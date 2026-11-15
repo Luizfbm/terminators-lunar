@@ -431,49 +431,6 @@ footer[data-guide='true'] {
   white-space: normal;
 }
 
-/* The Sun and the Earth, marked on the side of the Moon where each lies (seen from orbit). */
-.globe__body {
-  position: absolute;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transform: translate(-7px, -50%);
-  font-size: var(--small);
-  white-space: nowrap;
-  pointer-events: none;
-  text-shadow:
-    0 0 6px var(--bg),
-    0 0 2px var(--bg);
-}
-
-.globe__body::before {
-  content: '';
-  flex: none;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-}
-
-.globe__body--sun::before {
-  background: var(--sun);
-  box-shadow: 0 0 14px 3px color-mix(in srgb, var(--sun) 55%, transparent);
-}
-
-.globe__body--earth::before {
-  background: radial-gradient(circle at 35% 35%, #cfe1ff, var(--earth) 55%, #3f6fc4);
-  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--earth) 45%, transparent);
-}
-
-/* Against the right edge the word goes on the inner side of the dot. */
-.globe__body--left {
-  flex-direction: row-reverse;
-  transform: translate(calc(-100% + 7px), -50%);
-}
-
-.globe[data-dressed='false'] .globe__body {
-  visibility: hidden;
-}
-
 .stage__note {
   position: absolute;
   inset: 40% var(--gutter) auto;

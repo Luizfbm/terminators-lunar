@@ -302,8 +302,7 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
               site={globeSite}
               sun={overhead?.sun ?? null}
               earth={overhead?.earth ?? null}
-              sunLabel={t('strip.sun')}
-              earthLabel={t('strip.earth')}
+              cursorMs={cursorMs}
               sunAzimuthDeg={sky?.sun.azimuth_deg ?? null}
               earthAzimuthDeg={sky?.earth.azimuth_deg ?? null}
               sunUp={sunUp}
