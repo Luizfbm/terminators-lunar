@@ -1,0 +1,26 @@
+/* "Check in JPL Horizons": the two links in the row under the Sun's and the Earth's position at the Cursor. */
+.horizons-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px 16px;
+}
+
+.horizons-links__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  color: var(--fg);
+  text-decoration: underline dotted var(--dim);
+  text-underline-offset: 0.3em;
+}
+
+.horizons-links__link:hover {
+  text-decoration-style: solid;
+}
+
+@media (pointer: coarse) {
+  .horizons-links__link {
+    min-height: 44px;
+  }
+}
