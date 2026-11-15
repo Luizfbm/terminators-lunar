@@ -68,36 +68,72 @@ At Site CR05, the 240 m terrain puts the Sunset 5.7 h later than the 20 m terrai
 - **151 Sites:** the 130 Artemis Sites of Wueller et al. 2026, plus the IM-2 and Blue Ghost 1 landing points, Chandrayaan-3, and 18 landing sites of earlier missions (Apollo, Surveyor, Luna, Chang'e 3) (`/sites`: 130 `wueller2026`, 2 `clps`, 6 `apollo`, 1 `isro`, 12 `lroc2016`).
 - **The Resolution ladder:** any Query at three DEM resolutions, with the range between them.
 - **A Site's year:** every month of a year, and the Windows with the most time with both the Sun and the Earth.
+- **Custom Sites:** a coordinate at or south of 80°S is a Site too (source `custom`), and the whole Query, plan B included, lives in the link.
 
 Each `/visibility` answer also gives the sub-solar and sub-Earth points and the Sun's radius. When the engine's queue is full the API answers 503 `busy` with `Retry-After`. Time coverage runs from 2023-08-01 to 2032-12-31 (`/meta`).
 
 The Uncertainty band from the DEM's known error (ADR 0003) is not built yet.
 
+### In the answer
+
+Under the sentence that answers the Query, the app shows:
+
+- **A knife-edge warning.** If a few metres of miss changes the answer, a sentence says so before anyone has to open anything else. It reads the Landing scatter of the "If the lander misses" panel, and only counts points up to 250 m from the Site, the miss IM-2 Athena made. It speaks when one of those points has the Sun, or the Earth, for at least 10% of the Window (never less than 1 h) more or less than the Site, and it names the distance, the direction and the hours. A link takes you to the panel. A stable Site, or a scatter that is still loading or has failed, shows nothing.
+- **The Sun's disc at the Cursor.** Next to the Cursor, on the timeline and in the view from the ground, the Sun fraction reads "Sun: whole disc in view", "Sun: hidden" or "Sun: 63% of the disc". A Sun that is partly in view never rounds to 0% or to 100%.
+- **How far the horizon reaches.** One line says our horizon reaches 300 km, the outer edge of the 240 m DEM, and how far away the Occluders of the next Sunset and Earthset are. Below it, the rule: the Sun counts as visible while any part of its disc is in view, and the Earth counts by its centre.
+- **Plan A × Plan B.** Plan A is the Query on screen. Plan B changes the Site, the start day, the length in days or the Observer height, and the six numbers (Sun-and-Earth time, sunlit hours, Earth-visible hours, LCIP, LCSP, mean Sun fraction) sit side by side, with a star on the better one. A gap under 0.5 h, or under 0.5 percentage point for a share of the Window, is a tie, and the closing sentence never names a winner when the plans cannot be told apart. When the two Windows differ in length, the totals are compared as a share of each Window.
+- **A check in JPL Horizons.** Under "Stats for nerds", the Sun's and the Earth's position at the Cursor come with one link each to JPL Horizons, already filled in with the Site, the Observer height and the instant (to the minute, UT, no atmosphere). It is the same request the validation uses, so Horizons prints azimuth and elevation to compare with ours.
+
+Also in the app, each one answered by a route of the contract: the Windows of a Site by start day, the nearby Sites ranked (`/sites/{site_id}/windows`, `/sites/{site_id}/neighbours`); the Landing scatter, the slope and the nearest permanent shadow (`/visibility/scatter`, `/terrain`); a lander's battery over the Window (`/visibility/energy`); the same Query without terrain, as a flat horizon line (`/visibility/flat`); when a Deep Space Network dish can hear the Site (`/visibility/dsn`); and an assistant that answers questions about a Query with the engine's numbers (`/assistant`; with no model configured it answers in offline mode).
+
 Independent reviews found real defects in the engine and data, each now covered by a regression test: rays that stepped over nearby peaks (Sunsets off by up to 158.9 min, now at most 13.1), the shifted SLDEM2015 crop, only 3 distinct rays at the exact pole, a cache with no memory limit, light routes stuck behind the engine, and a cache-warming thread that never stopped.
 
 ## How we know the numbers are right, and where they are not
 
-Every check has a tolerance written before its first run. Nobody changes a tolerance or a reference to make a check pass. This is the current `/validations` data:
+Every check has a tolerance, and nobody changes a tolerance or a reference to make a check pass. The table is the current content of [`backend/app/data/validations.json`](backend/app/data/validations.json), the file `/validations` serves and the Proof page shows: 32 entries, 29 passed, 2 failed and 1 pending. The pending one is an example, not a check. Failures come first, as on the Proof page. A negative control is a check that must fail on purpose, to show the check can tell a wrong answer from a right one; it says nothing about the engine. The file also holds, for each entry, what it was compared against and what it does not cover, so read those on the Proof page before quoting a row.
 
-| Check | Against | Tolerance | Result | Status |
-|---|---|---|---|---|
-| Sun azimuth and elevation | JPL Horizons, 6 Sites south of 80°S, 300 instants from 2025 to 2032 | ≤ 0.02° | max error 0.000001° | passed |
-| Earth azimuth and elevation | the same | ≤ 0.02° | max error 0.000312° | passed |
-| Negative control, clock 10 min off | the Sun check with the time shifted | must exceed 0.02° | 0.085° | passed |
-| Negative control, Site moved | the Sun check with longitude shifted 0.01° and 0.03° | 0.01° detected, 0.03° exceeds 0.02° | 0.0100° and 0.0300° | passed |
-| Sub-solar point | JPL Horizons, 12 instants | ≤ 0.05° per point | max separation 0.0002° | passed |
-| Sub-Earth point | JPL Horizons, 12 instants | ≤ 0.05° per point | max separation 0.0058° | passed |
-| Negative control, sub-points with the clock off | the sub-point check with the time shifted | must exceed 0.05° | 1.020° | passed |
-| Sunlit days | Wueller et al. 2026, all 130 Sites, 06/11 to 27/11/2026 | ≤ 1 day per Site | 75 of 130 within 1 day, 55 outside | **failed** |
-| Blue Ghost 1 | Firefly's end of mission: last data 23:15 UTC on 16/03/2025, "just over 5 hours" after nightfall | our Sunset 5 to 6 h before the last data | our Sunset 19:44 UTC, 3.51 h before | **failed** |
-| IM-2 Athena | LROC resting point, 12.75 h of mission | none, there is no comparable number | the engine sees the Sun the whole time | pending |
-| Chandrayaan-3 | ISRO, sleep mode on 04/09/2023 | our first Sunset not before 04/09/2023 | first Sunset 2023-09-04 07:12 UTC, Occluder 6.9 km away | passed |
+| Id | Check | Tolerance | Result | Status | Script |
+|---|---|---|---|---|---|
+| `wueller2026-sunlit-days` | Consecutive sunlit days at the Artemis Sites vs Wueller et al. 2026 | ≤ 1 day per Site | 75 of 130 Sites within 1 day; largest gap +19.23 d at MMO09. Of the 97 with a published value above 0, 75 within 1 day. 33 Sites are published as 0 days. | **failed** | `validation/live_checks.py` |
+| `landing-blue-ghost-1` | Blue Ghost 1 Sunset vs end of the mission | our Sunset 5 to 6 h before the final data | our Sunset 2025-03-16 19:44 UTC, 3.51 h before the final data; Occluder: Mare Crisium, 0.7 km at azimuth 270.0° | **failed** | `validation/live_landings.py` |
+| `example-sun-height-apollo11` | Example: how high the Sun gets, Apollo 11 vs the pole | none: an example, not a check | highest Sun: 87.8° at Apollo 11, 2.0° at Site 001 | pending | `validation/live_landings.py` |
+| `horizons-sun-azel` | Sun azimuth and elevation vs JPL Horizons | ≤ 0.02° | max error 0.000001° over 300 instants (angular separation 0.000001°) | passed | `validation/test_horizons.py` |
+| `horizons-earth-azel` | Earth azimuth and elevation vs JPL Horizons | ≤ 0.02° | max error 0.000312° over 300 instants (angular separation 0.000312°) | passed | `validation/test_horizons.py` |
+| `larissa-athena-horizon` | Horizon mask at IM-2 Athena, against Larissa's independent silhouette | per azimuth \|ours − hers\| ≤ atan(1 m / d) + 0.01°, d her blocking distance; at least 99% of our 720 azimuths within it and RMS ≤ 0.03°. 1 m: the adjusted LOLA maps' 0.3–0.5 m RMS (Barker et al. 2021) and the unadjusted map's ~0.5 m radial orbit error (Mazarico et al. 2018), in quadrature. Fixed before evaluating the comparison | 99.2% of 720 azimuths within; ours − hers: mean -0.0022°, RMS 0.0197°, P95 0.051°, largest +0.090° at 190° (her Occluder 0.55 km away) | passed | `validation/test_athena.py` |
+| `negative-control-larissa-horizon-rotated` | Negative control: Larissa's silhouette turned by 1° | must break both conditions: under 99% of azimuths within and RMS above 0.03° | broke both conditions (37.6% within, RMS 0.079°) | passed | `validation/test_athena.py` |
+| `landing-im2-athena` | IM-2 Athena landing point | incidence = 90° − our Sun elevation at the published image centre, within 0.015° at both images (both published to 0.01°). The Earth over the transmission is reported as a fact, not judged | incidence, ours − LROC: M1495922531LE +0.0040°, M1496181900LE -0.0000°. Fact, not judged: over the transmission our mask keeps the Earth's centre at least 12.3° above the horizon (2025-03-06T17:30:00Z). Shown for information: Sun fraction at the resting point 1.00 and 1.00 at the two images; the photos show the site lit. | passed | `validation/test_athena.py` |
+| `negative-control-lroc-article-times` | Negative control: the LROC images at the times their articles give | must exceed 0.015° at both images | broke the check at both images (M1495922531LE -0.881°, M1496181900LE -0.358°) | passed | `validation/test_athena.py` |
+| `eclipse-2025-local-contacts` | The total lunar eclipse of 14/03/2025, seen from the Moon: when the Earth covers the Sun | each of the four contacts (Sun fraction leaves 1, reaches 0, leaves 0, returns to 1) within 30 s of gfoclt: our Earth is a sphere of the equatorial radius, gfoclt's an ellipsoid 21.4 km shorter at the poles, ~20 s at ~0.55°/h, plus the bisection. And inside NASA's contacts: into the umbra in [U1, U2], out in [U3, U4], all in [P1, P4] | at -89.4°, 90°: ours − gfoclt -6.9 s, -8.0 s, +3.6 s, +4.4 s (contacts 04:22:39.6, 05:32:09.3, 08:17:50.8, 09:27:24.8 UTC); inside NASA's intervals. At Athena, for information: ours − gfoclt -6.8 s, -8.0 s, +3.6 s, +4.4 s. | passed | `validation/test_eclipse.py` |
+| `negative-control-eclipse-earth-radius` | Negative control: the eclipse with the Earth 1% larger | must exceed 30 s on some contact | broke the check: ours − gfoclt -77.8 s, -79.3 s, +74.8 s, +75.4 s | passed | `validation/test_eclipse.py` |
+| `horizons-flat-sunset` | Flat horizon: the Sun's upper limb at each Sunset vs JPL Horizons | ≤ 0.02° from the dip | max error 0.00014° over 26 Sunsets | passed | `validation/test_flat_horizon.py` |
+| `negative-control-flat-sunset-centre` | Negative control: the Sun's centre at each flat Sunset | must exceed 0.02° | failed as expected (0.262°) | passed | `validation/test_flat_horizon.py` |
+| `negative-control-time-shift` | Negative control: 10 min shift | must exceed 0.02° | failed as expected (0.085°) | passed | `validation/test_horizons.py` |
+| `negative-control-longitude-shift` | Negative control: longitude shift | 0.01° detected (≥ 0.009°), 0.03° exceeds 0.02° | 0.01° shift moved the Sun 0.0100°, 0.03° shift 0.0300° (as expected) | passed | `validation/test_horizons.py` |
+| `horizons-dsn-elevation` | Moon elevation at each DSN pass edge vs JPL Horizons | ≤ 0.05° from 6° | max error 0.002126° from 6° over 74 pass edges | passed | `validation/test_horizons_dsn.py` |
+| `horizons-dsn-pass-edges` | DSN pass start and end vs JPL Horizons' crossing of 6° | ≤ 2 min | max gap 0.8 s over 74 pass edges | passed | `validation/test_horizons_dsn.py` |
+| `negative-control-dsn-edges-shifted` | Negative control: DSN pass edges 10 minutes late | must exceed 0.05° | smallest error 1.283406° over 74 edges moved 10 min | passed | `validation/test_horizons_dsn.py` |
+| `eduardo-panel-incidence` | Panel pointing vs Eduardo's panel-geometry model | ≤ 1e-9 on the incidence factor | max error 5.0e-16 over 2,520 Sun directions and 8 instants through the API | passed | `validation/test_panel_incidence.py` |
+| `negative-control-panel-azimuth-turned` | Negative control: the panels turned 180° | must exceed 1e-9 | failed as expected (1.00) | passed | `validation/test_panel_incidence.py` |
+| `pgda-sun-visibility` | Share of time with the Sun up, against NASA's 18.6-year map | RMSE ≤ 5 percentage points and mean difference ≤ 2 points | RMSE 1.00 points, mean difference -0.44 points over 86 points (largest -3.01); a second cycle moves the mean by -0.14 points; mean Sun fraction, not judged, is off by -1.78 on average. Bright ridges, shown for information (the map cannot place a value inside a 60 m pixel there): RMSE 25.40, mean difference -22.36 points over 18 points | passed | `validation/test_pgda.py` |
+| `pgda-earth-visibility` | Share of time with the Earth visible, against NASA's 18.6-year map | RMSE ≤ 5 percentage points and mean difference ≤ 2 points | RMSE 3.01 points, mean difference -0.53 points over 86 points (largest -19.11); a second cycle moves the mean by -0.10 points; by the Earth's centre, as the app counts it, the mean is -5.72 points | passed | `validation/test_pgda.py` |
+| `negative-control-pgda-longitude` | Negative control: the same points at longitude + 180° | must break both checks (RMSE above 5 points) | broke both checks (Sun RMSE 22.45, Earth RMSE 47.35 points) | passed | `validation/test_pgda.py` |
+| `psr-synthetic-patch` | Nearest permanent shadow on a known map | distance within one cell (60 m); azimuth within the angle one cell subtends there | largest distance error 16.7 m; largest azimuth error 0.39 of a cell's angle | passed | `validation/test_psr.py` |
+| `slope-synthetic-plane` | Slope of a known plane | ≤ 0.01°; level plane exactly 0, all of it under 10° | largest gap 0.000002° on the tilted plane; level plane 0 and all under 10° | passed | `validation/test_slope.py` |
+| `slope-cell-count` | Cells within 100 m on a 20 m grid | within 12 % | 81 cells, 3.1 % from 78.5 | passed | `validation/test_slope.py` |
+| `horizons-sub-sun` | Sub-solar point vs JPL Horizons | ≤ 0.05° per point | max separation 0.0002° over 12 instants | passed | `validation/test_sub_points.py` |
+| `horizons-sub-earth` | Sub-Earth point vs JPL Horizons | ≤ 0.05° per point | max separation 0.0058° over 12 instants | passed | `validation/test_sub_points.py` |
+| `negative-control-sub-points-time-shift` | Negative control: sub-solar point 2 h later | must exceed 0.05° | failed as expected (1.020°) | passed | `validation/test_sub_points.py` |
+| `horizons-sun-distance-factor` | Sun-distance factor of the battery vs JPL Horizons | ≤ 0.1 % of (1 au / d)² | max error 3.4e-09 % over 12 instants | passed | `validation/test_sun_distance.py` |
+| `negative-control-sun-distance-ignored` | Negative control: the battery with the Sun always at 1 au | must exceed 0.1 % | failed as expected (3.34 %) | passed | `validation/test_sun_distance.py` |
+| `landing-chandrayaan-3` | Chandrayaan-3 Sunset vs ISRO sleep date | our Sunset after 04/09/2023 (ISRO slept them before sunset) | our first Sunset 2023-09-04 07:12 UTC; Occluder: 6.9 km at azimuth 277.5° | passed | `validation/live_landings.py` |
+
+The Proof page opens with two summaries before the checks. "Where a number can be wrong" is a table of nine sources of error (terrain resolution, height error of the map, relief smaller than the finest cell, horizon reach, the time step, the Sun's and the Earth's positions, the Sun as a disc, the Earth by its centre, and where the lander lands), each with its size, its effect on the answer and where the size comes from: a check, a script, a decision record or a paper. A row with no source for its size has no number. "What we have not checked yet" lists eight gaps that belong to the whole page and not to one check, such as the 5 m maps, errors every LOLA map shares, measured instants to compare Sunsets with, the 40 Sites of Wueller et al. 2026 with no known cause, bright ridges, the DSN link, the battery model beyond the Sun's angle and distance, and the Earth's atmosphere in an eclipse. A unit test looks up every figure in those rows in the check, file or decision record they cite.
 
 Why each failure or gap is there:
 
 - **Wueller 2026.** The published value is a 60 m pixel, rounded down, on a map that changes by several days within ±180 m. Our number is within that spread at 90 of the 130 Sites. Four rows of the source are blank and count against us. An independent walk over the DEM agrees with the engine. 40 Sites are still unexplained, almost all with more Sun on our side, and the paper's method is not in any open source we could reach ([docs/validation/sources-wueller-blue-ghost.md](docs/validation/sources-wueller-blue-ghost.md)). The whole investigation is in [docs/validation/wueller-2026.md](docs/validation/wueller-2026.md).
 - **Blue Ghost 1.** The SLDEM2015 window has a grid shifted by a fraction of a pixel, which makes a false wall 54 m from the lander. With the corrected crop, the Sunset is 19:44 UTC. It still fails, and the rule is the weak part. Firefly gives the time of the last data, not of the Sunset, so the 17:15 to 18:15 UTC band came from the phrase "just over 5 hours". JPL Horizons puts the Sun's centre on the flat horizon at 20:10:39 UTC, 26 min after our terrain Sunset, and the band sits about 2 h before that. Sources: [docs/validation/sources-wueller-blue-ghost.md](docs/validation/sources-wueller-blue-ghost.md).
-- **IM-2.** The lander tipped over inside a crater about 20 m across, smaller than the finest DEM, with its panels facing away. Its mission did not end at a terrain Sunset, so there is nothing to compare.
+- **IM-2.** Two checks pass, and neither is about the Sunset. `landing-im2-athena` confirms the ephemeris: the incidence angle LROC publishes at the resting point matches 90° minus our Sun elevation to within 0.004° at both images. `larissa-athena-horizon` compares our Horizon mask there with an independent silhouette (99.2% of 720 azimuths within the tolerance). The lander tipped over inside a crater about 20 m across, smaller than the finest DEM, with its panels facing away, and the engine sees the Sun the whole time (Sun fraction 1.00 at both images). The mission did not end at a terrain Sunset, so there is no time to compare, and the terrain is not what these checks test.
 - **Chandrayaan-3.** ISRO gives the day it put the lander to sleep (04/09/2023) but no time. So this only checks the order: our first Sunset does not come before that day. It is not a comparison with a measured instant.
 
 How to run the checks: [validation/README.md](validation/README.md).
@@ -114,14 +150,14 @@ SPICE kernels (DE440, Moon frames)       LOLA DEMs: 20 m to 5 km, 80 m to 100 km
                                  \ /
                 compare (Sun as a disc, Earth by its centre)
                                   |
-             events, periods, metrics  ->  FastAPI  ->  /visibility, /ladder, /year
+             events, periods, metrics  ->  FastAPI  ->  /visibility, /visibility/ladder, /sites/{id}/year
 ```
 
 Sites outside the polar DEMs (Apollo 11, Blue Ghost 1, Chandrayaan-3) use SLDEM2015 and the PGDA 60°S DEMs instead.
 
 ## Run it locally
 
-You need [uv](https://docs.astral.sh/uv/) and the `gh` CLI, logged in. The DEM test windows (about 58 MB) live in a release asset of this repo.
+You need [uv](https://docs.astral.sh/uv/) and the `gh` CLI, logged in. The DEM test windows live in two release assets of this repo: the polar ones (about 59 MB) and the windows of the Sites outside the polar DEMs (about 151 MB).
 
 ```bash
 fixtures/dem/fetch.sh
@@ -130,20 +166,48 @@ uv sync --locked
 uv run uvicorn app.main:app --port 8000
 ```
 
-Then `curl "localhost:8000/visibility?site_id=001&start=$(date -u +%F)T00:00:00Z"` (`start` is required). The fixtures cover about ±25 km at 20 m around the pole, so Sites further out answer only on the server, which has the full DEMs.
+Then `curl "localhost:8000/visibility?site_id=001&start=$(date -u +%F)T00:00:00Z"` (`start` is required). The fixtures cover about ±25 km at 20 m around the pole, plus the windows of Apollo 11, Blue Ghost 1 and Chandrayaan-3, so the other Sites answer only on the server, which has the full DEMs.
+
+The web interface (Node 22) reads the API at `https://lunar-api.luizfbm.win` unless `VITE_API_BASE_URL` says otherwise. To point it at the API above:
+
+```bash
+cd frontend
+npm ci
+VITE_API_BASE_URL=http://localhost:8000 npm run dev
+```
 
 Tests, the same ones CI runs:
 
 ```bash
+npx --yes @redocly/cli@2.77.0 lint contract/openapi.yaml
 cd backend
 uv run ruff check . && uv run ruff format --check . && uv run mypy .
 uv run pytest
 cd ..
 uv run --project backend pytest validation
 uvx schemathesis run contract/openapi.yaml --url http://localhost:8000 --checks all
+cd frontend
+npm run lint && npm run typecheck && npm test -- --run
+npm run generate:types && git diff --exit-code -- .
+npx playwright install --with-deps chromium && npm run e2e
 ```
 
-Schemathesis needs the API from the step above running. Mutation testing runs by hand from the Actions tab (the `Mutation` workflow), not on a laptop.
+Schemathesis needs the API from the step above running (with `LUNAR_ASSISTANT_IP_LIMIT_PER_MINUTE=0`, as CI sets it, or the assistant's cap of 10 questions a minute turns most of its answers into 503). The end-to-end tests build the app against a Prism mock of the contract, so they need no backend. Mutation testing runs by hand from the Actions tab (the `Mutation` workflow), not on a laptop.
+
+## In production
+
+The stack in `deploy/compose.yaml` runs three containers with Docker Compose on one VPS: the backend, Caddy (which also serves the built frontend) and a Cloudflare Tunnel. `lunar.luizfbm.win` serves the frontend and `lunar-api.luizfbm.win` the backend. The full DEMs and SPICE kernels live on the server, not in the repo, and `deploy/fetch-data.sh` puts them there. GitHub Actions deploys on every merge to `main`.
+
+The backend's limits, set in `deploy/compose.yaml`:
+
+| Limit | Value |
+|---|---|
+| Engine runs at once (`LUNAR_ENGINE_CONCURRENCY`) | 4 |
+| Answer cache (`LUNAR_CACHE_MAX_MB`) | 1.2 GB |
+| Container memory (`mem_limit`) | 4.5 GB |
+| Engine routes per client address per minute | 600 |
+
+A request that waits more than 25 s for an engine slot, or an address over its cap, gets the 503 `busy` described above. The cache is warmed in the background for every Curated Site over the default Window, after each start and after each UTC midnight (ADR 0004).
 
 ## Data and credits
 
