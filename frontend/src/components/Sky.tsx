@@ -19,10 +19,11 @@ import {
   type Patch,
   type PixelBounds,
 } from '../domain/terrain'
+import { groundSource } from '../domain/terrainHeights'
 import { useI18n } from '../i18n/I18nContext'
 import type { GroundMark } from './Ground'
 import { regolithMaterial, SHADOW_FLOOR } from './regolith'
-import { loadGround, loadSiteGround, loadWideGround, type GroundData } from './groundData'
+import { loadGround, loadPatchGround, loadSiteGround, loadWideGround, type GroundData } from './groundData'
 import { EARTH, earthMaterial as makeEarthMaterial, glowTexture, loadEarthMap, SUN } from './spaceBodies'
 
 /** The crest of the horizon: dim all round, and warm where the Sun is behind or beside it. */
@@ -131,6 +132,9 @@ export function Sky({
   const letters = useRef<(SVGTextElement | null)[]>([])
   // The eighth the view faces, for the compass's accessible name: set only when it changes.
   const [facing, setFacing] = useState<number | null>(null)
+  // Where no published polar map holds the Site: the engine's grid on its way, or why it is not there.
+  const [groundStatus, setGroundStatus] = useState<'loading' | 'none' | 'failed' | null>(null)
+  const retryGround = useRef<(() => void) | null>(null)
   // What the frame loop reads: the latest props, and where the camera is turning to.
   const latest = useRef({ result, cursorMs, stretch, mark, onGround, onFailed, pose })
   const aim = useRef<{ yaw: number; pitch: number } | null>(null)
@@ -260,18 +264,23 @@ export function Sky({
       const mesh = new THREE.Mesh(new THREE.BufferGeometry(), material)
       mesh.visible = false
       scene.add(mesh)
-      return { data: null as GroundData | null, mesh, material, relief: null as THREE.Texture | null, reliefAsked: !relief }
+      // `settled`: the map has arrived, or is known not to come, so whether it holds the Site is known.
+      return { data: null as GroundData | null, mesh, material, relief: null as THREE.Texture | null, reliefAsked: !relief, settled: false }
     }
     const fine = level(true)
     const wide = level(true)
     // The 20 m ground right around the Site: its mesh is fine enough to carry its own light, so it has no image of finer relief.
     const site = level(false)
+    // Anywhere no published polar map holds the Site: the engine's own DEM around it, from
+    // /terrain/heights (237 m over most of the Moon). It has no image of finer relief.
+    const patch = level(false)
     type Level = ReturnType<typeof level>
     // A phone, or a modest graphics card, keeps the coarser ground (the requirement).
     const finest = canTakeFinest({ memoryGb: (navigator as { deviceMemory?: number }).deviceMemory, maxTextureSize: renderer.capabilities.maxTextureSize })
     target.dataset.finest = String(finest)
-    // The Site whose 20 m ground was asked for, so another Site asks again.
+    // The Site whose 20 m ground was asked for, so another Site asks again, and the one it has come for.
     let siteAsked: string | null = null
+    let siteSettled: string | null = null
     const askSite = (data: VisibilityResult) => {
       const { latitude_deg, longitude_deg } = data.query.site
       const key = `${latitude_deg},${longitude_deg}`
@@ -280,18 +289,61 @@ export function Sky({
       site.data = null
       if (!finest) return
       void loadSiteGround(latitude_deg, longitude_deg).then((ground) => {
-        if (!gone && siteAsked === key) site.data = ground
+        if (!gone && siteAsked === key) {
+          site.data = ground
+          siteSettled = key
+        }
       })
     }
-    let groundFor: { result: VisibilityResult; stretch: number; fine: GroundData | null; wide: GroundData | null; site: GroundData | null } | null = null
+    // The Site whose grid was asked for, and what the grid is.
+    let patchAsked: string | null = null
+    let patchDem: { product: string; resolutionM: number } | null = null
+    let statusNow: 'loading' | 'none' | 'failed' | null = null
+    const status = (next: 'loading' | 'none' | 'failed' | null, shown: string | null = next) => {
+      if (shown === null) delete target.dataset.groundStatus
+      else target.dataset.groundStatus = shown
+      if (next === statusNow) return
+      statusNow = next
+      setGroundStatus(next)
+    }
+    const askPatch = (data: VisibilityResult, key: string) => {
+      if (patchAsked === key) return
+      patchAsked = key
+      patch.data = null
+      patchDem = null
+      status('loading')
+      void loadPatchGround(data.query.site).then((answer) => {
+        if (gone || patchAsked !== key) return
+        if (answer.ok) {
+          patch.data = answer.ground
+          patchDem = { product: answer.product, resolutionM: answer.resolutionM }
+          status(null, 'ready')
+        } else {
+          // Never a made-up ground: the view says there is none, and keeps the horizon line.
+          status(answer.code === 'outside_coverage' ? 'none' : 'failed')
+        }
+      })
+    }
+    // Try again asks on the next frame.
+    retryGround.current = () => {
+      patchAsked = null
+    }
+    let groundFor: { result: VisibilityResult; stretch: number; fine: GroundData | null; wide: GroundData | null; site: GroundData | null; patch: GroundData | null } | null =
+      null
     void loadGround().then((data) => {
-      if (!gone) fine.data = data
+      if (gone) return
+      fine.data = data
+      fine.settled = true
     })
     // The wider map is a 22 MB file: a phone goes without it.
     if (!coarse) {
       void loadWideGround().then((data) => {
-        if (!gone) wide.data = data
+        if (gone) return
+        wide.data = data
+        wide.settled = true
       })
+    } else {
+      wide.settled = true
     }
     // The finer relief only tilts the light; it comes after the shapes.
     const askRelief = (from: Level) => {
@@ -375,16 +427,32 @@ export function Sky({
       on.mesh.visible = geometry !== null
       if (geometry) askRelief(on)
       if (geometry && on.material.map) {
-        const map = (on === site ? site.data : on === fine ? fine.data : wide.data)?.heights
+        const map = (on === patch ? patch.data : on === site ? site.data : on === fine ? fine.data : wide.data)?.heights
         if (map) on.material.map.repeat.setScalar(grainRepeat(map))
       }
     }
-    const buildGround = (data: VisibilityResult, by: number) => {
-      groundFor = { result: data, stretch: by, fine: fine.data, wide: wide.data, site: site.data }
+    const buildGround = (data: VisibilityResult, by: number, patchData: GroundData | null) => {
+      groundFor = { result: data, stretch: by, fine: fine.data, wide: wide.data, site: site.data, patch: patchData }
       const { latitude_deg, longitude_deg } = data.query.site
       const eye = data.query.observer_height_m
       const horizon = horizonTable(data.horizon.samples)
       const reach = horizonDistanceTable(data.horizon.samples)
+      // No published polar map holds the Site: the engine's grid is all the ground there is,
+      // every point of it (every other one on a phone), under the engine's horizon.
+      if (patchData && patchDem) {
+        show(fine, null)
+        show(wide, null)
+        show(site, null)
+        const stride = coarse ? 2 : 1
+        const grid = patchAround(patchData.heights, latitude_deg, longitude_deg, eye, Infinity, stride)
+        show(patch, groundGeometry(patchData.heights, [{ patch: grid }], horizon, reach, by))
+        target.dataset.ground = 'real'
+        target.dataset.near = 'none'
+        target.dataset.far = 'silhouette'
+        latest.current.onGround?.({ ...groundSpacing(patchDem.resolutionM, stride), product: patchDem.product })
+        return
+      }
+      show(patch, null)
       const fineMap = fine.data && covers(fine.data.heights, latitude_deg, longitude_deg, GROUND_MARGIN_M) ? fine.data.heights : null
       const wideMap = wide.data && covers(wide.data.heights, latitude_deg, longitude_deg, GROUND_MARGIN_M) ? wide.data.heights : null
       // How finely the ground nearest the Site is measured and drawn, for the caption.
@@ -534,15 +602,31 @@ export function Sky({
       if (width === 0 || height === 0) return
       if (builtFor?.result !== state.result || builtFor.stretch !== state.stretch) build(state.result, state.stretch)
       askSite(state.result)
+      // The published polar maps first, as always; the engine's grid only where none of them
+      // holds the Site, once that is known (domain/terrainHeights.ts).
+      const here = state.result.query.site
+      const hereKey = `${here.latitude_deg},${here.longitude_deg}`
+      const holds = (on: Level, settled: boolean, marginM: number) =>
+        settled ? on.data !== null && covers(on.data.heights, here.latitude_deg, here.longitude_deg, marginM) : null
+      const source = groundSource(here.latitude_deg, [
+        holds(fine, fine.settled, GROUND_MARGIN_M),
+        holds(wide, wide.settled, GROUND_MARGIN_M),
+        holds(site, !finest || siteSettled === hereKey, 0),
+      ])
+      target.dataset.groundSource = source
+      if (source === 'patch') askPatch(state.result, hereKey)
+      else if (statusNow !== null || target.dataset.groundStatus) status(null)
+      const patchNow = source === 'patch' && patchAsked === hereKey ? patch.data : null
       if (
-        (fine.data || wide.data || site.data) &&
+        (fine.data || wide.data || site.data || patchNow || groundFor?.patch) &&
         (groundFor?.result !== state.result ||
           groundFor.stretch !== state.stretch ||
           groundFor.fine !== fine.data ||
           groundFor.wide !== wide.data ||
-          groundFor.site !== site.data)
+          groundFor.site !== site.data ||
+          groundFor.patch !== patchNow)
       ) {
-        buildGround(state.result, state.stretch)
+        buildGround(state.result, state.stretch, patchNow)
       }
       const now = sampleAt(state.result.timeline.samples, state.cursorMs)
       if (now) {
@@ -635,13 +719,14 @@ export function Sky({
       target.removeEventListener('pointermove', move)
       target.removeEventListener('pointerup', up)
       target.removeEventListener('pointercancel', up)
-      for (const object of [stars, path, wall, ridge, sun, earth, pin, fine.mesh, wide.mesh, site.mesh]) {
+      retryGround.current = null
+      for (const object of [stars, path, wall, ridge, sun, earth, pin, fine.mesh, wide.mesh, site.mesh, patch.mesh]) {
         object.geometry.dispose()
         ;(object.material as THREE.Material).dispose()
       }
       fine.relief?.dispose()
       wide.relief?.dispose()
-      for (const on of [fine, wide, site]) on.material.map?.dispose()
+      for (const on of [fine, wide, site, patch]) on.material.map?.dispose()
       grain.dispose()
       earthMap?.dispose()
       glow.material.map?.dispose()
@@ -653,6 +738,19 @@ export function Sky({
   return (
     <div className="sky" ref={frame}>
       <canvas ref={canvas} role="img" aria-label={t('sky.label', { site: result.query.site.name })} />
+      {groundStatus !== null && (
+        <p className="sky__ground-status" data-state={groundStatus} aria-live="polite">
+          {t(`sky.ground.${groundStatus}` as 'sky.ground.loading')}
+          {groundStatus === 'failed' && (
+            <>
+              {' '}
+              <button type="button" onClick={() => retryGround.current?.()}>
+                {t('sky.ground.retry')}
+              </button>
+            </>
+          )}
+        </p>
+      )}
       {facing !== null && (
         <div className="sky__dial" role="img" aria-label={t('sky.facing', { direction: t(`direction.${facing}` as 'direction.0') })}>
           <svg viewBox="-50 -50 100 100" aria-hidden="true">
