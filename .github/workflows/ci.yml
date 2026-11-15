@@ -9,34 +9,16 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# Every job runs on our own runners on the VPS (deploy/runner/), two at a time.
-# Each side's jobs skip until its folder exists. Conventions the workers follow:
-# - backend/ is a uv project exposing the FastAPI app at app.main:app
-# - frontend/ has npm scripts lint, typecheck, test, e2e and generate:types
+# CI is split in two halves.
+# - Here, on our two runners on the VPS (deploy/runner/): the slow checks, Playwright (in two
+#   shards, one per runner) and schemathesis, plus the contract lint, which takes seconds.
+# - On Luiz's Mac, scripts/ci-mac.sh: ruff, mypy, pytest, the validation suite, eslint, tsc,
+#   vitest and the generated-types check. It reports the commit status `mac-gates`.
+# A pull request merges only with both halves green.
+# Conventions: backend/ is a uv project exposing the FastAPI app at app.main:app;
+# frontend/ has npm scripts lint, typecheck, test, e2e and generate:types.
 jobs:
-  detect:
-    runs-on: [self-hosted, lunar-vps]
-    outputs:
-      contract: ${{ steps.d.outputs.contract }}
-      backend: ${{ steps.d.outputs.backend }}
-      frontend: ${{ steps.d.outputs.frontend }}
-      validation: ${{ steps.d.outputs.validation }}
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          # Our runners keep their workspace: the DEM fixtures, the venv and node_modules
-          # stay from the last job instead of being fetched again.
-          clean: false
-      - id: d
-        run: |
-          echo "contract=$([ -f contract/openapi.yaml ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-          echo "backend=$([ -f backend/pyproject.toml ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-          echo "frontend=$([ -f frontend/package.json ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-          echo "validation=$([ -d validation ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-
   contract:
-    needs: detect
-    if: needs.detect.outputs.contract == 'true'
     runs-on: [self-hosted, lunar-vps]
     steps:
       - uses: actions/checkout@v7
@@ -46,55 +28,11 @@ jobs:
           clean: false
       - run: npx --yes @redocly/cli@2.77.0 lint contract/openapi.yaml
 
-  backend:
-    needs: detect
-    if: needs.detect.outputs.backend == 'true'
-    runs-on: [self-hosted, lunar-vps]
-    defaults:
-      run:
-        working-directory: backend
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          # Our runners keep their workspace: the DEM fixtures, the venv and node_modules
-          # stay from the last job instead of being fetched again.
-          clean: false
-      - uses: astral-sh/setup-uv@v10.3.3
-      - run: "$GITHUB_WORKSPACE/fixtures/dem/fetch.sh"
-        env:
-          GH_TOKEN: ${{ github.token }}
-      - run: uv sync --locked
-      - run: uv run ruff check .
-      - run: uv run ruff format --check .
-      - run: uv run mypy .
-      - run: uv run pytest -n 3 --dist loadfile
-
-  validation:
-    needs: detect
-    if: needs.detect.outputs.validation == 'true' && needs.detect.outputs.backend == 'true'
-    runs-on: [self-hosted, lunar-vps]
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          # Our runners keep their workspace: the DEM fixtures, the venv and node_modules
-          # stay from the last job instead of being fetched again.
-          clean: false
-      - uses: astral-sh/setup-uv@v10.3.3
-      - run: "$GITHUB_WORKSPACE/fixtures/dem/fetch.sh"
-        env:
-          GH_TOKEN: ${{ github.token }}
-      - run: uv sync --locked --project backend
-      - run: uv run --project backend pytest validation -n 3 --dist loadfile
-
   schemathesis:
-    needs: detect
-    if: needs.detect.outputs.backend == 'true' && needs.detect.outputs.contract == 'true'
     runs-on: [self-hosted, lunar-vps]
     steps:
       - uses: actions/checkout@v7
         with:
-          # Our runners keep their workspace: the DEM fixtures, the venv and node_modules
-          # stay from the last job instead of being fetched again.
           clean: false
       - uses: astral-sh/setup-uv@v10.3.3
       - run: "$GITHUB_WORKSPACE/fixtures/dem/fetch.sh"
@@ -113,31 +51,22 @@ jobs:
           exit 1
       - run: uvx schemathesis run contract/openapi.yaml --url http://localhost:8000 --checks all
 
-  frontend:
-    needs: detect
-    if: needs.detect.outputs.frontend == 'true'
+  e2e:
     runs-on: [self-hosted, lunar-vps]
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     defaults:
       run:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v7
         with:
-          # Our runners keep their workspace: the DEM fixtures, the venv and node_modules
-          # stay from the last job instead of being fetched again.
           clean: false
       - uses: actions/setup-node@v7
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm test -- --run
-      - name: Generated types match the contract
-        run: |
-          npm run generate:types
-          git diff --exit-code -- .
+      - run: npm ci --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
-      - run: npm run e2e
+      - run: npx playwright test --shard=${{ matrix.shard }}/2 --workers=2

@@ -71,26 +71,20 @@ The agent Luiz is talking to is the coordinator. It does not implement the issue
 - The coordinator splits the work into GitHub issues that are well separated and can run at the same time: each one touches its own files, needs no other open issue's result, and says what done looks like.
 - Each issue goes to its own agent, Claude Sonnet 5.5 at high effort, on its own branch. The agent runs only the Mac checks listed under "CI gates", opens a pull request that closes the issue, and reports back what it changed, the commands it ran with their output, and the CI run of its pull request.
 - An agent never starts the app, never deploys and never touches the VPS.
-- The coordinator checks the report against the diff, waits for the CI run on the runner to be green and merges the pull request (squash).
+- The coordinator checks the report against the diff, runs `scripts/ci-mac.sh` on the head, waits for both halves of CI to be green and merges the pull request (squash).
 - With everything green on `main`, the coordinator deploys to the VPS straight away, without asking Luiz first. Anything red stops the deploy.
 - Work that cannot be split (one step needs the previous one's result) stays with the coordinator.
 
 ## CI gates
 
-Every change merges only with every check green. The checks run on our own runners on the VPS (`deploy/runner/`, label `lunar-vps`, two jobs at a time, each allowed every core but at a CPU weight far below production's and capped at 3 GB), not on GitHub's machines and not on a laptop.
+Every change merges only with every check green, and the checks are split in two halves (decided by Luiz on 15/11/2026: the Mac was too loaded to run everything and the VPS alone was too slow):
 
-On Luiz's Mac only the essential checks run, before a push, and only on what the change touched:
+- **On the VPS**, `.github/workflows/ci.yml` on our two runners (`deploy/runner/`, label `lunar-vps`, each allowed every core at a CPU weight far below production's, capped at 3 GB): Playwright end to end against the mock, in two shards, schemathesis against the contract, and the contract lint.
+- **On Luiz's Mac**, `scripts/ci-mac.sh`: ruff, mypy, pytest (unit, integration and regression tests together, in parallel), the validation suite, eslint, tsc, vitest and the generated-types check. Run it on a clean checkout of the pull request's head; it reports the commit status `mac-gates` on GitHub. Only the coordinator runs it, before merging.
 
-- frontend: `npm run lint`, `npm run typecheck`, and `npx vitest run <the test files of the touched modules>`;
-- backend: `uv run ruff check`, `uv run ruff format --check` and `uv run mypy` on the touched files, and `uv run pytest <one test file>` only when it is the new or changed test.
+Agents never run Playwright, schemathesis, the validation suite or a whole suite. Before a push they run only lint, typecheck and the unit tests of what they touched (`npx vitest run <files>`, `uv run pytest <one file>`).
 
-Everything else runs only in CI on the runner: the whole vitest and pytest suites, the validation suite, schemathesis, the generated-types check and every Playwright spec. Never run Playwright, schemathesis, the validation suite or a whole suite on the Mac. The evidence for those is the CI run on the pull request.
-
-- Backend: ruff, mypy, pytest (unit, integration and regression tests together), the validation suite, schemathesis against the contract.
-- Frontend: eslint, tsc, vitest, Playwright end to end against the mock.
-- Both: generated types match the contract.
-
-No check is skipped, retried until it passes or marked as allowed to fail. Mutation testing is not one of these gates: it runs by hand. The frontend gets regression tests with its first change, and mutation testing (Stryker) the same way as the backend.
+A pull request merges with the VPS run and `mac-gates` both green on its head. No check is skipped, retried until it passes or marked as allowed to fail. Mutation testing is not one of these gates: it runs by hand. The frontend gets regression tests with its first change, and mutation testing (Stryker) the same way as the backend.
 
 ## Deploy
 
