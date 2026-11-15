@@ -41,11 +41,32 @@ SITES = {
     "APOLLO11": (0.67416, 23.47314, "sldem"),
     "BG1": (18.5621232969557, 61.8099892551118, "sldem"),
     "CH3": (-69.373, 32.319, "ldem60s"),
+    # The mission landing sites of data/missions/missions.csv (LROC 2016), all outside the polar DEMs.
+    "APOLLO12": (-3.0128, -23.4219, "sldem"),  # Apollo 12
+    "APOLLO14": (-3.64589, -17.47194, "sldem"),  # Apollo 14
+    "APOLLO15": (26.13239, 3.6333, "sldem"),  # Apollo 15
+    "APOLLO16": (-8.9734, 15.5011, "sldem"),  # Apollo 16
+    "APOLLO17": (20.1911, 30.7723, "sldem"),  # Apollo 17
+    "SURVEYOR1": (-2.4745, -43.3398, "sldem"),  # Surveyor 1
+    "SURVEYOR3": (-3.0162, -23.418, "sldem"),  # Surveyor 3
+    "SURVEYOR5": (1.4551, 23.1943, "sldem"),  # Surveyor 5
+    "SURVEYOR6": (0.4742, -1.4275, "sldem"),  # Surveyor 6
+    "SURVEYOR7": (-40.9812, -11.5127, "sldem"),  # Surveyor 7
+    "LUNA16": (-0.5137, 56.3638, "sldem"),  # Luna 16
+    "LUNA17": (38.23764, -35.00163, "sldem"),  # Luna 17
+    "LUNA20": (3.7863, 56.6242, "sldem"),  # Luna 20
+    "LUNA21": (25.9994, 30.4076, "sldem"),  # Luna 21
+    "LUNA23": (12.6667, 62.1511, "sldem"),  # Luna 23
+    "LUNA24": (12.7142, 62.2129, "sldem"),  # Luna 24
+    "CE3": (44.1214, -19.5117, "sldem"),  # Chang'e 3
 }
 
 
 def _tile_names(lat: float, lon: float, half_m: float) -> list[str]:
-    """The SLDEM2015 512 ppd tiles (30° by 45°) under the window."""
+    """The SLDEM2015 512 ppd tiles (30° by 45°) under the window.
+
+    The map's seam is at 0°E: a window that reaches past it takes the tiles on both sides.
+    """
     dlat = math.degrees(half_m / R)
     dlon = math.degrees(half_m / (R * math.cos(math.radians(abs(lat) + dlat))))
     names = []
