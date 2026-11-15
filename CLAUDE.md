@@ -77,7 +77,7 @@ The agent Luiz is talking to is the coordinator. It does not implement the issue
 
 ## CI gates
 
-Every change merges only with every check green. The checks run on our own runner on the VPS (`deploy/runner/`, label `lunar-vps`, capped at 3 cores and 3 GB, one job at a time), not on GitHub's machines and not on a laptop.
+Every change merges only with every check green. The checks run on our own runners on the VPS (`deploy/runner/`, label `lunar-vps`, two jobs at a time, each allowed every core but at a CPU weight far below production's and capped at 2.5 GB), not on GitHub's machines and not on a laptop.
 
 On Luiz's Mac only the essential checks run, before a push, and only on what the change touched:
 
