@@ -1294,6 +1294,13 @@ components:
                   minimum: 0
                   maximum: 1
                   description: Sun fraction. 0 during a lunar eclipse.
+                angular_radius_deg:
+                  type: number
+                  exclusiveMinimum: 0
+                  description: |
+                    Apparent radius of the Sun's disc seen from the Observer at this instant,
+                    asin(solar radius / topocentric distance) from the SPICE ephemeris, in degrees.
+                    Optional for older answers; this server always sends it.
         earth:
           allOf:
             - $ref: "#/components/schemas/BodyPosition"
@@ -1303,6 +1310,13 @@ components:
                 visible:
                   type: boolean
                   description: Earth's centre is above the Horizon mask.
+                angular_radius_deg:
+                  type: number
+                  exclusiveMinimum: 0
+                  description: |
+                    Apparent radius of the Earth seen from the Observer at this instant, from its
+                    equatorial radius (6378.1366 km) over its topocentric distance (a sphere, not the ellipsoid's limb),
+                    in degrees. Optional for older answers; this server always sends it.
 
     Event:
       type: object

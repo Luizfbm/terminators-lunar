@@ -589,10 +589,22 @@ export interface components {
             sun: components["schemas"]["BodyPosition"] & {
                 /** @description Sun fraction. 0 during a lunar eclipse. */
                 fraction: number;
+                /**
+                 * @description Apparent radius of the Sun's disc seen from the Observer at this instant,
+                 *     asin(solar radius / topocentric distance) from the SPICE ephemeris, in degrees.
+                 *     Optional for older answers; this server always sends it.
+                 */
+                angular_radius_deg?: number;
             };
             earth: components["schemas"]["BodyPosition"] & {
                 /** @description Earth's centre is above the Horizon mask. */
                 visible: boolean;
+                /**
+                 * @description Apparent radius of the Earth seen from the Observer at this instant, from its
+                 *     equatorial radius (6378.1366 km) over its topocentric distance (a sphere, not the ellipsoid's limb),
+                 *     in degrees. Optional for older answers; this server always sends it.
+                 */
+                angular_radius_deg?: number;
             };
         };
         Event: {
