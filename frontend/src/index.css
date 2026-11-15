@@ -1331,7 +1331,14 @@ footer[data-guide='true'] {
   .bar__nav {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     white-space: normal;
+  }
+
+  /* Wrapped, the buttons' negative margins would pull a second line over the app's name. */
+  .bar__nav button,
+  .bar__nav .ask-button.ask-button {
+    margin: 0;
   }
 
   /* The picture takes at least half the screen, and the foot of the stage sits below it (the requirement). */
