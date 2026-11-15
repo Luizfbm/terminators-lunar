@@ -16,6 +16,7 @@ import { MissPanel } from './phase4/miss/MissPanel'
 import { useRadius, useScatter } from './phase4/miss/useMiss'
 import { WhenToLand } from './phase4/site-windows/WhenToLand'
 import { Battery } from './phase4/battery/Battery'
+import { Reach } from './phase4/reach/Reach'
 
 const HOUR_MS = 3_600_000
 
@@ -155,6 +156,7 @@ export function Answer({
           dark: formatSpan(metrics.lcsp_hours * HOUR_MS),
         })}
       </p>
+      <Reach result={result} cursorMs={cursorMs} />
       <FlatMetrics result={result} />
       <WhenToLand result={result} onWindow={onWindow} />
       <Battery result={result} />
