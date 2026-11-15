@@ -1,0 +1,52 @@
+[project]
+name = "terminators-lunar-backend"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "spiceypy>=6.0",
+    "rasterio>=1.4",
+    "numpy>=2",
+    "httpx>=0.27",
+]
+
+[dependency-groups]
+dev = [
+    "mutmut>=3.8.1",
+    "mypy>=1.13",
+    "pytest>=8.3",
+    "ruff>=0.8",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.mypy]
+strict = true
+exclude = ["^mutants/"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.mutmut]
+source_paths = ["app"]
+# The modules that compute or hold the answer: the engine, the ephemeris, the terrain
+# (horizon.py reads the DEMs and walks the resolution ladder), the year, the feature
+# names and the cache. Left out: catalog.py and constants.py are data, problems.py is
+# text, main.py is routing; schemathesis and the HTTP tests cover those, and mutating
+# a site name or a problem title tells us nothing about the physics.
+only_mutate = [
+    "app/cache.py",
+    "app/dsn.py",
+    "app/engine.py",
+    "app/ephemeris.py",
+    "app/features.py",
+    "app/geometry.py",
+    "app/horizon.py",
+    "app/timeutil.py",
+    "app/visibility.py",
+    "app/year.py",
+]
+also_copy = ["Dockerfile"]

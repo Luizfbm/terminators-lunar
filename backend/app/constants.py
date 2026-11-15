@@ -1,0 +1,18 @@
+"""Shared limits from the contract."""
+
+from datetime import UTC, datetime
+
+ENGINE_VERSION = "0.1.0"
+MOON_RADIUS_M = 1_737_400.0
+MOON_RADIUS_KM = 1737.4
+WINDOW_MIN = datetime(2023, 8, 1, tzinfo=UTC)
+WINDOW_MAX = datetime(2032, 12, 31, 23, 59, 59, tzinfo=UTC)
+MAX_DURATION_HOURS = 1440.0
+DEFAULT_DURATION_HOURS = 708.73
+DEFAULT_OBSERVER_HEIGHT_M = 2.0
+SHORT_SHADOW_MAX_HOURS = 12.0
+CUSTOM_MAX_LATITUDE_DEG = -80.0
+STEP_MINUTES = 15
+AZIMUTH_STEP_DEG = 0.5
+HORIZON_SAMPLES = 720
+PROBLEM_TYPE_BASE = "https://lunar-api.luizfbm.win/problems"

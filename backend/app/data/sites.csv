@@ -1,0 +1,135 @@
+id,name,latitude_deg,longitude_deg,source,source_reference,region_id,has_5m_dem
+MMA01,Mons Malapert MMA01,-85.9425,-0.94365,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMA,False
+MMA_K2023,Mons Malapert MMA_K2023 (Kring et al. 2023),-85.9919,2.0564,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMA,False
+MMA02,Mons Malapert MMA02,-86.0153,3.38206,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMA,False
+MMA03,Mons Malapert MMA03,-85.9577,-3.27827,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMA,False
+MMO01,Mons Mouton MMO01,-85.416,31.8506,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMO,False
+MMO02,Mons Mouton MMO02,-85.481,29.5494,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMO,False
+MMO03,Mons Mouton MMO03,-85.4085,30.4056,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMO,False
+MMO04,Mons Mouton MMO04,-85.4089,28.15,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMO,False
+MMO05,Mons Mouton MMO05,-85.3439,28.5944,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMO,False
+MMO06,Mons Mouton MMO06,-85.2614,30.1862,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMO,False
+NR101,Nobile Rim 1 NR101,-85.295,36.9168,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",NR1,False
+NR102,Nobile Rim 1 NR102,-85.2606,36.8888,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",NR1,False
+NR103,Nobile Rim 1 NR103,-85.5456,37.5572,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",NR1,False
+NR104,Nobile Rim 1 NR104,-85.0173,37.8745,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",NR1,False
+NR105,Nobile Rim 1 NR105,-85.0722,37.555,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",NR1,False
+NR106,Nobile Rim 1 NR106,-85.1557,36.986,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",NR1,False
+NR107,Nobile Rim 1 NR107,-85.1978,37.1774,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",NR1,False
+NR108,Nobile Rim 1 NR108,-85.1027,36.7514,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",NR1,False
+NR109,Nobile Rim 1 NR109,-85.0405,37.4339,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",NR1,False
+NR201,Nobile Rim 2 NR201,-84.0539,56.4813,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",NR2,False
+NR202,Nobile Rim 2 NR202,-84.1553,59.8351,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",NR2,False
+NR203,Nobile Rim 2 NR203,-83.6871,57.0082,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",NR2,False
+NR204,Nobile Rim 2 NR204,-83.7847,57.683,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",NR2,False
+NR205,Nobile Rim 2 NR205,-83.6185,59.0568,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",NR2,False
+NR206,Nobile Rim 2 NR206,-83.7805,59.2824,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",NR2,False
+NR2_K2023,Nobile Rim 2 NR2_K2023 (Kring et al. 2023),-84.0737,59.1974,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",NR2,False
+NR207,Nobile Rim 2 NR207,-83.9181,59.3265,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",NR2,False
+AR01,Amundsen Rim AR01,-84.4672,66.97,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",AR,False
+AR02,Amundsen Rim AR02,-84.4384,67.9722,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",AR,False
+AR03,Amundsen Rim AR03,-84.4131,69.2908,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",AR,False
+AR04,Amundsen Rim AR04,-84.3587,68.8507,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",AR,False
+AR05,Amundsen Rim AR05,-84.2292,69.8771,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",AR,False
+AR06,Amundsen Rim AR06,-84.1965,69.1606,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",AR,False
+AR07,Amundsen Rim AR07,-84.1037,69.6895,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",AR,False
+AR08,Amundsen Rim AR08,-84.0198,69.9101,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",AR,False
+FRA01,Faustini Rim A FRA01,-87.6425,97.2617,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",FRA,False
+FRA02,Faustini Rim A FRA02,-87.7492,95.0842,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",FRA,False
+FRA03,Faustini Rim A FRA03,-87.9631,94.3707,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",FRA,False
+PNS01,Peak near Shackleton PNS01,-88.9691,134.106,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",PNS,True
+PNS02,Peak near Shackleton PNS02,-89.0607,128.442,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",PNS,True
+007,Peak near Shackleton (NASA site 007),-88.8113,123.554,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",PNS,True
+PNS03,Peak near Shackleton PNS03,-88.8518,126.992,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",PNS,True
+PNS04,Peak near Shackleton PNS04,-88.9092,120.538,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",PNS,True
+CR01,Connecting Ridge CR01,-89.5273,-154.592,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",CR,True
+CR02,Connecting Ridge CR02,-89.5361,-149.937,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",CR,True
+CR03,Connecting Ridge CR03,-89.4142,-114.095,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",CR,True
+CR04,Connecting Ridge CR04,-89.3323,-118.506,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",CR,True
+CRE01,Connecting Ridge Extension CRE01,-89.0109,-94.6104,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",CRE,False
+CRE02,Connecting Ridge Extension CRE02,-89.2964,-114.058,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",CRE,False
+dGR201,de Gerlache Rim 2 dGR201,-88.3891,-68.8647,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",dGR2,False
+dGR101,de Gerlache Rim 1 dGR101,-88.5134,-68.0146,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",dGR1,True
+011,de Gerlache Rim 1 (NASA site 011),-88.6744,-68.228,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",dGR1,True
+dGR102,de Gerlache Rim 1 dGR102,-88.9489,-74.2119,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",dGR1,True
+dGR103,de Gerlache Rim 1 dGR103,-88.4446,-62.4905,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",dGR1,True
+dGR104,de Gerlache Rim 1 dGR104,-88.429,-64.8767,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",dGR1,True
+dGR202,de Gerlache Rim 2 dGR202,-88.0371,-75.0441,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",dGR2,False
+dGR203,de Gerlache Rim 2 dGR203,-88.1408,-71.6955,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",dGR2,False
+dGR204,de Gerlache Rim 2 dGR204,-88.1377,-74.333,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",dGR2,False
+dGKM01,de Gerlache-Kocher Massif dGKM01,-85.5196,-115.383,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",dGKM,False
+dGKM_K2023,de Gerlache-Kocher Massif dGKM_K2023 (Kring et al. 2023),-85.7259,-116.813,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",dGKM,False
+dGKM02,de Gerlache-Kocher Massif dGKM02,-85.7775,-116.502,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",dGKM,False
+dGKM03,de Gerlache-Kocher Massif dGKM03,-85.8574,-112.686,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",dGKM,False
+HW01,Haworth HW01,-86.7682,-20.514,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",HW,False
+HW02,Haworth HW02,-86.8076,-21.7194,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",HW,False
+HW03,Haworth HW03,-86.8596,-19.8934,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",HW,False
+HW04,Haworth HW04,-86.568,-21.4727,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",HW,False
+HW05,Haworth HW05,-86.6616,-30.5483,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",HW,False
+HW06,Haworth HW06,-87.0499,-24.2402,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",HW,False
+HW_K2023,Haworth HW_K2023 (Kring et al. 2023),-86.9895,-24.2545,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",HW,False
+HW07,Haworth HW07,-86.9324,-23.0203,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",HW,False
+HW08,Haworth HW08,-86.924,-25.8094,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",HW,False
+CRE03,Connecting Ridge Extension CRE03,-88.788,-107.304,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",CRE,False
+PNS05,Peak near Shackleton PNS05,-88.6973,131.082,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",PNS,True
+CRE04,Connecting Ridge Extension CRE04,-88.6738,-109.194,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",CRE,False
+CR05,Connecting Ridge CR05,-89.4207,-149.472,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",CR,True
+CR06,Connecting Ridge CR06,-89.4441,-137.291,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",CR,True
+CR07,Connecting Ridge CR07,-89.4913,-138.352,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",CR,True
+001,Connecting Ridge (NASA site 001),-89.4661,-136.949,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",CR,True
+PCB01,Peak near Cabeus B PCB01,-83.7633,-69.9829,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",PCB,False
+PCB02,Peak near Cabeus B PCB02,-83.6317,-67.6339,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",PCB,False
+PCB03,Peak near Cabeus B PCB03,-83.563,-68.2009,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",PCB,False
+PCB04,Peak near Cabeus B PCB04,-83.3691,-67.6646,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",PCB,False
+PCB05,Peak near Cabeus B PCB05,-83.5388,-71.9419,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",PCB,False
+SP01,Slater Plain SP01,-87.4783,124.521,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",SP,False
+SP02,Slater Plain SP02,-87.3818,126.513,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",SP,False
+SP03,Slater Plain SP03,-87.2825,123.748,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",SP,False
+SP04,Slater Plain SP04,-87.1925,123.034,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",SP,False
+SP05,Slater Plain SP05,-87.1818,119.703,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",SP,False
+SP06,Slater Plain SP06,-87.073,126.131,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",SP,False
+SP07,Slater Plain SP07,-87.1306,127.857,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",SP,False
+SP08,Slater Plain SP08,-87.3275,130.054,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",SP,False
+SP09,Slater Plain SP09,-87.1837,133.344,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",SP,False
+SP10,Slater Plain SP10,-87.0319,130.702,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",SP,False
+SP11,Slater Plain SP11,-86.9504,126.675,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",SP,False
+dGR2_K2023,de Gerlache Rim 2 dGR2_K2023 (Kring et al. 2023),-88.45,-67.8591,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",dGR2,True
+AR09,Amundsen Rim AR09,-84.0718,67.8044,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",AR,False
+AR10,Amundsen Rim AR10,-84.1924,67.281,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",AR,False
+CR08,Connecting Ridge CR08,-89.6319,-125.14,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",CR,True
+CRE05,Connecting Ridge Extension CRE05,-88.7305,-108.626,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",CRE,False
+CRE06,Connecting Ridge Extension CRE06,-89.1168,-102.612,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",CRE,False
+dGKM04,de Gerlache-Kocher Massif dGKM04,-85.8651,-114.443,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",dGKM,False
+dGKM05,de Gerlache-Kocher Massif dGKM05,-85.7072,-113.861,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",dGKM,False
+dGKM06,de Gerlache-Kocher Massif dGKM06,-85.4633,-117.594,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",dGKM,False
+dGR105,de Gerlache Rim 1 dGR105,-88.6208,-57.1839,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",dGR1,True
+dGR205,de Gerlache Rim 2 dGR205,-88.0646,-62.0736,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",dGR2,False
+dGR206,de Gerlache Rim 2 dGR206,-87.9467,-62.0981,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",dGR2,False
+FRA04,Faustini Rim A FRA04,-88.0748,93.5487,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",FRA,False
+FRA05,Faustini Rim A FRA05,-88.0976,89.7822,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",FRA,False
+FRA06,Faustini Rim A FRA06,-88.0582,86.0952,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",FRA,False
+FRA07,Faustini Rim A FRA07,-87.912,82.0721,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",FRA,False
+FRA08,Faustini Rim A FRA08,-87.9018,88.0518,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",FRA,False
+HW09,Haworth HW09,-86.623,-26.0746,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",HW,False
+HW10,Haworth HW10,-86.5272,-14.8763,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",HW,False
+MMA04,Mons Malapert MMA04,-86.3098,-0.459283,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMA,False
+MMO07,Mons Mouton MMO07,-85.1953,32.9287,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMO,False
+MMO08,Mons Mouton MMO08,-85.513,35.7041,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMO,False
+MMO09,Mons Mouton MMO09,-85.4665,33.0398,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMO,False
+NR208,Nobile Rim 2 NR208,-83.9064,57.8114,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",NR2,False
+MMO10,Mons Mouton MMO10,-85.4608,31.4902,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMO,False
+MMP01,Mons Mouton Plateau MMP01,-85.1114,26.7102,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMP,False
+MMP02,Mons Mouton Plateau MMP02,-84.8055,24.8871,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMP,False
+MMP03,Mons Mouton Plateau MMP03,-84.9683,31.153,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMP,False
+MMP04,Mons Mouton Plateau MMP04,-84.6863,20.8866,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMP,False
+MMP05,Mons Mouton Plateau MMP05,-84.4159,28.2118,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMP,False
+MMP06,Mons Mouton Plateau MMP06,-84.5961,30.4525,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMP,False
+MMP07,Mons Mouton Plateau MMP07,-84.6834,37.3387,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMP,False
+MMP08,Mons Mouton Plateau MMP08,-84.2114,40.81,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMP,False
+MMP09,Mons Mouton Plateau MMP09,-83.6844,32.8848,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMP,False
+MMP10,Mons Mouton Plateau MMP10,-84.1383,25.6422,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMP,False
+MMP11,Mons Mouton Plateau MMP11,-84.269,36.6724,wueller2026,"Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",MMP,False
+IM2,IM-2 Athena landing point,-84.7906,29.1957,clps,"LROC, Athena's final resting place, lroc.im-ldi.com/images/1408",,False
+APOLLO11,Apollo 11 (Tranquility Base),0.67416,23.47314,apollo,"NSSDC Lunar Landing Sites, Apollo 11 Lunar Module, ME/DE421; Wagner et al. 2017, Icarus 283, 92-103",,False
+BG1,Blue Ghost 1 landing point (Mare Crisium),18.5621232969557,61.8099892551118,clps,"NAIF CLPS SPICE archive, clps_to19d_bgm1_v01.tf, BGM1_LANDING_SITE, MOON_ME",,False
+CH3,Chandrayaan-3 (Statio Shiv Shakti),-69.373,32.319,isro,"Statio Shiv Shakti (IAU-approved name); coordinate from Wikipedia, Chandrayaan-3, another source gives -69.3676, 32.3481 (~0.4 km)",,False

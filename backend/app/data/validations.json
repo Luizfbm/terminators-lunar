@@ -1,0 +1,738 @@
+[
+  {
+    "id": "horizons-sun-azel",
+    "title": {
+      "en": "Sun azimuth and elevation vs JPL Horizons",
+      "pt": "Azimute e elevação do Sol contra o JPL Horizons"
+    },
+    "reference": "JPL Horizons, surface observer (coord@301, 2 m, airless) at 6 Sites south of 80°S, 300 instants 2025-2032",
+    "tolerance": {
+      "en": "≤ 0.02°",
+      "pt": "≤ 0,02°"
+    },
+    "result": {
+      "en": "max error 0.000001° over 300 instants (angular separation 0.000001°)",
+      "pt": "erro máximo de 0,000001° em 300 instantes (separação angular 0,000001°)"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Sky position only, run without terrain: relief, DEM error and the Sun's disc are not part of this check.",
+      "pt": "Só posição no céu, rodada sem terreno: relevo, erro do DEM e o disco do Sol não entram nesta checagem."
+    },
+    "script_path": "validation/test_horizons.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "horizons-earth-azel",
+    "title": {
+      "en": "Earth azimuth and elevation vs JPL Horizons",
+      "pt": "Azimute e elevação da Terra contra o JPL Horizons"
+    },
+    "reference": "JPL Horizons, surface observer (coord@301, 2 m, airless) at 6 Sites south of 80°S, 300 instants 2025-2032",
+    "tolerance": {
+      "en": "≤ 0.02°",
+      "pt": "≤ 0,02°"
+    },
+    "result": {
+      "en": "max error 0.000312° over 300 instants (angular separation 0.000312°)",
+      "pt": "erro máximo de 0,000312° em 300 instantes (separação angular 0,000312°)"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Sky position only, run without terrain: relief, DEM error and the Sun's disc are not part of this check.",
+      "pt": "Só posição no céu, rodada sem terreno: relevo, erro do DEM e o disco do Sol não entram nesta checagem."
+    },
+    "script_path": "validation/test_horizons.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "larissa-athena-horizon",
+    "title": {
+      "en": "Horizon mask at IM-2 Athena, against Larissa's independent silhouette",
+      "pt": "Máscara de horizonte no IM-2 Athena, contra a silhueta independente da Larissa"
+    },
+    "reference": "An independent study by Larissa (the independent work, not merged): her terrain-only silhouette at the IM-2 Athena point (-84.7906°, 29.1957°, 2 m), her own code over LOLA LDEM_80S_20M + LDEM_75S_30M (GDR, 2017), data/larissa_athena_horizon.csv (commit 5766403, SHA-256 d9cd6761…); ours over LDEM_80S_*_ADJ (Barker et al. 2023)",
+    "tolerance": {
+      "en": "per azimuth |ours − hers| ≤ atan(1 m / d) + 0.01°, d her blocking distance; at least 99% of our 720 azimuths within it and RMS ≤ 0.03°. 1 m: the adjusted LOLA maps' 0.3–0.5 m RMS (Barker et al. 2021) and the unadjusted map's ~0.5 m radial orbit error (Mazarico et al. 2018), in quadrature. Fixed before evaluating the comparison",
+      "pt": "por azimute |nosso − dela| ≤ atan(1 m / d) + 0,01°, d a distância de bloqueio dela; pelo menos 99% dos nossos 720 azimutes dentro disso e RMS ≤ 0,03°. 1 m: o RMS de 0,3–0,5 m dos mapas LOLA ajustados (Barker et al. 2021) e o erro radial de órbita de ~0,5 m do mapa não ajustado (Mazarico et al. 2018), em quadratura. Fixada antes de avaliar a comparação"
+    },
+    "result": {
+      "en": "99.2% of 720 azimuths within; ours − hers: mean -0.0022°, RMS 0.0197°, P95 0.051°, largest +0.090° at 190° (her Occluder 0.55 km away)",
+      "pt": "99,2% de 720 azimutes dentro; nosso − dela: média -0,0022°, RMS 0,0197°, P95 0,051°, maior +0,090° em 190° (Occluder dela a 0,55 km)"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Both sides are LOLA altimetry, so errors common to LOLA don't show. Athena tipped over in a crater about 20 m across, smaller than either DEM. Her rays start 40 m out, so an Occluder closer than that would show on our side only.",
+      "pt": "Os dois lados são altimetria do LOLA, então erros comuns ao LOLA não aparecem. O Athena tombou numa cratera de uns 20 m, menor que os dois DEMs. Os raios dela começam a 40 m, então um Occluder mais perto que isso só apareceria do nosso lado."
+    },
+    "script_path": "validation/test_athena.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "negative-control-larissa-horizon-rotated",
+    "title": {
+      "en": "Negative control: Larissa's silhouette turned by 1°",
+      "pt": "Controle negativo: a silhueta da Larissa girada 1°"
+    },
+    "reference": "The Athena horizon check with her silhouette rotated by 1° in azimuth",
+    "tolerance": {
+      "en": "must break both conditions: under 99% of azimuths within and RMS above 0.03°",
+      "pt": "precisa quebrar as duas condições: menos de 99% dos azimutes dentro e RMS acima de 0,03°"
+    },
+    "result": {
+      "en": "broke both conditions (37.6% within, RMS 0.079°)",
+      "pt": "quebrou as duas condições (37,6% dentro, RMS 0,079°)"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Shows the check can fail; says nothing about the engine.",
+      "pt": "Mostra que a checagem pode falhar; não diz nada sobre o motor."
+    },
+    "script_path": "validation/test_athena.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "landing-im2-athena",
+    "title": {
+      "en": "IM-2 Athena landing point",
+      "pt": "Ponto de pouso do IM-2 Athena"
+    },
+    "reference": "LROC NAC M1495922531LE and M1496181900LE: incidence angle and image centre from the PDS index of volume LROLRC_0062C, mid-exposure from the image labels (NASA/GSFC/Arizona State University); LROC 1408 resting point (-84.7906°, 29.1957°); NASA 25-025: landed ~17:30 UTC 06/03/2025, transmission ended ~06:15 UTC 07/03/2025",
+    "tolerance": {
+      "en": "incidence = 90° − our Sun elevation at the published image centre, within 0.015° at both images (both published to 0.01°). The Earth over the transmission is reported as a fact, not judged",
+      "pt": "incidência = 90° − nossa elevação do Sol no centro publicado da imagem, dentro de 0,015° nas duas imagens (as duas publicadas com 0,01°). A Terra durante a transmissão é relatada como fato, não julgada"
+    },
+    "result": {
+      "en": "incidence, ours − LROC: M1495922531LE +0.0040°, M1496181900LE -0.0000°. Fact, not judged: over the transmission our mask keeps the Earth's centre at least 12.3° above the horizon (2025-03-06T17:30:00Z). Shown for information: Sun fraction at the resting point 1.00 and 1.00 at the two images; the photos show the site lit.",
+      "pt": "incidência, nossa − LROC: M1495922531LE +0,0040°, M1496181900LE -0,0000°. Fato, não julgado: durante a transmissão nossa máscara mantém o centro da Terra pelo menos 12,3° acima do horizonte (2025-03-06T17:30:00Z). Só como informação: fração do Sol no ponto final 1,00 e 1,00 nas duas imagens; as fotos mostram o local iluminado."
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "The LROC part checks the ephemeris, not the terrain. Athena tipped over inside a crater about 20 m across, smaller than our 20 m DEM resolves, with its panels facing away from the Sun; the end of the mission was not a terrain Sunset, so there is no published time to compare.",
+      "pt": "A parte da LROC confere a efeméride, não o relevo. O Athena tombou dentro de uma cratera de uns 20 m, menor do que o DEM de 20 m resolve, com os painéis de costas para o Sol; o fim da missão não foi um Sunset do relevo, então não há horário publicado para comparar."
+    },
+    "script_path": "validation/test_athena.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "negative-control-lroc-article-times",
+    "title": {
+      "en": "Negative control: the LROC images at the times their articles give",
+      "pt": "Controle negativo: as imagens da LROC nos horários dos artigos"
+    },
+    "reference": "The LROC incidence check at the times written in LROC articles 1408 (16:54:21 07/03/2025) and 1409 (14:52 UTC 10/03/2025), which the image labels do not match",
+    "tolerance": {
+      "en": "must exceed 0.015° at both images",
+      "pt": "precisa passar de 0,015° nas duas imagens"
+    },
+    "result": {
+      "en": "broke the check at both images (M1495922531LE -0.881°, M1496181900LE -0.358°)",
+      "pt": "quebrou nas duas imagens (M1495922531LE -0,881°, M1496181900LE -0,358°)"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Shows the check is sensitive to the time; says nothing about the engine.",
+      "pt": "Mostra que a checagem é sensível ao horário; não diz nada sobre o motor."
+    },
+    "script_path": "validation/test_athena.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "eclipse-2025-local-contacts",
+    "title": {
+      "en": "The total lunar eclipse of 14/03/2025, seen from the Moon: when the Earth covers the Sun",
+      "pt": "O eclipse lunar total de 14/03/2025, visto da Lua: quando a Terra cobre o Sol"
+    },
+    "reference": "SPICE gfoclt (Earth and Sun as pck00011 ellipsoids, LT) from the same point, -89.4°, 90°, 2 m, on our own kernels; NASA's whole-Moon contacts, 'Eclipse Predictions by Fred Espenak, NASA's GSFC' (LE2025Mar14T.pdf, Danjon's rule), as intervals; the gfoclt call follows Larissa's independent prototype (the independent work)",
+    "tolerance": {
+      "en": "each of the four contacts (Sun fraction leaves 1, reaches 0, leaves 0, returns to 1) within 30 s of gfoclt: our Earth is a sphere of the equatorial radius, gfoclt's an ellipsoid 21.4 km shorter at the poles, ~20 s at ~0.55°/h, plus the bisection. And inside NASA's contacts: into the umbra in [U1, U2], out in [U3, U4], all in [P1, P4]",
+      "pt": "cada um dos quatro contatos (a fração do Sol sai de 1, chega a 0, sai de 0, volta a 1) a até 30 s do gfoclt: nossa Terra é uma esfera do raio equatorial, a do gfoclt um elipsoide 21,4 km mais curto nos polos, ~20 s a ~0,55°/h, mais a bisseção. E dentro dos contatos da NASA: entra na umbra em [U1, U2], sai em [U3, U4], tudo em [P1, P4]"
+    },
+    "result": {
+      "en": "at -89.4°, 90°: ours − gfoclt -6.9 s, -8.0 s, +3.6 s, +4.4 s (contacts 04:22:39.6, 05:32:09.3, 08:17:50.8, 09:27:24.8 UTC); inside NASA's intervals. At Athena, for information: ours − gfoclt -6.8 s, -8.0 s, +3.6 s, +4.4 s.",
+      "pt": "em -89,4°, 90°: nosso − gfoclt -6,9 s, -8,0 s, +3,6 s, +4,4 s (contatos 04:22:39,6, 05:32:09,3, 08:17:50,8, 09:27:24,8 UTC); dentro dos intervalos da NASA. No Athena, só como informação: nosso − gfoclt -6,8 s, -8,0 s, +3,6 s, +4,4 s."
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "No refraction by the Earth's atmosphere: the Sun is gone when the solid Earth covers it, while the real umbra is enlarged by the atmosphere (NASA's Danjon rule). NASA's contacts are for the whole Moon, so they only bound ours. Judged at one fixture point; Athena's contacts are shown for information.",
+      "pt": "Sem refração pela atmosfera da Terra: o Sol some quando a Terra sólida o cobre, enquanto a umbra real é aumentada pela atmosfera (regra de Danjon da NASA). Os contatos da NASA são da Lua inteira, então só limitam os nossos. Julgado num ponto de teste; os contatos do Athena aparecem só como informação."
+    },
+    "script_path": "validation/test_eclipse.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "negative-control-eclipse-earth-radius",
+    "title": {
+      "en": "Negative control: the eclipse with the Earth 1% larger",
+      "pt": "Controle negativo: o eclipse com a Terra 1% maior"
+    },
+    "reference": "The eclipse contact check with our engine's Earth radius made 1% larger",
+    "tolerance": {
+      "en": "must exceed 30 s on some contact",
+      "pt": "precisa passar de 30 s em algum contato"
+    },
+    "result": {
+      "en": "broke the check: ours − gfoclt -77.8 s, -79.3 s, +74.8 s, +75.4 s",
+      "pt": "quebrou a checagem: nosso − gfoclt -77,8 s, -79,3 s, +74,8 s, +75,4 s"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Shows the check sees a 64 km error in the Earth's size; says nothing about the engine.",
+      "pt": "Mostra que a checagem vê um erro de 64 km no tamanho da Terra; não diz nada sobre o motor."
+    },
+    "script_path": "validation/test_eclipse.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "horizons-flat-sunset",
+    "title": {
+      "en": "Flat horizon: the Sun's upper limb at each Sunset vs JPL Horizons",
+      "pt": "Horizonte plano: a borda de cima do Sol em cada pôr do Sol contra o JPL Horizons"
+    },
+    "reference": "JPL Horizons, Sun from a surface observer (coord@301 on the 1737.4 km sphere, airless) at the Observer height: elevation plus half the angular diameter, at each flat Sunset of 5 Queries (Site 001 and 4 custom Sites from 84.5°S to 89.9°S, 0, 2 and 10 m), 2025-2032",
+    "tolerance": {
+      "en": "≤ 0.02° from the dip",
+      "pt": "≤ 0,02° do mergulho do horizonte"
+    },
+    "result": {
+      "en": "max error 0.00014° over 26 Sunsets",
+      "pt": "erro máximo de 0,00014° em 26 pores do Sol"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Bare sphere only: it checks the Sunset definition and the dip, nothing about terrain.",
+      "pt": "Só a esfera nua: confere a definição de pôr do Sol e o mergulho, nada sobre o relevo."
+    },
+    "script_path": "validation/test_flat_horizon.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "negative-control-flat-sunset-centre",
+    "title": {
+      "en": "Negative control: the Sun's centre at each flat Sunset",
+      "pt": "Controle negativo: o centro do Sol em cada pôr do Sol no horizonte plano"
+    },
+    "reference": "The flat Sunset check with the Sun's centre in place of its upper limb",
+    "tolerance": {
+      "en": "must exceed 0.02°",
+      "pt": "tem que passar de 0,02°"
+    },
+    "result": {
+      "en": "failed as expected (0.262°)",
+      "pt": "falhou como esperado (0,262°)"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Only shows the check tells the edge of the Sun from its centre.",
+      "pt": "Só mostra que a checagem distingue a borda do Sol do seu centro."
+    },
+    "script_path": "validation/test_flat_horizon.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "negative-control-time-shift",
+    "title": {
+      "en": "Negative control: 10 min shift",
+      "pt": "Controle negativo: deslocamento de 10 min"
+    },
+    "reference": "The Horizons Sun check with the backend asked 10 minutes later",
+    "tolerance": {
+      "en": "must exceed 0.02°",
+      "pt": "tem que passar de 0,02°"
+    },
+    "result": {
+      "en": "failed as expected (0.085°)",
+      "pt": "falhou como esperado (0,085°)"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Only shows the check is sensitive to time.",
+      "pt": "Só mostra que a checagem é sensível ao tempo."
+    },
+    "script_path": "validation/test_horizons.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "negative-control-longitude-shift",
+    "title": {
+      "en": "Negative control: longitude shift",
+      "pt": "Controle negativo: deslocamento de longitude"
+    },
+    "reference": "The Horizons Sun check with the Site moved 0.01° and 0.03° in longitude",
+    "tolerance": {
+      "en": "0.01° detected (≥ 0.009°), 0.03° exceeds 0.02°",
+      "pt": "0,01° detectado (≥ 0,009°), 0,03° passa de 0,02°"
+    },
+    "result": {
+      "en": "0.01° shift moved the Sun 0.0100°, 0.03° shift 0.0300° (as expected)",
+      "pt": "deslocamento de 0,01° moveu o Sol 0,0100°, de 0,03° moveu 0,0300° (como esperado)"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Only shows the check is sensitive to position.",
+      "pt": "Só mostra que a checagem é sensível à posição."
+    },
+    "script_path": "validation/test_horizons.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "horizons-dsn-elevation",
+    "title": {
+      "en": "Moon elevation at each DSN pass edge vs JPL Horizons",
+      "pt": "Elevação da Lua em cada borda de passagem da DSN contra o JPL Horizons"
+    },
+    "reference": "JPL Horizons, Moon (301) from DSS-14, DSS-43 and DSS-63 (coord@399 at the geodetic coordinates of DSN 810-005 module 301, airless), every minute around each pass edge in ten 30 h Windows 2023-2032. Minimum elevation 6° from DSN 810-005, module 302 Rev. E (1 July 2024), Table 1, page 8 (elevation motion limits of the 70-m antennas, 6° to 89.5°)",
+    "tolerance": {
+      "en": "≤ 0.05° from 6°",
+      "pt": "≤ 0,05° de 6°"
+    },
+    "result": {
+      "en": "max error 0.002126° from 6° over 74 pass edges",
+      "pt": "erro máximo de 0,002126° de 6° em 74 bordas de passagem"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Geometry only, with the Moon's centre for the Site: no antenna schedule, no link budget, no terrain around the stations, no refraction, only the three 70 m antennas.",
+      "pt": "Só geometria, com o centro da Lua no lugar do Site: sem escala das antenas, sem orçamento de enlace, sem relevo em volta das estações, sem refração, só as três antenas de 70 m."
+    },
+    "script_path": "validation/test_horizons_dsn.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "horizons-dsn-pass-edges",
+    "title": {
+      "en": "DSN pass start and end vs JPL Horizons' crossing of 6°",
+      "pt": "Início e fim das passagens da DSN contra o cruzamento de 6° do JPL Horizons"
+    },
+    "reference": "JPL Horizons, Moon (301) from DSS-14, DSS-43 and DSS-63 (coord@399 at the geodetic coordinates of DSN 810-005 module 301, airless), every minute around each pass edge in ten 30 h Windows 2023-2032. Minimum elevation 6° from DSN 810-005, module 302 Rev. E (1 July 2024), Table 1, page 8 (elevation motion limits of the 70-m antennas, 6° to 89.5°)",
+    "tolerance": {
+      "en": "≤ 2 min",
+      "pt": "≤ 2 min"
+    },
+    "result": {
+      "en": "max gap 0.8 s over 74 pass edges",
+      "pt": "diferença máxima de 0,8 s em 74 bordas de passagem"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Geometry only, with the Moon's centre for the Site: no antenna schedule, no link budget, no terrain around the stations, no refraction, only the three 70 m antennas.",
+      "pt": "Só geometria, com o centro da Lua no lugar do Site: sem escala das antenas, sem orçamento de enlace, sem relevo em volta das estações, sem refração, só as três antenas de 70 m."
+    },
+    "script_path": "validation/test_horizons_dsn.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "negative-control-dsn-edges-shifted",
+    "title": {
+      "en": "Negative control: DSN pass edges 10 minutes late",
+      "pt": "Controle negativo: bordas das passagens da DSN 10 minutos atrasadas"
+    },
+    "reference": "The elevation check with every edge moved 10 minutes later",
+    "tolerance": {
+      "en": "must exceed 0.05°",
+      "pt": "tem que passar de 0,05°"
+    },
+    "result": {
+      "en": "smallest error 1.283406° over 74 edges moved 10 min",
+      "pt": "menor erro de 1,283406° em 74 bordas deslocadas 10 min"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Only shows the check is sensitive to time.",
+      "pt": "Só mostra que a checagem é sensível ao tempo."
+    },
+    "script_path": "validation/test_horizons_dsn.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "eduardo-panel-incidence",
+    "title": {
+      "en": "Panel pointing vs Eduardo's panel-geometry model",
+      "pt": "Apontamento dos painéis contra o modelo de geometria de painel do Eduardo"
+    },
+    "reference": "Eduardo's panel-geometry model, calcular_potencia_painel (independent reference, commit 170350d): 3,000 Sun directions, elevations −2° to 10°, azimuths all round, flat, upright fixed (0°, 90°, 213.5°) and upright tracking; and the Sun's direction at Site 001 at 8 instants, through the API",
+    "tolerance": {
+      "en": "≤ 1e-9 on the incidence factor",
+      "pt": "≤ 1e-9 no fator de incidência"
+    },
+    "result": {
+      "en": "max error 5.0e-16 over 2,520 Sun directions and 8 instants through the API",
+      "pt": "erro máximo de 5,0e-16 em 2.520 direções do Sol e 8 instantes pela API"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Only the angle between the panels and the Sun's centre. Upright panels with the Sun's centre at or below 0° are left out: his function gates on the horizon of the bare sphere and ours on the terrain, through the Sun fraction, and at Connecting Ridge 001 most sunlit hours of some months have the Sun's centre below 0°. No thermal model, no tracking error, no shadow of the lander on its own panels.",
+      "pt": "Só o ângulo entre os painéis e o centro do Sol. Painéis em pé com o centro do Sol a 0° ou abaixo ficam de fora: a função dele corta no horizonte da esfera lisa e a nossa no terreno, pela fração do Sol, e na Connecting Ridge 001 a maior parte das horas de Sol de alguns meses tem o centro do Sol abaixo de 0°. Sem modelo térmico, sem erro de rastreamento, sem sombra do módulo sobre os próprios painéis."
+    },
+    "script_path": "validation/test_panel_incidence.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "negative-control-panel-azimuth-turned",
+    "title": {
+      "en": "Negative control: the panels turned 180°",
+      "pt": "Controle negativo: os painéis virados 180°"
+    },
+    "reference": "The same table, with our upright panels facing the opposite way",
+    "tolerance": {
+      "en": "must exceed 1e-9",
+      "pt": "tem que passar de 1e-9"
+    },
+    "result": {
+      "en": "failed as expected (1.00)",
+      "pt": "falhou como esperado (1,00)"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Only shows the table can tell which way the panels face.",
+      "pt": "Só mostra que a tabela distingue para que lado os painéis olham."
+    },
+    "script_path": "validation/test_panel_incidence.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "pgda-sun-visibility",
+    "title": {
+      "en": "Share of time with the Sun up, against NASA's 18.6-year map",
+      "pt": "Parte do tempo com Sol, contra o mapa de 18,6 anos da NASA"
+    },
+    "reference": "PGDA product 69 (Mazarico et al. 2011, Icarus 211, 1066-1081), AVGVISIB_85S_060M_201608.TIF, 60 m, hourly over 18.6 years, at points drawn by a seeded rule stratified by the map's own value",
+    "tolerance": {
+      "en": "RMSE ≤ 5 percentage points and mean difference ≤ 2 points",
+      "pt": "RMSE ≤ 5 pontos percentuais e diferença média ≤ 2 pontos"
+    },
+    "result": {
+      "en": "RMSE 1.00 points, mean difference -0.44 points over 86 points (largest -3.01); a second cycle moves the mean by -0.14 points; mean Sun fraction, not judged, is off by -1.78 on average. Bright ridges, shown for information (the map cannot place a value inside a 60 m pixel there): RMSE 25.40, mean difference -22.36 points over 18 points",
+      "pt": "RMSE de 1,00 pontos, diferença média de -0,44 pontos em 86 pontos (maior -3,01); um segundo ciclo muda a média em -0,14 pontos; a fração média do Sol, não julgada, fica em média -1,78 pontos fora. Cristas claras, só como informação (ali o mapa não consegue situar um valor dentro de um pixel de 60 m): RMSE de 25,40, diferença média de -22,36 pontos em 18 pontos"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Only where the map is smooth (no neighbouring pixel more than 5 points away), so no Sun value from 0.6 up: the map has no smooth pixel that bright. At the surface (0 m). Over one nodal cycle from 2023; the map's own cycle is not published. Bright ridges (Sun map at 0.6 or more, 18 points, no smoothness filter) are shown for information and never judged: the map cannot place a value inside a 60 m pixel there.",
+      "pt": "Só onde o mapa é suave (nenhum pixel vizinho a mais de 5 pontos), então nenhum valor de Sol a partir de 0,6: o mapa não tem pixel suave tão claro. Na superfície (0 m). Num ciclo nodal a partir de 2023; o ciclo do próprio mapa não é publicado. Cristas claras (mapa do Sol em 0,6 ou mais, 18 pontos, sem filtro de suavidade) aparecem só como informação e nunca são julgadas: ali o mapa não consegue situar um valor dentro de um pixel de 60 m."
+    },
+    "script_path": "validation/test_pgda.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "pgda-earth-visibility",
+    "title": {
+      "en": "Share of time with the Earth visible, against NASA's 18.6-year map",
+      "pt": "Parte do tempo com a Terra visível, contra o mapa de 18,6 anos da NASA"
+    },
+    "reference": "PGDA product 69 (Mazarico et al. 2011, Icarus 211, 1066-1081), AVGVISIB_85S_060M_201608_EARTH.TIF, 60 m, hourly over 18.6 years, at points drawn by a seeded rule stratified by the map's own value",
+    "tolerance": {
+      "en": "RMSE ≤ 5 percentage points and mean difference ≤ 2 points",
+      "pt": "RMSE ≤ 5 pontos percentuais e diferença média ≤ 2 pontos"
+    },
+    "result": {
+      "en": "RMSE 3.01 points, mean difference -0.53 points over 86 points (largest -19.11); a second cycle moves the mean by -0.10 points; by the Earth's centre, as the app counts it, the mean is -5.72 points",
+      "pt": "RMSE de 3,01 pontos, diferença média de -0,53 pontos em 86 pontos (maior -19,11); um segundo ciclo muda a média em -0,10 pontos; pelo centro da Terra, como o app conta, a média fica em -5,72 pontos"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Only where the map is smooth (no neighbouring pixel more than 5 points away), so no Sun value from 0.6 up: the map has no smooth pixel that bright. At the surface (0 m). Over one nodal cycle from 2023; the map's own cycle is not published. Bright ridges (Sun map at 0.6 or more, 18 points, no smoothness filter) are shown for information and never judged: the map cannot place a value inside a 60 m pixel there.",
+      "pt": "Só onde o mapa é suave (nenhum pixel vizinho a mais de 5 pontos), então nenhum valor de Sol a partir de 0,6: o mapa não tem pixel suave tão claro. Na superfície (0 m). Num ciclo nodal a partir de 2023; o ciclo do próprio mapa não é publicado. Cristas claras (mapa do Sol em 0,6 ou mais, 18 pontos, sem filtro de suavidade) aparecem só como informação e nunca são julgadas: ali o mapa não consegue situar um valor dentro de um pixel de 60 m."
+    },
+    "script_path": "validation/test_pgda.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "negative-control-pgda-longitude",
+    "title": {
+      "en": "Negative control: the same points at longitude + 180°",
+      "pt": "Controle negativo: os mesmos pontos na longitude + 180°"
+    },
+    "reference": "The PGDA Sun and Earth checks with the engine run at each point's longitude + 180°",
+    "tolerance": {
+      "en": "must break both checks (RMSE above 5 points)",
+      "pt": "precisa quebrar as duas checagens (RMSE acima de 5 pontos)"
+    },
+    "result": {
+      "en": "broke both checks (Sun RMSE 22.45, Earth RMSE 47.35 points)",
+      "pt": "quebrou as duas checagens (RMSE do Sol 22,45, RMSE da Terra 47,35 pontos)"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Shows the check can fail; says nothing about the engine.",
+      "pt": "Mostra que a checagem pode falhar; não diz nada sobre o motor."
+    },
+    "script_path": "validation/test_pgda.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "psr-synthetic-patch",
+    "title": {
+      "en": "Nearest permanent shadow on a known map",
+      "pt": "Sombra permanente mais próxima num mapa conhecido"
+    },
+    "reference": "One 60 m shadowed cell at 5 distances (333 m to 31 km) and bearings, placed by spherical trigonometry",
+    "tolerance": {
+      "en": "distance within one cell (60 m); azimuth within the angle one cell subtends there",
+      "pt": "distância dentro de uma célula (60 m); azimute dentro do ângulo que uma célula ocupa ali"
+    },
+    "result": {
+      "en": "largest distance error 16.7 m; largest azimuth error 0.39 of a cell's angle",
+      "pt": "maior erro de distância 16,7 m; maior erro de azimute 0,39 do ângulo de uma célula"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Arithmetic only. The real map (PGDA product 69, LPSR_85S_060M_201608) is checked against the 130 Sites of Wueller et al. 2026 live, after it is on the server.",
+      "pt": "Só a aritmética. O mapa real (produto 69 do PGDA, LPSR_85S_060M_201608) é conferido contra os 130 Sites de Wueller et al. 2026 ao vivo, depois que estiver no servidor."
+    },
+    "script_path": "validation/test_psr.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "slope-synthetic-plane",
+    "title": {
+      "en": "Slope of a known plane",
+      "pt": "Inclinação de um plano conhecido"
+    },
+    "reference": "atan(0.05) = 2.8624° worked by hand for a plane rising 1 m every 20 m, and 0 for a level one. Defaults: NASA Artemis III landing requirement, slope under 10° over 100 m (Artemis HLS Overview, Space Apps 2025, NTRS 20250009323)",
+    "tolerance": {
+      "en": "≤ 0.01°; level plane exactly 0, all of it under 10°",
+      "pt": "≤ 0,01°; plano nivelado exatamente 0, todo abaixo de 10°"
+    },
+    "result": {
+      "en": "largest gap 0.000002° on the tilted plane; level plane 0 and all under 10°",
+      "pt": "maior diferença de 0,000002° no plano inclinado; plano nivelado 0 e todo abaixo de 10°"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Arithmetic on synthetic DEMs only. A 20 m DEM cannot see rocks or craters a few metres across, such as the one IM-2 tipped over in; no verdict word is given.",
+      "pt": "Só a aritmética, em DEMs sintéticos. Um DEM de 20 m não vê pedras nem crateras de poucos metros, como a em que o IM-2 tombou; não damos veredito."
+    },
+    "script_path": "validation/test_slope.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "slope-cell-count",
+    "title": {
+      "en": "Cells within 100 m on a 20 m grid",
+      "pt": "Células a até 100 m numa grade de 20 m"
+    },
+    "reference": "π·100²/20² = 78.5 cells",
+    "tolerance": {
+      "en": "within 12 %",
+      "pt": "dentro de 12 %"
+    },
+    "result": {
+      "en": "81 cells, 3.1 % from 78.5",
+      "pt": "81 células, 3,1 % de 78,5"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Arithmetic on synthetic DEMs only. A 20 m DEM cannot see rocks or craters a few metres across, such as the one IM-2 tipped over in; no verdict word is given.",
+      "pt": "Só a aritmética, em DEMs sintéticos. Um DEM de 20 m não vê pedras nem crateras de poucos metros, como a em que o IM-2 tombou; não damos veredito."
+    },
+    "script_path": "validation/test_slope.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "horizons-sub-sun",
+    "title": {
+      "en": "Sub-solar point vs JPL Horizons",
+      "pt": "Ponto subsolar contra o JPL Horizons"
+    },
+    "reference": "JPL Horizons, Moon (301) from the Earth's centre, quantities 14 and 15, MOON_ME, 12 instants 2025-2032",
+    "tolerance": {
+      "en": "≤ 0.05° per point",
+      "pt": "≤ 0,05° por ponto"
+    },
+    "result": {
+      "en": "max separation 0.0002° over 12 instants",
+      "pt": "separação máxima de 0,0002° em 12 instantes"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Only where the Sun and the Earth are overhead on the Moon, for the globe; nothing about terrain.",
+      "pt": "Só onde o Sol e a Terra estão a pino na Lua, para o globo; nada sobre o relevo."
+    },
+    "script_path": "validation/test_sub_points.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "horizons-sub-earth",
+    "title": {
+      "en": "Sub-Earth point vs JPL Horizons",
+      "pt": "Ponto sub-Terra contra o JPL Horizons"
+    },
+    "reference": "JPL Horizons, Moon (301) from the Earth's centre, quantities 14 and 15, MOON_ME, 12 instants 2025-2032",
+    "tolerance": {
+      "en": "≤ 0.05° per point",
+      "pt": "≤ 0,05° por ponto"
+    },
+    "result": {
+      "en": "max separation 0.0058° over 12 instants",
+      "pt": "separação máxima de 0,0058° em 12 instantes"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Only where the Sun and the Earth are overhead on the Moon, for the globe; nothing about terrain.",
+      "pt": "Só onde o Sol e a Terra estão a pino na Lua, para o globo; nada sobre o relevo."
+    },
+    "script_path": "validation/test_sub_points.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "negative-control-sub-points-time-shift",
+    "title": {
+      "en": "Negative control: sub-solar point 2 h later",
+      "pt": "Controle negativo: ponto subsolar 2 h depois"
+    },
+    "reference": "The sub-solar check with the backend asked 2 hours later",
+    "tolerance": {
+      "en": "must exceed 0.05°",
+      "pt": "tem que passar de 0,05°"
+    },
+    "result": {
+      "en": "failed as expected (1.020°)",
+      "pt": "falhou como esperado (1,020°)"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Only shows the check is sensitive to time.",
+      "pt": "Só mostra que a checagem é sensível ao tempo."
+    },
+    "script_path": "validation/test_sub_points.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "horizons-sun-distance-factor",
+    "title": {
+      "en": "Sun-distance factor of the battery vs JPL Horizons",
+      "pt": "Fator de distância do Sol na bateria contra o JPL Horizons"
+    },
+    "reference": "JPL Horizons, Sun (10) from Site 001 (coord@301, 2 m), quantity 20 (range), 12 instants 2025-2032",
+    "tolerance": {
+      "en": "≤ 0.1 % of (1 au / d)²",
+      "pt": "≤ 0,1 % de (1 au / d)²"
+    },
+    "result": {
+      "en": "max error 3.4e-09 % over 12 instants",
+      "pt": "erro máximo de 3,4e-09 % em 12 instantes"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Only how far the Sun is. The panel pointing has its own check against Eduardo's model; the rest of the panel model (no heat, constant load) has no outside reference.",
+      "pt": "Só a distância do Sol. O apontamento dos painéis tem a sua própria checagem contra o modelo do Eduardo; o resto do modelo (sem calor, carga constante) não tem referência externa."
+    },
+    "script_path": "validation/test_sun_distance.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "negative-control-sun-distance-ignored",
+    "title": {
+      "en": "Negative control: the battery with the Sun always at 1 au",
+      "pt": "Controle negativo: a bateria com o Sol sempre a 1 au"
+    },
+    "reference": "The same Horizons distances against a factor of 1",
+    "tolerance": {
+      "en": "must exceed 0.1 %",
+      "pt": "tem que passar de 0,1 %"
+    },
+    "result": {
+      "en": "failed as expected (3.34 %)",
+      "pt": "falhou como esperado (3,34 %)"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Only shows the chosen dates are far enough from 1 au for the check to see the distance.",
+      "pt": "Só mostra que as datas escolhidas estão longe o bastante de 1 au para a checagem ver a distância."
+    },
+    "script_path": "validation/test_sun_distance.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "wueller2026-sunlit-days",
+    "title": {
+      "en": "Consecutive sunlit days at the Artemis Sites vs Wueller et al. 2026",
+      "pt": "Dias seguidos de Sol nos Sites do Artemis contra Wueller et al. 2026"
+    },
+    "reference": "Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, data Zenodo 17084058: longest run of sunlit days in the 2026 southern mid-summer (06/11-27/11), 2 m | live: https://lunar-api.luizfbm.win, engine 0.1.0",
+    "tolerance": {
+      "en": "≤ 1 day per Site",
+      "pt": "≤ 1 dia por Site"
+    },
+    "result": {
+      "en": "75 of 130 Sites within 1 day; largest gap +19.23 d at MMO09. Of the 97 with a published value above 0, 75 within 1 day. 33 Sites are published as 0 days.",
+      "pt": "75 de 130 Sites dentro de 1 dia; maior diferença +19,23 d em MMO09. Dos 97 com valor publicado acima de 0, 75 dentro de 1 dia. 33 Sites aparecem publicados com 0 dia."
+    },
+    "status": "failed",
+    "not_covered": {
+      "en": "Only 2026. Wueller used LROC QuickMap TerrainShadows on a 60 m map, 12 h steps and shadows to 150 km; we use 20/80/240 m DEMs to 300 km and 15 min steps, and count any part of the Sun's disc as sunlit. At 2 Sites the published Sun-and-Earth days exceed the Sun days for 2026 (MMO08, MMO09...), which cannot happen, so some published zeros may not be measurements; they still count against us here. Checked live against the public API, not in CI.",
+      "pt": "Só 2026. O Wueller usou o TerrainShadows do LROC QuickMap num mapa de 60 m, passos de 12 h e sombras até 150 km; nós usamos DEMs de 20/80/240 m até 300 km e passos de 15 min, e contamos qualquer parte do disco do Sol como Sol. Em 2 Sites os dias de Sol e Terra publicados passam dos dias de Sol em 2026 (MMO08, MMO09...), o que não pode acontecer, então alguns zeros publicados talvez não sejam medidas; mesmo assim contam contra nós aqui. Conferido ao vivo na API pública, fora do CI."
+    },
+    "script_path": "validation/live_checks.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "landing-blue-ghost-1",
+    "title": {
+      "en": "Blue Ghost 1 Sunset vs end of the mission",
+      "pt": "Sunset do Blue Ghost 1 contra o fim da missão"
+    },
+    "reference": "Firefly press release 17/03/2025: final data ~23:15 UTC 16/03/2025, just over 5 h into the lunar night | live: https://lunar-api.luizfbm.win, engine 0.1.0",
+    "tolerance": {
+      "en": "our Sunset 5 to 6 h before the final data",
+      "pt": "nosso Sunset de 5 a 6 h antes dos últimos dados"
+    },
+    "result": {
+      "en": "our Sunset 2025-03-16 19:44 UTC, 3.51 h before the final data; Occluder: Mare Crisium, 0.7 km at azimuth 270.0°",
+      "pt": "nosso Sunset 2025-03-16 19:44 UTC, 3,51 h antes dos últimos dados; Occluder: Mare Crisium, 0,7 km at azimuth 270,0°"
+    },
+    "status": "failed",
+    "not_covered": {
+      "en": "The 17:15-18:15 UTC band is inferred from the press release phrase 'just over 5 hours into the lunar night', not from a published sunset instant; no primary source with the local sunset time was found yet. Our Sunset is when the last edge of the Sun's disc goes behind the terrain, which need not be what a mission release calls the start of night. The deploy's SLDEM2015 crop resampled the terrain on a grid shifted by a fraction of a pixel and made a false wall. The corrected crop gives 19:44:27 UTC. Landing point from the CLPS SPICE archive, terrain from SLDEM2015 (~59 m). Compared after the numbers were known, so not a check: JPL Horizons puts the Sun's centre on the geometric horizon (no terrain) at 20:10:39 UTC on 16/03/2025 (docs/validation/sources-wueller-blue-ghost.md), 26 min after our terrain Sunset; the rule's band sits about 2 h before that. The check stays failed against the original rule.",
+      "pt": "A faixa de 17:15 a 18:15 UTC vem da frase 'just over 5 hours into the lunar night' do comunicado, não de um instante de pôr do Sol publicado; ainda não achamos fonte primária com a hora do pôr do Sol no local. Nosso Sunset é quando a última borda do disco do Sol some atrás do relevo, o que pode não ser o que um comunicado chama de início da noite. O recorte do SLDEM2015 no deploy reamostrava o relevo numa grade deslocada de fração de pixel e criava uma parede falsa. O recorte corrigido dá 19h44m27 UTC. Ponto de pouso do arquivo SPICE do CLPS, relevo do SLDEM2015 (~59 m). Comparado depois de conhecer os números, então não é checagem: o JPL Horizons põe o centro do Sol no horizonte geométrico (sem relevo) às 20:10:39 UTC de 16/03/2025 (docs/validation/sources-wueller-blue-ghost.md), 26 min depois do nosso Sunset com relevo; a faixa da regra fica umas 2 h antes disso. A checagem continua failed contra a regra original."
+    },
+    "script_path": "validation/live_landings.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "landing-chandrayaan-3",
+    "title": {
+      "en": "Chandrayaan-3 Sunset vs ISRO sleep date",
+      "pt": "Sunset do Chandrayaan-3 contra a data em que a ISRO o pôs para dormir"
+    },
+    "reference": "ISRO Chandrayaan-3 updates: lander and rover in sleep mode on 04/09/2023, awakening expected around 22/09/2023 | live: https://lunar-api.luizfbm.win, engine 0.1.0",
+    "tolerance": {
+      "en": "our Sunset after 04/09/2023 (ISRO slept them before sunset)",
+      "pt": "nosso Sunset depois de 04/09/2023 (a ISRO os pôs para dormir antes do pôr do Sol)"
+    },
+    "result": {
+      "en": "our first Sunset 2023-09-04 07:12 UTC; Occluder: 6.9 km at azimuth 277.5°",
+      "pt": "nosso primeiro Sunset 2023-09-04 07:12 UTC; Occluder: 6,9 km at azimuth 277,5°"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "ISRO put the lander and rover to sleep before the local sunset, as an operations decision, and its updates page gives the date (04/09/2023) but no time for the sleep or for the expected sunset. So this only checks that our first Sunset in the Window does not come before that date; it is not a comparison with a measured instant. The awakening expected around 22/09/2023 is not checked. Terrain from the PGDA 60°S DEMs.",
+      "pt": "A ISRO pôs o módulo e o rover para dormir antes do pôr do Sol local, por decisão de operação, e a página de atualizações dá a data (04/09/2023), mas não a hora do repouso nem a do pôr do Sol esperado. Então isto só confere que o nosso primeiro Sunset na Window não vem antes dessa data; não é comparação com um instante medido. O despertar esperado por volta de 22/09/2023 não é conferido. Relevo dos DEMs PGDA de 60°S."
+    },
+    "script_path": "validation/live_landings.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "example-sun-height-apollo11",
+    "title": {
+      "en": "Example: how high the Sun gets, Apollo 11 vs the pole",
+      "pt": "Exemplo: até onde o Sol sobe, Apollo 11 contra o polo"
+    },
+    "reference": "Engine output only, Window from 2026-11-06T00:00:00Z, one synodic month | live: https://lunar-api.luizfbm.win, engine 0.1.0",
+    "tolerance": {
+      "en": "none: an example, not a check",
+      "pt": "nenhuma: é um exemplo, não uma checagem"
+    },
+    "result": {
+      "en": "highest Sun: 87.8° at Apollo 11, 2.0° at Site 001",
+      "pt": "Sol mais alto: 87,8° no Apollo 11, 2,0° no Site 001"
+    },
+    "status": "pending",
+    "not_covered": {
+      "en": "Nothing is compared to a reference here.",
+      "pt": "Nada é comparado com uma referência aqui."
+    },
+    "script_path": "validation/live_landings.py",
+    "run_at": "2026-11-15T13:02:11Z"
+  }
+]
