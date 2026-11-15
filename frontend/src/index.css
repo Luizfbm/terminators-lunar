@@ -1759,13 +1759,6 @@ button.site {
   overflow-y: auto;
 }
 
-/* Under 900 px the view buttons are below the picture, so the menu may use all of its height. */
-@media (max-width: 899px) {
-  .globe-menu {
-    max-height: 100%;
-  }
-}
-
 /* On a phone the panel does not fit beside the Moon: it folds into a button in the corner. */
 .globe-menu__toggle {
   display: none;
@@ -1815,9 +1808,10 @@ button.site {
   }
 
   /* The panel opens under the button, and is not there while it is folded. */
+  /* Under the button and above the view buttons at the foot of the stage. */
   .globe-menu {
     top: 48px;
-    max-height: calc(100% - 48px);
+    max-height: calc(100% - 48px - 64px);
   }
 
   .globe-menu[data-open='false'] {
@@ -1895,4 +1889,11 @@ button.site {
 .globe-menu__langs .globe-menu__button {
   flex: 1 1 0;
   min-width: 0;
+}
+
+/* A finger needs 44 px view buttons: the ground view leaves a taller last row for them. */
+@media (pointer: coarse) {
+  .ground-view {
+    grid-template-rows: minmax(0, 1fr) clamp(84px, 22%, 150px) 76px;
+  }
 }

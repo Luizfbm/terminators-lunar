@@ -238,7 +238,8 @@ function SiteList({
 
   const source = isCustomSite(site) ? t('sites.custom.source') : t('sites.source', { reference: site.source_reference })
 
-  // In <body>, above the bar, the strip and everything else on the page, whatever stacks them.
+  // In <body>, above the strip and everything else on the page, whatever stacks them. Opened from the Details
+  // drawer, which is a modal dialog of its own, it goes inside the drawer: the rest of the page is inert then.
   return createPortal(
     <div className="site-sheet">
       {!place.sheet && <div className="site-sheet__backdrop" aria-hidden="true" style={{ visibility: place.style.visibility }} />}
@@ -320,7 +321,7 @@ function SiteList({
         <CustomSiteForm site={site} maxLatitudeDeg={maxLatitudeDeg} onCoordinate={onCoordinate} />
       </dialog>
     </div>,
-    document.body,
+    anchor.current?.closest('dialog') ?? document.body,
   )
 }
 
