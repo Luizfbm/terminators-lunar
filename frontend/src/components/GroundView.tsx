@@ -1,7 +1,7 @@
-import { lazy, Suspense, useId, useMemo, useState } from 'react'
+import { lazy, Suspense, useId, useState } from 'react'
 import type { VisibilityResult } from '../api/client'
 import { sampleAt } from '../domain/sky'
-import { groundCaption, stretchFor, type GroundSpacing } from '../domain/skyScene'
+import { groundCaption, type GroundSpacing } from '../domain/skyScene'
 import { useI18n } from '../i18n/I18nContext'
 import { Ground, type GroundMark } from './Ground'
 import { CursorSun } from './cursorSun/CursorSun'
@@ -39,9 +39,8 @@ export function prepareGround(): Promise<void> {
 export const groundPrepared = () => skyModule !== null
 
 /**
- * The view from the ground (the requirement): the sky in 3D, to turn in, and under it the horizon
- * unrolled, to see the Sun's whole path at once. A browser that cannot draw 3D gets the unrolled
- * horizon alone, as before.
+ * The full ground view in 3D, with body direction guides in Sky. A browser that cannot
+ * draw 3D keeps the unrolled horizon as its fallback.
  */
 export function GroundView({
   result,
@@ -64,16 +63,10 @@ export function GroundView({
   // Over the sky only the one-line hint; what the ground is and how it is drawn waits behind a button (the requirement).
   const [aboutOpen, setAboutOpen] = useState(false)
   const aboutId = useId()
-  const stretch = useMemo(
-    () =>
-      stretchFor([
-        ...result.horizon.samples.map((point) => point.elevation_deg),
-        ...result.timeline.samples.map((sample) => sample.sun.elevation_deg),
-        // The Earth climbs higher than the Sun near the pole: it has to fit in the view too.
-        ...result.timeline.samples.map((sample) => sample.earth.elevation_deg),
-      ]),
-    [result],
-  )
+  // Physical scale: the Sun and the Earth are drawn at their true angular size, so the terrain and
+  // the angles are too. A stretched horizon with true-size discs would show the Sun clear of a ridge
+  // that hides part of it (the answer's Sun fraction). No vertical exaggeration on the ground view.
+  const stretch = 1
   const sunFraction = sampleAt(result.timeline.samples, cursorMs)?.sun.fraction ?? null
   if (!supported) return <Ground result={result} cursorMs={cursorMs} mark={mark} />
   const about = [...groundCaption(groundStep, { t, formatNumber }), stretch > 1 && t('sky.caption.stretched', { times: formatNumber(Math.round(stretch * 10) / 10) })]
@@ -108,9 +101,6 @@ export function GroundView({
             {about}
           </p>
         </div>
-      </div>
-      <div className="ground-view__strip">
-        <Ground result={result} cursorMs={cursorMs} mark={mark} compact />
       </div>
     </div>
   )

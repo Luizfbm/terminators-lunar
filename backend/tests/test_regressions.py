@@ -1467,3 +1467,22 @@ def test_a_typed_point_north_of_80s_is_answered_by_the_global_dem(
         engine = samples[round(azimuth / 0.5)]["elevation_deg"]
         independent = walk(azimuth)
         assert independent - 0.0005 <= engine <= independent + 0.003, (azimuth, engine, independent)
+
+
+def test_each_sample_gives_the_true_angular_radius_of_the_sun_and_the_earth() -> None:
+    # 15/11/2026: the view from the ground drew the Sun at the Window's mean radius and the Earth
+    # at a fixed 0.95°, both enlarged with the stretched heights. The engine already had both
+    # radii per instant (asin(radius / topocentric distance), SPICE); now every sample says them.
+    payload = visibility({"site_id": "001", "start": "2026-11-15T00:00:00Z", "duration_hours": 48})
+    samples = payload["timeline"]["samples"]
+    sun = [sample["sun"]["angular_radius_deg"] for sample in samples]
+    earth = [sample["earth"]["angular_radius_deg"] for sample in samples]
+    # Written out here, not taken from the code: the Sun (695,700 km) between perihelion and
+    # aphelion, give or take the Earth-Moon distance; the Earth (6,371 km mean) between perigee
+    # and apogee of the Moon, give or take the Moon's own radius.
+    assert all(0.258 < value < 0.276 for value in sun)
+    assert all(0.88 < value < 1.04 for value in earth)
+    # The Window's mean radius the answer already published is the mean of these.
+    assert sum(sun) / len(sun) == pytest.approx(payload["timeline"]["sun_radius_deg"], rel=1e-9)
+    # Over two days the Moon's distance changes, so the Earth's radius is not a constant.
+    assert max(earth) - min(earth) > 0.0005

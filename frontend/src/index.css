@@ -477,7 +477,7 @@ input[type='date']:focus-within {
   position: absolute;
   inset: 0;
   display: grid;
-  grid-template-rows: minmax(0, 1fr) clamp(84px, 22%, 150px) 60px;
+  grid-template-rows: minmax(0, 1fr) 60px;
 }
 
 .ground-view__sky,
@@ -1197,7 +1197,7 @@ input[type='date']:focus-within {
 
   /* No row left free for the view buttons: they are below the picture now. */
   .ground-view {
-    grid-template-rows: minmax(0, 1fr) clamp(84px, 22%, 150px);
+    grid-template-rows: minmax(0, 1fr);
   }
 
   .answer {
@@ -2108,3 +2108,19 @@ button.site {
   outline: 2px solid #fff;
   outline-offset: 3px;
 }
+
+.sky__body-guide {
+  position: absolute;
+  z-index: 4;
+  padding: 5px 8px;
+  border: 1px solid #ffffff50;
+  border-radius: 5px;
+  background: #000b;
+  color: #fff;
+  font: 12px/1.3 sans-serif;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+}
+.sky__body-guide[hidden] { display: none; }
+.sky__body-guide:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.sky__body-guide span { display: inline-block; margin-right: 5px; }
