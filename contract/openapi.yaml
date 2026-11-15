@@ -895,6 +895,8 @@ paths:
           $ref: "#/components/responses/NotFound"
         "422":
           $ref: "#/components/responses/Unprocessable"
+        "503":
+          $ref: "#/components/responses/Busy"
 
   /visibility/dsn:
     get:

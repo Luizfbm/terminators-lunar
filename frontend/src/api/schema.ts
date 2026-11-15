@@ -1930,6 +1930,7 @@ export interface operations {
             };
             404: components["responses"]["NotFound"];
             422: components["responses"]["Unprocessable"];
+            503: components["responses"]["Busy"];
         };
     };
     getVisibilityDsn: {
