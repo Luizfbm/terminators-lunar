@@ -1,0 +1,34 @@
+name: Mac
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: mac-${{ github.ref }}
+  cancel-in-progress: true
+
+# The heavy half of CI: scripts/ci-mac.sh (ruff, mypy, pytest, the validation suite, eslint, tsc,
+# vitest, the generated-types check and the full Playwright e2e). The light half is ci.yml.
+# This job runs on a self-hosted runner that is Luiz's Mac (Apple M4, 10 cores), labelled
+# lunar-mac. The script posts the commit status `mac-gates` itself, so the job needs
+# `statuses: write`. The job is red when the script fails, and so is `mac-gates`. The job is not
+# named mac-gates on purpose: the required check on main is the commit status of that name.
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  ci-mac:
+    runs-on: [self-hosted, macOS, lunar-mac]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The script refuses a checkout with uncommitted changes, and the result must belong
+          # to this commit: nothing left over from an earlier run.
+          clean: true
+      - run: scripts/ci-mac.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
