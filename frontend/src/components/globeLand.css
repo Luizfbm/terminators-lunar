@@ -1,0 +1,187 @@
+/* "Land" on the globe: the dot under the cursor and its bubble, and the names of the missions (the requirement). */
+/* "Land here": a small orange dot under the cursor on the Moon and a light speech bubble beside it. */
+.globe-land {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.globe-land[hidden] {
+  display: none;
+}
+
+.globe-land__dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: clamp(8px, 0.7vw, 12px);
+  height: clamp(8px, 0.7vw, 12px);
+  box-sizing: border-box;
+  border: 1.5px solid #fff;
+  border-radius: 50%;
+  background: #ff9f1c;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .globe-land__dot {
+    animation: land-pulse 1.6s ease-out infinite;
+  }
+}
+
+@keyframes land-pulse {
+  from {
+    box-shadow: 0 0 0 0 rgba(255, 159, 28, 0.4);
+  }
+  to {
+    box-shadow: 0 0 0 clamp(8px, 0.9vw, 16px) rgba(255, 159, 28, 0);
+  }
+}
+
+.globe-land__bubble {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15em;
+  box-sizing: border-box;
+  padding: 0.4em 0.95em;
+  border: 1px solid rgba(17, 17, 17, 0.55);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #111;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  font: 500 clamp(10px, 0.8vw, 15px) / 1 Orbitron, system-ui, sans-serif;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.globe-land__site {
+  font-size: 0.78em;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+.globe-land__site[hidden] {
+  display: none;
+}
+
+/* The tail points to the dot, from the lower corner of the bubble on the side of the dot. */
+.globe-land__bubble::before {
+  content: '';
+  position: absolute;
+  bottom: 0.22em;
+  left: -0.34em;
+  width: 0.55em;
+  height: 0.55em;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.55);
+  border-left: 1px solid rgba(17, 17, 17, 0.55);
+  background: rgba(255, 255, 255, 0.94);
+  transform: rotate(45deg);
+}
+
+.globe-land__bubble[data-side='left']::before {
+  right: -0.34em;
+  left: auto;
+  border-right: 1px solid rgba(17, 17, 17, 0.55);
+  border-bottom: 1px solid rgba(17, 17, 17, 0.55);
+  border-left: 0;
+  transform: rotate(-45deg);
+}
+
+.globe-land__bubble:focus-visible {
+  outline: 2px solid #ff9f1c;
+  outline-offset: 3px;
+}
+
+/*
+ * The names of the missions in orbit (the requirement): beside the dot, in the colour of the missions'
+ * dots (domain/markers.ts). The button itself is the size of nothing and lets the drag through; its name
+ * is clicked to land there. A name with no room waits for the focus, and the dot's hover names it in the
+ * bubble of "Land".
+ */
+.globe-marks {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.globe-marks[hidden],
+.globe-mark[hidden] {
+  display: none;
+}
+
+.globe[data-dressed='false'] .globe-marks {
+  visibility: hidden;
+}
+
+.globe-mark {
+  position: absolute;
+  width: 0;
+  height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  pointer-events: none;
+}
+
+.globe-mark__name {
+  position: absolute;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 14px;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+  text-shadow:
+    0 0 6px var(--bg),
+    0 0 2px var(--bg),
+    0 0 1px #000;
+}
+
+.globe-mark__name:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.globe-mark[data-quiet='true'] .globe-mark__name {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.globe-mark:focus-visible {
+  outline: none;
+}
+
+.globe-mark:focus-visible .globe-mark__name {
+  visibility: visible;
+  color: #fff;
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* The Sites layer on the map has the colour it has in orbit (domain/markers.ts), so a Site looks the same at both levels. */
+.globe .globe__site::before {
+  background: #5ef2c8;
+  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.75);
+}
+
+/* A mission's landing on the map: its own colour, and its name in view, as in orbit. */
+.globe .globe__site[data-mission='true']::before {
+  background: #fff;
+  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.75);
+}
+
+.globe .globe__site[data-mission='true'] .globe__name {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 14px;
+  visibility: visible;
+}

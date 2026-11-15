@@ -6,7 +6,10 @@ import { Cover, coverSeen, rememberCover } from './components/Cover'
 import { Guide } from './components/Guide'
 import type { GroundMark } from './components/Ground'
 import { GroundView, prepareGround } from './components/GroundView'
-import type { GlobeSite } from './components/Globe'
+import type { GlobeLanding, GlobeSite } from './components/Globe'
+import { StageStatus } from './components/stageStatus/StageStatus'
+import { limitText } from './components/stageStatus/format'
+import { STRINGS as STAGE_STRINGS } from './components/stageStatus/strings'
 import { ClassroomSheet } from './components/phase4/classroom/Sheet'
 import { Proof } from './components/Proof'
 import { TimeStrip } from './components/TimeStrip'
@@ -18,6 +21,7 @@ import {
   isCoordinate,
   isCustomSite,
   readLink,
+  siteKey,
   writeLink,
   type Choice,
   type Page,
@@ -28,6 +32,7 @@ import { IM2_LANDING } from './domain/landing'
 import { DIVE_MS, fadeMs, scenesOf, startStage, stepStage } from './domain/stageMove'
 import { chosenGlobeSite } from './domain/chosenSite'
 import { levelOfView } from './domain/globeLevels'
+import { landingPhase, landRef, startLanding, type Landing } from './domain/land'
 import { sampleAt, subPointsAt, type LatLon } from './domain/sky'
 import { isUp, statement, type Body } from './domain/statement'
 import { useAnswer, useSites, type Answer as Answered } from './hooks/useAnswer'
@@ -74,7 +79,12 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
     startStage(start, window.matchMedia('(prefers-reduced-motion: reduce)').matches),
   )
   const view = stage.wanted
-  const setView = useCallback((next: View) => move({ type: 'want', view: next }), [])
+  // Back from the ground goes to the exploration view the visitor came from: the orbit or the polar map.
+  const explorationView = useRef<'orbit' | 'map'>(link.view === 'map' ? 'map' : 'orbit')
+  const setView = useCallback((next: View) => {
+    if (next !== 'ground') explorationView.current = next
+    move({ type: 'want', view: next })
+  }, [])
   const scenes = scenesOf(stage)
   // The globe is mounted once it has been on screen, and then waits under the ground view. A link
   // opened on the ground does not load it (and its images, 22 MB on a phone) until it is asked for.
@@ -108,6 +118,28 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
   const [openedAt] = useState(() => Date.now())
   const sites = useSites()
   const { state, retry } = useAnswer(siteRef, choice)
+  // "Land" (the requirement): the place goes to the Query, as the map's double click does, and the stage
+  // goes down to the ground once the answer for that very place is ready. The Window, the Observer
+  // height and the Cursor stay as they are.
+  const [landing, setLanding] = useState<Landing | null>(null)
+  const land = useCallback(
+    (place: GlobeLanding) => {
+      setLanding(startLanding(place, place.name, siteRef))
+      setSiteRef(landRef(place))
+    },
+    [siteRef],
+  )
+  const landingNow = landingPhase(landing, siteKey(siteRef), state.status)
+  // Settled while rendering, like `globeSeen` above: the answer for the landing place is in, so down to
+  // the ground there; or another Site was asked for meanwhile, so the landing is dropped.
+  if (landingNow === 'arrived' || landingNow === 'stale') {
+    setLanding(null)
+    if (landingNow === 'arrived') move({ type: 'want', view: 'ground' })
+  }
+  const cancelLanding = useCallback(() => {
+    if (landing) setSiteRef(landing.previous)
+    setLanding(null)
+  }, [landing])
 
   const answered = state.status === 'ready' ? state.answer : state.last
   // Right after the first answer the view from the ground is fetched in the background, so a
@@ -311,6 +343,7 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
               label={t('globe.label', { site: site.name, state: t(sunUp ? 'globe.lit' : 'globe.dark') })}
               unavailable={t('globe.unavailable')}
               onSelect={setSiteRef}
+              onLand={land}
               mode={stage.globeMode}
               level={levelOfView(view)}
               onLevel={setView}
@@ -332,11 +365,32 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
           </div>
         )}
         {!result && state.status === 'loading' && <StageLoading />}
+        {/* The stage says itself what it waits for, and what failed, so it does not depend on the column of answers. */}
+        {result && page === 'answer' && (
+          <StageStatus
+            landing={landing}
+            phase={landingNow}
+            status={state.status}
+            reason={state.status === 'error' ? t(ERROR_KEYS[state.code] ?? 'error.unknown') : null}
+            outsideCustom={customOutside}
+            customLimitDeg={answer?.meta.coverage.custom_max_latitude_deg ?? null}
+            hasAnswer={answer !== null}
+            onRetry={retry}
+            onCancel={cancelLanding}
+            onBackToDefault={() => setSiteRef(null)}
+          />
+        )}
         {stage.shown === 'map' && stage.phase === 'idle' && <p className="stage__caption">{t(touchScreen() ? 'map.caption.touch' : 'map.caption')}</p>}
         {result && scenes.groundMounted && (
           <div className="stage__ground" data-fade={scenes.groundFade ?? undefined} style={{ animationDuration: `${fadeMs(still)}ms` }}>
             <GroundView result={result} cursorMs={cursorMs} mark={mark} pose={scenes.skyPose} />
           </div>
+        )}
+        {view === 'ground' && (
+          <button type="button" className="stage__back" onClick={() => setView(explorationView.current)}>
+            <span aria-hidden="true">← </span>
+            {STAGE_STRINGS[i18n.locale].back}
+          </button>
         )}
         {/* Under 900 px wide the foot sits below the picture, never on it (the requirement). */}
         <div className="stage__foot">
@@ -364,7 +418,7 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
             <p className="status__title">{t('error.title')}</p>
             {customOutside ? (
               <>
-                <p>{t('sites.custom.outside')}</p>
+                <p>{t('sites.custom.outside', { limit: limitText(answer?.meta.coverage.custom_max_latitude_deg ?? -80, i18n.locale) })}</p>
                 <button type="button" className="status__retry" onClick={() => setSiteRef(null)}>
                   {t('sites.custom.backToDefault')}
                 </button>
