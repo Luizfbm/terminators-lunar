@@ -5,6 +5,7 @@ export type EventBand = components['schemas']['EventBand']
 export type MetricBand = components['schemas']['MetricBand']
 type Metrics = components['schemas']['UncertaintyResult']['metrics']
 
+const MINUTE_MS = 60_000
 const HOUR_MS = 3_600_000
 
 /** A Sunset, Sunrise, Earthset or Earthrise of the `/visibility` answer, as far as matching needs. */
@@ -58,10 +59,10 @@ export function spreadText({ t, formatTime, formatDay }: Words, spread: Spread, 
       ? t('uncertainty.none', { total: String(spread.clones) })
       : t('uncertainty.maybe', { count: String(spread.withEvent), total: String(spread.clones) })
   }
+  // A window under a minute wide is no window: the clock cannot show it, so say the error does not move the time.
+  if (spread.latestMs - spread.earliestMs < MINUTE_MS) return t('uncertainty.steadyTime')
   const clock = (ms: number) => (dayOf(ms) === dayOf(nominalMs) ? formatTime(ms) : `${formatDay(ms)}, ${formatTime(ms)}`)
-  const from = clock(spread.earliestMs)
-  const to = clock(spread.latestMs)
-  return from === to ? t('uncertainty.around', { time: from }) : t('uncertainty.between', { from, to })
+  return t('uncertainty.between', { from: clock(spread.earliestMs), to: clock(spread.latestMs) })
 }
 
 /** The metrics of the Numbers table that the route gives a band for. */
@@ -80,7 +81,10 @@ export function rangeText(
   const text = SHARES.includes(metric)
     ? (value: number) => `${formatNumber(Math.round(value * 1000) / 10)}%`
     : (value: number) => formatSpan(value * HOUR_MS)
-  return t('uncertainty.range', { low: text(band.low), high: text(band.high) })
+  const low = text(band.low)
+  const high = text(band.high)
+  // Both ends read the same on screen: there is no range to show.
+  return low === high ? t('uncertainty.steadyNumber') : t('uncertainty.range', { low, high })
 }
 
 // ---- Asking again -------------------------------------------------------------------------

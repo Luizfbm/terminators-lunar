@@ -24,7 +24,7 @@ function nextOf(visibility: Visibility, type: string): Event {
  * Serves 202 first, holds the second ask until `release()`, then serves 200: the next Sunset
  * between 40 min before and 40 min after, the next Earthset in 9 of 32 clones only, the rest as is.
  */
-async function serveBand(page: Page) {
+async function serveBand(page: Page, sunsetSpreadMs = 40 * MINUTE_MS) {
   const seen = new Promise<Visibility>((resolve) => {
     page.on('response', (response) => {
       if (new URL(response.url()).pathname === '/visibility') void response.json().then(resolve)
@@ -53,7 +53,7 @@ async function serveBand(page: Page) {
       const events = visibility.events.map((event) => {
         const ms = Date.parse(event.t)
         if (is(event, sunset)) {
-          return { type: event.type, t: event.t, earliest: instant(ms - 40 * MINUTE_MS), latest: instant(ms + 40 * MINUTE_MS), clones_with_event: 32 }
+          return { type: event.type, t: event.t, earliest: instant(ms - sunsetSpreadMs), latest: instant(ms + sunsetSpreadMs), clones_with_event: 32 }
         }
         if (is(event, earthset)) return { type: event.type, t: event.t, clones_with_event: 9 }
         return { type: event.type, t: event.t, earliest: event.t, latest: event.t, clones_with_event: 32 }
@@ -69,7 +69,7 @@ async function serveBand(page: Page) {
           method: 'dem_error_clones',
           error_products: [],
           events,
-          metrics: { sunlit_hours: metric, earth_visible_hours: metric, sun_and_earth_hours: metric, lcsp_hours: { low: 0, high: 2.25 }, mean_sun_fraction: { low: 0.996, high: 1 } },
+          metrics: { sunlit_hours: metric, earth_visible_hours: { low: 324.8, high: 324.8 }, sun_and_earth_hours: metric, lcsp_hours: { low: 0, high: 2.25 }, mean_sun_fraction: { low: 0.996, high: 1 } },
         }),
       })
     } finally {
@@ -108,8 +108,19 @@ test.describe('in English', () => {
     const numbers = page.getByRole('table', { name: 'The numbers for this Window' })
     await expect(numbers.getByRole('row', { name: /Longest night \(LCSP\)/ })).toContainText('with the map’s height error: 0 min to 2 h 15 min')
     await expect(numbers.getByRole('row', { name: /Mean Sun fraction/ })).toContainText('with the map’s height error: 99.6% to 100%')
+    // Low and high the same: no range, just that the error does not move the number.
+    await expect(numbers.getByRole('row', { name: /Earth visible/ })).toContainText('the map’s height error does not change this number')
     // The LCIP is not in the band.
     await expect(numbers.getByRole('row', { name: /Longest sunlight/ })).not.toContainText('with the map’s height error')
+  })
+
+  test('says the error does not change the time when the window is narrower than a minute', async ({ page }) => {
+    // 14 s wide, as the backend measures Site 001's Earthrise band.
+    const band = await serveBand(page, 7_000)
+    band.release()
+    await page.goto('/')
+    await expect(page.getByText('the map’s height error does not change this time')).toBeVisible()
+    await expect(page.getByText(/between \d\d:\d\d and \d\d:\d\d with the map’s height error/)).toHaveCount(0)
   })
 
   test('shows nothing, and keeps the answer, when the route says it cannot', async ({ page }) => {
@@ -148,5 +159,14 @@ test.describe('in Portuguese', () => {
     await page.goto('/?stats=1')
     const numbers = page.getByRole('table', { name: 'Os números desta Janela' })
     await expect(numbers.getByRole('row', { name: /Fração média do Sol/ })).toContainText('com o erro de altura do mapa: 99,6% a 100%')
+    await expect(numbers.getByRole('row', { name: /Terra visível/ })).toContainText('o erro de altura do mapa não muda este número')
+  })
+
+  test('diz que o erro não muda o horário quando a janela é mais estreita que um minuto', async ({ page }) => {
+    const band = await serveBand(page, 7_000)
+    band.release()
+    await page.goto('/')
+    await expect(page.getByText('o erro de altura do mapa não muda este horário')).toBeVisible()
+    await expect(page.getByText(/entre \d\d:\d\d e \d\d:\d\d com o erro de altura do mapa/)).toHaveCount(0)
   })
 })

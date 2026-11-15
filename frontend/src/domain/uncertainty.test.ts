@@ -101,11 +101,26 @@ describe('spreadText', () => {
     )
   })
 
-  it('does not say "between 15:00 and 15:00" when both ends fall in the same minute', () => {
-    const text = spreadText(en, window('2026-11-20T15:00:10Z', '2026-11-20T15:00:40Z'), nominal)
-    expect(text).toBe('around 15:00 with the map’s height error')
-    expect(spreadText(pt, window('2026-11-20T15:00:10Z', '2026-11-20T15:00:40Z'), nominal)).toBe(
-      'por volta de 15:00 com o erro de altura do mapa',
+  it('says the error does not change the time when the window is narrower than a minute', () => {
+    // 14 s wide, as the backend measures Site 001's Earthrise band.
+    expect(spreadText(en, window('2026-11-20T15:00:10Z', '2026-11-20T15:00:24Z'), nominal)).toBe(
+      'the map’s height error does not change this time',
+    )
+    expect(spreadText(pt, window('2026-11-20T15:00:10Z', '2026-11-20T15:00:24Z'), nominal)).toBe(
+      'o erro de altura do mapa não muda este horário',
+    )
+    // Even when the two ends straddle a minute mark on the clock.
+    expect(spreadText(en, window('2026-11-20T15:00:50Z', '2026-11-20T15:01:20Z'), nominal)).toBe(
+      'the map’s height error does not change this time',
+    )
+    expect(spreadText(en, window('2026-11-20T15:00:00Z', '2026-11-20T15:00:00Z'), nominal)).toBe(
+      'the map’s height error does not change this time',
+    )
+  })
+
+  it('still gives the window from exactly one minute wide', () => {
+    expect(spreadText(en, window('2026-11-20T15:00:00Z', '2026-11-20T15:01:00Z'), nominal)).toBe(
+      'between 15:00 and 15:01 with the map’s height error',
     )
   })
 
@@ -137,6 +152,20 @@ describe('rangeText', () => {
   it('gives the mean Sun fraction as a percentage with a decimal, since the band is often narrower than a whole percent', () => {
     expect(rangeText(en, 'mean_sun_fraction', { low: 0.996, high: 1 })).toBe('with the map’s height error: 99.6% to 100%')
     expect(rangeText(pt, 'mean_sun_fraction', { low: 0.996, high: 1 })).toBe('com o erro de altura do mapa: 99,6% a 100%')
+  })
+
+  it('says the error does not change the number when both ends read the same', () => {
+    expect(rangeText(en, 'sunlit_hours', { low: 708.73, high: 708.73 })).toBe('the map’s height error does not change this number')
+    expect(rangeText(pt, 'sunlit_hours', { low: 708.73, high: 708.73 })).toBe('o erro de altura do mapa não muda este número')
+    // Different values that round to the same minute on screen.
+    expect(rangeText(en, 'earth_visible_hours', { low: 324.0001, high: 324.004 })).toBe('the map’s height error does not change this number')
+    // A share rounds to a tenth of a percent.
+    expect(rangeText(en, 'mean_sun_fraction', { low: 0.9991, high: 0.9994 })).toBe('the map’s height error does not change this number')
+    expect(rangeText(pt, 'mean_sun_fraction', { low: 1, high: 1 })).toBe('o erro de altura do mapa não muda este número')
+  })
+
+  it('still gives a range when the ends read differently', () => {
+    expect(rangeText(en, 'lcsp_hours', { low: 0, high: 1 / 60 })).toContain(' to ')
   })
 })
 
