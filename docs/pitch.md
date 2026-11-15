@@ -57,19 +57,19 @@ Notas de gravação: abrir o link antes e deixar o painel "Se o módulo errar o 
 
 ## O que outros times declaram
 
-Estes números **não são do nosso app** e não são referência da Prova. Vêm da leitura que o repositório de pesquisa fez dos sites dos times em 15/11/2026, e cada time pode ter mudado o site desde então. Antes de citar um número em voz alta, abra o site e confira. O ponto exato é o do Site 001 (89,4661° S, 136,949° W, 2 m), e o nosso valor é o de [3].
+Estes números **não são do nosso app** e não são referência da Prova. Foram lidos nos sites dos próprios times em 15/11/2026, e cada time pode ter mudado o site desde então. Antes de citar um número em voz alta, abra o site e confira. O ponto exato é o do Site 001 (89,4661° S, 136,949° W, 2 m), e o nosso valor é o de [3].
 
-| Time (repositório) | O que o time mostra ou declara | Nosso valor |
+| Time | O que o time mostra ou declara | Nosso valor |
 |---|---|---|
-| Zoriana (526) | Earthrise às 16:05 de 13/12 e Earthset às 11:35 de 27/12, com o Horizons de hora em hora e o LOLA de 40 m | 16:05:27 e 11:28:58 [3] |
+| Zoriana | Earthrise às 16:05 de 13/12 e Earthset às 11:35 de 27/12, com o Horizons de hora em hora e o LOLA de 40 m | 16:05:27 e 11:28:58 [3] |
 | Earthset (Faisalabad) | Earthrise às 16:05 de 13/12, com o LOLA de 20, 80 e 240 m até 300 km | 16:05:27 [3] |
-| Noctis Horizon (592, Pavlodar) | Earthrise às 16:03 de 13/12 | 16:05:27 [3] |
-| Lunar Window (364) | Earthrise às 16:00 de 13/12 e Earthset às 11:32 de 27/12 | 16:05:27 e 11:28:58 [3] |
-| Time de Recife (491) | Earthrise 18 min antes do nosso (15:47) | 16:05:27 [3] |
+| Noctis Horizon (Pavlodar) | Earthrise às 16:03 de 13/12 | 16:05:27 [3] |
+| Lunar Window | Earthrise às 16:00 de 13/12 e Earthset às 11:32 de 27/12 | 16:05:27 e 11:28:58 [3] |
+| Time de Recife | Earthrise 18 min antes do nosso (15:47) | 16:05:27 [3] |
 | Cosall | Horizonte do LOLA de 80 m "out to 100 km"; mostra a Terra visível às 00:00 de 01/12 | a Terra só nasce a 13/12 às 16:05:27, atrás de Mons Malapert, a 134 a 140 km [3] |
-| LunarX (303, VoidX) | Horizonte só com relevo até uns 10 km ("more distant massifs are not in the horizon"); mostra a Terra visível às 00:00 de 01/12 | idem |
+| LunarX (VoidX) | Horizonte só com relevo até uns 10 km ("more distant massifs are not in the horizon"); mostra a Terra visível às 00:00 de 01/12 | idem |
 | Sharp Navigation (time Sharpai, Vilnius) | No "lower slope", cerca de 0,2 km do Site 001, 74% de Sol e 36% de Terra no mês, contra 100% e 46,8% no ponto de cima; não há referência para dizer qual dos dois pontos acerta | 100% de Sol (708,73 h) e 46,8% de Terra e de Sol e Terra juntos (331,39 h de 708,73 h) no Site 001 [1][3] |
-| LANDERPRINT (494) | Com quatro faces de painel fixas, virar o corpo 10° passa uma semana de outubro de 2027 de energia suficiente a insuficiente (10.628,79 Wh contra 13.360 Wh de carga, declarado pelo time) | o painel da bateria usa um só azimute fixo [7] |
+| LANDERPRINT | Com quatro faces de painel fixas, virar o corpo 10° passa uma semana de outubro de 2027 de energia suficiente a insuficiente (10.628,79 Wh contra 13.360 Wh de carga, declarado pelo time) | o painel da bateria usa um só azimute fixo [7] |
 | Lunar Sightline Planner (Legazpi) | "IM-2 Athena (approx.)" em 84,800° S 29,200° E, a uns 290 m do ponto final da LROC, com LOLA de 20 m: o Sol some por 35 dias a partir de 06/03/2025 | não bate: o nosso motor dá 15,8 dias sem Sol, de 20/03 a 04/04 (ver "Deixado de fora") |
 
 Nesta tabela só o Zoriana, o Earthset, o Noctis Horizon e o Lunar Window entram como "outros times acham a mesma hora". Os demais explicam por que as respostas divergem.
@@ -85,14 +85,14 @@ Nesta tabela só o Zoriana, o Earthset, o Noctis Horizon e o Lunar Window entram
 ## Deixado de fora
 
 - **Os 35 dias de Sol apagado na Athena a 290 m** (Lunar Sightline Planner): conferido no app em produção em 15/11/2026 e **não bate**. No mesmo ponto (84,800° S 29,200° E, 2 m, Window de 840 h a partir de 06/03/2025), o nosso motor dá Sol até 20/03/2025 00:50 UTC, quando ele se põe atrás do Mons Mouton, e de volta só em 04/04/2025 19:31 UTC: uma noite de 378,7 h (15,8 dias), e 461 h de Sol nas 840 h. No ponto final da LROC, a Athena tem Sol nas 48 h. Para o pitch, o argumento continua de pé com o nosso número: "a 290 m de onde a Athena parou, o Sol some por quase 16 dias". Os 35 dias do outro time não entram.
-- **"Quatro cálculos independentes" no nascer da Terra:** o texto da pesquisa usa "independentes", mas aqui "independente" é palavra da Prova. Dizemos "outros times, com outro código".
+- **"Quatro cálculos independentes" no nascer da Terra:** o que se diz por aí é "independentes", mas aqui "independente" é palavra da Prova. Dizemos "outros times, com outro código".
 - **Os Sites do Wueller, o português e o nome do relevo como diferencial:** o app tem os três, mas deixaram de ser exclusivos (outros times usam os 130 Sites, estão em português e nomeiam o relevo). Aparecem como fato, nunca como "só nós".
 - **A faixa de incerteza do DEM (ADR 0003):** o README diz que ainda não está pronta. Fica fora do pitch até estar.
 - **O ±1,5° do Sol:** é a ordem de grandeza do README. No roteiro usamos os 2,0° que o app mostra [2].
 
 ## Antes de gravar
 
-1. Abrir o link da Query no app no ar e conferir cada número de [1] a [13] contra a tela. Os números aqui foram recalculados localmente, com os DEMs de teste do repositório e o motor 0.1.0, por `TestClient` (nada rodou no servidor). A escada do CR05 bate com a do README, que vem do servidor, e o Earthrise de 13/12 às 16:05:27 UTC bate com o que a pesquisa leu no servidor.
+1. Abrir o link da Query no app no ar e conferir cada número de [1] a [13] contra a tela. Os números aqui foram recalculados localmente, com os DEMs de teste do repositório e o motor 0.1.0, por `TestClient` (nada rodou no servidor). A escada do CR05 bate com a do README, que vem do servidor, e o Earthrise de 13/12 às 16:05:27 UTC bate com o app no ar.
 2. Recontar a linha "De N checagens: passam X, falham Y, pendentes Z" da Prova [6]. Se mudou, mudar a narração, a legenda e este texto.
 3. Reabrir os sites das atribuições. Os números deles são de 15/11/2026.
 4. Conferir o link público de fora da nossa rede, em desktop e no celular.
