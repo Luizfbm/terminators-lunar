@@ -1,0 +1,234 @@
+.classroom {
+  display: grid;
+  gap: 12px;
+}
+
+.classroom__title {
+  font-family: var(--serif);
+  font-size: calc(var(--display) * 0.72);
+  line-height: 1.15;
+}
+
+.classroom__say {
+  max-width: 44ch;
+}
+
+/* The model says what it is before the figure: amber is taken by the Sun, so the tag is outlined. */
+.classroom__model {
+  max-width: 52ch;
+  font-size: var(--small);
+  color: var(--dim);
+}
+
+.classroom__tag {
+  display: inline-block;
+  margin-right: 4px;
+  padding: 0 7px;
+  border: 1px solid var(--dim);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+.classroom__figure {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.classroom__grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.classroom__tick,
+.classroom__hillLabel {
+  font-family: var(--mono);
+  font-size: 13px;
+  fill: var(--dim);
+}
+
+.classroom__hillLabel {
+  fill: var(--fg);
+}
+
+.classroom__path {
+  fill: none;
+  stroke: var(--sun);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+.classroom__path--winter {
+  stroke-width: 1.5;
+  stroke-dasharray: 5 5;
+  opacity: 0.55;
+}
+
+.classroom__ground,
+.classroom__hill {
+  fill: var(--terrain);
+}
+
+.classroom__hill {
+  stroke: var(--hatch);
+  stroke-width: 1.5;
+}
+
+.classroom__horizon {
+  stroke: var(--track);
+  stroke-width: 1.5;
+}
+
+.classroom__sun {
+  fill: var(--sun);
+  stroke: var(--bg);
+  stroke-width: 2;
+}
+
+.classroom__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: var(--small);
+  color: var(--dim);
+}
+
+.classroom__pair {
+  white-space: nowrap;
+}
+
+.classroom__key {
+  display: inline-block;
+  width: 22px;
+  border-top: 2.5px solid var(--sun);
+}
+
+.classroom__key--winter {
+  margin-left: 8px;
+  border-top: 1.5px dashed var(--sun);
+  opacity: 0.55;
+}
+
+.classroom__control {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 7.5rem;
+  align-items: center;
+  gap: 12px;
+}
+
+.classroom__control input {
+  width: 100%;
+  min-height: 44px;
+  accent-color: var(--sun);
+}
+
+.classroom__control output {
+  font-family: var(--mono);
+  font-size: var(--small);
+  text-align: right;
+}
+
+.classroom__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.classroom__presets button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  background: var(--field);
+  font-size: var(--small);
+  cursor: pointer;
+}
+
+.classroom__presets button[aria-pressed='true'] {
+  border-color: var(--dim);
+  background: var(--chosen);
+}
+
+@media (pointer: coarse) {
+  .classroom__presets button {
+    min-height: 44px;
+  }
+}
+
+.classroom__hidden {
+  max-width: 44ch;
+  font-size: var(--small);
+}
+
+/* The way in: a quiet link in the foot of the stage, beside the view buttons (the requirement). */
+.classroom-open {
+  max-width: 22rem;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--edge);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  backdrop-filter: blur(6px);
+  color: var(--fg);
+  font-size: var(--small);
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .classroom-open {
+    min-height: 44px;
+  }
+}
+
+/* The sheet: the figure on its own, over a dimmed screen. */
+.classroom-sheet {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.classroom-sheet::backdrop {
+  background: color-mix(in srgb, #000 55%, transparent);
+}
+
+.classroom-sheet__body {
+  display: grid;
+  gap: 4px;
+  padding: 16px 20px 20px;
+}
+
+.classroom-sheet__close {
+  justify-self: end;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  background: var(--field);
+  font-size: var(--small);
+  cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .classroom-sheet__close {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 640px) {
+  .classroom-sheet__body {
+    padding: 12px 16px 16px;
+  }
+}

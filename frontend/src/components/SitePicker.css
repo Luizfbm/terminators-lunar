@@ -1,0 +1,138 @@
+/* The Site picker as a dialog (the requirement). The base rules of the list (rows, search, fields) are
+   in index.css. This file loads before index.css, so each rule here starts with dialog.site-list
+   to win over them. */
+
+/* The page dims under the list on a larger screen. The dimming only shows: a click goes through it
+   to the page, where the list's pointerdown listener closes the list. */
+.site-sheet__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgb(0 0 0 / 0.55);
+  pointer-events: none;
+}
+
+dialog.site-list {
+  /* The browser places a dialog with a margin, a padding and a border of its own. */
+  z-index: 61;
+  inset: auto;
+  margin: 0;
+  padding: 4px 12px 0;
+  max-width: none;
+  overflow: hidden;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgb(0 0 0 / 0.6);
+}
+
+dialog.site-list:not([open]) {
+  display: none;
+}
+
+/* On a phone: the whole screen, opaque, nothing of the page showing through. */
+dialog.site-list--sheet {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  max-height: none;
+  padding: 0 16px env(safe-area-inset-bottom, 0);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+dialog.site-list .site-list__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+}
+
+dialog.site-list .site-list__title {
+  margin: 0 4px;
+  color: var(--dim);
+  font-size: var(--small);
+  font-weight: 500;
+}
+
+dialog.site-list .site-list__close {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  background: var(--field);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--small);
+  cursor: pointer;
+}
+
+dialog.site-list .site-list__close:hover {
+  border-color: var(--dim);
+}
+
+dialog.site-list--sheet .site-list__close {
+  min-height: 44px;
+}
+
+@media (pointer: coarse) {
+  dialog.site-list .site-list__close {
+    min-height: 44px;
+  }
+}
+
+/* The list and its citation scroll together; the search and the coordinate fields stay put. */
+dialog.site-list .site-list__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 8px;
+}
+
+dialog.site-list .site-list__options {
+  flex: none;
+  overflow: visible;
+  padding-bottom: 0;
+}
+
+dialog.site-list .site-list__source {
+  margin: 20px 4px 4px;
+}
+
+/* The chosen Site keeps a check mark; the highlight only follows the arrow keys and the pointer.
+   The mark is drawn, not read: the option already says it is selected. */
+dialog.site-list .site-list__name::before {
+  content: '';
+  display: inline-block;
+  width: 1.25em;
+}
+
+dialog.site-list .site-list__option[aria-selected='true'] .site-list__name::before {
+  content: '✓';
+  content: '✓' / '';
+  color: var(--fg);
+}
+
+/* A placeholder reads as an example, never as a value already typed. */
+dialog.site-list .site-list__field input::placeholder {
+  font-style: italic;
+}
+
+/* A bad field: the error colour on its edge, and its cause under the fields. */
+dialog.site-list .site-list__field input[aria-invalid='true'] {
+  border-bottom-color: var(--error);
+  box-shadow: 0 1px 0 var(--error);
+}
+
+dialog.site-list .site-list__problems {
+  margin-top: 8px;
+  color: var(--error);
+  font-size: var(--small);
+}
+
+dialog.site-list .site-list__problems p {
+  margin: 0;
+}

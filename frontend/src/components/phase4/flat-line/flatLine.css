@@ -1,0 +1,46 @@
+/* The line without terrain sits under the Sun's reason, quieter than it: the Countdown speaks first. */
+.flat-line {
+  max-width: 44ch;
+  margin: -4px 0 clamp(16px, 3.5vh, 32px);
+  padding-left: 12px;
+  /* A flat line on the left edge: the bare horizon the sentence is about. */
+  border-left: 2px solid var(--track);
+  color: var(--dim);
+  font-size: var(--small);
+}
+
+.flat-line b {
+  font-family: var(--mono);
+  font-weight: 400;
+  color: var(--fg);
+  white-space: nowrap;
+}
+
+.flat-line--quiet {
+  border-left-style: dotted;
+}
+
+/* The Window without terrain: the real column first, the flat one dimmer beside it. */
+.flat-metrics__table thead th {
+  padding: 0 0 6px;
+  border-top: 0;
+  text-align: right;
+  font-size: var(--small);
+  color: var(--dim);
+}
+
+.flat-metrics__table thead td {
+  border-top: 0;
+}
+
+.flat-metrics__table tbody td + td {
+  padding-left: 16px;
+}
+
+.flat-metrics__flat {
+  color: var(--dim);
+}
+
+.flat-metrics__say {
+  max-width: 44ch;
+}

@@ -1,0 +1,463 @@
+/* The assistant (the requirement). Neither of the two meaning colours: amber is the Sun and blue is the
+   Earth, so the panel is drawn in the page's own greys, and an untraced number gets the plain
+   foreground with a dashed underline and a "!" rather than a third colour. */
+
+/* The button: a quiet control in the top bar, with an edge so it reads as clickable (the requirement).
+   The class is doubled to win over `.bar__nav button`, which strips the bar's buttons bare. */
+.ask-button.ask-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  /* The 44 px target rises into the bar's 20 px top padding, but never hangs below the bar: the bar
+     is drawn above the page, so anything below it would lie over the answer's first line once the
+     answer scrolls (the requirement). The bar grows by those 12 px instead. */
+  margin: -12px 0 0;
+  padding: 0 12px 0 8px;
+  border: 1px solid var(--edge);
+  border-radius: 22px;
+  background: var(--field);
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ask-button.ask-button:hover {
+  border-color: var(--dim);
+}
+
+.ask-button__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--dim);
+  border-radius: 50%;
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* The strip's place for the button. Empty on a wide screen, where the button is in the top bar. */
+.strip__ask:empty {
+  display: none;
+}
+
+/* On a phone the bar scrolls away, so the button goes into the pinned time strip, at the right end
+   of the Cursor's row, where a right thumb reaches it. It is never laid over the page: floating, it
+   covered the headline, the calendar, the miss table and the custom point's Check (the requirement). */
+@media (max-width: 760px) {
+  .strip:has(> .strip__ask:not(:empty)) {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .strip:has(> .strip__ask:not(:empty)) > :is(.strip__track, .strip__ticks, .strip__legend) {
+    grid-column: 2 / -1;
+  }
+
+  .strip__ask {
+    grid-column: 3;
+    grid-row: 1;
+    margin-bottom: 8px;
+  }
+
+  .strip__ask .ask-button.ask-button {
+    margin: 0;
+  }
+
+  /* With no strip (the Proof page, or while the first answer loads) the button stays in the top
+     bar, which then wraps instead of squeezing the app's name into a column. */
+  .bar:has(.ask-button) {
+    flex-wrap: wrap;
+  }
+
+  /* The cover and the Guide's tips sit at the foot of a phone screen too: the button steps aside
+     while they are up, as the rest of the app does behind them. */
+  .screen:has(> .cover, > .guide) .ask-button.ask-button {
+    visibility: hidden;
+  }
+}
+
+/* While the Site picker or any other dialog is open, the button steps aside, so nothing of theirs
+   can sit under it. The assistant's own sheet is left out: it covers the button already, and the
+   focus goes back to the button when the sheet closes. */
+.screen:has(.site-list, [aria-haspopup='listbox'][aria-expanded='true']) .ask-button.ask-button,
+body:has(dialog[open]:not(.ask)) .ask-button.ask-button {
+  visibility: hidden;
+}
+
+/* The sheet: over the answer column on a wide screen, the whole screen on a phone. */
+.ask {
+  inset: 0 0 0 auto;
+  width: min(100%, calc(30rem + 2 * var(--gutter)));
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.ask[open] {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.ask::backdrop {
+  background: rgb(8 9 10 / 0.6);
+}
+
+.ask__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px var(--gutter) 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ask__title {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1.75rem;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.ask__about {
+  margin-top: 4px;
+  color: var(--dim);
+  font-size: var(--small);
+}
+
+.ask__close {
+  flex: 0 0 auto;
+  min-height: 44px;
+  margin: -8px -8px 0 0;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  color: var(--dim);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.ask__close:hover {
+  color: var(--fg);
+}
+
+.ask__body {
+  overflow-y: auto;
+  padding: 20px var(--gutter);
+}
+
+.ask-empty {
+  display: grid;
+  gap: 16px;
+  max-width: 44ch;
+}
+
+.ask-empty__title {
+  color: var(--dim);
+  font-size: var(--small);
+}
+
+.ask-empty ul {
+  display: grid;
+  gap: 8px;
+  margin: -8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ask-example {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  background: var(--field);
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ask-example:hover {
+  border-color: var(--dim);
+}
+
+.ask-log {
+  display: grid;
+  gap: 28px;
+}
+
+.ask-turn {
+  display: grid;
+  gap: 10px;
+}
+
+/* The reader's question, set apart on the right like a note handed in. */
+.ask-question {
+  justify-self: end;
+  max-width: 85%;
+  padding: 8px 14px;
+  border-radius: 14px 14px 4px 14px;
+  background: var(--chosen);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ask-turn__who {
+  margin: 4px 0 -4px;
+  color: var(--dim);
+  font-size: var(--small);
+  font-weight: 400;
+}
+
+/* The answer reads like the app's own statements, a step smaller. */
+.ask-answer {
+  font-family: var(--serif);
+  font-size: 1.375rem;
+  line-height: 1.25;
+}
+
+/* Numbers in the mono, as in the app's statements; the mono runs large beside the serif. */
+.ask-number {
+  font-family: var(--mono);
+  font-size: 0.8em;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+}
+
+.ask-untraced {
+  background: none;
+  color: inherit;
+  text-decoration: underline dashed var(--fg);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+.ask-untraced::after {
+  content: '!';
+  margin-left: 1px;
+  font-family: var(--mono);
+  font-size: 0.6em;
+  vertical-align: super;
+}
+
+.ask-trace {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  color: var(--dim);
+  font-size: var(--small);
+}
+
+.ask-trace__mark {
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.ask-trace--short {
+  color: var(--fg);
+}
+
+.ask-trace__more {
+  display: block;
+  margin-top: 2px;
+  color: var(--dim);
+}
+
+.ask-offline {
+  padding: 8px 12px;
+  border: 1px dashed var(--edge);
+  border-radius: 8px;
+  color: var(--dim);
+  font-size: var(--small);
+}
+
+.ask-offline strong {
+  color: var(--fg);
+  font-weight: 500;
+}
+
+.ask-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 12px;
+  align-items: baseline;
+  font-size: var(--small);
+}
+
+.ask-sources__title {
+  color: var(--dim);
+}
+
+.ask-sources ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ask-sources a {
+  display: inline-block;
+  padding: 10px 0;
+  color: var(--fg);
+  text-decoration: underline dotted var(--dim);
+  text-underline-offset: 0.3em;
+}
+
+.ask-wait,
+.ask-problem {
+  color: var(--dim);
+  font-size: var(--small);
+}
+
+.ask-problem {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-left: 2px solid var(--fg);
+  color: var(--fg);
+}
+
+.ask-wait {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.ask-wait__long {
+  flex-basis: 100%;
+}
+
+.ask-wait__dots {
+  width: 24px;
+  height: 6px;
+  background: radial-gradient(circle, var(--dim) 2px, transparent 2.5px) 0 0 / 8px 6px repeat-x;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ask-wait__dots {
+    animation: ask-dots 1.2s steps(3) infinite;
+  }
+}
+
+@keyframes ask-dots {
+  from {
+    clip-path: inset(0 66% 0 0);
+  }
+  to {
+    clip-path: inset(0 -10% 0 0);
+  }
+}
+
+.ask-link {
+  justify-self: start;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.ask__foot {
+  display: grid;
+  gap: 6px;
+  padding: 12px var(--gutter) 16px;
+  border-top: 1px solid var(--line);
+}
+
+.ask-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 10px;
+  align-items: end;
+}
+
+.ask-form__label {
+  grid-column: 1 / -1;
+  color: var(--dim);
+  font-size: var(--small);
+}
+
+.ask-form__field {
+  min-height: 48px;
+  max-height: 30vh;
+  padding: 10px 12px;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  background: var(--field);
+  color: var(--fg);
+  font: inherit;
+  resize: vertical;
+}
+
+.ask-form__send {
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1px solid var(--fg);
+  border-radius: 24px;
+  background: var(--fg);
+  color: var(--bg);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ask-form__send:disabled {
+  border-color: var(--edge);
+  background: none;
+  color: var(--dim);
+  cursor: default;
+}
+
+.ask-form__hint,
+.ask__privacy,
+.ask-full {
+  color: var(--dim);
+  font-size: var(--small);
+}
+
+.ask-form__hint {
+  grid-column: 1 / -1;
+}
+
+.ask__privacy .ask-link,
+.ask-full .ask-link {
+  min-height: 0;
+  color: var(--dim);
+}
+
+@media (max-width: 760px) {
+  .ask {
+    width: 100%;
+    border-left: 0;
+  }
+
+  .ask-answer {
+    font-size: 1.25rem;
+  }
+}

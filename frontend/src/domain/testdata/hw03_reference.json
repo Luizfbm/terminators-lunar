@@ -1,0 +1,23 @@
+{
+  "_about": "Haworth HW03, Window from 2026-11-14T00:00Z for 708.73 h, as a validation reference: a Sunset 5.98 days after the start (19 November), two dark stretches before 6 December, the Sun up from there to the end of the Window. Rebuilt by hand because the test DEMs stop short of Haworth; the times are reference values, not the engine's to the minute.",
+  "start": "2026-11-14T00:00:00Z",
+  "end": "2026-12-13T12:43:48Z",
+  "events": [
+    { "type": "sunset", "t": "2026-11-19T23:31:00Z" },
+    { "type": "earthset", "t": "2026-11-20T09:10:00Z" },
+    { "type": "sunrise", "t": "2026-11-21T10:05:00Z" },
+    { "type": "sunset", "t": "2026-11-28T06:40:00Z" },
+    { "type": "earthrise", "t": "2026-11-29T03:20:00Z" },
+    { "type": "sunrise", "t": "2026-11-30T15:15:00Z" }
+  ],
+  "periods": [
+    { "body": "sun", "state": "visible", "start": "2026-11-14T00:00:00Z", "end": "2026-11-19T23:31:00Z" },
+    { "body": "sun", "state": "hidden", "start": "2026-11-19T23:31:00Z", "end": "2026-11-21T10:05:00Z" },
+    { "body": "sun", "state": "visible", "start": "2026-11-21T10:05:00Z", "end": "2026-11-28T06:40:00Z" },
+    { "body": "sun", "state": "hidden", "start": "2026-11-28T06:40:00Z", "end": "2026-11-30T15:15:00Z" },
+    { "body": "sun", "state": "visible", "start": "2026-11-30T15:15:00Z", "end": "2026-12-13T12:43:48Z" },
+    { "body": "earth", "state": "visible", "start": "2026-11-14T00:00:00Z", "end": "2026-11-20T09:10:00Z" },
+    { "body": "earth", "state": "hidden", "start": "2026-11-20T09:10:00Z", "end": "2026-11-29T03:20:00Z" },
+    { "body": "earth", "state": "visible", "start": "2026-11-29T03:20:00Z", "end": "2026-12-13T12:43:48Z" }
+  ]
+}

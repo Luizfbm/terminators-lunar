@@ -1,0 +1,95 @@
+{
+  "what": "Heights of LDEM_80S_20MPP_ADJ pixel centres around Site 001, read with rasterio straight from the fixture (fixtures/dem, release fixtures-dem-v1), not through deploy/globe_assets.py. Metres above the 1737.4 km sphere.",
+  "points": [
+    {
+      "latitude_deg": -89.466157783,
+      "longitude_deg": -136.952509049,
+      "metres_from_site": 2.0,
+      "height_m": 1947.5031
+    },
+    {
+      "latitude_deg": -89.468403356,
+      "longitude_deg": -137.212257576,
+      "metres_from_site": 101.9,
+      "height_m": 1942.4753
+    },
+    {
+      "latitude_deg": -89.46390133,
+      "longitude_deg": -136.694941874,
+      "metres_from_site": 98.1,
+      "height_m": 1946.3654
+    },
+    {
+      "latitude_deg": -89.463743126,
+      "longitude_deg": -137.193022692,
+      "metres_from_site": 99.4,
+      "height_m": 1949.587
+    },
+    {
+      "latitude_deg": -89.468562948,
+      "longitude_deg": -136.709814044,
+      "metres_from_site": 100.6,
+      "height_m": 1943.9869
+    },
+    {
+      "latitude_deg": -89.465758653,
+      "longitude_deg": -137.952323983,
+      "metres_from_site": 283.8,
+      "height_m": 1936.4381
+    },
+    {
+      "latitude_deg": -89.456835757,
+      "longitude_deg": -136.918986086,
+      "metres_from_site": 281.1,
+      "height_m": 1951.0718
+    },
+    {
+      "latitude_deg": -89.475479627,
+      "longitude_deg": -136.987223591,
+      "metres_from_site": 284.6,
+      "height_m": 1930.0303
+    },
+    {
+      "latitude_deg": -89.466394143,
+      "longitude_deg": -135.951503263,
+      "metres_from_site": 281.9,
+      "height_m": 1920.9158
+    },
+    {
+      "latitude_deg": -89.475073409,
+      "longitude_deg": -138.004761012,
+      "metres_from_site": 401.9,
+      "height_m": 1936.4961
+    },
+    {
+      "latitude_deg": -89.457068058,
+      "longitude_deg": -135.935157338,
+      "metres_from_site": 398.1,
+      "height_m": 1927.2911
+    },
+    {
+      "latitude_deg": -89.456443472,
+      "longitude_deg": -137.901684215,
+      "metres_from_site": 399.4,
+      "height_m": 1942.7723
+    },
+    {
+      "latitude_deg": -89.47572019,
+      "longitude_deg": -135.96843073,
+      "metres_from_site": 400.6,
+      "height_m": 1910.8346
+    },
+    {
+      "latitude_deg": -89.476268921,
+      "longitude_deg": -137.398688226,
+      "metres_from_site": 333.1,
+      "height_m": 1945.5237
+    },
+    {
+      "latitude_deg": -89.456090659,
+      "longitude_deg": -137.65387051,
+      "metres_from_site": 364.1,
+      "height_m": 1945.6348
+    }
+  ]
+}

@@ -1,0 +1,224 @@
+/* The polar map's markers, the ring on the chosen Site and the readout under the pointer (the requirement). */
+
+/* On the map the ground is pointed at, not dragged: a double click asks about the point. */
+.globe[data-mode='map'] canvas {
+  cursor: crosshair;
+}
+
+.globe__map {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.globe__region,
+.globe__site {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fg);
+  cursor: pointer;
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+}
+
+/* A finger needs more room than the marker shows. */
+.globe__region::after,
+.globe__site::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+
+@media (pointer: coarse) {
+  .globe__region::after,
+  .globe__site::after {
+    inset: -10px;
+  }
+}
+
+.globe__region {
+  width: 22px;
+  height: 22px;
+}
+
+.globe__count {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border: 1.5px solid var(--fg);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+/* The Region that holds the chosen Site is filled in. */
+.globe__region[data-chosen='true'] .globe__count {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.globe__name {
+  position: absolute;
+  left: 26px;
+  top: 2px;
+  color: var(--fg);
+  font-size: var(--small);
+  line-height: 18px;
+  white-space: nowrap;
+  text-shadow:
+    0 0 6px var(--bg),
+    0 0 2px var(--bg);
+}
+
+/* A name with no room beside its marker waits for the hover or the focus. */
+.globe__region[data-quiet='true'] .globe__name,
+.globe__site .globe__name {
+  visibility: hidden;
+}
+
+.globe__region:hover .globe__name,
+.globe__region:focus-visible .globe__name,
+.globe__site:hover .globe__name,
+.globe__site:focus-visible .globe__name {
+  visibility: visible;
+  z-index: 1;
+}
+
+.globe__region:hover,
+.globe__region:focus-visible,
+.globe__site:hover,
+.globe__site:focus-visible {
+  z-index: 2;
+}
+
+.globe__region:hover .globe__count,
+.globe__region:focus-visible .globe__count {
+  transform: scale(1.25);
+}
+
+.globe__region:focus-visible,
+.globe__site:focus-visible {
+  outline: none;
+}
+
+.globe__region:focus-visible .globe__count,
+.globe__site:focus-visible::before {
+  outline: 2px solid var(--fg);
+  outline-offset: 3px;
+}
+
+.globe__site {
+  width: 20px;
+  height: 20px;
+}
+
+.globe__site::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: #cfd3dc;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--bg) 70%, transparent);
+  transition: transform 0.15s ease;
+}
+
+.globe__site:hover::before,
+.globe__site:focus-visible::before {
+  transform: scale(1.5);
+}
+
+.globe__site .globe__name {
+  left: 22px;
+  top: 1px;
+}
+
+/* The chosen Site already has its name beside it. */
+.globe__site[aria-current='true'] .globe__name {
+  display: none;
+}
+
+/* The chosen Site: a ring and a dot, amber while the Sun is up there. */
+.globe__chosen {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--fg);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--bg) 60%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--bg) 60%, transparent);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.globe__chosen::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: var(--fg);
+}
+
+.globe__chosen[data-lit='true'] {
+  border-color: var(--sun);
+}
+
+.globe__chosen[data-lit='true']::after {
+  background: var(--sun);
+}
+
+.globe__back {
+  position: absolute;
+  right: var(--gutter);
+  bottom: 12px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--edge);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  backdrop-filter: blur(6px);
+  color: var(--fg);
+  font-size: var(--small);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.globe__back:hover {
+  background: var(--chosen);
+}
+
+@media (pointer: coarse) {
+  .globe__back {
+    min-height: 44px;
+  }
+}
+
+.globe__readout {
+  position: absolute;
+  padding: 2px 8px;
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.globe[data-dressed='false'] .globe__map,
+.globe[data-dressed='false'] .globe__chosen,
+.globe[data-dressed='false'] .globe__readout {
+  visibility: hidden;
+}
+
+/* On the map the layout gives the chosen Site's name its top left corner, clear of the markers. */
+.globe__pin.globe__pin--placed {
+  transform: none;
+}

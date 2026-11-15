@@ -1,0 +1,28 @@
+{
+  "projection": "south polar stereographic, sphere, true scale at the pole",
+  "proj4": "+proj=stere +lat_0=-90 +lat_ts=-90 +lon_0=0 +R=1737400 +units=m",
+  "sphere_radius_m": 1737400.0,
+  "pixel_of": "column = (x - x_min_m) / metres_per_pixel, row = (y_max_m - y) / metres_per_pixel; the Site's own pixel is at (size_px / 2, size_px / 2)",
+  "tiles": {
+    "001": {
+      "x_min_m": -14260.0,
+      "y_max_m": -8620.0,
+      "height_png": {
+        "file": "site_20m_001.png",
+        "size_px": 320,
+        "metres_per_pixel": 20.0,
+        "metres_above_1737400_m": {
+          "at_0": 1024.901,
+          "at_65535": 1959.418
+        }
+      }
+    }
+  },
+  "source": {
+    "product": "LDEM_80S_20MPP_ADJ",
+    "resolution_m": 20.0,
+    "resampling": "none: the source's own pixels",
+    "reference": "Barker et al. 2023, PGDA product 90, pgda.gsfc.nasa.gov/products/90"
+  },
+  "built_at": "fixture"
+}

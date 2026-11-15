@@ -1,0 +1,332 @@
+/* "If the lander misses" (requirement the implementation). Tokens from src/index.css; nothing new is coloured:
+   amber is still the Sun and blue still the Earth. */
+
+.miss {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 2.5rem;
+}
+
+.miss__title {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1.75rem;
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+.miss__subtitle {
+  margin: 1.25rem 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+  font-family: var(--serif);
+  font-size: 1.375rem;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.miss__say {
+  max-width: 44ch;
+}
+
+.miss__say b,
+.miss__psr b {
+  font-family: var(--mono);
+  font-size: 0.94em;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.miss__radius {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--small);
+}
+
+.miss__radius-label {
+  margin-right: 4px;
+  color: var(--dim);
+}
+
+.miss__radius button {
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  background: var(--field);
+  font-family: var(--mono);
+  cursor: pointer;
+}
+
+.miss__radius button:hover {
+  border-color: var(--dim);
+}
+
+.miss__radius button[aria-pressed='true'] {
+  border-color: var(--fg);
+  background: var(--chosen);
+}
+
+@media (pointer: coarse) {
+  .miss__radius button {
+    min-height: 44px;
+  }
+}
+
+.miss__waiting {
+  display: grid;
+  gap: 0.25rem;
+  max-width: 44ch;
+}
+
+.miss__waited {
+  font-family: var(--mono);
+}
+
+.miss__figure {
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.miss-figure {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  overflow: visible;
+}
+
+.miss-figure__ring {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.miss-figure__north path {
+  fill: var(--fg);
+}
+
+.miss-figure__north text {
+  fill: var(--fg);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.miss-figure__reach {
+  stroke: var(--dim);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.miss-figure__dot {
+  fill: var(--field);
+  stroke: var(--track);
+  stroke-width: 1.5;
+}
+
+.miss-figure__halo {
+  fill: none;
+  stroke: var(--fg);
+  stroke-width: 1.5;
+}
+
+.miss-figure__value {
+  fill: var(--dim);
+  font-family: var(--mono);
+  font-size: 11px;
+  dominant-baseline: middle;
+}
+
+.miss-figure__point--worst .miss-figure__value {
+  fill: var(--fg);
+}
+
+.miss-figure__worst {
+  fill: var(--fg);
+}
+
+.miss-figure--waiting .miss-figure__dot {
+  stroke: var(--edge);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .miss-figure--waiting .miss-figure__point {
+    animation: miss-wait 1.6s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes miss-wait {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.miss-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--small);
+}
+
+.miss-table th,
+.miss-table td {
+  padding: 0.3rem 0.75rem 0.3rem 0;
+  border-bottom: 1px solid var(--line);
+  font-weight: 400;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.miss-table td {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.miss-table__value {
+  white-space: nowrap;
+}
+
+.miss-table thead th {
+  color: var(--dim);
+}
+
+.miss-table__pick {
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--dim);
+  text-align: left;
+  text-decoration: underline dotted var(--track);
+  text-underline-offset: 0.3em;
+  cursor: pointer;
+}
+
+.miss-table__pick:hover,
+.miss-table__pick[aria-pressed='true'] {
+  color: var(--fg);
+}
+
+.miss-table__pick[aria-pressed='true'] {
+  text-decoration: none;
+}
+
+.miss-table__row--drawn td {
+  color: var(--fg);
+}
+
+@media (pointer: coarse) {
+  .miss-table__pick {
+    min-height: 44px;
+  }
+}
+
+.miss__aside {
+  max-width: 44ch;
+  padding-left: 12px;
+  border-left: 2px solid var(--edge);
+  color: var(--dim);
+  font-size: var(--small);
+}
+
+.miss__link {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fg);
+  font-size: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.miss-scale {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+}
+
+.miss-scale__axis {
+  stroke: var(--track);
+  stroke-width: 2;
+}
+
+.miss-scale__over {
+  fill: var(--terrain);
+}
+
+.miss-scale__tick line {
+  stroke: var(--track);
+}
+
+.miss-scale__tick text,
+.miss-scale__limit-label {
+  fill: var(--dim);
+  font-family: var(--mono);
+  font-size: 11px;
+  text-anchor: middle;
+}
+
+.miss-scale__limit {
+  stroke: var(--fg);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.miss-scale__limit-label {
+  fill: var(--fg);
+}
+
+.miss-scale__mark circle {
+  fill: var(--fg);
+}
+
+.miss-scale__mark text {
+  fill: var(--fg);
+  font-family: var(--mono);
+  font-size: 11px;
+  text-anchor: middle;
+}
+
+.miss-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem 1rem;
+  margin: 0;
+  font-size: var(--small);
+}
+
+.miss-facts div {
+  border-top: 1px solid var(--line);
+  padding-top: 0.35rem;
+}
+
+.miss-facts dt {
+  color: var(--dim);
+}
+
+.miss-facts dd {
+  margin: 0;
+  font-family: var(--mono);
+}
+
+.miss__source {
+  color: var(--dim);
+  text-decoration: underline dotted var(--track);
+  text-underline-offset: 0.3em;
+}
+
+.miss__source:hover {
+  color: var(--fg);
+}
+
+.miss__psr {
+  max-width: 44ch;
+}
