@@ -748,6 +748,7 @@ ENGINE_PATHS = (
     "/visibility/dsn",
     "/sites/{site_id}/year",
     "/sites/{site_id}/windows",
+    "/terrain/heights",
 )
 
 
