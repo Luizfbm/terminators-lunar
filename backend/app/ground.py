@@ -74,8 +74,8 @@ def terrain(site: catalog.Site, radius_m: float, slope_limit_deg: float) -> dict
         ) from missing
     except slope.NoCellInRadius as empty:
         raise ApiProblem(
-            "outside_coverage",
-            "Outside coverage",
+            "dem_too_coarse",
+            "DEM too coarse",
             f"The DEM is too coarse for this radius: {empty}.",
         ) from empty
     answer: dict[str, Any] = {

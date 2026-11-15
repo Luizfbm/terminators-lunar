@@ -9,7 +9,7 @@ Base URL: `https://lunar-api.luizfbm.win`. Locally, the Prism mock: `npx @stopli
 - All computation is in the backend (ADR 0002). The frontend picks the next event after the Cursor, composes the plain sentence from templates, formats numbers and draws.
 - Instants are UTC with `Z`. Azimuth is clockwise from local north, 0 to 360. Elevation is above the local horizontal plane, not above the terrain.
 - A Query is either `site_id` or `latitude_deg` + `longitude_deg`, never both, plus `start`, `duration_hours` (default 708.73) and `observer_height_m` (default 2). It all goes in the URL, along with the Cursor and the language.
-- Errors are RFC 9457 `application/problem+json` with a stable `code`: `outside_coverage`, `window_out_of_range`, `ambiguous_site`, `missing_site`, `invalid_parameter`. Translate the `code`. Don't show `detail`, which is English only.
+- Errors are RFC 9457 `application/problem+json` with a stable `code`: `outside_coverage`, `dem_too_coarse` (only `/terrain`: a DEM covers the point but is too coarse for the radius), `window_out_of_range`, `ambiguous_site`, `missing_site`, `invalid_parameter`. Translate the `code`. Don't show `detail`, which is English only.
 - `Cache-Status: lunar-api; hit` means the answer came from the cache (Curated Sites). `fwd=miss` means it was computed now. A cold Curated Site or a custom Site takes from about 1 s up to 20 s on the VPS, so show a loading state.
 - The mock always returns the contract's example, whatever you ask for (`/visibility?site_id=001` returns the CR01 example). To get an error from the mock, send `Prefer: code=404` or `Prefer: code=422`.
 

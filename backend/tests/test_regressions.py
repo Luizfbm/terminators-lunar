@@ -1637,3 +1637,32 @@ def test_route_takes_the_coarse_grid_as_a_query_string() -> None:
         assert body["coarse_m"] == coarse
         seen[coarse] = (body["plans"][0]["hazards_hit"], body["plans"][0]["distance_m"])
     assert seen == {60: (11, 2289), 20: (12, 2356)}
+
+
+def test_a_dem_too_coarse_for_the_radius_has_its_own_problem_code(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # 15/11/2026, found building the slope panel over LDEM_128: GET /terrain at a typed global
+    # point with the default 100 m radius was a 422 `outside_coverage`, the same code as a point
+    # no DEM covers, so the frontend had to match the English `detail` to tell "the DEM is too
+    # coarse for this radius" from "there is no DEM here". The cells of LDEM_128 are 236.9 m
+    # across (written out here, not read from the code: 128 px/deg of a 1737.4 km sphere), so
+    # with the Site on a cell corner none of them has its centre within 100 m.
+    from tests.test_global_dem import _write_global
+
+    _write_global(tmp_path)
+    monkeypatch.setenv("LUNAR_DEM_DIR", str(tmp_path))
+    coarse = client.get("/terrain", params={"latitude_deg": 10.0, "longitude_deg": 20.0})
+    assert coarse.status_code == 422, coarse.text
+    problem = coarse.json()
+    assert problem["code"] == "dem_too_coarse"
+    assert problem["type"].endswith("/dem-too-coarse")
+    assert "no cell centre of LDEM_128 (236.9 m) lies within 100 m" in problem["detail"]
+
+    # A point no DEM covers keeps its code: 85°N is a pole cap that holds only LDEM_60N_240M,
+    # which this server does not have, and a Curated Site with no DEM folder at all.
+    nothing = client.get("/terrain", params={"latitude_deg": 85.0, "longitude_deg": 20.0})
+    assert (nothing.status_code, nothing.json()["code"]) == (422, "outside_coverage")
+    monkeypatch.setenv("LUNAR_DEM_DIR", str(tmp_path / "empty"))
+    empty = client.get("/terrain", params={"site_id": "001"})
+    assert (empty.status_code, empty.json()["code"]) == (422, "outside_coverage")
