@@ -1,0 +1,3 @@
+# All ephemeris and horizon computation lives in the backend
+
+The frontend only draws what the contract returns; the backend (Python, spiceypy, rasterio) computes Sun and Earth positions, horizon masks and every metric. An earlier proposal computed azimuth and elevation in the browser from precomputed sub-solar and sub-Earth points, which would make the app lighter but split the science across two languages and two test suites. One validated engine is easier to keep precise and fits the contract-first split between backend and frontend workers. Curated Sites are precomputed and cached so the demo never waits on a live computation.
