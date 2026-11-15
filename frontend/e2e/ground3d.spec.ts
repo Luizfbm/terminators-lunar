@@ -250,3 +250,21 @@ test.describe('on a phone', () => {
   })
 })
 
+
+// The real ground is lit by a Lunar-Lambert shader patched into three's Lambert one.
+// The unit tests hold the sum and the patch, but only a browser compiles GLSL: a typo in it, or a
+// three upgrade that moves the line, shows as a shader error in the console and a black ground.
+test('the ground\'s regolith shader compiles: no shader error is logged and the view still opens', async ({ page }) => {
+  const problems: string[] = []
+  page.on('console', (message) => {
+    if (message.type() === 'error' && /WebGLProgram|Shader Error|THREE\./.test(message.text())) problems.push(message.text())
+  })
+  page.on('pageerror', (error) => problems.push(error.message))
+  await serveHeights(page, { south_pole_fine: { size: 128, metresPerPixel: 1600 } })
+  await open(page)
+  await expect(sky(page)).toHaveAttribute('data-ground', 'real')
+  // Looking round draws the ground again from another side, so every material has been used.
+  await page.getByRole('button', { name: 'Look right' }).click()
+  await expect.poll(async () => Number(await sky(page).getAttribute('data-yaw'))).not.toBeNaN()
+  expect(problems).toEqual([])
+})
