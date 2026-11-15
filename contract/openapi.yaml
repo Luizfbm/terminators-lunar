@@ -34,7 +34,7 @@ tags:
   - name: hazard
     description: >-
       Steep ground near a Site at 5 m, Normal navigation against Multiresolution, the Rovers and
-      their drives (Eduardo's multiresolution work).
+      their drives (our group's multiresolution work).
 
 paths:
   /health:
@@ -653,7 +653,7 @@ paths:
         full Sun at 1 au, the power the lander draws, and the battery's capacity. At each timeline
         step the panels give `panel_power_w` × Sun fraction × (1 au / Sun distance)² × incidence
         factor, the load is taken out, and the charge stays between empty and full. The battery
-        starts full. The incidence factor follows Eduardo's panel-geometry model, with A and E the
+        starts full. The incidence factor follows our group's panel-geometry model, with A and E the
         Sun's azimuth and elevation at the step (its centre): `sun` (the default) keeps the panels
         facing the Sun, factor 1; `fixed` stands them upright facing `panel_azimuth_deg`, factor
         max(0, cos E · cos(A − P)), so they only get the Sun while it is on their side, about half
@@ -971,7 +971,7 @@ paths:
       operationId: listRovers
       summary: The Rovers a mission can bring
       description: |
-        Eight Rovers from Eduardo's cockpit catalogue (commit 2195fcb): four for the Moon and four
+        Eight Rovers from our group's cockpit catalogue (commit 2195fcb): four for the Moon and four
         Mars rovers asked "what if it went to the Moon?". Each number has its source in
         `source_reference`; the ones the source does not give are listed in `estimated` and the
         screen marks them. `darkness_tolerance_hours` is the GLOSSARY's Darkness tolerance:
@@ -993,7 +993,7 @@ paths:
       operationId: getSiteHazard
       summary: How much of the steep ground each kind of navigation misses near a Site
       description: |
-        Eduardo's Monte Carlo over the real LOLA 5 m data (PGDA product 78, Barker et al. 2021):
+        Our group's Monte Carlo over the real LOLA 5 m data (PGDA product 78, Barker et al. 2021):
         from a coarse grid (60 m or 20 m), how much of the ground steeper than `slope_limit_deg`
         at 5 m does each navigation miss? Normal navigation reads the coarse grid only;
         Multiresolution adds the 5 m detail only where the laser really measured (LDEC > 0) and
@@ -1028,7 +1028,7 @@ paths:
       summary: The 10 x 10 km ground grid nearest a Site
       description: |
         The central 10 x 10 km of the PGDA 78 tile nearest the Site, as 200 x 200 cells of 50 m,
-        built by Eduardo's `build_map_bundle.py` from the official 5 m layers (surf, ldec, slp,
+        built by our group's `build_map_bundle.py` from the official 5 m layers (surf, ldec, slp,
         slperr). Arrays are base64, little-endian, row-major, `n` x `n`; row 0 is the +y edge and
         column 0 the -x edge of the polar stereographic plane, centred on `centre`. Decode each
         value as described in `encoding`. 422 `no_hazard_grid` when no grid lies within 15 km.
@@ -1094,7 +1094,7 @@ paths:
       operationId: getSiteRoute
       summary: A drive across the grid, planned by Normal navigation and by Multiresolution
       description: |
-        Plans the same drive twice on the Site's hazard grid with Eduardo's A* planner
+        Plans the same drive twice on the Site's hazard grid with our group's A* planner
         (`planGridAStar`, ported from `rover_tese_engine.js`): Normal navigation sees only the
         coarse grid (`coarse_m`); Multiresolution sees the 5 m slope, the laser density and the
         margin at `confidence_level`. Each plan is then driven at 50 m steps and scored against the
@@ -1103,14 +1103,14 @@ paths:
         The Rover is `rover_id` from `/rovers`, or the numbers given one by one (`slope_limit_deg`,
         `battery_wh`, `power_shadow_w`, `solar_w`, `rtg_w`), which override the catalogue's.
         `sun_fraction` is the Sun fraction the panels get during the drive, usually the Site's at
-        the Cursor. The planner's costs, the speed and the battery model are Eduardo's and are not
+        the Cursor. The planner's costs, the speed and the battery model are our group's and are not
         from a paper: `assumptions` lists every one of them.
 
         `swarm` (with `swarm=true`) is an illustration for the animation, not a result: 100
         agents per generation are blended toward the Multiresolution path as the generations go,
         and the first two generations die on a lowered slope limit. Its survival counts are not
         evidence for either navigation. `solar_points` are sunlit-facing spots along the path,
-        by Eduardo's local hillshade rule with the Sun at `sun_azimuth_deg`, for the animation
+        by our group's local hillshade rule with the Sun at `sun_azimuth_deg`, for the animation
         only; they carry no energy.
 
         422 `no_hazard_grid` when no grid lies within 15 km, `invalid_parameter` for a start or
@@ -2618,7 +2618,7 @@ components:
           description: The Site falls inside the 10 x 10 km grid.
         lroc:
           type: object
-          description: LROC NAC images that cover the grid, from Eduardo's survey of the LROC archive.
+          description: LROC NAC images that cover the grid, from our group's survey of the LROC archive.
           required: [images_covering, best_resolution_m_px, best_incidence_deg, best_product, viewer_url]
           properties:
             images_covering: { type: integer, minimum: 0 }
@@ -3007,7 +3007,7 @@ components:
         assumptions:
           type: object
           description: >-
-            Every planner and battery number that is Eduardo's choice rather than a measurement or
+            Every planner and battery number that is our group's choice rather than a measurement or
             a published value, by name, so the screen can say so.
           additionalProperties: { type: number }
         swarm:
