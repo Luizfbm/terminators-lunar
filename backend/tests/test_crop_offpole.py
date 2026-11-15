@@ -89,3 +89,46 @@ def test_a_stale_window_is_cut_again(tmp_path: Path) -> None:
     assert crop.needs_cut(path, name, {name: crop.digest(path)}) is False
     assert crop.needs_cut(path, name, {name: "0" * 64}) is True
     assert crop.needs_cut(tmp_path / "missing.TIF", name, {}) is True
+
+
+def test_the_error_window_is_cut_on_the_dem_windows_grid(tmp_path: Path) -> None:
+    """Chandrayaan-3's `_ERR` window comes from the same bounds as its DEM window (issue 51)."""
+    lat, lon, half = -69.373, 32.319, 2000.0
+    left, bottom, right, top = crop._polar_bounds(lat, lon, 4 * half)
+    res = 60.0
+    width, height = int((right - left) / res), int((top - bottom) / res)
+    transform = Affine(res, 0, left, 0, -res, top)
+    crs = rasterio.crs.CRS.from_proj4(
+        "+proj=stere +lat_0=-90 +lat_ts=-90 +lon_0=0 +R=1737400 +units=m"
+    )
+    rng = np.random.default_rng(3)
+    for name, values in (
+        ("LDEM_60S_60MPP_ADJ", 1000.0 + rng.normal(0, 5, (height, width))),
+        ("LDEM_60S_60MPP_ADJ_ERR", np.abs(rng.normal(0.5, 0.1, (height, width)))),
+    ):
+        with rasterio.open(
+            tmp_path / f"{name}.TIF",
+            "w",
+            driver="GTiff",
+            width=width,
+            height=height,
+            count=1,
+            dtype="float32",
+            crs=crs,
+            transform=transform,
+        ) as source:
+            source.write(values.astype(np.float32), 1)
+
+    dem, error = tmp_path / "cut" / "dem.TIF", tmp_path / "cut" / "err.TIF"
+    dem.parent.mkdir()
+    crop._ldem("LDEM_60S_60MPP_ADJ", tmp_path, lat, lon, half, dem)
+    crop._ldem("LDEM_60S_60MPP_ADJ" + crop.ERROR_SUFFIX, tmp_path, lat, lon, half, error)
+    crop._same_grid(dem, error)
+    with rasterio.open(dem) as a, rasterio.open(error) as b:
+        assert a.shape == b.shape and a.shape[0] > 10
+        assert a.transform.almost_equals(b.transform)
+        assert float(b.read(1).max()) < 2.0  # metres of error, not heights
+    # A window on another grid is refused, not silently read as if it matched.
+    crop._ldem("LDEM_60S_60MPP_ADJ_ERR", tmp_path, lat, lon, half / 2, error.with_name("e2.TIF"))
+    with pytest.raises(SystemExit):
+        crop._same_grid(dem, error.with_name("e2.TIF"))
