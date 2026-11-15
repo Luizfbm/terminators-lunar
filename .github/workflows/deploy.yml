@@ -1,8 +1,9 @@
 name: Deploy
 
+# Manual only: deploys are done by SSH after both halves of CI are green on main (see
+# CLAUDE.md, "Deploy"). A push to main no longer starts it, so it never runs on a machine
+# this repo cannot use.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -11,7 +12,7 @@ concurrency:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, lunar-vps]
     environment: production
     steps:
       - name: Configure SSH
