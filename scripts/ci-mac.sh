@@ -16,9 +16,18 @@
 # set). The @timing tests assert how long something took, so they must not share the machine:
 # they run alone, with one worker, once both groups are done. Nothing is ever re-run until it passes.
 #
+# Only the groups a change can break run (LUNAR_CI_BASE, set by mac.yml on a pull request, is the
+# commit to compare with; without it everything runs, as on a push to main):
+#   contract/, .github/, scripts/, fixtures/, or a file at the root   both groups
+#   backend/ or validation/                                         the backend group
+#   frontend/                                                       the frontend group
+#   anything else (docs/, *.md)                                     no group
+# The e2e is never cut by file: one header button broke phone tests in specs nobody touched.
+#
 #   scripts/ci-mac.sh            # check HEAD and report
 #   scripts/ci-mac.sh --no-report
 #   LUNAR_E2E_WORKERS=4 scripts/ci-mac.sh
+#   LUNAR_CI_BASE=origin/main scripts/ci-mac.sh   # only what changed since main
 set -Eeuo pipefail
 
 ROOT=$(git rev-parse --show-toplevel)
@@ -26,6 +35,24 @@ cd "$ROOT"
 REPO=Luizfbm/terminators-lunar
 REPORT=1
 [ "${1:-}" = "--no-report" ] && REPORT=0
+
+RUN_BACKEND=1
+RUN_FRONTEND=1
+if [ -n "${LUNAR_CI_BASE:-}" ]; then
+  RUN_BACKEND=0
+  RUN_FRONTEND=0
+  while IFS= read -r path; do
+    case "$path" in
+      contract/* | .github/* | scripts/* | fixtures/*) RUN_BACKEND=1 RUN_FRONTEND=1 ;;
+      backend/* | validation/*) RUN_BACKEND=1 ;;
+      frontend/*) RUN_FRONTEND=1 ;;
+      docs/* | *.md) ;;
+      */*) ;;
+      *) RUN_BACKEND=1 RUN_FRONTEND=1 ;; # a file at the root (lock files, tool config)
+    esac
+  done < <(git diff --name-only "$(git merge-base "$LUNAR_CI_BASE" HEAD)" HEAD)
+fi
+echo "groups: backend=$RUN_BACKEND frontend=$RUN_FRONTEND"
 
 if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
   echo "The checkout has uncommitted changes: the result would not belong to $(git rev-parse --short HEAD)." >&2
@@ -122,18 +149,22 @@ group() { # group <name> <function>: runs in a subshell, everything it prints go
 
 status pending "running on Luiz's Mac"
 
-run "DEM fixtures" bash fixtures/dem/fetch.sh
+[ "$RUN_BACKEND" = 0 ] || run "DEM fixtures" bash fixtures/dem/fetch.sh
 run "contract lint" npx --yes @redocly/cli@2.77.0 lint contract/openapi.yaml
 
 step="backend and frontend groups"
-group backend backend_group &
-backend_pid=$!
-group frontend frontend_group &
-frontend_pid=$!
 backend_rc=0
 frontend_rc=0
-wait "$backend_pid" || backend_rc=$?
-wait "$frontend_pid" || frontend_rc=$?
+if [ "$RUN_BACKEND" = 1 ]; then
+  group backend backend_group &
+  backend_pid=$!
+fi
+if [ "$RUN_FRONTEND" = 1 ]; then
+  group frontend frontend_group &
+  frontend_pid=$!
+fi
+[ "$RUN_BACKEND" = 0 ] || wait "$backend_pid" || backend_rc=$?
+[ "$RUN_FRONTEND" = 0 ] || wait "$frontend_pid" || frontend_rc=$?
 
 failed=()
 for name in backend frontend; do
@@ -146,7 +177,7 @@ for name in backend frontend; do
   fi
 done
 
-if [ ${#failed[@]} -eq 0 ]; then
+if [ ${#failed[@]} -eq 0 ] && [ "$RUN_FRONTEND" = 1 ]; then
   step="e2e @timing"
   echo "== [main] $step" >&3
   timing_rc=0
@@ -169,5 +200,6 @@ fi
 
 rm -rf "$LOGS"
 took=$(( $(date +%s) - started ))
-status success "lint, types, pytest, validation, vitest, e2e in ${took}s"
+ran=$([ "$RUN_BACKEND" = 1 ] && printf 'backend ')$([ "$RUN_FRONTEND" = 1 ] && printf 'frontend+e2e ')
+status success "contract lint, ${ran:-no group (docs only) }in ${took}s"
 echo "mac-gates passed for $(git rev-parse --short HEAD) in ${took}s"

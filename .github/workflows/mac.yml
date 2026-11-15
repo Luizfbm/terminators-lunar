@@ -26,9 +26,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          # The script refuses a checkout with uncommitted changes, and the result must belong
-          # to this commit: nothing left over from an earlier run.
-          clean: true
+          # Untracked files stay (node_modules, the backend venv, the DEM fixtures), so a run does
+          # not fetch them again. Tracked files are reset to this commit, and the script refuses a
+          # checkout with uncommitted changes to tracked files.
+          clean: false
+          # The pull request's base must be here to compare with.
+          fetch-depth: 0
       - run: scripts/ci-mac.sh
         env:
           GH_TOKEN: ${{ github.token }}
+          # On a pull request only the groups its changes can break run; a push to main runs all.
+          LUNAR_CI_BASE: ${{ github.event.pull_request.base.sha }}
