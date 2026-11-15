@@ -21,6 +21,7 @@ from fastapi.testclient import TestClient
 
 from app import cache, catalog, clones, engine, horizon, uncertainty
 from app.main import app
+from tests.test_polar_wide import W20, W60, W240, _dems
 
 client = TestClient(app)
 # CR05 in late November 2026: the Sun sets and the Earth sets inside the Window.
@@ -668,3 +669,41 @@ def test_the_curated_sites_bands_are_warmed_after_everything_else(
     )
     assert answer.status_code == 200
     assert answer.headers["cache-status"] == "lunar-api; hit"
+
+
+# --- a typed point past the 80 m square (60 m DEM, no published error) -----------------------
+
+
+def test_the_band_of_a_point_the_60_m_dem_answers_lists_it_as_uncovered(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """15/11/2026: the band asked the polar ladder for its bands, so a point past the 80 m
+    square, which `/visibility` answers with the 60 m DEM, got a failure instead of a band."""
+    _dems(tmp_path, with_60=True, eighty_covers_site=False)
+    for product in (W20, W240):
+        source = tmp_path / f"{product}.TIF"
+        with rasterio.open(source) as dem:
+            profile = {**dem.profile, "dtype": "float32", "nodata": float("nan")}
+            error = np.full((dem.height, dem.width), SIGMA_M, dtype=np.float32)
+        error_path = tmp_path / f"{product}{horizon.ERROR_SUFFIX}.TIF"
+        with rasterio.open(error_path, "w", **profile) as out:
+            out.write(error, 1)
+    monkeypatch.setenv("LUNAR_DEM_DIR", str(tmp_path))
+    params = {
+        "latitude_deg": -84.0,
+        "longitude_deg": 0.0,
+        "start": "2026-11-14T00:00:00Z",
+        "duration_hours": 100,
+    }
+
+    plain = client.get("/visibility", params=params)
+    assert plain.status_code == 200, plain.text
+    assert [d["product"] for d in plain.json()["provenance"]["dems"]] == [W20, W60, W240]
+
+    band = wait_for_band(params)
+    assert band["clones"] == CLONES
+    assert band["uncovered"] == [W60]
+    assert [p["dem"] for p in band["error_products"]] == [W20, W240]
+    assert all(metric["low"] <= metric["high"] for metric in band["metrics"].values()), band[
+        "metrics"
+    ]

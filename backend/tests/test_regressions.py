@@ -20,6 +20,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
+from app import horizon
 from app.main import app
 from tests.assistant_stub import (
     call,
@@ -1119,3 +1120,123 @@ def test_the_model_gets_durations_in_the_app_format_and_where_they_count_from(
     rules = scripted.bodies[0]["messages"][0]["content"]
     assert "5 d 23 h" in rules and "never as decimal days" in rules
     assert "from the start of the Window" in rules and "Cursor" in rules
+
+
+_MOON_RADIUS_M = 1_737_400.0
+
+
+def _bilinear(grid: Any, transform: Any, x: Any, y: Any) -> Any:
+    """Bilinear height at map points, written for this test (the engine has its own)."""
+    import numpy as np
+
+    col = (x - transform.c) / transform.a - 0.5
+    row = (y - transform.f) / transform.e - 0.5
+    c0, r0 = np.floor(col).astype(int), np.floor(row).astype(int)
+    fc, fr = col - c0, row - r0
+    return (
+        grid[r0, c0] * (1 - fc) * (1 - fr)
+        + grid[r0, c0 + 1] * fc * (1 - fr)
+        + grid[r0 + 1, c0] * (1 - fc) * fr
+        + grid[r0 + 1, c0 + 1] * fc * fr
+    )
+
+
+# 15/11/2026: a typed point past the 80 m DEM's square (here 81°S, 10°E) answered 422
+# outside-coverage, though the API takes typed points up to 80°S: the 80 m DEM is ±304 km
+# around the pole and the rays walk it out to 100 km. The 60 m DEM, which reaches 60°S, walks
+# those 5 to 100 km now (horizon.POLAR_WIDE). It runs only where the DEM folder has the 60 m
+# DEM (LUNAR_DEM_DIR on the full data); the fixtures and CI do not.
+_WIDE_DEM = horizon.dem_dir() / f"{horizon.WIDE_PRODUCT}.TIF"
+_PAST_THE_SQUARE = (-81.0, 10.0)
+
+
+def _polar_xy(latitude: Any, longitude: Any) -> tuple[Any, Any]:
+    """South polar stereographic on the 1737.4 km sphere, written for this test."""
+    import numpy as np
+
+    rho = 2.0 * _MOON_RADIUS_M * np.tan(np.pi / 4.0 + latitude / 2.0)
+    return rho * np.sin(longitude), rho * np.cos(longitude)
+
+
+@pytest.mark.skipif(
+    not _WIDE_DEM.is_file(),
+    reason=f"{horizon.WIDE_PRODUCT}.TIF is not in the DEM folder ({horizon.dem_dir()})",
+)
+def test_a_typed_point_past_the_80_m_square_is_answered_by_the_60_m_dem() -> None:
+    import math
+
+    import numpy as np
+    import rasterio
+    from rasterio.windows import from_bounds  # type: ignore[import-untyped]
+
+    payload = visibility(
+        {
+            "latitude_deg": _PAST_THE_SQUARE[0],
+            "longitude_deg": _PAST_THE_SQUARE[1],
+            "start": "2026-11-15T00:00:00Z",
+        }
+    )
+    samples = payload["horizon"]["samples"]
+    assert len(samples) == 720
+    assert all(math.isfinite(s["elevation_deg"]) for s in samples)
+    products = [d["product"] for d in payload["provenance"]["dems"]]
+    assert products == ["LDEM_80S_20MPP_ADJ", horizon.WIDE_PRODUCT, "LDEM_60S_240MPP_ADJ"]
+
+    # The same walk, written here: 20 m to 5 km, 60 m to 100 km, 240 m to 300 km.
+    lat0, lon0 = (math.radians(v) for v in _PAST_THE_SQUARE)
+    site_xy = _polar_xy(np.array(lat0), np.array(lon0))
+    windows: dict[str, Any] = {}
+    for product, reach in (
+        ("LDEM_80S_20MPP_ADJ", 6_000.0),
+        (horizon.WIDE_PRODUCT, 105_000.0),
+        ("LDEM_60S_240MPP_ADJ", 305_000.0),
+    ):
+        with rasterio.open(horizon.dem_dir() / f"{product}.TIF") as dataset:
+            window = (
+                from_bounds(
+                    float(site_xy[0]) - reach,
+                    float(site_xy[1]) - reach,
+                    float(site_xy[0]) + reach,
+                    float(site_xy[1]) + reach,
+                    dataset.transform,
+                )
+                .round_offsets()
+                .round_lengths()
+            )
+            grid = dataset.read(1, window=window).astype(np.float64)
+            windows[product] = (grid, dataset.window_transform(window))
+    grid, transform = windows["LDEM_80S_20MPP_ADJ"]
+    ground = float(_bilinear(grid, transform, site_xy[0], site_xy[1]))
+    observer = ground + payload["query"]["observer_height_m"]
+    up = np.array(
+        [math.cos(lat0) * math.cos(lon0), math.cos(lat0) * math.sin(lon0), math.sin(lat0)]
+    )
+    east = np.array([-math.sin(lon0), math.cos(lon0), 0.0])
+    north = np.cross(up, east)
+
+    def walk(azimuth: float) -> float:
+        bearing = math.radians(azimuth)
+        heading = math.cos(bearing) * north + math.sin(bearing) * east
+        best = -math.inf
+        for product, steps in (
+            ("LDEM_80S_20MPP_ADJ", ((0.1, 0.1, 500.0), (1.0, 501.0, 5_000.0))),
+            (horizon.WIDE_PRODUCT, ((10.0, 5_010.0, 100_000.0),)),
+            ("LDEM_60S_240MPP_ADJ", ((50.0, 100_050.0, 300_000.0),)),
+        ):
+            g, t = windows[product]
+            d = np.concatenate([np.arange(low, high, step) for step, low, high in steps])
+            theta = d / _MOON_RADIUS_M
+            point = up[None, :] * np.cos(theta)[:, None] + heading[None, :] * np.sin(theta)[:, None]
+            x, y = _polar_xy(np.arcsin(point[:, 2]), np.arctan2(point[:, 1], point[:, 0]))
+            r = _MOON_RADIUS_M + _bilinear(g, t, x, y)
+            elevation = np.degrees(
+                np.arctan2(r * np.cos(theta) - (_MOON_RADIUS_M + observer), r * np.sin(theta))
+            )
+            best = max(best, float(np.max(elevation)))
+        return best
+
+    # The walk can only miss a peak the engine's zoom finds: never above it, under it by little.
+    for azimuth in (0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0):
+        engine = samples[round(azimuth / 0.5)]["elevation_deg"]
+        independent = walk(azimuth)
+        assert independent - 0.0005 <= engine <= independent + 0.003, (azimuth, engine, independent)

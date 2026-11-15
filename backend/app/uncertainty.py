@@ -222,7 +222,7 @@ def request(
     `/visibility` does (DemUnavailable, Busy) instead of failing in the background. A job
     that failed reports its error to the next caller, once, and the one after starts again.
     """
-    found = clones.coverage(site["id"])
+    found = clones.coverage(site["latitude_deg"], site["longitude_deg"], site["id"])
     key = _key(site, start, duration_hours, height_m, found)
     with _lock:
         body = _results.get(key)

@@ -10,3 +10,5 @@ Most Sites have no 5 m elevation data, so their real micro-terrain shadows are u
 ## Consequences
 
 - The 5 m DEM itself is about 90 % interpolated, so it is a better estimate, not ground truth; validation cannot treat it as the reference.
+
+Status note, 15/11/2026 (decided by Luiz): a typed point past the 80 m DEM's square (between about 83.3°S and 80°S) is answered with the 60 m DEM `LDEM_60S_60MPP_ADJ` where the 80 m one would be. Its answer is the "80" rung of the Resolution ladder, and `provenance.dems` names the real product. The 60 m product has no per-pixel error in our data, so the Uncertainty band lists it in `uncovered` and does not vary its heights (ADR 0006).

@@ -106,9 +106,13 @@ class Coverage:
         return tuple(band for band in self.bands if band not in self.covered)
 
 
-def coverage(site_id: str | None) -> Coverage:
-    folder, ladder = horizon.ladder_for(site_id)
-    bands = horizon.rung(20.0, ladder)
+def coverage(latitude_deg: float, longitude_deg: float, site_id: str | None) -> Coverage:
+    """The bands that walk this point's rays (horizon.bands_for) and which have an error raster.
+
+    The 60 m DEM that answers a typed point past the 80 m square has no published error
+    raster in our data, so it lands in `uncovered`: its heights are not varied.
+    """
+    folder, bands = horizon.bands_for(latitude_deg, longitude_deg, site_id)
     covered = tuple(band for band in bands if horizon.error_path(folder, band).is_file())
     return Coverage(folder, bands, covered)
 
@@ -147,7 +151,10 @@ def _read_window(
         latitude_deg, longitude_deg, azimuths, np.array([band.outer_m], dtype=np.float64)
     )
     x, y = horizon._project(
-        band, np.append(lat.ravel(), latitude_deg), np.append(lon.ravel(), longitude_deg)
+        band,
+        np.append(lat.ravel(), latitude_deg),
+        np.append(lon.ravel(), longitude_deg),
+        longitude_deg,
     )
     with (
         horizon._LOCK,
@@ -198,12 +205,13 @@ class CloneSource:
     ) -> None:
         self.site = site
         self.height_m = height_m
-        self.coverage = found or coverage(site["id"])
         self.correlation_m = correlation_m() if correlation is None else correlation
         self.seed = SEED if seed is None else seed
         # Same placement as horizon.mask(): off the pole by a hair, rounded to 7 places.
-        self.latitude_deg = round(max(site["latitude_deg"], horizon.POLE_LATITUDE_DEG), 7)
-        self.longitude_deg = round(site["longitude_deg"], 7)
+        self.latitude_deg, self.longitude_deg = horizon._placed(
+            site["latitude_deg"], site["longitude_deg"]
+        )
+        self.coverage = found or coverage(self.latitude_deg, self.longitude_deg, site["id"])
         self._windows: list[_Window] = []
         for band in self.coverage.covered:
             window = _read_window(self.coverage.folder, band, self.latitude_deg, self.longitude_deg)
