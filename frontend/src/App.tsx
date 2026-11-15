@@ -13,6 +13,7 @@ import { StageStatus } from './components/stageStatus/StageStatus'
 import { limitText } from './components/stageStatus/format'
 import { STRINGS as STAGE_STRINGS } from './components/stageStatus/strings'
 import { ClassroomSheet } from './components/phase4/classroom/Sheet'
+import { DriveSheet } from './components/drive/DriveSheet'
 import { Proof } from './components/Proof'
 import { TimeStrip } from './components/TimeStrip'
 import { siteName } from './components/siteName'
@@ -431,6 +432,8 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
             ))}
           </p>
           {result && stage.shown === 'ground' && stage.phase === 'idle' && <ClassroomSheet />}
+          {/* Rover and drive (#100): the Rover choice, the Hazard inspector, the simulation and the walk. */}
+          {result && answer && <DriveSheet result={result} coverage={answer.meta.coverage} cursorMs={cursorMs} />}
         </div>
       </section>
 
