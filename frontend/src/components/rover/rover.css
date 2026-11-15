@@ -1,0 +1,306 @@
+/* The rover and mission picker. Amber and blue belong to the Sun and the Earth, so nothing here uses them. */
+.rover-picker {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.rover-picker__title {
+  font-family: var(--serif);
+  font-size: calc(var(--display) * 0.72);
+  font-weight: 400;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.rover-picker__intro,
+.rover-picker__status {
+  margin: 0;
+  color: var(--dim);
+}
+
+.rover-button,
+.rover-segment {
+  min-height: 40px;
+  padding: 4px 14px;
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  background: var(--field);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--small);
+  cursor: pointer;
+}
+
+.rover-segment[aria-pressed='true'] {
+  background: var(--chosen);
+  border-color: var(--fg);
+}
+
+.rover-button:focus-visible,
+.rover-segment:focus-visible,
+.rover-card:focus-visible,
+.rover-dte input:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
+}
+
+.rover-groups,
+.rover-segments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rover-groups__label {
+  color: var(--dim);
+}
+
+/* The carousel: a row of cards with a step button on each side. It scrolls on a narrow screen. */
+.rover-carousel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.rover-carousel__step {
+  min-width: 40px;
+  padding: 4px 10px;
+  font-size: var(--body);
+}
+
+.rover-carousel__row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding: 4px;
+}
+
+.rover-card {
+  flex: 1 0 9.5rem;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  background: var(--field);
+  color: var(--fg);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  scroll-snap-align: center;
+}
+
+.rover-card[aria-checked='true'] {
+  background: var(--chosen);
+  border-color: var(--fg);
+}
+
+.rover-card__name {
+  font-size: var(--small);
+  font-weight: 600;
+}
+
+.rover-card__mars,
+.rover-card__dark,
+.rover-card__fit {
+  font-family: var(--mono);
+  font-size: var(--small);
+  color: var(--dim);
+}
+
+/* Short of the night is said in words and by the edge; never by colour alone. */
+.rover-card[data-fit='short'] {
+  border-style: dashed;
+}
+
+.rover-card[data-fit='short'] .rover-card__fit {
+  color: var(--error);
+}
+
+.rover-glyph {
+  width: 100%;
+  max-width: 7.5rem;
+  height: auto;
+}
+
+.rover-glyph__ground {
+  stroke: var(--edge);
+  stroke-width: 1;
+}
+
+.rover-glyph__body,
+.rover-glyph__rtg {
+  fill: var(--track);
+}
+
+.rover-glyph__panel {
+  fill: var(--hatch);
+}
+
+.rover-glyph__mast {
+  stroke: var(--hatch);
+  stroke-width: 2;
+}
+
+.rover-glyph__head {
+  fill: var(--hatch);
+}
+
+.rover-glyph__wheel {
+  fill: var(--edge);
+  stroke: var(--hatch);
+  stroke-width: 1.5;
+}
+
+.rover-detail {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  min-width: 0;
+}
+
+.rover-detail__head {
+  display: grid;
+  gap: 4px;
+}
+
+.rover-detail__name {
+  margin: 0;
+  font-size: var(--body);
+}
+
+.rover-detail__mars {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: var(--small);
+}
+
+.rover-detail__desc,
+.rover-detail__note,
+.rover-detail__source {
+  margin: 0;
+  font-size: var(--small);
+  color: var(--dim);
+}
+
+.rover-detail__source span {
+  color: var(--fg);
+}
+
+.rover-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.rover-stat dt {
+  font-size: var(--small);
+  color: var(--dim);
+}
+
+.rover-stat dd {
+  margin: 0;
+  font-family: var(--mono);
+}
+
+.rover-estimated {
+  margin-left: 2px;
+  cursor: help;
+}
+
+.rover-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.rover-fit {
+  display: grid;
+  gap: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--edge);
+}
+
+.rover-fit p {
+  margin: 0;
+}
+
+.rover-fit b,
+.rover-mission b {
+  font-family: var(--mono);
+  font-weight: 500;
+}
+
+.rover-mission {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  min-width: 0;
+}
+
+.rover-mission legend {
+  padding: 0 6px;
+  font-size: var(--small);
+  color: var(--dim);
+}
+
+.rover-mission__bar {
+  display: grid;
+  gap: 4px;
+}
+
+.rover-mission__label {
+  font-size: var(--small);
+  color: var(--dim);
+}
+
+.rover-mission__window,
+.rover-mission__height {
+  margin: 0;
+  font-size: var(--small);
+}
+
+.rover-mission__warning {
+  margin: 0;
+  font-size: var(--small);
+  color: var(--error);
+}
+
+.rover-dte {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 8px;
+  align-items: center;
+}
+
+.rover-dte input {
+  width: 20px;
+  height: 20px;
+}
+
+.rover-dte p {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 40rem) {
+  .rover-carousel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rover-carousel__step {
+    display: none;
+  }
+}
