@@ -1388,3 +1388,21 @@ def test_every_route_that_answers_422_lets_schemathesis_expect_it() -> None:
     }
     missing = sorted(name for name in documented if "422" not in expected.get(name, []))
     assert missing == []
+
+
+def test_route_takes_the_coarse_grid_as_a_query_string() -> None:
+    # Found on 15/11/2026 while writing GET /sites/{site_id}/route: `coarse_m` was typed
+    # Literal[60, 20], and a query string "60" is not the integer 60 for a Literal, so every
+    # request that named the parameter was answered 422 invalid_parameter although the contract
+    # lists 60 and 20. The numbers are what Eduardo's engine printed under Node for AR06, VIPER,
+    # P90, Sun 0.5 from (609.9, 1159.0) to (2009.9, 2259.0): Normal navigation on the 60 m grid
+    # hits 11 steep waypoints over 2289 m, on the 20 m grid 12 over 2356 m.
+    where = {"start_x_m": 609.9, "start_y_m": 1159.0, "goal_x_m": 2009.9, "goal_y_m": 2259.0}
+    seen = {}
+    for coarse in (60, 20):
+        response = client.get("/sites/AR06/route", params={**where, "coarse_m": coarse})
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["coarse_m"] == coarse
+        seen[coarse] = (body["plans"][0]["hazards_hit"], body["plans"][0]["distance_m"])
+    assert seen == {60: (11, 2289), 20: (12, 2356)}

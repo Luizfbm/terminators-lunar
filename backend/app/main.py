@@ -8,7 +8,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import FastAPI, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
@@ -24,6 +24,8 @@ from . import (
     ground,
     horizon,
     neighbours,
+    route,
+    rovers,
     scatter,
     slope,
     uncertainty,
@@ -509,4 +511,50 @@ def get_visibility_dsn(
         ) from missing
     return Response(
         answer, media_type="application/json", headers={"Cache-Status": _cache_status(hit)}
+    )
+
+
+@app.get("/rovers")
+async def get_rovers() -> dict[str, Any]:
+    """The eight Rovers of Eduardo's catalogue, each number with its source (the requirement)."""
+    return rovers.listing()
+
+
+@app.get("/sites/{site_id}/route")
+def get_site_route(
+    site_id: str,
+    rover_id: str = "viper",
+    slope_limit_deg: float | None = Query(None, gt=0, le=45),
+    battery_wh: float | None = Query(None, gt=0, le=100000),
+    power_shadow_w: float | None = Query(None, ge=0, le=10000),
+    solar_w: float | None = Query(None, ge=0, le=10000),
+    rtg_w: float | None = Query(None, ge=0, le=10000),
+    start_x_m: float | None = Query(None, ge=-5000, le=5000),
+    start_y_m: float | None = Query(None, ge=-5000, le=5000),
+    goal_x_m: float | None = Query(None, ge=-5000, le=5000),
+    goal_y_m: float | None = Query(None, ge=-5000, le=5000),
+    coarse_m: route.CoarseM = route.CoarseM.M60,
+    confidence_level: Literal["P50", "P90", "P99"] = "P90",
+    sun_fraction: float = Query(0.5, ge=0, le=1),
+    sun_azimuth_deg: float | None = Query(None, ge=0, lt=360),
+    swarm: bool = False,
+) -> dict[str, Any]:
+    """The same drive planned by Normal navigation and by Multiresolution (the requirement)."""
+    return route.compare(
+        site_id,
+        rover_id=rover_id,
+        slope_limit_deg=slope_limit_deg,
+        battery_wh=battery_wh,
+        power_shadow_w=power_shadow_w,
+        solar_w=solar_w,
+        rtg_w=rtg_w,
+        start_x_m=start_x_m,
+        start_y_m=start_y_m,
+        goal_x_m=goal_x_m,
+        goal_y_m=goal_y_m,
+        coarse_m=int(coarse_m),
+        confidence_level=confidence_level,
+        sun_fraction=sun_fraction,
+        sun_azimuth_deg=sun_azimuth_deg,
+        swarm=swarm,
     )

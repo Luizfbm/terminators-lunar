@@ -1,0 +1,155 @@
+[
+ {
+  "model": "lrv",
+  "line": "Lua",
+  "short": "LRV · APOLLO 15–17",
+  "name": "Lunar Roving Vehicle (Apollo)",
+  "shortDesc": "1971–72 · 2 astronautas · rodas de tela de aço de 81,8 cm",
+  "massKg": 210,
+  "batteryWh": 8712,
+  "solarW": 0,
+  "rtgW": 0,
+  "powerShadowW": 350,
+  "mastHeightM": 1.14,
+  "slopeLimitDeg": 15,
+  "est": [
+   "powerShadowW"
+  ],
+  "src": "NSSDC: 210 kg, 3,10 m, 2× baterias 36 V · 121 Ah (prata-zinco, não recarregáveis). Consumo médio estimado."
+ },
+ {
+  "model": "viper",
+  "line": "Lua",
+  "short": "VIPER",
+  "name": "VIPER (NASA)",
+  "shortDesc": "Caçador de gelo do polo sul · broca de 1 m · 3 painéis solares verticais",
+  "massKg": 430,
+  "batteryWh": 5420,
+  "solarW": 450,
+  "rtgW": 0,
+  "powerShadowW": 95,
+  "mastHeightM": 2.45,
+  "slopeLimitDeg": 15,
+  "est": [],
+  "src": "NASA/NTRS (LSIC 2024): bateria 5.420 Wh, painéis 320–450 W; 57 h só na bateria em teste → ~95 W."
+ },
+ {
+  "model": "ltv",
+  "line": "Lua",
+  "short": "LTV · ARTEMIS",
+  "name": "Lunar Terrain Vehicle (Artemis)",
+  "shortDesc": "Em desenvolvimento · 2 astronautas · desenho ainda não congelado",
+  "massKg": 500,
+  "batteryWh": 6650,
+  "solarW": 650,
+  "rtgW": 0,
+  "powerShadowW": 110,
+  "mastHeightM": 2,
+  "slopeLimitDeg": 18,
+  "est": [
+   "massKg",
+   "batteryWh",
+   "solarW",
+   "powerShadowW",
+   "mastHeightM"
+  ],
+  "src": "NASA não publicou massa nem dimensões; valores são estimativas de classe (~500 kg)."
+ },
+ {
+  "model": "mapp",
+  "line": "Lua",
+  "short": "MAPP · LUNAR OUTPOST",
+  "name": "Lunar Outpost MAPP",
+  "shortDesc": "Rover comercial compacto · parede solar lateral e torre de câmeras",
+  "massKg": 10,
+  "batteryWh": 420,
+  "solarW": 180,
+  "rtgW": 0,
+  "powerShadowW": 120,
+  "mastHeightM": 0.6,
+  "slopeLimitDeg": 14,
+  "est": [
+   "massKg",
+   "batteryWh",
+   "solarW",
+   "powerShadowW",
+   "mastHeightM"
+  ],
+  "src": "Valores ilustrativos (fabricante não publicou ficha completa)."
+ },
+ {
+  "model": "sojourner",
+  "line": "Marte",
+  "short": "SOJOURNER · 1997",
+  "name": "Sojourner (Mars Pathfinder)",
+  "shortDesc": "E se fosse à Lua? · 10,6 kg · 6 rodas de 13 cm",
+  "massKg": 10.6,
+  "batteryWh": 150,
+  "solarW": 16,
+  "rtgW": 0,
+  "powerShadowW": 10,
+  "mastHeightM": 0.3,
+  "slopeLimitDeg": 12,
+  "est": [
+   "batteryWh",
+   "powerShadowW"
+  ],
+  "src": "NASA: 10,6 kg, 30 cm de altura, painel de 0,22 m² com ~16 W; bateria Li-SOCl2 não recarregável (capacidade estimada)."
+ },
+ {
+  "model": "mer",
+  "line": "Marte",
+  "short": "SPIRIT / OPPORTUNITY",
+  "name": "Mars Exploration Rover",
+  "shortDesc": "E se fosse à Lua? · modelo 3D oficial da NASA (simplificado)",
+  "massKg": 180,
+  "batteryWh": 450,
+  "solarW": 140,
+  "rtgW": 0,
+  "powerShadowW": 100,
+  "mastHeightM": 1.4,
+  "slopeLimitDeg": 15,
+  "est": [
+   "batteryWh"
+  ],
+  "src": "Painéis ~140 W, ~100 W para dirigir; 2 baterias Li-íon de 8 Ah (energia estimada). Modelo: NASA-3D-Resources."
+ },
+ {
+  "model": "curiosity",
+  "line": "Marte",
+  "short": "CURIOSITY · MSL",
+  "name": "Curiosity (Mars Science Laboratory)",
+  "shortDesc": "E se fosse à Lua? · nuclear (MMRTG) · 899 kg",
+  "massKg": 899,
+  "batteryWh": 2350,
+  "solarW": 0,
+  "rtgW": 110,
+  "powerShadowW": 100,
+  "mastHeightM": 2.2,
+  "slopeLimitDeg": 20,
+  "est": [
+   "batteryWh",
+   "powerShadowW"
+  ],
+  "src": "science.nasa.gov: 899 kg, 3,0 × 2,7 × 2,2 m; MMRTG ~110 W; 2 baterias Li-íon de 42 Ah (energia estimada)."
+ },
+ {
+  "model": "perse",
+  "line": "Marte",
+  "short": "PERSEVERANCE · M2020",
+  "name": "Perseverance (Mars 2020)",
+  "shortDesc": "E se fosse à Lua? · modelo 3D oficial da NASA (simplificado)",
+  "massKg": 1025,
+  "batteryWh": 2400,
+  "solarW": 0,
+  "rtgW": 110,
+  "powerShadowW": 100,
+  "mastHeightM": 2.2,
+  "slopeLimitDeg": 20,
+  "est": [
+   "batteryWh",
+   "powerShadowW"
+  ],
+  "src": "NSSDC: ~1.025 kg, 3,0 × 2,7 × 2,2 m; MMRTG ~110 W; 2 baterias Li-íon de 43 Ah (energia estimada). Modelo: NASA-3D-Resources."
+ }
+]
