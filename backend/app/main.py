@@ -22,6 +22,7 @@ from . import (
     dsn,
     energy,
     ground,
+    hazard,
     heights,
     horizon,
     neighbours,
@@ -522,3 +523,27 @@ def get_visibility_dsn(
     return Response(
         answer, media_type="application/json", headers={"Cache-Status": _cache_status(hit)}
     )
+
+
+@app.get("/sites/{site_id}/hazard")
+async def get_site_hazard(site_id: str) -> dict[str, Any]:
+    """Eduardo's Monte Carlo on the 10 x 10 km grid nearest the Site (the requirement)."""
+    return hazard.site_hazard(site_id)
+
+
+@app.get("/sites/{site_id}/hazard/grid")
+async def get_site_hazard_grid(site_id: str) -> dict[str, Any]:
+    """The grid itself, as the bundle stores it (the requirement)."""
+    return hazard.site_hazard_grid(site_id)
+
+
+@app.get("/sites/{site_id}/hazard/around")
+async def get_site_hazard_around(
+    site_id: str,
+    x_m: float | None = Query(None, ge=-5000, le=5000),
+    y_m: float | None = Query(None, ge=-5000, le=5000),
+    radius_m: float = Query(250, ge=50, le=2000),
+    slope_limit_deg: float = Query(hazard.SLOPE_LIMIT_DEG, gt=0, le=45),
+) -> dict[str, Any]:
+    """The steep cells within a radius of a point of the grid (the requirement)."""
+    return hazard.site_hazard_around(site_id, x_m, y_m, radius_m, slope_limit_deg)
