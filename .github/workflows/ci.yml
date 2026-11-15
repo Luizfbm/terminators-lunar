@@ -67,7 +67,7 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run mypy .
-      - run: uv run pytest -n 4 --dist loadfile
+      - run: uv run pytest -n 3 --dist loadfile
 
   validation:
     needs: detect
@@ -84,7 +84,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
       - run: uv sync --locked --project backend
-      - run: uv run --project backend pytest validation -n 4 --dist loadfile
+      - run: uv run --project backend pytest validation -n 3 --dist loadfile
 
   schemathesis:
     needs: detect

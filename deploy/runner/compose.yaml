@@ -18,7 +18,8 @@ x-runner: &runner
   # docker's default is 1024; 128 is an eighth of the app's weight and far below
   # ai-memory's systemd default.
   cpu_shares: 128
-  mem_limit: 2560m
+  mem_limit: 3g
+  # pytest runs on 3 workers of about 650 MB each; 4 did not fit in 2.5 GB.
   oom_score_adj: 900
   # Playwright's Chromium needs more shared memory than Docker's 64 MB default.
   shm_size: 1g
