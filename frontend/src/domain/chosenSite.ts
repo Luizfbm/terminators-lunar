@@ -6,6 +6,8 @@ export interface PlacedSite extends LatLon {
   id: string
   name: string
   region_id?: string | null
+  /** Where the coordinate comes from (`wueller2026`, `apollo`, ...): which switch of the menu governs its dot. */
+  source?: string
 }
 
 /** A custom Site's key on the globe: its coordinate, so the globe flies again when another point is typed. */

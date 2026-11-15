@@ -1,0 +1,47 @@
+import type { Layers } from './siteLayers'
+
+/**
+ * The buttons of the menu on the left of the globe, in order, under the two level buttons (`globeLevels.ts`).
+ * The words are English on purpose, in both languages.
+ */
+export const MENU_ITEMS = [
+  { id: 'initial', label: 'Initial position' },
+  { id: 'dark_side', label: 'Dark side' },
+  { id: 'north', label: 'Northern Hemisphere' },
+  { id: 'south', label: 'Southern Hemisphere' },
+  { id: 'missions', label: 'Lunar Missions' },
+  { id: 'sites', label: 'Sites' },
+  { id: 'planets', label: 'Planets' },
+] as const
+
+export type MenuId = (typeof MENU_ITEMS)[number]['id']
+export type MenuState = Record<MenuId, boolean>
+
+/** The three switches start pressed: all the dots and the planets are shown, as before the menu. */
+export const initialMenu = (): MenuState => ({ initial: false, dark_side: false, north: false, south: false, missions: true, sites: true, planets: true })
+
+/** The four buttons that turn the Moon: pressing one releases the other three, as the Moon can only face one way. */
+export const VIEW_BUTTONS = ['initial', 'dark_side', 'north', 'south'] as const
+
+/**
+ * A click presses a released button and releases a pressed one. Pressing one of the four that turn the
+ * Moon releases the other three; Missions, Sites and Planets are their own switches and never touch another.
+ */
+export function toggled(state: MenuState, id: MenuId): MenuState {
+  const next = { ...state, [id]: !state[id] }
+  if (next[id] && (VIEW_BUTTONS as readonly string[]).includes(id)) for (const other of VIEW_BUTTONS) if (other !== id) next[other] = false
+  return next
+}
+
+/** The same four buttons with all of them released: the Moon was turned some other way (to the map and back, say). */
+export function releasedTurns(state: MenuState): MenuState {
+  const next = { ...state }
+  for (const id of VIEW_BUTTONS) next[id] = false
+  return next
+}
+
+/**
+ * What the three switches say about what the globe draws. The four buttons that turn the Moon act through
+ * the camera (`GlobeMenu`'s `onView`) and have nothing to add here.
+ */
+export const layersOf = (state: MenuState): Layers => ({ sites: state.sites, missions: state.missions, planets: state.planets })
