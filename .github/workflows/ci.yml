@@ -9,12 +9,13 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Every job runs on our own runner on the VPS (deploy/runner/), one at a time.
 # Each side's jobs skip until its folder exists. Conventions the workers follow:
 # - backend/ is a uv project exposing the FastAPI app at app.main:app
 # - frontend/ has npm scripts lint, typecheck, test, e2e and generate:types
 jobs:
   detect:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, lunar-vps]
     outputs:
       contract: ${{ steps.d.outputs.contract }}
       backend: ${{ steps.d.outputs.backend }}
@@ -32,7 +33,7 @@ jobs:
   contract:
     needs: detect
     if: needs.detect.outputs.contract == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, lunar-vps]
     steps:
       - uses: actions/checkout@v7
       - run: npx --yes @redocly/cli@2.77.0 lint contract/openapi.yaml
@@ -40,7 +41,7 @@ jobs:
   backend:
     needs: detect
     if: needs.detect.outputs.backend == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, lunar-vps]
     defaults:
       run:
         working-directory: backend
@@ -66,7 +67,7 @@ jobs:
   validation:
     needs: detect
     if: needs.detect.outputs.validation == 'true' && needs.detect.outputs.backend == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, lunar-vps]
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.3
@@ -86,7 +87,7 @@ jobs:
   schemathesis:
     needs: detect
     if: needs.detect.outputs.backend == 'true' && needs.detect.outputs.contract == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, lunar-vps]
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.3
@@ -116,7 +117,7 @@ jobs:
   frontend:
     needs: detect
     if: needs.detect.outputs.frontend == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, lunar-vps]
     defaults:
       run:
         working-directory: frontend

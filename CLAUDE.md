@@ -77,7 +77,7 @@ The agent Luiz is talking to is the coordinator. It does not implement the issue
 
 ## CI gates
 
-Every change merges only with every check green.
+Every change merges only with every check green. The checks run on our own runner on the VPS (`deploy/runner/`, label `lunar-vps`, capped at 3 cores and 3 GB, one job at a time), not on GitHub's machines and not on a laptop.
 
 - Backend: ruff, mypy, pytest (unit, integration and regression tests together), the validation suite, schemathesis against the contract.
 - Frontend: eslint, tsc, vitest, Playwright end to end against the mock.

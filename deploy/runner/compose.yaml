@@ -1,0 +1,24 @@
+# The CI runner, apart from the app stack (deploy/compose.yaml) so a test never shares a
+# container or a network with production. Run from this folder on the VPS:
+#   RUNNER_TOKEN=<registration token> docker compose up -d --build
+# The token is only read on the first start; afterwards the registration lives in the volume.
+#
+# Caps: the VPS has 5 cores and 7.9 GB. The app may take up to 4.5 GB (deploy/compose.yaml)
+# and ai-memory about 0.5 GB, so the runner gets 3 cores and 3 GB. One job at a time.
+name: lunar-runner
+
+services:
+  runner:
+    build: .
+    restart: unless-stopped
+    environment:
+      RUNNER_TOKEN: ${RUNNER_TOKEN:-}
+    volumes:
+      - runner:/runner
+    cpus: 3
+    mem_limit: 3g
+    # Playwright's Chromium needs more shared memory than Docker's 64 MB default.
+    shm_size: 1g
+
+volumes:
+  runner:
