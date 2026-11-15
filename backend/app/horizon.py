@@ -36,6 +36,14 @@ class Band:
     outer_m: float
     # "polar": south polar stereographic. "eqc": SLDEM2015's equirectangular, lon_0 180°.
     projection: str = "polar"
+    # The rung of the Resolution ladder this band stands for, when it is not its own
+    # resolution: the 60 m DEM stands in for the 80 m one where that one runs out (see
+    # POLAR_WIDE). None is the band's own resolution.
+    rung_m: float | None = None
+
+
+def _rung_of(band: Band) -> float:
+    return band.resolution_m if band.rung_m is None else band.rung_m
 
 
 LADDER: tuple[Band, ...] = (
@@ -56,6 +64,22 @@ OFFPOLE_LADDERS: tuple[tuple[Band, ...], ...] = (
         Band("LDEM_60S_60MPP_ADJ", 60.0, 0.0, 100_000.0),
         Band("LDEM_60S_240MPP_ADJ", 240.0, 100_000.0, 300_000.0),
     ),
+)
+# The 80 m DEM is a square of ±304 km around the pole, and the rays walk it out to 100 km,
+# so on its own it answers a point only up to ~83.3°S (204 km from the pole) in every
+# direction, while a typed point is taken up to 80°S. The 60 m DEM of the same release
+# reaches 60°S and is finer: where the 80 m one runs out, it walks those 5 to 100 km
+# instead. A point the polar ladder answers never gets here, so its answer is unchanged.
+WIDE_PRODUCT = "LDEM_60S_60MPP_ADJ"
+POLAR_WIDE: tuple[Band, ...] = (
+    Band("LDEM_80S_20MPP_ADJ", 20.0, 0.0, 5_000.0),
+    Band(WIDE_PRODUCT, 60.0, 5_000.0, 100_000.0, rung_m=80.0),
+    Band("LDEM_60S_240MPP_ADJ", 240.0, 100_000.0, 300_000.0),
+)
+# A point within 5 km of the 20 m square's edge (about 80.0°S) is past even its 5 km.
+POLAR_EDGE: tuple[Band, ...] = (
+    Band(WIDE_PRODUCT, 60.0, 0.0, 100_000.0, rung_m=80.0),
+    Band("LDEM_60S_240MPP_ADJ", 240.0, 100_000.0, 300_000.0),
 )
 # Ray points don't sit on pixel centres, so a fixed step misses the top of a nearby bump:
 # one sample per pixel put the mask 0.2° low 90 m from Site 001, and at the pole the Sun
@@ -113,6 +137,8 @@ def products() -> list[dict[str, Any]]:
         for band in LADDER
         if (folder / f"{band.product}.TIF").is_file()
     ]
+    if (folder / f"{WIDE_PRODUCT}.TIF").is_file():
+        found.append({"product": WIDE_PRODUCT, "resolution_m": 60.0})
     for ladder in OFFPOLE_LADDERS:
         for band in ladder:
             entry = {"product": band.product, "resolution_m": band.resolution_m}
@@ -144,16 +170,18 @@ def rung(finest_m: float, ladder: tuple[Band, ...] = LADDER) -> tuple[Band, ...]
 
     At 20 m this is the ladder itself. At 80 m the 80 m DEM reads from the Site out to 100 km,
     at 240 m the 240 m DEM reads every ray, Site height included. The off-pole products are
-    59.2 and 236.9 m, so a band counts as a rung when it is within 5% of it.
+    59.2 and 236.9 m, so a band counts as a rung when it is within 5% of it. A band that
+    stands in for another rung (`rung_m`, the 60 m DEM where the 80 m one runs out) counts
+    as that rung.
     """
-    kept = [band for band in ladder if band.resolution_m >= finest_m * 0.95]
+    kept = [band for band in ladder if _rung_of(band) >= finest_m * 0.95]
     if not kept:
         raise ValueError(f"no DEM in the ladder is {finest_m} m or coarser")
     if kept[0].inner_m == 0.0:
         return tuple(kept)
     first = kept[0]
     return (
-        Band(first.product, first.resolution_m, 0.0, first.outer_m, first.projection),
+        Band(first.product, first.resolution_m, 0.0, first.outer_m, first.projection, first.rung_m),
         *kept[1:],
     )
 
@@ -183,10 +211,26 @@ def mask(
             finest_m,
         )
     except DemUnavailable:
+        # A polar point past the 80 m square: the 60 m DEM walks those 5 to 100 km
+        # instead (POLAR_WIDE), and right at its edge every ray from the Site (POLAR_EDGE).
+        if ladder is LADDER and (folder / f"{WIDE_PRODUCT}.TIF").is_file():
+            for wide in (POLAR_WIDE, POLAR_EDGE):
+                try:
+                    return _mask(
+                        str(folder),
+                        wide,
+                        round(latitude_deg, 7),
+                        round(longitude_deg, 7),
+                        height_m,
+                        finest_m,
+                    )
+                except DemUnavailable:
+                    continue
         # Off by default and in production. Only checks of where the Sun and the Earth
         # are in the sky turn it on, for Sites past the DEM fixtures; the answer then
         # says so with an empty `provenance.dems`.
         if os.environ.get(FLAT_WITHOUT_DEM) != "1":
+            # The polar ladder's own error, not the fallbacks': it says what is missing.
             raise
         return flat(latitude_deg, longitude_deg, height_m)
 
