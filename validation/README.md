@@ -207,3 +207,55 @@ docker compose cp backend:/tmp/athena_engine.json ../validation/data/athena_engi
 
 Until `data/athena_engine.json` exists, the horizon entries and the transmission part of
 `landing-im2-athena` show as pending.
+
+---
+
+## 11. Gläser et al. 2018 at the Connecting Ridge (the requirement)
+
+`test_glaser.py` checks the Sun against the one published value for the Connecting Ridge that
+we could read in full: Gläser et al. 2018, Planetary and Space Science 162, 170-178, Table 2 (p. 12
+of the NASA NTRS preprint 20170007365), point C1 at 2 m, (-89.4398°, 222.83°E), 2017-01-01 to
+2037-01-01 hourly, on the authors' own 20 m DTM. The rule, the reference and the tolerance are in
+`glaser.py` and were committed before any result. The 92.27 % of the 2014 Icarus abstract is the
+same quantity on the authors' earlier DTM; it is context in the result text and is never judged.
+
+| id | Reference | Tolerance (fixed before the first run) |
+|---|---|---|
+| `glaser-sun-visibility` | solar visibility 92.1 %, the share of the period with any part of the Sun's disc visible. Ours: the maximum, over the 317 points within 250 m of C1 (25 m spacing), of the share of hourly steps with any part of the Sun above the Horizon mask | \|difference\| ≤ 5 percentage points, either way |
+| `glaser-mean-sun-fraction` | maximum average illumination 88.0 %. Ours: the maximum over the same points of the mean Sun fraction, terrain only | \|difference\| ≤ 5 percentage points, either way |
+| `negative-control-glaser-longitude` | the same grid at longitude + 180° | must break both checks |
+
+- Each quantity is judged on its own maximum, as the paper does: it says the two maxima do not always fall on the same pixel.
+- The maximum is over a neighbourhood, not the value at Site 001: the paper's point is about 800 m from Site 001, and the coordinate is given to about 3 m on a DTM that is not ours. Site 001's own values (and the best point of its 100 m Landing ellipse), the value at C1 itself, the Sun fraction with the Earth's eclipse, each calendar year, the 9-year span the app can answer (2023-08-01 to 2033-01-01), a 15 min step and a series shifted by 30 min are shown in the result text and never judged.
+- The comparison is terrain only: the Earth's eclipse of the Sun is not in the judged value, as the GLOSSARY defines the Sun fraction.
+- If a check fails, it stays failed and is reported with its numbers. Nothing is tuned: not the tolerance, the neighbourhood, the period or the reference.
+
+The 20 years run past the app's coverage, so the engine side runs offline on the server, in the
+backend image with the full DE440 and the full DEMs, like the PGDA one. The scan is vectorised
+(one Sun vector per step for the whole neighbourhood, one Horizon mask per point) and
+`test_glaser.py` checks it against `engine.Look` to 1e-5. From the repo root on the server
+(`deploy/compose.yaml` already mounts the data volume read-only at `/data` and sets
+`LUNAR_META_KERNEL` and `LUNAR_DEM_DIR`, as `deploy/fetch-data.sh` relies on for `crop_offpole.py`;
+`/tmp/glaser` is the writable output folder):
+
+```bash
+mkdir -p /tmp/glaser
+docker compose -f deploy/compose.yaml --env-file .env run --rm --no-deps -T \
+  -v "$PWD/validation:/validation:ro" -v /tmp/glaser:/out \
+  --entrypoint python backend /validation/run_glaser_engine.py \
+  /out/glaser_engine.json --processes 3 --nice 10 </dev/null
+cp /tmp/glaser/glaser_engine.json validation/data/glaser_engine.json
+```
+
+- It computes 683 points: the 317 of the neighbourhood, the same 317 at longitude + 180°, and the 49 of Site 001's Landing ellipse. At most 3 worker processes (the script refuses more), one thread of arithmetic each, and `--nice` (default 10) lowers their priority below the engine's. Memory: one process peaked at about 0.7 GB on a Mac (a Horizon mask reads the 80 m and 240 m windows whole), so budget about 3 GB for three workers and the parent; the compose service's limit is 4.5 GB.
+- It is resumable: every finished point is appended to `/tmp/glaser/glaser_engine.json.partial.jsonl`, and the Sun vectors are kept in `/tmp/glaser/glaser_engine.json.work/`. After a stop, run the same command again; it carries on, and refuses if the rule, the period or the kernels changed (`--fresh` starts over).
+- `--days`, `--start` and `--limit` shorten it for smoke runs. The output then says `"smoke": true`, and `test_glaser.py` refuses it.
+- Commit `validation/data/glaser_engine.json` with the refreshed `backend/app/data/validations.json`.
+
+Until `data/glaser_engine.json` exists, the three entries stay `pending`, and the tests that need it
+are skipped. When it exists, `pytest validation` also recomputes five points (C1 and 100 m east,
+west, north and south of it) over the span the committed SPICE fixture covers and compares them
+with the committed file to 1e-6, so the file cannot drift away from the code.
+
+Not covered: the surface level (0 m; the paper's Table 1 point is 325 m from C1), the Earth, the
+Sun at another Observer height, and any elevation product other than `LDEM_80S_20MPP_ADJ`.

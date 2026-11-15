@@ -230,6 +230,75 @@
     "run_at": "2026-11-15T13:02:11Z"
   },
   {
+    "id": "glaser-sun-visibility",
+    "title": {
+      "en": "Share of time with the Sun up at Connecting Ridge C1, against Gläser et al.",
+      "pt": "Parte do tempo com Sol no ponto C1 da Connecting Ridge, contra Gläser et al."
+    },
+    "reference": "Gläser et al. 2018, Planetary and Space Science 162, 170-178, Table 2, point C1 at -89.4398°, 222.83°E, 2 m: solar visibility 92.1 % (any part of the Sun's disc), hourly over 2017-01-01 to 2037-01-01, on the authors' own 20 m DTM. Ours: the maximum over the 317 points within 250 m of C1 (25 m spacing), the share of hourly steps with any part of the Sun's disc above the Horizon mask, the same 20 years, hourly, at 2 m on LDEM_80S_20MPP_ADJ",
+    "tolerance": {
+      "en": "|difference| ≤ 5 percentage points, in either direction",
+      "pt": "|diferença| ≤ 5 pontos percentuais, nos dois sentidos"
+    },
+    "result": {
+      "en": "Maximum over 317 points 91.87 %, 0 m from C1, against 92.1 %: difference -0.23 points. For information: at C1 itself 91.87 %; at Site 001 77.14 %, best point of its 100 m Landing ellipse 86.41 %; the best point's calendar years run from 90.72 to 92.57 %, and over 2023-08-01 to 2033-01-01 it is 92.10 % (+0.23 points); on 5 points a 15 min step moves the value by at most 0.00 points and a series shifted by 30 min by at most 0.01; the paper's 92.27 % of 2014 (its earlier DTM) is context, not judged",
+      "pt": "Máximo em 317 pontos de 91,87 %, a 0 m de C1, contra 92,1 %: diferença de -0,23 pontos. Só como informação: em C1 mesmo 91,87 %; no Site 001 77,14 %, melhor ponto da Landing ellipse de 100 m 86,41 %; os anos civis do melhor ponto vão de 90,72 a 92,57 %, e de 01/08/2023 a 01/01/2033 fica em 92,10 % (+0,23 pontos); em 5 pontos, o passo de 15 min muda o valor em até 0,00 pontos e uma série deslocada de 30 min em até 0,01; os 92,27 % de 2014 (no DTM anterior deles) são só contexto, não julgados"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Terrain only: the Earth's eclipse of the Sun is not in the judged value (it is shown in the result). Not the value at Site 001: the paper's point C1 is about 800 m from it, and Site 001's values are shown for information only. The paper's number is the maximum of a region, at a point given to about 3 m, on its own DTM; ours is the maximum over 317 nodes on another elevation product. Observer at 2 m; the surface (0 m) is not checked. The Sun is the only body checked. The 9-year span the app can answer, each calendar year, the 15 min step and a half-hour shift are shown and never judged.",
+      "pt": "Só o terreno: o eclipse do Sol pela Terra não entra no valor julgado (aparece no resultado). Não é o valor no Site 001: o ponto C1 do artigo fica a uns 800 m dele, e os valores do Site 001 aparecem só como informação. O número do artigo é o máximo de uma região, num ponto dado a uns 3 m, no DTM deles; o nosso é o máximo de 317 nós em outro produto de elevação. Observer a 2 m; a superfície (0 m) não é checada. O Sol é o único corpo checado. O trecho de 9 anos que o app consegue responder, cada ano civil, o passo de 15 min e um deslocamento de meia hora aparecem só como informação e nunca são julgados."
+    },
+    "script_path": "validation/test_glaser.py",
+    "run_at": "2026-11-15T17:23:25Z"
+  },
+  {
+    "id": "glaser-mean-sun-fraction",
+    "title": {
+      "en": "Mean Sun fraction at Connecting Ridge C1, against Gläser et al.",
+      "pt": "Fração média do Sol no ponto C1 da Connecting Ridge, contra Gläser et al."
+    },
+    "reference": "Gläser et al. 2018, Planetary and Space Science 162, 170-178, Table 2, point C1 at -89.4398°, 222.83°E, 2 m: maximum average illumination 88.0 % (mean visible fraction of the Sun's disc), hourly over 2017-01-01 to 2037-01-01, on the authors' own 20 m DTM. Ours: the maximum over the 317 points within 250 m of C1 (25 m spacing), the mean Sun fraction, terrain only, the same 20 years, hourly, at 2 m on LDEM_80S_20MPP_ADJ",
+    "tolerance": {
+      "en": "|difference| ≤ 5 percentage points, in either direction",
+      "pt": "|diferença| ≤ 5 pontos percentuais, nos dois sentidos"
+    },
+    "result": {
+      "en": "Maximum over 317 points 87.98 %, 25 m from C1, against 88.0 %: difference -0.02 points. For information: at C1 itself 87.53 %; at Site 001 71.81 %, best point of its 100 m Landing ellipse 81.87 %; the best point's calendar years run from 86.60 to 88.71 %, and over 2023-08-01 to 2033-01-01 it is 88.28 % (+0.30 points); on 5 points a 15 min step moves the value by at most 0.00 points and a series shifted by 30 min by at most 0.00; with the Earth's eclipse of the Sun, as the app shows it, -0.05 points",
+      "pt": "Máximo em 317 pontos de 87,98 %, a 25 m de C1, contra 88,0 %: diferença de -0,02 pontos. Só como informação: em C1 mesmo 87,53 %; no Site 001 71,81 %, melhor ponto da Landing ellipse de 100 m 81,87 %; os anos civis do melhor ponto vão de 86,60 a 88,71 %, e de 01/08/2023 a 01/01/2033 fica em 88,28 % (+0,30 pontos); em 5 pontos, o passo de 15 min muda o valor em até 0,00 pontos e uma série deslocada de 30 min em até 0,00; com o eclipse do Sol pela Terra, como o app mostra, -0,05 pontos"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Terrain only: the Earth's eclipse of the Sun is not in the judged value (it is shown in the result). Not the value at Site 001: the paper's point C1 is about 800 m from it, and Site 001's values are shown for information only. The paper's number is the maximum of a region, at a point given to about 3 m, on its own DTM; ours is the maximum over 317 nodes on another elevation product. Observer at 2 m; the surface (0 m) is not checked. The Sun is the only body checked. The 9-year span the app can answer, each calendar year, the 15 min step and a half-hour shift are shown and never judged.",
+      "pt": "Só o terreno: o eclipse do Sol pela Terra não entra no valor julgado (aparece no resultado). Não é o valor no Site 001: o ponto C1 do artigo fica a uns 800 m dele, e os valores do Site 001 aparecem só como informação. O número do artigo é o máximo de uma região, num ponto dado a uns 3 m, no DTM deles; o nosso é o máximo de 317 nós em outro produto de elevação. Observer a 2 m; a superfície (0 m) não é checada. O Sol é o único corpo checado. O trecho de 9 anos que o app consegue responder, cada ano civil, o passo de 15 min e um deslocamento de meia hora aparecem só como informação e nunca são julgados."
+    },
+    "script_path": "validation/test_glaser.py",
+    "run_at": "2026-11-15T17:23:25Z"
+  },
+  {
+    "id": "negative-control-glaser-longitude",
+    "title": {
+      "en": "Negative control: the same neighbourhood at longitude + 180°",
+      "pt": "Controle negativo: a mesma vizinhança na longitude + 180°"
+    },
+    "reference": "The two Gläser checks with the engine run at each point's longitude + 180°",
+    "tolerance": {
+      "en": "must break both checks (|difference| above 5 points)",
+      "pt": "precisa quebrar as duas checagens (|diferença| acima de 5 pontos)"
+    },
+    "result": {
+      "en": "broke both checks (Sun visibility 24.73 % (-67.37 points), mean Sun fraction 21.71 % (-66.29 points))",
+      "pt": "quebrou as duas checagens (visibilidade do Sol 24,73 % (-67,37 pontos), fração média do Sol 21,71 % (-66,29 pontos))"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Shows the check can fail; says nothing about the engine.",
+      "pt": "Mostra que a checagem pode falhar; não diz nada sobre o motor."
+    },
+    "script_path": "validation/test_glaser.py",
+    "run_at": "2026-11-15T17:23:25Z"
+  },
+  {
     "id": "negative-control-time-shift",
     "title": {
       "en": "Negative control: 10 min shift",
