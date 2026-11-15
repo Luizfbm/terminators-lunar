@@ -183,13 +183,30 @@
     return ((((val + h) % span) + span) % span) - h;
   }
 
-  function updateShield3D(grid, pos, headingDeg, scan, baseElev) {
+  function updateShield3D(grid, pos, headingDeg, scan, baseElev, degrau) {
     while (shieldGroup.children.length) {
       const c = shieldGroup.children.pop();
       if (c.geometry) c.geometry.dispose();
       if (c.material) c.material.dispose();
     }
     if (!scan || !scan.sectors) return;
+
+    const ringCol = degrau === 0 ? 0xf59e0b : 0x00ff88;
+    const haloPts = [];
+    const segs = 48;
+    for (let i = 0; i <= segs; i++) {
+      const a = (i / segs) * Math.PI * 2;
+      const rx = pos.x + Math.sin(a) * 16.5;
+      const ry = pos.y + Math.cos(a) * 16.5;
+      const rh = sampleElev(grid, rx, ry) - baseElev + 0.9;
+      haloPts.push(rx - pos.x, rh, -(ry - pos.y));
+    }
+    const haloGeo = new THREE.BufferGeometry();
+    haloGeo.setAttribute("position", new THREE.Float32BufferAttribute(haloPts, 3));
+    shieldGroup.add(new THREE.Line(
+      haloGeo,
+      new THREE.LineBasicMaterial({ color: ringCol, transparent: true, opacity: 0.92 })
+    ));
 
     for (const sc of scan.sectors) {
       const a0 = (sc.azDeg - 7.0) * Math.PI / 180;
@@ -293,9 +310,9 @@
 
     // Escudo Direcional 3D no solo
     if (teseState.walkMode) {
-      updateShield3D(grid, pos, headingDeg, teseState.lastScan, baseElev);
+      updateShield3D(grid, pos, headingDeg, teseState.lastScan, baseElev, teseState.degrau);
     } else if (shieldGroup.children.length) {
-      updateShield3D(grid, pos, headingDeg, null, baseElev);
+      updateShield3D(grid, pos, headingDeg, null, baseElev, teseState.degrau);
     }
 
     // Baliza de destino
@@ -409,6 +426,7 @@
     if (rect.width > 0 && rect.height > 0) {
       originScreen.x = (v0.x * 0.5 + 0.5) * rect.width;
       originScreen.y = (-v0.y * 0.5 + 0.5) * rect.height;
+      originScreen.camZoom = camZoom;
       originScreen.valid = true;
     }
 

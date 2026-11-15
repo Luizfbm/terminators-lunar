@@ -238,14 +238,27 @@
     const ts = entry.terrain_stats || {};
     const slopeLim = getActiveRoverSlopeLimit();
 
+    const faImpPct = (gradeNV != null && teseNV != null && gradeNV > 0)
+      ? Math.round(((gradeNV - teseNV) / gradeNV) * 100)
+      : null;
+    const mcBase = mc && mc.grade_perigo_nao_vetado != null ? mc.grade_perigo_nao_vetado : null;
+    const mcTese = mc && mc.teseP90_perigo_nao_vetado != null ? mc.teseP90_perigo_nao_vetado : null;
+    const mcImpPct = (mcBase != null && mcTese != null && mcBase > 0)
+      ? ((mcBase - mcTese) / mcBase) * 100
+      : null;
+    const errImpPct = (mc && mc.erro_mediano_grade > 0 && mc.erro_mediano_tese != null)
+      ? ((mc.erro_mediano_grade - mc.erro_mediano_tese) / mc.erro_mediano_grade) * 100
+      : null;
+
     const el = document.getElementById("insp-metrics");
     if (!el) return;
     el.innerHTML = `
       <div class="insp-kpi"><span>Perigo >${slopeLim}° (Grade ${stateTese.inspCoarse})</span><b>${stateTese.inspCoarse === "20m" ? ts.pct_over_15_20m : ts.pct_over_15_60m}%</b></div>
       <div class="insp-kpi good"><span>Perigo real 5 m (>15°)</span><b>${ts.pct_over_15_real}%</b></div>
-      <div class="insp-kpi warn"><span>Não vetado c/ FA ${stateTese.inspFA}% (Grade)</span><b>${gradeNV != null ? gradeNV.toFixed(2) + "%" : "—"}</b></div>
-      <div class="insp-kpi good"><span>Não vetado c/ FA ${stateTese.inspFA}% (Tese)</span><b>${teseNV != null ? teseNV.toFixed(2) + "%" : "—"}</b></div>
-      <div class="insp-kpi"><span>Erro mediano Grade → Tese</span><b>${mc ? mc.erro_mediano_grade.toFixed(2) + "° → " + mc.erro_mediano_tese.toFixed(2) + "°" : "—"}</b></div>
+      <div class="insp-kpi warn"><span>Não vetado c/ FA ${stateTese.inspFA}% (Normal)</span><b>${gradeNV != null ? gradeNV.toFixed(2) + "%" : "—"}</b></div>
+      <div class="insp-kpi good"><span>Não vetado c/ FA ${stateTese.inspFA}% (Multi)</span><b>${teseNV != null ? teseNV.toFixed(2) + "%" : "—"}${faImpPct != null ? ` <small>(${faImpPct >= 0 ? "−" : "+"}${Math.abs(faImpPct)}%)</small>` : ""}</b></div>
+      <div class="insp-kpi good"><span>Redução de Perigo (Escudo P90)</span><b>${mcImpPct != null ? `${mcBase.toFixed(1)}% → ${mcTese.toFixed(1)}% (−${mcImpPct.toFixed(1)}%)` : "—"}</b></div>
+      <div class="insp-kpi"><span>Erro mediano Normal → Multi</span><b>${mc ? mc.erro_mediano_grade.toFixed(2) + "° → " + mc.erro_mediano_tese.toFixed(2) + "°" + (errImpPct != null ? ` (${errImpPct >= 0 ? "−" : "+"}${Math.abs(errImpPct).toFixed(0)}%)` : "") : "—"}</b></div>
     `;
   }
 
@@ -525,8 +538,8 @@
     updateScan();
     renderMiniMap();
     _toast(which === "base"
-      ? "⚠️ Plano Sem Tese (Degrau 0) aceito! Rota e raios solares ativos."
-      : `🛡️ Plano Com Tese (Degrau 4 · Escudo ${stateTese.shieldLevel}) aceito! Siga a rota ou colete ⚡ nas partes claras.`);
+      ? "⚠️ Navegação Normal (Sem Tese) aceita! Rota e raios solares ativos."
+      : `🛡️ Multirresolução (Com Tese · Escudo ${stateTese.shieldLevel}) aceita! Siga a rota ou colete ⚡ nas partes claras.`);
   }
 
   function toggleWalkMode() {
@@ -535,6 +548,7 @@
     const panel = document.getElementById("tese-walk-panel");
     const btn = document.getElementById("btn-walk-mode");
     const banner = document.getElementById("mission-banner");
+    const pill = document.getElementById("rover-shield-danger-pill");
     if (panel) panel.hidden = !stateTese.walkMode;
     if (btn) btn.classList.toggle("active", stateTese.walkMode);
     if (banner && stateTese.walkMode) banner.hidden = true;
@@ -545,6 +559,7 @@
       renderMiniMap();
     } else {
       stateTese.keys = {};
+      if (pill) pill.hidden = true;
       const holder = document.getElementById("landed-rover-holder");
       if (holder) {
         holder.style.left = "";
@@ -619,6 +634,92 @@
     refreshWalkPanel();
   }
 
+  function computeShieldRingHazardMetrics() {
+    const grid = stateTese.activeGrid;
+    if (!grid) return null;
+    const slopeLim = getActiveRoverSlopeLimit();
+    const zMap = { P50: 0.0, P90: 1.282, P99: 2.326 };
+    const zConf = zMap[stateTese.shieldLevel] ?? 1.282;
+
+    let tot = 0, realHaz = 0, normMiss = 0, multiMiss = 0;
+    const radM = 250;
+    const step = 50;
+    for (let dy = -radM; dy <= radM; dy += step) {
+      for (let dx = -radM; dx <= radM; dx += step) {
+        if (dx * dx + dy * dy > radM * radM) continue;
+        const c = global.TeseEngine.sampleGrid(grid, stateTese.pos.x + dx, stateTese.pos.y + dy);
+        tot++;
+        if (c.slp5 > slopeLim) {
+          realHaz++;
+          const coarseS = stateTese.coarseMode === "20m" && c.slp20 != null ? c.slp20 : c.slp60;
+          if (coarseS <= slopeLim) normMiss++;
+          const effS = c.slp5 + zConf * (c.slperr || 1.2);
+          if (effS <= slopeLim) multiMiss++;
+        }
+      }
+    }
+    const localRealPct = tot ? (realHaz / tot) * 100 : 0;
+    const localNormMissPct = tot ? (normMiss / tot) * 100 : 0;
+    const localMultiMissPct = tot ? (multiMiss / tot) * 100 : 0;
+
+    const pgda = stateTese.activePgdaName ? stateTese.pgdaByName[stateTese.activePgdaName] : null;
+    const simSite = _surface() && _surface().sim && _surface().sim.site;
+    const mc = pgda
+      ? (stateTese.coarseMode === "20m" ? pgda.mc20 : pgda.mc60)
+      : (simSite && (stateTese.coarseMode === "20m" ? simSite.mc20 : simSite.mc60));
+
+    const mcBase = mc ? (mc.grade_perigo_nao_vetado ?? mc.grade_nv ?? null) : null;
+    const mcMulti = mc ? (mc.teseP90_perigo_nao_vetado ?? mc.teseP90_nv ?? null) : null;
+    const hasMC = mcBase != null && mcMulti != null;
+    const isNormal = stateTese.degrau === 0;
+    const activePct = hasMC ? (isNormal ? mcBase : mcMulti) : (isNormal ? localNormMissPct : localMultiMissPct);
+    const baseRef = hasMC ? mcBase : localNormMissPct;
+    const multiRef = hasMC ? mcMulti : localMultiMissPct;
+    const improvePct = baseRef > 0 ? Math.max(0, ((baseRef - multiRef) / baseRef) * 100) : 0;
+
+    return {
+      isNormal,
+      hasMC,
+      activePct,
+      improvePct,
+      localRealPct,
+      slopeLim
+    };
+  }
+
+  function updateShieldDangerPill(origScreen) {
+    const pill = document.getElementById("rover-shield-danger-pill");
+    if (!pill) return;
+    if (!stateTese.walkMode || !stateTese.activeGrid) {
+      pill.hidden = true;
+      return;
+    }
+    const m = computeShieldRingHazardMetrics();
+    if (!m) { pill.hidden = true; return; }
+
+    pill.hidden = false;
+    pill.classList.toggle("mode-base", m.isNormal);
+    const pctStr = m.activePct.toFixed(1).replace(".", ",");
+    const localStr = m.localRealPct.toFixed(1).replace(".", ",");
+    if (m.isNormal) {
+      pill.innerHTML = `⚠️ Perigo não vetado: <b>${pctStr}%</b> · Entorno 5m (&gt;${m.slopeLim}°): ${localStr}%`;
+    } else {
+      const impStr = m.improvePct > 0 ? ` <span style="color:#5dff9b;">(−${m.improvePct.toFixed(0)}%)</span>` : "";
+      pill.innerHTML = `🛡️ Perigo residual (${m.hasMC ? "MC P90" : stateTese.shieldLevel}): <b>${pctStr}%</b>${impStr} · Entorno 5m: ${localStr}%`;
+    }
+
+    const orig = origScreen || (global.Surface3DTerrain && global.Surface3DTerrain.getOriginScreenPos ? global.Surface3DTerrain.getOriginScreenPos() : null);
+    if (orig && orig.valid) {
+      const px = Math.max(290, Math.min(global.innerWidth - 180, orig.x));
+      const py = Math.max(120, Math.min(global.innerHeight - 172, orig.y + 18));
+      pill.style.left = `${px.toFixed(1)}px`;
+      pill.style.top = `${py.toFixed(1)}px`;
+    } else {
+      pill.style.left = "50%";
+      pill.style.top = `${Math.max(180, global.innerHeight - 180)}px`;
+    }
+  }
+
   function refreshWalkPanel() {
     const info = document.getElementById("tese-walk-telemetry");
     const grid = stateTese.activeGrid;
@@ -628,11 +729,17 @@
     const socPct = Math.round((sim.bat / sim.capWh) * 100);
     const decTxt = stateTese.lastScan ? stateTese.lastScan.decisionText : "Pronto para caminhar (clique no mini-mapa ou use WASD/setas)";
     const totalPk = (stateTese.solarPickups || []).length;
+    const hm = computeShieldRingHazardMetrics();
+    const mcGainLine = hm && hm.hasMC
+      ? `<div><b>Redução Multirresolução:</b> <span style="color:#5dff9b;font-weight:800;">−${hm.improvePct.toFixed(1)}%</span> de perigos não vetados</div>`
+      : "";
     info.innerHTML = `
       <div><b>Terreno:</b> ${grid.sitio}${grid.synthetic ? " (sintético)" : " (PGDA78 5m)"} · <b>LDEC:</b> ${cell.ldecAny ? "DISPARO REAL" : "interpolado"}</div>
       <div><b>Declive 5m / 60m:</b> ${cell.slp5.toFixed(1)}° / ${cell.slp60.toFixed(1)}° · <b>SOC:</b> ${socPct}% · <b>Dist:</b> ${Math.round(stateTese.walkDistM)} m · <b>⚡:</b> ${stateTese.pickupsCollected}/${totalPk}</div>
+      ${mcGainLine}
       <div class="tese-dec">${decTxt}</div>
     `;
+    updateShieldDangerPill();
   }
 
   function stepRover(dtReal) {
@@ -749,6 +856,7 @@
       }
       holder.style.transform = `translateX(-50%) scale(${sc.toFixed(2)}) rotate(${tilt.toFixed(1)}deg)`;
       holder.style.opacity = String(Math.max(0.35, 1 - z * 0.55));
+      updateShieldDangerPill(orig);
     }
   }
 
@@ -893,7 +1001,7 @@
       ctx.stroke();
     }
 
-    // Seta da direção proposta pelo Degrau ativo
+    // Seta da direção proposta pelo modo ativo
     const propRad = stateTese.lastScan.proposedRelDeg * Math.PI / 180;
     ctx.strokeStyle = "#00e5ff";
     ctx.lineWidth = 3;
@@ -901,10 +1009,31 @@
     ctx.moveTo(cx, baseY - 22);
     ctx.lineTo(cx + Math.sin(propRad) * 180, baseY - Math.cos(propRad) * 72);
     ctx.stroke();
+
+    // Círculo de segurança e % de perigo calculada no entorno do rover
+    const hm = computeShieldRingHazardMetrics();
+    ctx.beginPath();
+    ctx.ellipse(cx, baseY - 12, 84, 24, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = hm && hm.isNormal ? "rgba(245, 158, 11, 0.88)" : "rgba(0, 255, 136, 0.88)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    if (hm) {
+      const lbl = hm.isNormal
+        ? `Perigo s/ veto: ${hm.activePct.toFixed(1)}%`
+        : `Perigo: ${hm.activePct.toFixed(1)}% (−${hm.improvePct.toFixed(0)}%)`;
+      ctx.font = "800 11px 'JetBrains Mono', monospace";
+      const tw = ctx.measureText(lbl).width + 14;
+      ctx.fillStyle = "rgba(4, 16, 26, 0.88)";
+      ctx.fillRect(cx - tw / 2, baseY + 14, tw, 18);
+      ctx.strokeRect(cx - tw / 2, baseY + 14, tw, 18);
+      ctx.fillStyle = hm.isNormal ? "#fcd34d" : "#86efac";
+      ctx.textAlign = "center";
+      ctx.fillText(lbl, cx, baseY + 26);
+    }
     ctx.restore();
   }
 
-  // Comparador Sem Tese (Degrau 0) vs Com Tese (Degrau 4) no mesmo trajeto
+  // Comparador Navegação Normal (Sem Tese) vs Multirresolução (Com Tese) no mesmo trajeto
   function openTeseCompare() {
     const grid = stateTese.activeGrid;
     const sim = _surface() && _surface().sim;
@@ -921,40 +1050,50 @@
     const days = document.getElementById("cmp-days");
     if (!panel || !cols) return;
 
-    title.textContent = `⚖️ Sem Tese (Degrau 0) × Com Tese (Degrau 4 · ${stateTese.shieldLevel})`;
+    title.textContent = `⚖️ Navegação Normal (Sem Tese) × Multirresolução (Com Tese · ${stateTese.shieldLevel})`;
     days.textContent = `${grid.sitio} · trajeto ${Math.round(Math.hypot(goal.x - start.x, goal.y - start.y))} m`;
 
     const pgda = stateTese.activePgdaName ? stateTese.pgdaByName[stateTese.activePgdaName] : null;
+    const routeHazRed = cmp.base.hazardsHit > 0
+      ? Math.round(((cmp.base.hazardsHit - cmp.tese.hazardsHit) / cmp.base.hazardsHit) * 100)
+      : 0;
+    const mcRedPct = pgda && pgda.mc60 && pgda.mc60.grade_perigo_nao_vetado > 0
+      ? ((pgda.mc60.grade_perigo_nao_vetado - pgda.mc60.teseP90_perigo_nao_vetado) / pgda.mc60.grade_perigo_nao_vetado) * 100
+      : null;
+    const errRedPct = pgda && pgda.mc60 && pgda.mc60.erro_mediano_grade > 0
+      ? ((pgda.mc60.erro_mediano_grade - pgda.mc60.erro_mediano_tese) / pgda.mc60.erro_mediano_grade) * 100
+      : null;
     const mcHtml = pgda && pgda.mc60 ? `
       <div class="cmp-mc-box">
         <b>Dados reais PGDA 78 (${pgda.sitio}):</b>
         Perigo não vetado Grade 60m = <b>${pgda.mc60.grade_perigo_nao_vetado.toFixed(2)}%</b> →
-        Tese P90 = <b style="color:#5dff9b">${pgda.mc60.teseP90_perigo_nao_vetado.toFixed(2)}%</b> ·
-        Erro mediano ${pgda.mc60.erro_mediano_grade.toFixed(2)}° → ${pgda.mc60.erro_mediano_tese.toFixed(2)}°
+        Multirresolução P90 = <b style="color:#5dff9b">${pgda.mc60.teseP90_perigo_nao_vetado.toFixed(2)}%</b>
+        (${mcRedPct != null ? `<b style="color:#5dff9b">−${mcRedPct.toFixed(1)}%</b> de melhoria` : ""}) ·
+        Erro mediano ${pgda.mc60.erro_mediano_grade.toFixed(2)}° → ${pgda.mc60.erro_mediano_tese.toFixed(2)}° (${errRedPct != null ? `<b>−${errRedPct.toFixed(0)}%</b>` : ""})
       </div>` : "";
 
     const benchHtml = `
       <div class="cmp-mc-box" style="margin-top:6px;background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.38);">
-        <b>📊 Bateria Multirresolução LOLA (16 faixas reais · POP=100 · 1.600 travessias/célula):</b><br/>
-        • <b>N0 (Base):</b> Chegada <b style="color:#5dff9b">78,06%</b> vs. 67,31% (Grade 60m) · <b>+10,75 pp</b> (McNemar p=3,3×10⁻³¹, OR=5,99)<br/>
-        • <b>N1 (Terreno 20,1% &gt;15°):</b> <b style="color:#5dff9b">48,62%</b> vs. 35,44% · <b>+13,19 pp</b> (Wilcoxon p=0,046, OR=11,82, tomb. -2,44 pp)<br/>
-        • <b>N2 (Incerteza + Câmera):</b> <b style="color:#5dff9b">47,75%</b> vs. 35,44% · <b>+12,31 pp</b> (tomb. -2,81 pp, p=0,012)<br/>
-        • <b>N3 (Severo, POP=30):</b> <b style="color:#5dff9b">40,0%</b> vs. 30,8% (+30% rel., p=0,043) · Rover A sem escudo cai para 21,7% / 45,4% tomb.<br/>
-        • <b>Cobertura LDEC 5m:</b> apenas <b>7,29%</b> com disparo real LOLA (87,5°S–90°S) → fundamenta <i>No False Relief</i> + Escudo P90/P99
+        <b>📊 Melhoria Percentual da Multirresolução (16 faixas LOLA · POP=100 · 1.600 travessias/célula):</b><br/>
+        • <b>N0 (Base):</b> Chegada <b style="color:#5dff9b">78,06%</b> vs. 67,31% (Normal 60m) → <b style="color:#5dff9b">+16,0% rel.</b> (+10,75 pp, McNemar p=3,3×10⁻³¹, OR=5,99)<br/>
+        • <b>N1 (Terreno 20,1% &gt;15°):</b> <b style="color:#5dff9b">48,62%</b> vs. 35,44% → <b style="color:#5dff9b">+37,2% rel.</b> (+13,19 pp, Wilcoxon p=0,046, OR=11,82, tomb. -2,44 pp)<br/>
+        • <b>N2 (Incerteza + Câmera):</b> <b style="color:#5dff9b">47,75%</b> vs. 35,44% → <b style="color:#5dff9b">+34,7% rel.</b> (+12,31 pp, tomb. -2,81 pp, p=0,012)<br/>
+        • <b>N3 (Severo, POP=30):</b> <b style="color:#5dff9b">40,0%</b> vs. 30,8% → <b style="color:#5dff9b">+30,0% rel.</b> (p=0,043) · Normal sem escudo cai para 21,7% / 45,4% tomb.<br/>
+        • <b>Média nos 26 sítios PGDA 78:</b> redução média de <b style="color:#5dff9b">−79,7%</b> no perigo não vetado (31,48% → 6,38%) e <b style="color:#5dff9b">−42,9%</b> no erro mediano · LDEC real 5m: <b>7,29%</b>
       </div>`;
 
     cols.innerHTML = `
       <div class="cmp-col">
-        <h3>❌ Sem Tese (Degrau 0 · ${stateTese.coarseMode})</h3>
+        <h3>⚠️ Navegação Normal (Sem Tese · ${stateTese.coarseMode})</h3>
         <div class="cmp-stat"><span>SOC mínimo:</span><b>${cmp.base.socMin}%</b></div>
         <div class="cmp-stat"><span>Perigos >${getActiveRoverSlopeLimit()}° atingidos:</span><b style="color:#ff6b81">${cmp.base.hazardsHit}</b></div>
         <div class="cmp-stat"><span>Distância percorrida:</span><b>${cmp.base.distanceM} m</b></div>
         <div class="cmp-stat"><span>Tempo de travessia:</span><b>${cmp.base.timeH} h</b></div>
       </div>
       <div class="cmp-col">
-        <h3>🛡️ Com Tese (Degrau 4 · IA + Escudo ${stateTese.shieldLevel})</h3>
+        <h3>🛡️ Multirresolução (Com Tese · Otimização + ${stateTese.shieldLevel})</h3>
         <div class="cmp-stat"><span>SOC mínimo:</span><b style="color:#5dff9b">${cmp.tese.socMin}%</b></div>
-        <div class="cmp-stat"><span>Perigos evitados:</span><b style="color:#5dff9b">${cmp.hazardsAvoided} (restantes: ${cmp.tese.hazardsHit})</b></div>
+        <div class="cmp-stat"><span>Perigos evitados:</span><b style="color:#5dff9b">${cmp.hazardsAvoided} (−${routeHazRed}%) · restam ${cmp.tese.hazardsHit}</b></div>
         <div class="cmp-stat"><span>Vetos do Escudo ${stateTese.shieldLevel}:</span><b>${cmp.tese.vetoes}</b></div>
         <div class="cmp-stat"><span>Distância / Tempo:</span><b>${cmp.tese.distanceM} m · ${cmp.tese.timeH} h</b></div>
       </div>
@@ -988,7 +1127,7 @@
     const next = typeof force === "boolean" ? force : !global.Surface3DTerrain.tacticalMode;
     global.Surface3DTerrain.setTacticalZoom(next);
     const btn = document.getElementById("btn-tactical-zoom");
-    if (btn) btn.textContent = next ? "🎥 Voltar p/ Rover" : "🛰️ Visão IA (v18)";
+    if (btn) btn.textContent = next ? "🎥 Voltar p/ Rover" : "🛰️ Visão Multirresolução";
   }
 
   function onMiniMapClick(e) {

@@ -1,11 +1,9 @@
 /**
- * Motor Tático da Tese (extraído de simulacao_rover/animacao_tese_rover_neuroevolucao_v14.html)
- * 5 Degraus:
- *   0: Base 60/20 m (sem escudo, sem margem)
- *   1: + Marcato (Barreira Logarítmica + KKT)
- *   2: + Multirresolução 5 m (LDEC > 0 + No False Relief)
- *   3: + Monte Carlo Robusto (Escudo Determinístico P90 / P99)
- *   4: + IA (MLP) sob Escudo P90/P99
+ * Motor Tático da Tese
+ * Variações principais na simulação:
+ *   0: Navegação Normal (Sem Tese · grade 60/20 m, sem escudo)
+ *   1..3: Degraus intermediários internos (Otimização KKT / 5 m / MC P90)
+ *   4: Multirresolução (Com Tese · 5 m + LDEC + Otimização + Escudo P50/P90/P99)
  */
 (function (global) {
   "use strict";
@@ -13,11 +11,11 @@
   const Z_CONF = { P50: 0.0, P90: 1.282, P99: 2.326 };
 
   const DEGRAUS = [
-    { id: 0, name: "0: Base 60/20 m", short: "60/20m", desc: "Segue grade grossa sem escudo e sem margem" },
-    { id: 1, name: "1: + Marcato", short: "Marcato", desc: "Barreira logarítmica + KKT (desvio suave na grade)" },
-    { id: 2, name: "2: + Multirresolução 5 m", short: "Multi 5m", desc: "LDEC > 0 preserva 5 m; LDEC = 0 sem relevo falso" },
-    { id: 3, name: "3: + Monte Carlo (P90)", short: "MC P90", desc: "Escudo determinístico P90/P99 com incerteza LOLA" },
-    { id: 4, name: "4: + IA (MLP) + Escudo", short: "IA + Escudo", desc: "Rede MLP propõe trajetória filtrada pelo Escudo P90/P99" }
+    { id: 0, name: "Navegação Normal (Sem Tese)", short: "Normal (Sem Tese)", desc: "Grade LOLA grossa (60/20 m) sem multirresolução e sem escudo" },
+    { id: 1, name: "1: Otimização KKT", short: "Otimização", desc: "Barreira logarítmica + KKT (desvio suave na grade)" },
+    { id: 2, name: "2: Multirresolução 5 m", short: "Multi 5m", desc: "LDEC > 0 preserva 5 m; LDEC = 0 sem relevo falso" },
+    { id: 3, name: "3: Monte Carlo (P90)", short: "MC P90", desc: "Escudo determinístico P90/P99 com incerteza LOLA" },
+    { id: 4, name: "Multirresolução (Com Tese)", short: "Multirresolução", desc: "LDEC 5 m + Otimização contínua filtrada pelo Escudo P90/P99" }
   ];
 
   // Pesos pré-treinados compactos para MLP (10 entradas -> 6 ocultas tanh -> 3 saídas: delta, vel, carga)
@@ -249,16 +247,16 @@
     let shieldVetoed = false;
 
     if (degrau === 0) {
-      // Base 60/20 m: segue direto ao alvo, reação tardia
+      // Navegação Normal 60/20 m: segue direto ao alvo, reação tardia
       const center = sectors[6];
       if (center.freeM < 100) {
         proposedRel = sectors[8].freeM >= sectors[4].freeM ? 30 : -30;
-        decisionText = "Degrau 0: desvio tardio na grade grossa";
+        decisionText = "Navegação Normal: desvio tardio na grade grossa";
       } else {
-        decisionText = `Degrau 0 (${coarseMode}): seguindo rota sem escudo`;
+        decisionText = `Navegação Normal (${coarseMode}): seguindo rota sem escudo`;
       }
     } else if (degrau === 1) {
-      // + Marcato: função mérito com barreira logarítmica sobre setores
+      // + Otimização: função mérito com barreira logarítmica sobre setores
       let bestScore = -1e9, bestRel = 0;
       sectors.forEach((sc) => {
         const align = Math.cos((sc.relDeg - targetErrDeg) * Math.PI / 180);
@@ -268,7 +266,7 @@
       });
       proposedRel = bestRel;
       kkt = { deltaDeg: bestRel, lambdaObst: +(Math.max(0, 1 - sectors[6].freeM / 300)).toFixed(2), lambdaBat: +(Math.max(0, (35 - socPct) / 35)).toFixed(2) };
-      decisionText = `Degrau 1 (Marcato KKT): δ=${bestRel >= 0 ? "+" : ""}${bestRel}° · λ_obst=${kkt.lambdaObst}`;
+      decisionText = `Otimização KKT: δ=${bestRel >= 0 ? "+" : ""}${bestRel}° · λ_obst=${kkt.lambdaObst}`;
     } else if (degrau === 2 || degrau === 3) {
       // + Multirresolução 5m / Escudo P90
       let bestScore = -1e9, bestRel = 0;
@@ -281,16 +279,16 @@
       proposedRel = bestRel;
       if (!sectors[6].safe && Math.abs(targetErrDeg) < 20) shieldVetoed = true;
       decisionText = degrau === 2
-        ? `Degrau 2 (Multi 5m): corredor ${proposedRel >= 0 ? "+" : ""}${proposedRel}°`
-        : `Degrau 3 (Escudo ${shieldLevel}): ${shieldVetoed ? "VETO frontal → desvio" : "rota validada"} (${proposedRel >= 0 ? "+" : ""}${proposedRel}°)`;
+        ? `Multirresolução 5m: corredor ${proposedRel >= 0 ? "+" : ""}${proposedRel}°`
+        : `Escudo ${shieldLevel}: ${shieldVetoed ? "VETO frontal → desvio" : "rota validada"} (${proposedRel >= 0 ? "+" : ""}${proposedRel}°)`;
     } else {
-      // Degrau 4: IA (MLP) propõe, Escudo P90/P99 valida/veta
+      // Multirresolução (Com Tese): Otimização contínua + Escudo P90/P99 valida/veta
       const f = (idx) => clamp(sectors[idx].freeM / maxRangeM * 2 - 1, -1, 1);
       const inputs = [
         f(0), f(3), f(6), f(9), f(12),
         clamp(targetErrDeg / 90, -1, 1),
-        clamp(sectors[6].maxEff / slopeLimit - 0.5, -1, 1),
-        clamp(sectors[6].ldecDen * 2 - 1, -1, 1),
+        clamp((sectors[6].maxEff || 0) / slopeLimit - 0.5, -1, 1),
+        clamp((sectors[6].ldecDen || 0) * 2 - 1, -1, 1),
         clamp((socPct - 30) / 50, -1, 1),
         opts.inShadow ? -1 : 1
       ];
@@ -298,7 +296,7 @@
       proposedRel = clamp(mlpOut.deltaNorm * 75 + targetErrDeg * 0.45, -90, 90);
       speedFactor = clamp(0.75 + mlpOut.speedNorm * 0.35, 0.35, 1.1);
 
-      // Escudo P90/P99 verifica se o setor proposto pela MLP é seguro
+      // Escudo P90/P99 verifica se o setor proposto na otimização é seguro
       const closest = sectors.reduce((a, b) => Math.abs(b.relDeg - proposedRel) < Math.abs(a.relDeg - proposedRel) ? b : a);
       if (!closest.safe) {
         shieldVetoed = true;
@@ -306,13 +304,13 @@
         if (safeSectors.length) {
           const alt = safeSectors.reduce((a, b) => Math.abs(b.relDeg - targetErrDeg) < Math.abs(a.relDeg - targetErrDeg) ? b : a);
           proposedRel = alt.relDeg;
-          decisionText = `Degrau 4 (IA+Escudo ${shieldLevel}): MLP vetada (${closest.reason}) → ${alt.relDeg >= 0 ? "+" : ""}${alt.relDeg}°`;
+          decisionText = `Multirresolução (Escudo ${shieldLevel}): setor vetado (${closest.reason}) → ${alt.relDeg >= 0 ? "+" : ""}${alt.relDeg}°`;
         } else {
           speedFactor = 0.25;
-          decisionText = `Degrau 4 (Escudo ${shieldLevel}): redução de velocidade (todos setores com cautela)`;
+          decisionText = `Multirresolução (Escudo ${shieldLevel}): redução de velocidade (setores com cautela)`;
         }
       } else {
-        decisionText = `Degrau 4 (IA MLP + Escudo ${shieldLevel}): trajeto ótimo ${proposedRel >= 0 ? "+" : ""}${Math.round(proposedRel)}°`;
+        decisionText = `Multirresolução (Otimização + Escudo ${shieldLevel}): trajeto ótimo ${proposedRel >= 0 ? "+" : ""}${Math.round(proposedRel)}°`;
       }
     }
 
@@ -497,7 +495,7 @@
   }
 
   /**
-   * Compara Degrau 0 (Sem Tese) vs Degrau 4 (Com Tese + Gerações IA) no mesmo trajeto sobre a grade 5m real.
+   * Compara Navegação Normal (Degrau 0 · Sem Tese) vs Multirresolução (Degrau 4 · Com Tese) no mesmo trajeto sobre a grade 5m real.
    */
   function simulateRouteComparison(grid, start, goal, roverParams, sunFrac, shieldLevel, coarseMode) {
     const mode = coarseMode || "60m";
@@ -579,7 +577,7 @@
     const base = evaluateWaypoints(0, baseRaw);
     const tese = evaluateWaypoints(4, teseRaw);
 
-    // Gerações de Neuroevolução: 100 rovers por geração saindo da origem e "morrendo" nos perigos >15°
+    // Gerações do enxame de otimização: 100 rovers por geração saindo da origem e "morrendo" nos perigos >15°
     const generations = [];
     const spanDist = Math.max(200, Math.hypot(goal.x - start.x, goal.y - start.y));
     const dx = goal.x - start.x, dy = goal.y - start.y;

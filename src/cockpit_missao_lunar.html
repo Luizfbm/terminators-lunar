@@ -2182,9 +2182,32 @@
     .tese-walk-panel[hidden] { display: none; }
     #surface-3d-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 12; pointer-events: none; }
     .tese-walk-h { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 900; color: #00e5ff; letter-spacing: 0.6px; margin-bottom: 8px; }
-    .degrau-list { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 8px; }
-    .degrau-btn { border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.05); color: #cde2fa; border-radius: 6px; padding: 5px 2px; font-size: 10px; font-weight: 800; cursor: pointer; text-align: center; }
+    .degrau-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+    .degrau-btn { border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.05); color: #cde2fa; border-radius: 8px; padding: 6px 6px; font-size: 10.5px; font-weight: 800; cursor: pointer; text-align: center; line-height: 1.25; }
     .degrau-btn.active { background: #00e5ff; color: #04101a; border-color: #00e5ff; }
+    .rover-shield-pill {
+      position: fixed;
+      z-index: 410;
+      transform: translate(-50%, 0);
+      pointer-events: none;
+      padding: 5px 11px;
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.58);
+      border: 1.5px solid rgba(0, 255, 136, 0.78);
+      background: rgba(4, 20, 28, 0.90);
+      color: #86efac;
+    }
+    .rover-shield-pill.mode-base {
+      border-color: rgba(245, 158, 11, 0.85);
+      background: rgba(30, 17, 6, 0.92);
+      color: #fcd34d;
+    }
     #tese-minimap { width: 100%; height: auto; aspect-ratio: 1/1; border-radius: 8px; border: 1px solid rgba(255,255,255,0.18); cursor: crosshair; display: block; }
     .tese-walk-telemetry { font-size: 11px; line-height: 1.45; margin-top: 8px; color: #cde2fa; }
     .tese-walk-telemetry .tese-dec { margin-top: 4px; padding: 4px 6px; border-radius: 6px; background: rgba(0,229,255,0.12); color: #8ff4ff; font-weight: 700; }
@@ -2467,6 +2490,7 @@
       </aside>
 
       <div class="landed-rover-stage" id="landed-rover-holder"></div>
+      <div id="rover-shield-danger-pill" class="rover-shield-pill" hidden aria-live="polite"></div>
 
       <section class="eng-panel" id="eng-panel" aria-label="Modo Engenheiro">
         <div class="eng-h">🛠️ MODO ENGENHEIRO <span id="eng-src"></span></div>
@@ -2539,12 +2563,9 @@
           <button type="button" id="btn-ctrl-manual" class="active" onclick="TeseUI.setControlMode('manual')" title="Controle manual pelo teclado (WASD / Setas) seguindo a rota e coletando raios solares">🎮 Manual (Teclado)</button>
           <button type="button" id="btn-ctrl-auto" onclick="TeseUI.setControlMode('auto')" title="Navegação autônoma: rota traçada e seguida automaticamente">🤖 Autônoma (Rota)</button>
         </div>
-        <div class="degrau-list" role="group" aria-label="Seletor dos 5 Degraus">
-          <button type="button" class="degrau-btn" data-d="0" onclick="TeseUI.setDegrau(0)" title="Base 60/20m">0: Base</button>
-          <button type="button" class="degrau-btn" data-d="1" onclick="TeseUI.setDegrau(1)" title="+ Marcato KKT">1: Marcato</button>
-          <button type="button" class="degrau-btn" data-d="2" onclick="TeseUI.setDegrau(2)" title="+ Multirresolução 5m">2: Multi 5m</button>
-          <button type="button" class="degrau-btn" data-d="3" onclick="TeseUI.setDegrau(3)" title="+ Monte Carlo Robusto P90">3: MC P90</button>
-          <button type="button" class="degrau-btn active" data-d="4" onclick="TeseUI.setDegrau(4)" title="+ IA (MLP) sob Escudo P90/P99">4: IA+Escudo</button>
+        <div class="degrau-list" role="group" aria-label="Variação da Simulação">
+          <button type="button" class="degrau-btn" data-d="0" onclick="TeseUI.setDegrau(0)" title="Navegação Normal sem multirresolução (grade 60/20 m, sem escudo)">⚠️ Navegação Normal<br><small style="font-weight:600;opacity:0.85;">Sem Tese</small></button>
+          <button type="button" class="degrau-btn active" data-d="4" onclick="TeseUI.setDegrau(4)" title="Multirresolução 5 m + LDEC + Otimização + Escudo P50/P90/P99">🛡️ Multirresolução<br><small style="font-weight:600;opacity:0.85;">Com Tese</small></button>
         </div>
         <canvas id="tese-minimap" width="200" height="200" onclick="TeseUI.onMiniMapClick(event)" title="Clique no mini-mapa 10×10 km para definir destino (ou use WASD / setas)"></canvas>
         <div class="tese-nudge">
@@ -2552,10 +2573,10 @@
           <button type="button" onpointerdown="TeseUI.holdKey('ArrowUp',true)" onpointerup="TeseUI.holdKey('ArrowUp',false)" onpointerleave="TeseUI.holdKey('ArrowUp',false)">▲ Avançar</button>
           <button type="button" onpointerdown="TeseUI.holdKey('ArrowDown',true)" onpointerup="TeseUI.holdKey('ArrowDown',false)" onpointerleave="TeseUI.holdKey('ArrowDown',false)">▼</button>
           <button type="button" onpointerdown="TeseUI.holdKey('ArrowRight',true)" onpointerup="TeseUI.holdKey('ArrowRight',false)" onpointerleave="TeseUI.holdKey('ArrowRight',false)">▶</button>
-          <button type="button" onclick="TeseUI.openTeseCompare()" style="background:rgba(0,229,255,0.2);border-color:#00e5ff">⚖️ 0×4</button>
+          <button type="button" onclick="TeseUI.openTeseCompare()" style="background:rgba(0,229,255,0.2);border-color:#00e5ff" title="Comparar Navegação Normal × Multirresolução">⚖️ Comparar</button>
         </div>
         <div class="tese-nudge" style="margin-top:4px;">
-          <button type="button" id="btn-tactical-zoom" onclick="TeseUI.toggleTacticalZoom()" style="flex:1;background:rgba(16,185,129,0.2);border-color:#10b981;color:#a7f3d0;">🛰️ Visão IA (v18)</button>
+          <button type="button" id="btn-tactical-zoom" onclick="TeseUI.toggleTacticalZoom()" style="flex:1;background:rgba(16,185,129,0.2);border-color:#10b981;color:#a7f3d0;">🛰️ Visão Multirresolução</button>
           <button type="button" id="btn-point-sun" onclick="TeseUI.pointToSun()" title="Apontar a frente e o painel solar para o Sol (tecla F)" style="background:rgba(255,209,71,0.18);border-color:#ffd147;color:#ffe799;">☀️ Sol</button>
         </div>
         <div id="tese-walk-telemetry" class="tese-walk-telemetry"></div>
@@ -2638,13 +2659,13 @@
     </div>
   </div>
 
-  <!-- ANIMAÇÃO DA SIMULAÇÃO DO PERCURSO LADO A LADO (ESTILO v18.html) -->
-  <div id="v18-sim-modal" class="tese-modal" role="dialog" aria-modal="true" aria-label="Simulação lado a lado Sem Tese vs Com Tese" hidden>
+  <!-- ANIMAÇÃO DA SIMULAÇÃO DO PERCURSO LADO A LADO -->
+  <div id="v18-sim-modal" class="tese-modal" role="dialog" aria-modal="true" aria-label="Simulação lado a lado Navegação Normal vs Multirresolução" hidden>
     <div class="tese-modal-box">
       <div class="tese-modal-head">
         <div>
-          <h2>🛰️ Zoom-Out LOLA &amp; Neuroevolução (Sem Tese × Com Tese)</h2>
-          <div class="tese-modal-meta" id="v18-sub-meta">Mapa LOLA sob o rover · Enxame evolutivo em 5 gerações · Clique em um dos quadros para aceitar o plano</div>
+          <h2>🛰️ Zoom-Out LOLA (Navegação Normal × Multirresolução)</h2>
+          <div class="tese-modal-meta" id="v18-sub-meta">Mapa LOLA sob o rover · Enxame de 100 rovers convergindo para rota segura · Clique em um dos quadros para aceitar o plano</div>
         </div>
         <button type="button" class="cmp-x" onclick="RouteSimV18.close()" aria-label="Fechar">✕</button>
       </div>
@@ -2665,16 +2686,16 @@
       </div>
       <div class="v18-prog"><i id="v18-prog-fill"></i></div>
       <div class="v18-dual">
-        <div id="v18-pane-base" class="v18-pane" onclick="RouteSimV18.acceptPlan('base')" title="Clique neste quadro para aceitar o plano Sem Tese (Degrau 0)">
+        <div id="v18-pane-base" class="v18-pane" onclick="RouteSimV18.acceptPlan('base')" title="Clique neste quadro para aceitar a Navegação Normal (Sem Tese)">
           <div class="v18-pane-head">
-            <span class="tag-base">⚠️ SEM TESE (Degrau 0 · Grade <span id="v18-lbl-grid">60 m</span>)</span>
+            <span class="tag-base">⚠️ NAVEGAÇÃO NORMAL (Sem Tese · Grade <span id="v18-lbl-grid">60 m</span>)</span>
             <span id="v18-stat-base">Perigos: 0 · 0 m</span>
           </div>
           <canvas id="v18-canvas-base" width="440" height="340"></canvas>
         </div>
-        <div id="v18-pane-tese" class="v18-pane" onclick="RouteSimV18.acceptPlan('tese')" title="Clique neste quadro para aceitar o plano Com Tese (Degrau 4 + Escudo)">
+        <div id="v18-pane-tese" class="v18-pane" onclick="RouteSimV18.acceptPlan('tese')" title="Clique neste quadro para aceitar a Multirresolução (Com Tese + Otimização)">
           <div class="v18-pane-head">
-            <span class="tag-tese">🛡️ COM TESE (5 m + Escudo <span id="v18-lbl-shield">P90</span> + IA)</span>
+            <span class="tag-tese">🛡️ MULTIRRESOLUÇÃO (Com Tese · 5 m + Otimização + <span id="v18-lbl-shield">P90</span>)</span>
             <span id="v18-stat-tese">Perigos: 0 · Vetos: 0</span>
           </div>
           <canvas id="v18-canvas-tese" width="440" height="340"></canvas>
@@ -6564,6 +6585,9 @@
       if (!hit) { card.classList.remove("visible"); return; }
       card.style.borderColor = hit.viable ? "#00ff88" : "#ff9f43";
       const nOn = FUNNEL.filter(f => state.filters[f.key]).length;
+      const mcGainHtml = (hit.mc60 && hit.mc60.grade_nv > 0 && hit.mc60.teseP90_nv != null)
+        ? `<br>🛡️ <b>Perigo não vetado (${hit.pgda78_match || "MC 60m"}):</b> ${hit.mc60.grade_nv.toFixed(1).replace(".", ",")}% → <span style="color:#5dff9b;">${hit.mc60.teseP90_nv.toFixed(1).replace(".", ",")}%</span> (<b style="color:#5dff9b;">−${((hit.mc60.grade_nv - hit.mc60.teseP90_nv) / hit.mc60.grade_nv * 100).toFixed(0)}%</b> c/ Multirresolução)`
+        : "";
       card.innerHTML = `
         <div style="font-size:21px; font-weight:900; color:#ffffff;">
           ${hit.regiao} <span style="color:#ffd147;">(${hit.code})</span>
@@ -6579,7 +6603,7 @@
           ${hit.viable && hit.rec ? `📅 <b>Pouso recomendado:</b> ${fmtWhen(hit.rec.tH)}<br>🔋 <b>Bateria no pior momento:</b> ${Math.round(hit.rec.minPct * 100)}%${hit.rec.approx ? " ≈ (relevo ilustrativo)" : ""}<br>` : ""}
           ☀️ <b>Dias de Sol contínuos (tabela):</b> ${hit.effectiveDays} dias<br>
           🧊 <b>Gelo na cratera:</b> ${hit.psr_area.toLocaleString('pt-BR')} m²<br>
-          ⛰️ <b>Inclinação do chão:</b> ${String(hit.slope).replace(".", ",")}°
+          ⛰️ <b>Inclinação do chão:</b> ${String(hit.slope).replace(".", ",")}°${mcGainHtml}
         </div>
         ${skyLines(hit)}
         ${hit.viable ? `<div style="margin-top:10px; background:rgba(0,255,136,0.2); border:2px solid #00ff88; padding:8px 12px; border-radius:10px; text-align:center; font-size:16px; font-weight:900; color:#ffffff;">

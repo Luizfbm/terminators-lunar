@@ -1,8 +1,8 @@
 /**
- * Simulação Lado a Lado estilo v18.html (Sem Tese × Com Tese)
+ * Simulação Lado a Lado (Navegação Normal × Multirresolução)
  * - Zoom-out diretamente sobre o terreno sob o rover
  * - Seletor de grade LOLA (60 m / 20 m / 5 m)
- * - Enxame de Neuroevolução em 5 gerações convergindo para a rota ótima do Escudo P90/P99
+ * - Enxame evolutivo de 100 rovers convergindo para a rota ótima do Escudo P90/P99
  */
 (function (global) {
   "use strict";
@@ -237,7 +237,7 @@
     ctx.beginPath(); ctx.moveTo(sPx.x, sPx.y); ctx.lineTo(gPx.x, gPx.y); ctx.stroke();
     ctx.setLineDash([]);
 
-    // Enxame de Neuroevolução estilo v18.html: 100 rovers saindo, morrendo (X vermelho) e evoluindo!
+    // Enxame de travessia com 100 rovers saindo, morrendo (X vermelho) nos perigos e convergindo
     if (opts.generations && opts.generations.length) {
       const swarmPhase = Math.min(1, opts.progress / 0.65);
       const gIdx = Math.min(opts.generations.length - 1, Math.floor(Math.min(0.999, swarmPhase) * opts.generations.length));
@@ -405,7 +405,7 @@
       progress, start, goal, toPx,
       lineColor: "#f59e0b",
       faintColor: "rgba(245, 158, 11, 0.25)",
-      label: "Sem Tese",
+      label: "Normal",
       shieldArc: false
     });
 
@@ -413,12 +413,12 @@
       progress, start, goal, toPx,
       lineColor: "#10b981",
       faintColor: "rgba(16, 185, 129, 0.28)",
-      label: `Tese ${simState.shieldLevel}`,
+      label: `Multi ${simState.shieldLevel}`,
       shieldArc: true,
       generations: cmp.generations
     });
 
-    // Atualiza indicador de geração IA com contagem de sobreviventes dos 100 rovers
+    // Atualiza indicador de geração com contagem de sobreviventes dos 100 rovers
     const genPill = document.getElementById("v18-gen-pill");
     if (genPill && cmp.generations && cmp.generations.length) {
       const gIdx = Math.min(cmp.generations.length - 1, Math.floor(Math.min(0.999, progress / 0.65) * cmp.generations.length));
@@ -441,14 +441,26 @@
 
     const cards = document.getElementById("v18-cards");
     if (cards) {
+      const hazRedPct = bStats.hazCount > 0
+        ? Math.round(((bStats.hazCount - tStats.hazCount) / bStats.hazCount) * 100)
+        : (cmp.base.hazardsHit > 0 ? Math.round(((cmp.base.hazardsHit - cmp.tese.hazardsHit) / cmp.base.hazardsHit) * 100) : 0);
+      const tState = global.TeseUI && global.TeseUI.state;
+      const pgda = tState && tState.activePgdaName && tState.pgdaByName ? tState.pgdaByName[tState.activePgdaName] : null;
+      const mc = pgda && (simState.coarseMode === "20m" ? pgda.mc20 : pgda.mc60);
+      const mcRed = mc && mc.grade_perigo_nao_vetado > 0
+        ? Math.round(((mc.grade_perigo_nao_vetado - mc.teseP90_perigo_nao_vetado) / mc.grade_perigo_nao_vetado) * 100)
+        : null;
+      const mcSiteTxt = mc && mcRed !== null
+        ? ` · <b>Sítio ${pgda.sitio} (${simState.coarseMode}):</b> perigo não vetado ${mc.grade_perigo_nao_vetado.toFixed(1)}% → <b style="color:#34d399;">${mc.teseP90_perigo_nao_vetado.toFixed(1)}% (−${mcRed}%)</b>`
+        : "";
       cards.innerHTML = `
-        <div class="v18-card"><span>Distância (Sem × Tese)</span><b>${distBase} × ${distTese} m</b></div>
-        <div class="v18-card"><span>Bateria (Sem × Tese)</span><b style="color:#10b981;">${bStats.cur.soc}% × ${tStats.cur.soc}%</b></div>
-        <div class="v18-card"><span>Perigos >15° (Sem × Tese)</span><b style="color:#f59e0b;">${bStats.hazCount} × <span style="color:#10b981;">${tStats.hazCount}</span></b></div>
+        <div class="v18-card"><span>Distância (Normal × Multi)</span><b>${distBase} × ${distTese} m</b></div>
+        <div class="v18-card"><span>Bateria (Normal × Multi)</span><b style="color:#10b981;">${bStats.cur.soc}% × ${tStats.cur.soc}%</b></div>
+        <div class="v18-card"><span>Perigos &gt;15° (Redução)</span><b style="color:#f59e0b;">${bStats.hazCount} → <span style="color:#10b981;">${tStats.hazCount}</span> <small style="color:#34d399;">(${hazRedPct >= 0 ? "−" : "+"}${Math.abs(hazRedPct)}%)</small></b></div>
         <div class="v18-card"><span>Vetos Escudo ${simState.shieldLevel}</span><b style="color:#38bdf8;">${tStats.vetoCount} desvios</b></div>
         <div class="v18-card" style="grid-column:1/-1;font-size:11px;color:#cbd5e1;padding:6px 10px;">
-          📊 <b>Bateria Multirresolução (POP=100, 16 faixas LOLA):</b>
-          Chegada Tese 60→5m vs Grade 60m: <b style="color:#34d399;">+10,8 pp (N0)</b> · <b style="color:#34d399;">+13,2 pp (N1, p=0,046, OR=11,8)</b> · <b style="color:#34d399;">+12,3 pp (N2, tomb. -2,8 pp, p=0,012)</b> · <b style="color:#34d399;">+30% rel. (N3, p=0,043)</b> · LDEC real 5m: <b>7,29%</b>
+          📊 <b>Melhoria Multirresolução (POP=100, 16 faixas LOLA):</b>
+          Chegada vs. Grade 60m: <b style="color:#34d399;">+16% rel. N0</b> (+10,8 pp) · <b style="color:#34d399;">+37% rel. N1</b> (+13,2 pp, p=0,046) · <b style="color:#34d399;">+35% rel. N2</b> (+12,3 pp, p=0,012) · <b style="color:#34d399;">+30% rel. N3</b> (p=0,043)${mcSiteTxt}
         </div>
       `;
     }
