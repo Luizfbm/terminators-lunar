@@ -131,7 +131,9 @@ def gate(statuses: Counter[str]) -> int:
         print("the survivors; write the test that kills each new one.")
         return 1
     if int(killed * 10) > int(floor * 10):
-        print(f"PASS, and the floor can go up to {int(killed * 10) / 10:.1f}. Raise it in this change.")
+        print(
+            f"PASS, and the floor can go up to {int(killed * 10) / 10:.1f}. Raise it in this change."
+        )
     else:
         print("PASS")
     return 0
