@@ -1,5 +1,5 @@
 {
- "summary": "AR06 and its grid DM1 (1.3 km away): Eduardo's Monte Carlo results at 60 m and 20 m, commit 2195fcb",
+ "summary": "AR06 and its grid DM1 (1.3 km away): our group's Monte Carlo results at 60 m and 20 m, commit 2195fcb",
  "value": {
   "site_id": "AR06",
   "slope_limit_deg": 15,
@@ -378,6 +378,6 @@
     }
    }
   ],
-  "source_reference": "Eduardo's Monte Carlo mc_lola.py over PGDA product 78 (Barker et al. 2021), 5-fold cross-validation on the measured cells, 100 draws of Normal(slope, slperr), seed 2026 (branch eduardo/cockpit-multirresolucao, commit 2195fcb); ellipse share from LDEC_875S_5M by Eduardo's analise_cobertura_lola.py"
+  "source_reference": "Our group's Monte Carlo mc_lola.py over PGDA product 78 (Barker et al. 2021), 5-fold cross-validation on the measured cells, 100 draws of Normal(slope, slperr), seed 2026 (our group's research branch, commit 2195fcb); ellipse share from LDEC_875S_5M by our group's analise_cobertura_lola.py"
  }
 }

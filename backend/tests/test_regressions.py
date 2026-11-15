@@ -1711,3 +1711,38 @@ def test_the_sun_and_earth_radius_matches_an_independent_ephemeris_computation(
         # The contract names the equatorial radius; the mean one is 0.11% smaller.
         assert earth == pytest.approx(equatorial, abs=1e-5), sample["t"]
         assert earth == pytest.approx(mean, rel=2e-3), sample["t"]
+
+
+def _strings(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, dict):
+        return [s for key, item in value.items() for s in [key, *_strings(item)]]
+    if isinstance(value, list):
+        return [s for item in value for s in _strings(item)]
+    return []
+
+
+def test_no_team_member_is_named_in_what_the_api_serves() -> None:
+    # Found on 15/11/2026 (issue #136): the Rovers' `source_reference`, the hazard
+    # `source_reference`s (their provenance named a branch called after a person) and the
+    # Proof entries (titles, references, results, caveats and the validation ids) named
+    # Eduardo and Larissa. No person's name appears on screen or in anything the API
+    # serves; the work is credited to the group. Every string of every answer is walked,
+    # keys included, so a new field cannot bring a name back.
+    paths = [
+        "/rovers",
+        "/validations",
+        "/sites/AR06/hazard",
+        "/sites/AR06/hazard/grid",
+        "/sites/AR06/hazard/around",
+        "/sites/HW02/hazard",
+        "/sites/AR06/route",
+    ]
+    names = re.compile(r"eduardo|larissa", re.IGNORECASE)
+    named: list[tuple[str, str]] = []
+    for path in paths:
+        response = client.get(path)
+        assert response.status_code == 200, (path, response.text)
+        named += [(path, s[:120]) for s in _strings(response.json()) if names.search(s)]
+    assert named == []

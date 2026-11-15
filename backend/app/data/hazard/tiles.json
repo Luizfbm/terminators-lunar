@@ -1,6 +1,6 @@
 {
  "source": {
-  "branch": "origin/eduardo/cockpit-multirresolucao",
+  "branch": "our group's research branch",
   "commit": "2195fcb",
   "grids": "PGDA product 78 (Barker et al. 2021, Planetary and Space Science 203, 105119), 5 m surf, ldec, slp, slperr; central 10 x 10 km at 50 m by build_map_bundle.py",
   "monte_carlo": "mc_lola.py, 5 folds, 100 draws of Normal(slope, slperr), seed 2026, limit 15°",

@@ -4,7 +4,7 @@ Three Proof checks use independently produced reference data. The reference data
 
 | Proof entry | What it compares | Where it runs |
 |---|---|---|
-| `larissa-athena-horizon` (+ negative control) | Our Horizon mask at the IM-2 Athena point against the independent terrain-only silhouette | Engine output from the server (`run_athena_engine.py`) |
+| `independent-athena-horizon` (+ negative control) | Our Horizon mask at the IM-2 Athena point against the independent terrain-only silhouette | Engine output from the server (`run_athena_engine.py`) |
 | `landing-im2-athena` (+ negative control) | Our Sun at the two LROC NAC image centres against the incidence angle in the LROC PDS index; the Earth over the transmission as a fact | LROC part in CI; transmission from the server |
 | `eclipse-2025-local-contacts` (+ negative control) | The 14/03/2025 eclipse's local contacts against SPICE `gfoclt`, and inside NASA's whole-Moon contacts | CI, at the `ECLIPSE_2025` fixture point; Athena on the server, for information |
 

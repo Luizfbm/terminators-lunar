@@ -6,7 +6,7 @@
  "git_blob": "e12bb3b7ad6280beccb3722f87717bb2760dcc1e",
  "sha256": "4ecd4faa17e04955a0a854d58539d875ab3966c8b24f3ccb346af1f897e9e465",
  "rows": 486,
- "made_by": "validation/sfs/eduardo/photo2.py and photo3.py (his scripts, byte for byte), with ray.c, lib.py, load.py and eph.py",
+ "made_by": "validation/sfs/group/photo2.py and photo3.py (his scripts, byte for byte), with ray.c, lib.py, load.py and eph.py",
  "needs_to_regenerate": "the 486 LROC NAC orthophotos and the SfS elevation products (Bertone et al. 2026, packages A3CLR22 #8, #9, #10), LDEM_875S_20M, and the DE440 kernels; none of them is in this repository",
  "engine_fix": "The horizon code behind this file is his C ray-marcher (ray.c): exact stereographic geometry on a 1,737,400 m sphere, with curvature. The 111,320 m/degree constant fixed in his commit 8dea6de (10:37 -0300) lived in precalc/horizon.py and precalc/engine.py, which these scripts never import. By commit time this file predates the fix; by code path it never held the error. test_sfs_photos.py checks the sources for the constant."
 }

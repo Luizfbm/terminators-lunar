@@ -18,7 +18,7 @@
    "estimated": [
     "power_shadow_w"
    ],
-   "source_reference": "NSSDC: 210 kg, 3.10 m, two 36 V 121 Ah silver-zinc batteries, not rechargeable. Mean draw estimated. Eduardo's cockpit catalogue, commit 2195fcb."
+   "source_reference": "NSSDC: 210 kg, 3.10 m, two 36 V 121 Ah silver-zinc batteries, not rechargeable. Mean draw estimated. Our group's rover catalogue, commit 2195fcb."
   },
   {
    "id": "viper",
@@ -36,7 +36,7 @@
    "mast_height_m": 2.45,
    "slope_limit_deg": 15,
    "estimated": [],
-   "source_reference": "NASA NTRS (LSIC 2024): battery 5,420 Wh, panels 320-450 W; 57 h on battery alone in test, so about 95 W. Eduardo's cockpit catalogue, commit 2195fcb."
+   "source_reference": "NASA NTRS (LSIC 2024): battery 5,420 Wh, panels 320-450 W; 57 h on battery alone in test, so about 95 W. Our group's rover catalogue, commit 2195fcb."
   },
   {
    "id": "ltv",
@@ -60,7 +60,7 @@
     "power_shadow_w",
     "mast_height_m"
    ],
-   "source_reference": "NASA has not published mass or size; class estimates (about 500 kg). Eduardo's cockpit catalogue, commit 2195fcb."
+   "source_reference": "NASA has not published mass or size; class estimates (about 500 kg). Our group's rover catalogue, commit 2195fcb."
   },
   {
    "id": "mapp",
@@ -84,7 +84,7 @@
     "power_shadow_w",
     "mast_height_m"
    ],
-   "source_reference": "Illustrative values: the maker has not published a full data sheet. Eduardo's cockpit catalogue, commit 2195fcb."
+   "source_reference": "Illustrative values: the maker has not published a full data sheet. Our group's rover catalogue, commit 2195fcb."
   },
   {
    "id": "sojourner",
@@ -105,7 +105,7 @@
     "battery_wh",
     "power_shadow_w"
    ],
-   "source_reference": "NASA: 10.6 kg, 30 cm tall, 0.22 m² panel giving about 16 W; non-rechargeable Li-SOCl2 battery (capacity estimated). Eduardo's cockpit catalogue, commit 2195fcb."
+   "source_reference": "NASA: 10.6 kg, 30 cm tall, 0.22 m² panel giving about 16 W; non-rechargeable Li-SOCl2 battery (capacity estimated). Our group's rover catalogue, commit 2195fcb."
   },
   {
    "id": "mer",
@@ -125,7 +125,7 @@
    "estimated": [
     "battery_wh"
    ],
-   "source_reference": "Panels about 140 W, about 100 W to drive; two 8 Ah Li-ion batteries (energy estimated). Eduardo's cockpit catalogue, commit 2195fcb."
+   "source_reference": "Panels about 140 W, about 100 W to drive; two 8 Ah Li-ion batteries (energy estimated). Our group's rover catalogue, commit 2195fcb."
   },
   {
    "id": "curiosity",
@@ -146,7 +146,7 @@
     "battery_wh",
     "power_shadow_w"
    ],
-   "source_reference": "science.nasa.gov: 899 kg, 3.0 x 2.7 x 2.2 m; MMRTG about 110 W; two 42 Ah Li-ion batteries (energy estimated). Eduardo's cockpit catalogue, commit 2195fcb."
+   "source_reference": "science.nasa.gov: 899 kg, 3.0 x 2.7 x 2.2 m; MMRTG about 110 W; two 42 Ah Li-ion batteries (energy estimated). Our group's rover catalogue, commit 2195fcb."
   },
   {
    "id": "perseverance",
@@ -167,7 +167,7 @@
     "battery_wh",
     "power_shadow_w"
    ],
-   "source_reference": "NSSDC: about 1,025 kg, 3.0 x 2.7 x 2.2 m; MMRTG about 110 W; two 43 Ah Li-ion batteries (energy estimated). Eduardo's cockpit catalogue, commit 2195fcb."
+   "source_reference": "NSSDC: about 1,025 kg, 3.0 x 2.7 x 2.2 m; MMRTG about 110 W; two 43 Ah Li-ion batteries (energy estimated). Our group's rover catalogue, commit 2195fcb."
   }
  ]
 }

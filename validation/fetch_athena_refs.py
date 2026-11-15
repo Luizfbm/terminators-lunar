@@ -6,8 +6,8 @@ Needs the network, and for Larissa's file the branch of the independent work (`g
     uv run --project backend python validation/fetch_athena_refs.py
 
 It writes, under validation/data/:
-- `larissa_athena_horizon.csv`: Larissa's silhouette at the Athena point, byte for byte
-  from her branch, and `larissa_athena_horizon.json` with where it came from.
+- `independent_athena_horizon.csv`: Larissa's silhouette at the Athena point, byte for byte
+  from her branch, and `independent_athena_horizon.json` with where it came from.
 - `lroc_athena.json`: the two LROC NAC images. The image labels carry the exposure times
   but no geometry; the incidence angle and the image centre come from the PDS index table
   of the same LROC volume (`INDEX.TAB`, described by `INDEX.LBL`), whose MD5 is checked
@@ -126,9 +126,9 @@ def larissa() -> None:
     ).stdout
     if sha256(body) != LARISSA_SHA256:
         raise SystemExit("Larissa's file is not the one reviewed in the reference set")
-    (DATA / "larissa_athena_horizon.csv").write_bytes(body)
+    (DATA / "independent_athena_horizon.csv").write_bytes(body)
     meta = {
-        "file": "larissa_athena_horizon.csv",
+        "file": "independent_athena_horizon.csv",
         "source": f"{LARISSA_PATH} on branch {LARISSA_BRANCH} (the independent work)",
         "commit": LARISSA_COMMIT,
         "sha256": LARISSA_SHA256,
@@ -137,7 +137,7 @@ def larissa() -> None:
         "never_used": "elevacao_graus (her floor rule, wrong for this Observer: see the requirement)",
         "lines": "data on lines 6 to 3605; lines 1 to 4 are her header of origin, line 5 the columns",
     }
-    path = DATA / "larissa_athena_horizon.json"
+    path = DATA / "independent_athena_horizon.json"
     path.write_text(json.dumps(meta, ensure_ascii=False, indent=1) + "\n", "utf-8")
 
 
@@ -246,7 +246,7 @@ def main() -> None:
     larissa()
     lroc()
     espenak()
-    print("wrote larissa_athena_horizon.csv/.json, lroc_athena.json, espenak_2025mar14.json")
+    print("wrote independent_athena_horizon.csv/.json, lroc_athena.json, espenak_2025mar14.json")
 
 
 if __name__ == "__main__":

@@ -25,61 +25,60 @@ SCRIPT = "validation/test_traverse_battery.py"
 HERE = Path(__file__).resolve().parent
 
 REFERENCE = (
-    "Eduardo's battery of simulated traverses (commit 2195fcb of his branch "
-    "eduardo/cockpit-multirresolucao, a research workspace with no common history with this "
+    "Our group's battery of simulated traverses (commit 2195fcb of our group's research branch, a research workspace with no common history with this "
     "repository): {what}. Ours: the same, recomputed from the outcome of each of the 1,600 "
     "traverses per configuration and level, data/traverse_outcomes.json (made by "
-    "validation/sfs/extract_battery.py from his 64 raw files, whose SHA-256 it lists). His "
-    "scripts that made the raw files are in validation/sfs/eduardo/ (exp_dif.js, "
-    "rodar_dif_multi.js). It is Eduardo's simulation, which plans with his shadow engine, not ours"
+    "validation/sfs/extract_battery.py from its 64 raw files, whose SHA-256 it lists). Its "
+    "scripts that made the raw files are in validation/sfs/group/ (exp_dif.js, "
+    "rodar_dif_multi.js). It is our group's simulation, which plans with its research shadow engine, not the app's"
 )
 
 proof.declare(
-    "eduardo-traverse-battery-pop100",
+    "group-traverse-battery-pop100",
     title=proof.text(
-        "Eduardo's battery of simulated traverses: Multiresolution against Normal navigation, "
+        "Our group's battery of simulated traverses: Multiresolution against Normal navigation, "
         "N0 to N2",
-        "Bateria de travessias simuladas do Eduardo: Multirresolução contra Navegação Normal, "
+        "Bateria de travessias simuladas do nosso grupo: Multirresolução contra Navegação Normal, "
         "N0 a N2",
     ),
     reference=REFERENCE.format(
         what=(
-            "every row of his paired-statistics CSV (two batteries, four difficulty levels, "
+            "every row of its paired-statistics CSV (two batteries, four difficulty levels, "
             "eight pairs of configurations: arrival and tumbling, the difference, the Wilcoxon "
             "test over 16 lanes, the McNemar test over 1,600 traverses, the odds ratio and r), "
-            "and the numbers his plan quotes for Multiresolution against Normal navigation at "
+            "and the numbers its plan quotes for Multiresolution against Normal navigation at "
             "N0, N1 and N2 (arrival 78.06 / 48.62 / 47.75 % against 67.31 / 35.44 / 35.44 %)"
         ),
     ),
     tolerance=proof.text(
         "arrival and tumbling within 0.005 points, r within 0.0005, the odds ratio within "
         "0.005, p-values within a relative 1e-6, counts of traverses and of lanes exact; "
-        "numbers quoted in his plan at the digits it prints",
+        "numbers quoted in its plan at the digits it prints",
         "chegada e tombamento a 0,005 ponto, r a 0,0005, a razão de chances a 0,005, valores-p "
         "a uma diferença relativa de 1e-6, contagens de travessias e de faixas exatas; números "
-        "citados no plano dele nos dígitos em que ele os imprime",
+        "citados no plano do grupo nos dígitos em que ele os imprime",
     ),
     not_covered=proof.text(
-        "Eduardo's simulation, built on his shadow engine, not ours. It shows his statistics follow from his per-traverse "
+        "Our group's simulation, built on its research shadow engine, not the app's. It shows its statistics follow from its per-traverse "
         "results, not that the simulated rover resembles a real one: the traverses are a "
-        "simulation of his rover model, over 16 strips of LOLA elevation from 8 Sites, and the "
+        "simulation of its rover model, over 16 strips of LOLA elevation from 8 Sites, and the "
         "harder levels are synthetic (relief times 1.3, a larger slope error, a worse camera). "
         "The simulation itself was not re-run (64 runs under Node.js, hours; the scripts are "
-        "kept in validation/sfs/eduardo/), so the outcomes are his. McNemar treats the 1,600 "
+        "kept in validation/sfs/group/), so the outcomes are its. McNemar treats the 1,600 "
         "traverses as independent although 100 of them share each lane, so its p-values "
         "(1e-31, 1e-47) overstate the evidence; the Wilcoxon over the 16 lanes is the one to "
         "read, it is a normal approximation with ties on 16 values, and the CSV holds 64 tests "
         "with no correction for that. The time cap hides part of the difference: about a fifth "
         "of the traverses end by time or off the map in every configuration. N3 is in its own "
         "entry.",
-        "Simulação do Eduardo, feita sobre o motor de sombras dele, não a nossa. Mostra que as estatísticas dele seguem dos "
-        "resultados por travessia dele, não que o rover simulado se pareça com um real: as "
-        "travessias são uma simulação do modelo de rover dele, sobre 16 faixas de elevação LOLA "
+        "Simulação do nosso grupo, feita sobre o motor de sombras do próprio grupo, não a do app. Mostra que as estatísticas do grupo seguem dos "
+        "resultados por travessia do grupo, não que o rover simulado se pareça com um real: as "
+        "travessias são uma simulação do modelo de rover do grupo, sobre 16 faixas de elevação LOLA "
         "de 8 Sites, e os níveis mais difíceis são sintéticos (relevo vezes 1,3, erro de "
         "declive maior, câmera pior). A simulação em si não foi rodada de novo (64 execuções "
-        "em Node.js, horas; os scripts ficam guardados em validation/sfs/eduardo/), então os "
-        "resultados são dele. O McNemar trata as 1.600 travessias como independentes embora "
-        "100 delas dividam cada faixa, então os valores-p dele (1e-31, 1e-47) exageram a "
+        "em Node.js, horas; os scripts ficam guardados em validation/sfs/group/), então os "
+        "resultados são do grupo. O McNemar trata as 1.600 travessias como independentes embora "
+        "100 delas dividam cada faixa, então os valores-p do grupo (1e-31, 1e-47) exageram a "
         "evidência; o Wilcoxon sobre as 16 faixas é o que se deve ler, é uma aproximação normal "
         "com empates em 16 valores, e o CSV traz 64 testes sem correção para isso. O teto de "
         "tempo esconde parte da diferença: cerca de um quinto das travessias termina por tempo "
@@ -88,34 +87,33 @@ proof.declare(
     script_path=SCRIPT,
 )
 proof.declare(
-    "eduardo-traverse-n3-quote",
+    "group-traverse-n3-quote",
     title=proof.text(
-        "Eduardo's N3 figure (+30.0 %) against his POP = 100 battery",
-        "Número do N3 do Eduardo (+30,0 %) contra a bateria POP = 100 dele",
+        "Our group's N3 figure (+30.0 %) against its POP = 100 battery",
+        "Número do N3 do nosso grupo (+30,0 %) contra a bateria POP = 100 do grupo",
     ),
     reference=REFERENCE.format(
         what=(
-            "the N3 figure of his plan (docs/PLANO_INTEGRACAO_COCKPIT_TESE.md, section 5, listed "
+            "the N3 figure of its plan (docs/PLANO_INTEGRACAO_COCKPIT_TESE.md, section 5, listed "
             "with the POP = 100 numbers in sections 6 and 7): Multiresolution 40.0 % against "
             "Normal navigation 30.8 %, +30.0 % relative, Wilcoxon p = 0.043"
         ),
     ),
     tolerance=proof.text(
-        "the same as the N0 to N2 entry: arrival within 0.005 points of the 40.0 and 30.8 he "
-        "prints (taken as exact), the gain within 0.05, the p-value at the two digits printed",
-        "o mesmo da entrada N0 a N2: chegada a 0,005 ponto dos 40,0 e 30,8 que ele imprime "
+        "the same as the N0 to N2 entry: arrival within 0.005 points of the 40.0 and 30.8 it prints (taken as exact), the gain within 0.05, the p-value at the two digits printed",
+        "o mesmo da entrada N0 a N2: chegada a 0,005 ponto dos 40,0 e 30,8 que o grupo imprime "
         "(tomados como exatos), o ganho a 0,05, o valor-p nos dois dígitos impressos",
     ),
     not_covered=proof.text(
-        "Eduardo's simulation, built on his shadow engine, not ours. The 40.0 and 30.8 are the POP = 30 difficulty ladder "
-        "(his dados_escada.csv has exactly those values), 480 traverses per cell, whose "
-        "per-traverse files are not on his branch, so that run cannot be recomputed here; the "
+        "Our group's simulation, built on its research shadow engine, not the app's. The 40.0 and 30.8 are the POP = 30 difficulty ladder "
+        "(its dados_escada.csv has exactly those values), 480 traverses per cell, whose "
+        "per-traverse files are not on its branch, so that run cannot be recomputed here; the "
         "plan's own bullet says 'POP = 30', its summary and prompt list the figure with the "
         "POP = 100 ones. This entry judges the figure against the POP = 100 battery, where "
         "it is presented, and says nothing against the POP = 30 run itself.",
-        "Simulação do Eduardo, feita sobre o motor de sombras dele, não a nossa. Os 40,0 e 30,8 são da escada de dificuldade com "
-        "POP = 30 (o dados_escada.csv dele tem exatamente esses valores), 480 travessias por "
-        "célula, cujos arquivos por travessia não estão na branch dele, então essa rodada não "
+        "Simulação do nosso grupo, feita sobre o motor de sombras do próprio grupo, não a do app. Os 40,0 e 30,8 são da escada de dificuldade com "
+        "POP = 30 (o dados_escada.csv do grupo tem exatamente esses valores), 480 travessias por "
+        "célula, cujos arquivos por travessia não estão na branch do grupo, então essa rodada não "
         "pode ser recalculada aqui; o item do plano diz 'POP = 30', mas o resumo e o prompt "
         "listam o número junto com os de POP = 100. Esta entrada julga o número contra a "
         "bateria POP = 100, onde ele é apresentado, e não diz nada contra a rodada POP = 30 em "
@@ -124,13 +122,13 @@ proof.declare(
     script_path=SCRIPT,
 )
 proof.declare(
-    "negative-control-eduardo-traverse-pairing",
+    "negative-control-group-traverse-pairing",
     title=proof.text(
         "Negative control: the same battery with the traverses paired with the wrong lane",
         "Controle negativo: a mesma bateria com as travessias pareadas com a faixa errada",
     ),
     reference=(
-        "Eduardo's battery, Multiresolution against Normal navigation at N0 to N3 (800 s cap), with the "
+        "Our group's battery, Multiresolution against Normal navigation at N0 to N3 (800 s cap), with the "
         "outcomes of Normal navigation shifted by one lane before they are paired"
     ),
     tolerance=proof.text(
@@ -138,8 +136,8 @@ proof.declare(
         "tem que quebrar o pareamento: as contagens do McNemar mudam em todos os níveis",
     ),
     not_covered=proof.text(
-        "Shows the check can fail; says nothing about his simulation.",
-        "Mostra que a checagem pode falhar; não diz nada sobre a simulação dele.",
+        "Shows the check can fail; says nothing about its simulation.",
+        "Mostra que a checagem pode falhar; não diz nada sobre a simulação do grupo.",
     ),
     script_path=SCRIPT,
 )
@@ -336,7 +334,7 @@ def test_the_comparison_flags_a_number_that_is_off() -> None:
 # --- The checks -----------------------------------------------------------------------------------
 
 
-@proof.check("eduardo-traverse-battery-pop100")
+@proof.check("group-traverse-battery-pop100")
 def test_his_statistics_follow_from_his_traverses() -> None:
     data = outcomes()
     reference = battery.paired_reference()
@@ -380,29 +378,29 @@ def test_his_statistics_follow_from_his_traverses() -> None:
     significant = [f"N{lv}" for lv, m in rows.items() if m["wilcoxon_p"] < 0.05]
     if passed:
         result = proof.text(
-            f"All {len(reference)} rows of his CSV reproduce from the per-traverse outcomes, and "
-            f"so do the numbers his plan quotes at N0, N1 and N2. Multiresolution against "
+            f"All {len(reference)} rows of its CSV reproduce from the per-traverse outcomes, and "
+            f"so do the numbers its plan quotes at N0, N1 and N2. Multiresolution against "
             f"Normal navigation, 800 s cap: {'; '.join(en_parts)}. The lane-level test is below "
             f"0.05 at {', '.join(significant) or 'none of them'} (N3 of this battery is in its "
-            f"own entry). His bootstrap intervals came out the same in {shown} of "
+            f"own entry). Its bootstrap intervals came out the same in {shown} of "
             f"{len(reference)} rows (shown, not judged)",
-            f"As {len(reference)} linhas do CSV dele reproduzem a partir dos resultados por "
-            f"travessia, e os números que o plano dele cita em N0, N1 e N2 também. "
+            f"As {len(reference)} linhas do CSV do grupo reproduzem a partir dos resultados por "
+            f"travessia, e os números que o plano do grupo cita em N0, N1 e N2 também. "
             f"Multirresolução contra Navegação Normal, teto de 800 s: {'; '.join(pt_parts)}. "
             f"O teste por faixa fica abaixo de 0,05 em {', '.join(significant) or 'nenhum'} (o N3 "
-            f"desta bateria tem entrada própria). Os intervalos bootstrap dele saíram iguais em "
+            f"desta bateria tem entrada própria). Os intervalos bootstrap do grupo saíram iguais em "
             f"{shown} de {len(reference)} linhas (mostrados, não julgados)",
         )
     else:
         detail = f"rows {off_rows[:3]}; quotes {quote_off}"
         result = proof.text(f"does not reproduce: {detail}", f"não reproduz: {detail}")
     proof.record(
-        "eduardo-traverse-battery-pop100", "passed" if passed else "failed", result
+        "group-traverse-battery-pop100", "passed" if passed else "failed", result
     )
     assert passed, (off_rows, quote_off)
 
 
-@proof.check("eduardo-traverse-n3-quote")
+@proof.check("group-traverse-n3-quote")
 def test_the_n3_figure_against_the_pop_100_battery() -> None:
     data = outcomes()
     quote = battery.N3_QUOTE
@@ -412,7 +410,7 @@ def test_the_n3_figure_against_the_pop_100_battery() -> None:
     passed = not off
     ladder = {m: battery.ladder_value(m, 3) for m in battery.N3_LADDER}
     en = (
-        f"does not reproduce. On his POP = 100 battery (800 s cap) at N3 Multiresolution "
+        f"does not reproduce. On its POP = 100 battery (800 s cap) at N3 Multiresolution "
         f"reaches the goal in {capped['cheg_a']:.2f} % of traverses against "
         f"{capped['cheg_b']:.2f} % for Normal navigation ({capped['delta_pp']:+.2f} points, "
         f"{battery.relative_pct(capped):+.1f} %, Wilcoxon over the 16 lanes p = "
@@ -422,10 +420,10 @@ def test_the_n3_figure_against_the_pop_100_battery() -> None:
         f"quotes {quote.multires_pct:.1f} % against {quote.normal_pct:.1f} % "
         f"({quote.relative_pct:+.1f} %, p = {quote.wilcoxon_arrival_p}). The 40.0 and 30.8 are "
         f"the POP = 30 ladder ({ladder['Tese 60→5 m (regra)']:.1f} and "
-        f"{ladder['Grade 60 m']:.1f} in his dados_escada.csv), which cannot be recomputed here"
+        f"{ladder['Grade 60 m']:.1f} in its dados_escada.csv), which cannot be recomputed here"
     )
     pt_text = (
-        f"não reproduz. Na bateria POP = 100 dele (teto de 800 s), no N3, a Multirresolução "
+        f"não reproduz. Na bateria POP = 100 do grupo (teto de 800 s), no N3, a Multirresolução "
         f"chega à meta em {comma(capped['cheg_a'])} % das travessias contra "
         f"{comma(capped['cheg_b'])} % da Navegação Normal ({comma(capped['delta_pp'], '+.2f')} "
         f"pontos, {comma(battery.relative_pct(capped), '+.1f')} %, Wilcoxon sobre as 16 faixas "
@@ -438,7 +436,7 @@ def test_the_n3_figure_against_the_pop_100_battery() -> None:
         f"({comma(quote.relative_pct, '+.1f')} %, p = "
         f"{str(quote.wilcoxon_arrival_p).replace('.', ',')}). Os 40,0 e 30,8 são da escada com "
         f"POP = 30 ({comma(ladder['Tese 60→5 m (regra)'], '.1f')} e "
-        f"{comma(ladder['Grade 60 m'], '.1f')} no dados_escada.csv dele), que não dá para "
+        f"{comma(ladder['Grade 60 m'], '.1f')} no dados_escada.csv do grupo), que não dá para "
         f"recalcular aqui"
     )
     result = (
@@ -446,7 +444,7 @@ def test_the_n3_figure_against_the_pop_100_battery() -> None:
         if passed
         else proof.text(en, pt_text)
     )
-    proof.record("eduardo-traverse-n3-quote", "passed" if passed else "failed", result)
+    proof.record("group-traverse-n3-quote", "passed" if passed else "failed", result)
     # This entry is meant to report a finding, not to gate the suite: his N3 figure does not
     # reproduce from the POP = 100 battery (his plan's bullet says it is the POP = 30 run). The
     # test pins the numbers behind the verdict, so a change in the data or the rule shows up
@@ -465,7 +463,7 @@ def test_the_n3_figure_against_the_pop_100_battery() -> None:
     assert (ladder["Tese 60→5 m (regra)"], ladder["Grade 60 m"]) == (40.0, 30.8)
 
 
-@proof.check("negative-control-eduardo-traverse-pairing")
+@proof.check("negative-control-group-traverse-pairing")
 def test_the_negative_control_breaks_the_pairing() -> None:
     data = outcomes()
     reference = {
@@ -494,7 +492,7 @@ def test_the_negative_control_breaks_the_pairing() -> None:
         for level in battery.LEVELS
     )
     proof.record(
-        "negative-control-eduardo-traverse-pairing",
+        "negative-control-group-traverse-pairing",
         "passed" if broke else "failed",
         proof.text(
             f"broke the McNemar counts at every level ({en})"

@@ -42,7 +42,7 @@ export const ERROR_SOURCES = [
   {
     id: 'height',
     refs: [
-      check('larissa-athena-horizon'),
+      check('independent-athena-horizon'),
       file('validation/athena.py'),
       adr('0003'),
       paper('Barker et al. 2021'),
@@ -51,7 +51,7 @@ export const ERROR_SOURCES = [
   },
   {
     id: 'small',
-    refs: [check('landing-im2-athena'), check('larissa-athena-horizon')],
+    refs: [check('landing-im2-athena'), check('independent-athena-horizon')],
     figures: ['about 20 m across', 'Sun fraction at the resting point 1.00 and 1.00'],
   },
   {
@@ -98,7 +98,7 @@ export const NOT_CHECKED = [
   },
   {
     id: 'lola',
-    refs: [check('larissa-athena-horizon'), check('slope-synthetic-plane')],
+    refs: [check('independent-athena-horizon'), check('slope-synthetic-plane')],
     figures: ["errors common to LOLA don't show", 'Arithmetic on synthetic DEMs only'],
   },
   {
@@ -127,7 +127,7 @@ export const NOT_CHECKED = [
   },
   {
     id: 'panels',
-    refs: [check('eduardo-panel-incidence'), check('horizons-sun-distance-factor')],
+    refs: [check('group-panel-incidence'), check('horizons-sun-distance-factor')],
     figures: ['No thermal model, no tracking error', 'no heat, constant load'],
   },
   {
