@@ -1,7 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
-
-// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-test.fixme(true, 'depends on the answer column and the header, not shown (issue #78)')
+import { expect, test } from './classic'
+import type { Page } from '@playwright/test'
 
 // the requirement: a way in to the IM-2 Athena landing, and a note at that Site saying what the map
 // cannot see. The mock always answers for its example Site, so the Site that was asked is put

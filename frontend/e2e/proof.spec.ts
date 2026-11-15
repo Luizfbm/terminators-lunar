@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page } from '@playwright/test'
 import { ERROR_SOURCES, NOT_CHECKED } from '../src/domain/proofCaveats'
 
 test.use({ locale: 'en-GB' })
@@ -27,8 +28,7 @@ const serve = (page: Page, body: unknown) =>
   page.route('**/validations', (route) => route.fulfill({ json: body }))
 
 test.describe('the Proof page', () => {
-  // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-  test.fixme('opens from the answer, says the score first, puts failures first, and goes back', async ({ page }) => {
+  test('opens from the answer, says the score first, puts failures first, and goes back', async ({ page }) => {
     await serve(page, LIST)
     await page.goto('/')
     await page.getByRole('link', { name: 'How we know these numbers' }).click()

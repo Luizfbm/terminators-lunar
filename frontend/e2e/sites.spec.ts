@@ -1,4 +1,5 @@
-import { expect, test, type Page, type Route } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page, Route } from '@playwright/test'
 
 // the requirement: the Site picker is a searchable list grouped by Region. The mock only has a couple
 // of Sites, so these tests serve their own list, and answer /visibility for whichever Site was asked.
@@ -50,8 +51,7 @@ const list = (page: Page) => page.getByRole('listbox', { name: 'Sites' })
 
 test.use({ locale: 'en-GB' })
 
-// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-test.fixme('groups the Sites by Region, marks NASA’s nine, and keeps off-pole landers apart', async ({ page }) => {
+test('groups the Sites by Region, marks NASA’s nine, and keeps off-pole landers apart', async ({ page }) => {
   await serve(page)
   await page.goto('/')
   await trigger(page).click()
@@ -66,8 +66,7 @@ test.fixme('groups the Sites by Region, marks NASA’s nine, and keeps off-pole 
   await expect(page.getByText('Coordinate from Wueller et al. 2026, JGR Planets')).toBeVisible()
 })
 
-// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-test.fixme('search filters by name or code, and says so when nothing matches', async ({ page }) => {
+test('search filters by name or code, and says so when nothing matches', async ({ page }) => {
   await serve(page)
   await page.goto('/')
   await trigger(page).click()
@@ -80,8 +79,7 @@ test.fixme('search filters by name or code, and says so when nothing matches', a
   await expect(page.getByText('No Site has that name or code.', { exact: false })).toBeVisible()
 })
 
-// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-test.fixme('works from the keyboard: arrow opens, arrows move, Enter picks, Escape closes', async ({ page }) => {
+test('works from the keyboard: arrow opens, arrows move, Enter picks, Escape closes', async ({ page }) => {
   await serve(page)
   await page.goto('/')
   await expect(trigger(page)).toHaveAccessibleName('Site: Connecting Ridge CR01')
@@ -107,8 +105,7 @@ test.fixme('works from the keyboard: arrow opens, arrows move, Enter picks, Esca
   await expect(page).toHaveURL(/site=HW01/)
 })
 
-// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-test.fixme('a click outside closes the list', async ({ page }) => {
+test('a click outside closes the list', async ({ page }) => {
   await serve(page)
   await page.goto('/')
   await trigger(page).click()
@@ -117,8 +114,7 @@ test.fixme('a click outside closes the list', async ({ page }) => {
   await expect(list(page)).toHaveCount(0)
 })
 
-// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-test.fixme('shows the chosen Site while the list of Sites is still on its way', async ({ page }) => {
+test('shows the chosen Site while the list of Sites is still on its way', async ({ page }) => {
   let release!: () => void
   const holdSites = new Promise<void>((resolve) => {
     release = resolve
@@ -132,8 +128,7 @@ test.fixme('shows the chosen Site while the list of Sites is still on its way', 
   await expect(list(page).getByRole('option')).toHaveCount(SITES.length)
 })
 
-// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-test.fixme('follows a Site chosen elsewhere, as the globe and the link do', async ({ page }) => {
+test('follows a Site chosen elsewhere, as the globe and the link do', async ({ page }) => {
   // The globe calls the same setter as the link; a click on the 3D canvas has no stable target.
   await serve(page)
   await page.goto('/?site=CH3')
@@ -146,8 +141,7 @@ test.fixme('follows a Site chosen elsewhere, as the globe and the link do', asyn
 test.describe('on a phone', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
-  // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-  test.fixme('the open list covers the whole screen, with no sideways scroll', async ({ page }) => {
+  test('the open list covers the whole screen, with no sideways scroll', async ({ page }) => {
     // the requirement: it used to be a box above the time strip, with the page showing around it.
     await serve(page)
     await page.goto('/')

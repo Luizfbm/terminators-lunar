@@ -1,7 +1,5 @@
-import { expect, test, type Page, type Route } from '@playwright/test'
-
-// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-test.fixme(true, 'depends on the answer column and the header, not shown (issue #78)')
+import { expect, test } from './classic'
+import type { Page, Route } from '@playwright/test'
 
 // The DEM Uncertainty band (ADR 0003). /visibility/uncertainty runs in the background: it answers
 // 202 with the progress, then 200 with the band. The mock only knows the 200, so the test serves

@@ -1,8 +1,6 @@
-import { expect, test, type Page, type Route } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page, Route } from '@playwright/test'
 import { readFileSync } from 'node:fs'
-
-// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-test.fixme(true, 'depends on the answer column and the header, not shown (issue #78)')
 
 // the requirement. The mock answers /visibility with CR01 (longest night 5 d 2 h) and /visibility/energy
 // with its example: a battery that runs empty for 89 h, first at 26/03/2025 06:27 UTC. States the

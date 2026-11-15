@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page } from '@playwright/test'
 
 // One test per defect we have shipped or nearly shipped. Each says what broke and when.
 
@@ -39,8 +40,7 @@ test.describe('on a phone, 390 px wide', () => {
     expect(scrollWidth).toBe(innerWidth)
   })
 
-  // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-  test.fixme('a number never leaves its unit on another line', async ({ page }) => {
+  test('a number never leaves its unit on another line', async ({ page }) => {
     // Regression: "h" sat alone on the second line under "19".
     await open(page)
     const number = page.getByRole('heading', { level: 1 }).locator('b')
@@ -79,8 +79,7 @@ test.describe('on a phone, 390 px wide', () => {
     expect(name.x + name.width).toBeLessThanOrEqual(stage.x + stage.width)
   })
 
-  // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-  test.fixme('the Site list wraps its Region titles and its source line instead of cutting them', async ({ page }) => {
+  test('the Site list wraps its Region titles and its source line instead of cutting them', async ({ page }) => {
     // Seen on the list inherited the one-line rule of the Site name that opens it, so
     // "Haworth, in NASA’s list of nine Artemis III regions (October 2024)" was cut at "(October 20".
     await open(page)
@@ -100,8 +99,7 @@ test.describe('on a phone, 390 px wide', () => {
 test.describe('on a 1366x768 laptop', () => {
   test.use({ viewport: { width: 1366, height: 768 } })
 
-  // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-  test.fixme('the answer and the whole time strip fit above the fold', async ({ page }) => {
+  test('the answer and the whole time strip fit above the fold', async ({ page }) => {
     // Regression: the type was sized by width only, the page was 962 px tall and the
     // bar showed without its axis or legend.
     await open(page)
@@ -116,8 +114,7 @@ test.describe('on a 1366x768 laptop', () => {
 test.describe('on a 1366x768 laptop, with a panel open', () => {
   test.use({ viewport: { width: 1366, height: 768 } })
 
-  // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-  test.fixme('a long answer scrolls inside its column and the page itself stays put', async ({ page }) => {
+  test('a long answer scrolls inside its column and the page itself stays put', async ({ page }) => {
     // Integration of the panels, with the ladder open, a hidden table caption far down the
     // column stretched the document to 967 px, and the Moon and the time strip scrolled off screen.
     await open(page)
@@ -150,15 +147,13 @@ test.describe('default Query', () => {
     expect(shadow).toContain(background)
   })
 
-  // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-  test.fixme('the first line says where on the Moon', async ({ page }) => {
+  test('the first line says where on the Moon', async ({ page }) => {
     // Regression: nothing on screen said "Moon", then "· THE MOON" read as a stray suffix.
     await open(page)
     await expect(page.getByText('Lunar Landing Site Navigator · south pole of the Moon')).toBeVisible()
   })
 
-  // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-  test.fixme('a Window where the Sun and the Earth never overlap says so, not "together for 0 min"', async ({ page }) => {
+  test('a Window where the Sun and the Earth never overlap says so, not "together for 0 min"', async ({ page }) => {
     // First run against the real API, Site CR05 read "the Sun and the Earth together for 0 min".
     await page.route((url: URL) => url.pathname === '/visibility', async (route) => {
       const response = await route.fetch()
@@ -171,8 +166,7 @@ test.describe('default Query', () => {
     await expect(page.getByText(/together for 0/)).toHaveCount(0)
   })
 
-  // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-  test.fixme('a Window with no night does not report a night of zero minutes', async ({ page }) => {
+  test('a Window with no night does not report a night of zero minutes', async ({ page }) => {
     // First run against the real API, Site 001 in mid-November read "its longest night is 0 min".
     await page.route((url: URL) => url.pathname === '/visibility', async (route) => {
       const response = await route.fetch()
@@ -186,8 +180,7 @@ test.describe('default Query', () => {
   })
 })
 
-// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-test.fixme('the open Site list sits in valid HTML, with no paragraph inside a paragraph', async ({ page }) => {
+test('the open Site list sits in valid HTML, with no paragraph inside a paragraph', async ({ page }) => {
   // Found in the running app, the Query line was a <p> and the Site list inside it holds
   // <p> and <div>, so React logged "<p> cannot be a descendant of <p>" as soon as the list opened.
   await open(page)
@@ -255,8 +248,7 @@ test.describe('a browser that says it can draw 3D and then cannot', () => {
     })
   })
 
-  // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-  test.fixme('says the Moon cannot be drawn, instead of loading for ever', async ({ page }) => {
+  test('says the Moon cannot be drawn, instead of loading for ever', async ({ page }) => {
     await open(page)
     await expect(page.getByText('This browser cannot draw the 3D Moon. The answer beside it is complete.')).toBeVisible()
     await expect(page.locator('.stage__loading')).toHaveCount(0)

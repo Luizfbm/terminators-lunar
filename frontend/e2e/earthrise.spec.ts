@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { classic } from './classic'
 
 // the requirement: the page opens on an Earthrise written into index.html, ticks real steps, and hands
 // over to the globe once the Moon is dressed.
@@ -124,8 +125,7 @@ test.describe('the hand over', () => {
     await expect(scene(page)).toHaveCount(0)
   })
 
-  // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-  test.fixme('an answer that fails hands over to the error', async ({ page }) => {
+  test('an answer that fails hands over to the error', async ({ page }) => {
     await page.route((url: URL) => url.pathname === '/visibility', (route) =>
       route.fulfill({
         status: 503,
@@ -133,7 +133,8 @@ test.describe('the hand over', () => {
         body: JSON.stringify({ type: 'https://lunar-api.luizfbm.win/problems/busy', title: 'busy', status: 503, code: 'busy' }),
       }),
     )
-    await page.goto('/')
+    // The error is shown in the answer column, which Larissa's layout does not show.
+    await page.goto(classic('/'))
     await expect(scene(page)).toHaveCount(0)
     await expect(page.getByRole('alert')).toBeVisible()
   })

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './classic'
 
 // the requirement, step 1 of the identity pass: a loading state for the Moon, controls that look like
 // controls, and a serif for the statements.
@@ -39,8 +39,7 @@ test('a slow network does not hold the Moon back for ever', async ({ page }) => 
   await expect(page.locator('.globe')).toHaveAttribute('data-dressed', 'true', { timeout: 60_000 })
 })
 
-// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-test.fixme('the Query line and the views look like controls, not like text', async ({ page }) => {
+test('the Query line and the views look like controls, not like text', async ({ page }) => {
   // Luiz: "it is not clear where to click". They were dotted or plain text.
   await page.goto('/')
   await expect(page.getByRole('slider', { name: 'Cursor' })).toBeVisible()
@@ -64,8 +63,7 @@ test.fixme('the Query line and the views look like controls, not like text', asy
   expect(await fill(chosen)).not.toBe(await fill(other))
 })
 
-// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-test.fixme('the statements are set in the serif, the numbers inside them in the mono', async ({ page }) => {
+test('the statements are set in the serif, the numbers inside them in the mono', async ({ page }) => {
   await page.goto('/')
   const statement = page.getByRole('heading', { level: 1 })
   await expect(statement).toBeVisible()

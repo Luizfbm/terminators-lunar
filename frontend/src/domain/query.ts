@@ -137,6 +137,11 @@ export interface LinkState extends Choice {
   radiusM?: number | null
   /** Plan B of the comparison, kept by its panel; undefined when the comparison is closed. */
   planB?: PlanBLink | null
+  /**
+   * `layout=classic`: the header and the answer column are shown, as before Larissa's layout. Only present
+   * when the link has it, so a link without it reads back exactly as before and gets her layout.
+   */
+  classic?: true
 }
 
 export function readLink(search: string): LinkState {
@@ -174,6 +179,7 @@ export function readLink(search: string): LinkState {
     // Only when the link has one, so a link without it reads back exactly as before.
     ...(Number.isFinite(radius) && radius >= RADIUS_MIN_M && radius <= RADIUS_MAX_M ? { radiusM: radius } : {}),
     ...(planB ? { planB } : {}),
+    ...(params.get('layout') === 'classic' ? { classic: true as const } : {}),
   }
 }
 
@@ -201,6 +207,7 @@ function readPlanB(params: URLSearchParams, numberParam: (name: string) => numbe
 const LINK_KEYS = new Set([
   'lat', 'lon', 'site', 't', 'lang', 'view', 'start', 'hours', 'height', 'stats', 'page', 'radius',
   // Plan B of the comparison, carried by `planB` in the state.
+  'layout',
   'compare', 'bsite', 'blat', 'blon', 'bstart', 'bhours', 'bheight',
 ])
 
@@ -228,6 +235,7 @@ export function writeLink(state: LinkState, keep = ''): string {
   if (state.stats) params.set('stats', '1')
   if (state.radiusM != null) params.set('radius', String(state.radiusM))
   if (state.page === 'proof') params.set('page', 'proof')
+  if (state.classic) params.set('layout', 'classic')
   if (state.planB) {
     const b = state.planB
     params.set('compare', '1')
@@ -241,6 +249,14 @@ export function writeLink(state: LinkState, keep = ''): string {
     if (b.hours !== null) params.set('bhours', String(b.hours))
     if (b.heightM !== null) params.set('bheight', String(b.heightM))
   }
+  const text = params.toString()
+  return text ? `?${text}` : ''
+}
+
+/** A query string without `layout`: which layout the page opens in says nothing about which Query it asks. */
+export function linkWithoutLayout(search: string): string {
+  const params = new URLSearchParams(search)
+  params.delete('layout')
   const text = params.toString()
   return text ? `?${text}` : ''
 }

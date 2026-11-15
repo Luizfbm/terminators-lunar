@@ -1,9 +1,7 @@
 import { readFileSync } from 'node:fs'
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test, type Page } from '@playwright/test'
-
-// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-test.fixme(true, 'depends on the answer column and the header, not shown (issue #78)')
+import { expect, test } from './classic'
+import type { Page } from '@playwright/test'
 
 // Read at run time, not imported: the web image has only frontend/ and its build type-checks
 // this file (the requirement).

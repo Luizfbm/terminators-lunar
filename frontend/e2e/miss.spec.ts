@@ -1,8 +1,6 @@
 import { readFileSync } from 'node:fs'
-import { expect, test, type Page, type Route } from '@playwright/test'
-
-// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
-test.fixme(true, 'depends on the answer column and the header, not shown (issue #78)')
+import { expect, test } from './classic'
+import type { Page, Route } from '@playwright/test'
 
 const example = (name: string) => JSON.parse(readFileSync(new URL(`../../contract/examples/${name}`, import.meta.url), 'utf8'))
 const scatterExample = example('visibility-scatter-001.example.json')
