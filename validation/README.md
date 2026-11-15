@@ -207,3 +207,171 @@ docker compose cp backend:/tmp/athena_engine.json ../validation/data/athena_engi
 
 Until `data/athena_engine.json` exists, the horizon entries and the transmission part of
 `landing-im2-athena` show as pending.
+
+---
+
+## 11. Gläser et al. 2018 at the Connecting Ridge (the requirement)
+
+`test_glaser.py` checks the Sun against the one published value for the Connecting Ridge that
+we could read in full: Gläser et al. 2018, Planetary and Space Science 162, 170-178, Table 2 (p. 12
+of the NASA NTRS preprint 20170007365), point C1 at 2 m, (-89.4398°, 222.83°E), 2017-01-01 to
+2037-01-01 hourly, on the authors' own 20 m DTM. The rule, the reference and the tolerance are in
+`glaser.py` and were committed before any result. The 92.27 % of the 2014 Icarus abstract is the
+same quantity on the authors' earlier DTM; it is context in the result text and is never judged.
+
+| id | Reference | Tolerance (fixed before the first run) |
+|---|---|---|
+| `glaser-sun-visibility` | solar visibility 92.1 %, the share of the period with any part of the Sun's disc visible. Ours: the maximum, over the 317 points within 250 m of C1 (25 m spacing), of the share of hourly steps with any part of the Sun above the Horizon mask | \|difference\| ≤ 5 percentage points, either way |
+| `glaser-mean-sun-fraction` | maximum average illumination 88.0 %. Ours: the maximum over the same points of the mean Sun fraction, terrain only | \|difference\| ≤ 5 percentage points, either way |
+| `negative-control-glaser-longitude` | the same grid at longitude + 180° | must break both checks |
+
+- Each quantity is judged on its own maximum, as the paper does: it says the two maxima do not always fall on the same pixel.
+- The maximum is over a neighbourhood, not the value at Site 001: the paper's point is about 800 m from Site 001, and the coordinate is given to about 3 m on a DTM that is not ours. Site 001's own values (and the best point of its 100 m Landing ellipse), the value at C1 itself, the Sun fraction with the Earth's eclipse, each calendar year, the 9-year span the app can answer (2023-08-01 to 2033-01-01), a 15 min step and a series shifted by 30 min are shown in the result text and never judged.
+- The comparison is terrain only: the Earth's eclipse of the Sun is not in the judged value, as the GLOSSARY defines the Sun fraction.
+- If a check fails, it stays failed and is reported with its numbers. Nothing is tuned: not the tolerance, the neighbourhood, the period or the reference.
+
+The 20 years run past the app's coverage, so the engine side runs offline on the server, in the
+backend image with the full DE440 and the full DEMs, like the PGDA one. The scan is vectorised
+(one Sun vector per step for the whole neighbourhood, one Horizon mask per point) and
+`test_glaser.py` checks it against `engine.Look` to 1e-5. From the repo root on the server
+(`deploy/compose.yaml` already mounts the data volume read-only at `/data` and sets
+`LUNAR_META_KERNEL` and `LUNAR_DEM_DIR`, as `deploy/fetch-data.sh` relies on for `crop_offpole.py`;
+`/tmp/glaser` is the writable output folder):
+
+```bash
+mkdir -p /tmp/glaser
+docker compose -f deploy/compose.yaml --env-file .env run --rm --no-deps -T \
+  -v "$PWD/validation:/validation:ro" -v /tmp/glaser:/out \
+  --entrypoint python backend /validation/run_glaser_engine.py \
+  /out/glaser_engine.json --processes 3 --nice 10 </dev/null
+cp /tmp/glaser/glaser_engine.json validation/data/glaser_engine.json
+```
+
+- It computes 683 points: the 317 of the neighbourhood, the same 317 at longitude + 180°, and the 49 of Site 001's Landing ellipse. At most 3 worker processes (the script refuses more), one thread of arithmetic each, and `--nice` (default 10) lowers their priority below the engine's. Memory: one process peaked at about 0.7 GB on a Mac (a Horizon mask reads the 80 m and 240 m windows whole), so budget about 3 GB for three workers and the parent; the compose service's limit is 4.5 GB.
+- It is resumable: every finished point is appended to `/tmp/glaser/glaser_engine.json.partial.jsonl`, and the Sun vectors are kept in `/tmp/glaser/glaser_engine.json.work/`. After a stop, run the same command again; it carries on, and refuses if the rule, the period or the kernels changed (`--fresh` starts over).
+- `--days`, `--start` and `--limit` shorten it for smoke runs. The output then says `"smoke": true`, and `test_glaser.py` refuses it.
+- Commit `validation/data/glaser_engine.json` with the refreshed `backend/app/data/validations.json`.
+
+Until `data/glaser_engine.json` exists, the three entries stay `pending`, and the tests that need it
+are skipped. When it exists, `pytest validation` also recomputes five points (C1 and 100 m east,
+west, north and south of it) over the span the committed SPICE fixture covers and compares them
+with the committed file to 1e-6, so the file cannot drift away from the code.
+
+Not covered: the surface level (0 m; the paper's Table 1 point is 325 m from C1), the Earth, the
+Sun at another Observer height, and any elevation product other than `LDEM_80S_20MPP_ADJ`.
+
+---
+
+## 12. Eduardo's multiresolution Monte Carlo and the laser coverage (the requirement)
+
+`test_hazard_mc.py` checks the aggregate statistics that Eduardo publishes for his Monte Carlo
+on 26 PGDA 78 tiles (`hazard/mc_lola.py`, his `mc_lola.py` ported) against what the data in this
+repository gives. His numbers enter the Proof only if scripts and data here produce them. The
+rule and the tolerance of every number are in `hazard/rules.py`, committed before the first
+judgement; the long explanation, with what each number proves and what it does not, is in
+`docs/validation/eduardo-multiresolution.md`. The research repository we cite is
+https://github.com/Luizfbm/Luna-Investigation; his branch is read only at commit `2195fcb`.
+
+The two variants are **Normal navigation** (the coarse grid alone, 60 m or 20 m, no margin) and
+**Multiresolution** (the coarse grid plus the correction where the laser shot, with a slope
+margin P50, P90 or P99). The truth is the product's own slope on the cells that have a laser
+shot (about 7 % of the 5 m cells; the rest of LOLA 5 m is interpolated, ADR 0003), hidden from
+the method by 5-fold cross-validation. It is slope, not Sun or Earth.
+
+| id | What | Tolerance (fixed before the first run) | Runs |
+|---|---|---|---|
+| `eduardo-mc-missed-hazard-nominal` | mean over 26 tiles of missed hazard, 60 m: Normal navigation 31.48 %, Multiresolution P90 6.38 %, -79.7 % | each number as he prints it, to half a unit of his last digit | CI (`tiles.json`) |
+| `eduardo-mc-median-error` | mean over tiles of the median slope error: 1.04° to 0.59°, -42.9 % | the same | CI |
+| `eduardo-equal-false-alarm-60`, `-20` | Normal grid with a uniform margin chosen per tile to have Multiresolution P90's false alarm, against P90: 6.45 % to 3.88 %, -38.5 %, 26 of 26 tiles, Wilcoxon p = 3e-8 (60 m); 3.57 % to 3.19 %, -12 %, 24 of 26, p = 7.5e-7 (20 m) | the same; counts exact; p at the figures he prints | CI (`tiles.json` and `data/hazard_equal_false_alarm.json`) |
+| `eduardo-tradeoff-curves` | missed hazard at a fixed false alarm of 5 to 30 % (his Table 07): medians, median reduction 29 to 42 %, 26 of 26 (25 at 30 %), p = 3e-8 (6e-8) | the same | CI |
+| `negative-control-eduardo-equal-false-alarm` | the 60 m comparison with the grade allowed a 30 % false alarm | Multiresolution P90 must no longer win in 26 of 26 tiles, and the median reduction must not be positive | CI |
+| `eduardo-mc-rerun-pgda78` | `hazard/mc_lola.py` on the PGDA 78 layers (same seed 2026), against the 52 runs in `tiles.json` | every method's mean missed hazard and false alarm within 0.5 percentage points, the median error within 0.02°, on every run | **server**, `pending` until then |
+| `eduardo-ldec-coverage` | share of cells with a laser shot at 5, 10, 20, 40, 60 m inside 87.5°S, from `LDEC_875S_5M.IMG` (`hazard/coverage.py`): 7.29, 25.90, 67.97, 95.93, 99.40 % | each within 0.005 points (the two decimals he prints) | **server**, `pending` until then |
+
+The test used by every "equal false alarm" and "curve" claim is the **paired two-sided Wilcoxon
+signed-rank test across the 26 tiles** (the tile is the unit, N = 26), as his `rodar_todos.py`
+does with `scipy.stats.wilcoxon`; `rules.py` has an exact implementation that does not need scipy
+and the test checks it against a brute-force enumeration and against the textbook example. With
+26 of 26 tiles in the same direction the p-value is 2/2^26 = 3e-8, the smallest an N = 26 test
+can give: it says the direction is the same in every tile, not how large the effect is. "Equal
+false alarm" is his bisection: the grade's uniform margin is searched, per tile, on 20 calibration
+draws, until the grade vetoes as much safe terrain as Multiresolution P90 does.
+
+If a number does not reproduce, its entry is `failed` and says what we got. Nothing is tuned.
+
+Run only this file (about 2 s):
+
+```bash
+uv run --project backend pytest validation/test_hazard_mc.py
+```
+
+With scipy, matplotlib and tifffile the file also runs his own `mc_lola.py` (read from his commit)
+and the port on the same synthetic tile, at 60 m and 20 m, and requires every mean, interval,
+statistic, margin and curve point to be identical:
+
+```bash
+uv run --project backend --with scipy --with matplotlib --with tifffile \
+  pytest validation/test_hazard_mc.py
+```
+
+Data scripts. `data/hazard_equal_false_alarm.json` holds the control arm that `tiles.json`
+does not, copied from his `resumo.json` files by `hazard/extract_equal_false_alarm.py` (needs his
+branch fetched; the test that compares the file with his commit is skipped without it).
+`backend/app/data/hazard/tiles.json` comes from `hazard/import_eduardo_bundle.py`.
+
+### On the server: the rerun and the coverage
+
+Both need gigabytes (the PGDA 78 layers of 26 tiles, and `LDEC_875S_5M.IMG`, 920,272,896 bytes),
+so, like the Gläser check, they run on the server and nowhere else: never in CI, never on a
+laptop. From the repo root, with the data folder outside the repo (`/opt/lunar-data/pgda78` here):
+
+```bash
+# 1. the layers, with their sha256 recorded in validation/data/hazard_pgda78_sha256.json
+uv run --project backend python validation/hazard/fetch_pgda78.py /opt/lunar-data/pgda78 --with-ldec
+# 2. the Monte Carlo, 26 tiles x 60 m and 20 m (resumable; scipy comes with --with)
+mkdir -p /tmp/hazard
+nice -n 10 uv run --project backend --with scipy python validation/hazard/mc_lola.py \
+  --pgda-dir /opt/lunar-data/pgda78 --out /tmp/hazard/hazard_mc_rerun.json
+# 3. the coverage (reads the raster in strips of 96 rows)
+nice -n 10 uv run --project backend python validation/hazard/coverage.py \
+  --raster /opt/lunar-data/pgda78/LDEC_875S_5M.IMG --out /tmp/hazard/hazard_coverage.json
+cp /tmp/hazard/hazard_mc_rerun.json /tmp/hazard/hazard_coverage.json validation/data/
+```
+
+- `mc_lola.py` runs one tile at a time. It reads the four layers whole (float32) and works on
+  the central 2000 x 2000 cells (about 16 MB per layer) plus temporaries; memory was not measured
+  here, so watch the first tile. It appends each finished (tile, grid) to
+  `/tmp/hazard/hazard_mc_rerun.json.partial.jsonl`, so after a stop the same command carries on
+  (`--fresh` starts over, and it refuses a partial file made under another rule).
+- `--sorteios`, `--tiles` and `--limit` shorten it for a smoke run; the output then says
+  `"smoke": true` and the test refuses it.
+- Commit `validation/data/hazard_mc_rerun.json`, `validation/data/hazard_coverage.json` and
+  `validation/data/hazard_pgda78_sha256.json`, then refresh `backend/app/data/validations.json`
+  with the usual full run (`pytest validation`), which replaces the two `pending` entries.
+
+Not covered: Sun and Earth visibility (this is slope), the PGDA's correlated error clones, the
+15° limit and the margins (0.8° near data, 2.0° far), which are Eduardo's rules and not
+measurements, the 5 m cells with no laser shot, and any tile outside the 26.
+
+---
+
+## 13. Eduardo's photos and traverse battery (issue #92)
+
+Two sets of Eduardo's results are recomputed from scripts and data in the repository. Both are his work, not ours: the shadow engine is his horizon code, and the traverses are a simulation that plans with it. The rules, the tolerances and the arithmetic are in `sfs/photos.py` and `sfs/battery.py`, written before any result; the explanation, with every number of his against the recomputed one, is in `docs/validation/eduardo-photos.md`.
+
+| id | Reference | Tolerance (fixed before the first run) | Runs |
+|---|---|---|---|
+| `eduardo-photos-sfs-table` | His accuracy, false light and false shadow of five terrains on 486 LROC NAC photos (three regions), `RESULTADOS-SFS.md`, from his per-photo counts `data/sfs_fotos_todas.csv` | each of 60 numbers within 0.05 points of the one he prints; photo counts exact | CI |
+| `eduardo-photos-sfs-vs-lola20` | The photo-by-photo counts (346 and 349 of 366; 98 and 54 of 120) and the 20 m to 5 m gains his text states | counts exact; gains within 0.1 point | CI |
+| `negative-control-eduardo-photos-limb` | The same table with the Sun's upper limb instead of its centre | must break every terrain row | CI |
+| `eduardo-traverse-battery-pop100` | All 64 rows of his paired-statistics CSV, and the numbers his plan quotes for Multiresolution against Normal navigation at N0, N1 and N2, from the outcome of each simulated traverse `data/traverse_outcomes.json` | arrival and tumbling 0.005 points, r 0.0005, odds ratio 0.005, p-values a relative 1e-6, counts exact | CI |
+| `eduardo-traverse-n3-quote` | The N3 figure of his plan (40.0 % against 30.8 %, +30.0 %, p = 0.043) against his POP = 100 battery | as above | CI |
+| `negative-control-eduardo-traverse-pairing` | The same pairing with Normal navigation's outcomes shifted by one lane | the McNemar counts must change at every level | CI |
+
+- The check runs on the committed data and needs neither the photos nor the elevation products nor Node.js: it shows his tables and statistics follow from his counts and outcomes, not that his counts are right. His scripts that made the data are kept byte for byte in `sfs/eduardo/`, with where they came from in `sfs/eduardo/SOURCE.json`, and are not run.
+- `eduardo-traverse-n3-quote` is `failed`, on purpose: the +30.0 % of N3 is the POP = 30 run, not the POP = 100 battery it is listed with (34.88 % against 29.62 %, +17.7 %, Wilcoxon over the 16 lanes p = 0.271). The test pins the numbers behind that verdict, so the suite stays green and the Proof page shows it. Nothing is tuned.
+- The McNemar test counts 1,600 traverses as independent although 100 share each lane, so its p-values overstate the evidence; the Wilcoxon test over the 16 lanes is the one to read.
+- The outcomes file is made from his raw files by `sfs/extract_battery.py` (it needs `git fetch origin eduardo/cockpit-multirresolucao`), which lists their SHA-256; running it again gives the same bytes.
+- Run: `uv run --project backend pytest validation/test_sfs_photos.py validation/test_traverse_battery.py`.
+
+Not covered: our own engine against these photos (not done), the simulation itself (not re-run), the photo counts themselves (they need the photos and elevation products), the POP = 30 ladder from per-traverse data (not on his branch).

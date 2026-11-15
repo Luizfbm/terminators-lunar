@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildQuery, clampCursor, initialCursor, isCustomSite, maxDays, readLink, siteKey, siteRefOf, startDayRange, writeLink } from './query'
+import { buildQuery, clampCursor, initialCursor, isCustomSite, linkWithoutLayout, maxDays, readLink, siteKey, siteRefOf, startDayRange, writeLink } from './query'
 
 const meta = {
   defaults: { site_id: '001', duration_hours: 708.73, observer_height_m: 2 },
@@ -212,3 +212,44 @@ describe('the link of Plan B', () => {
   })
 })
 
+
+describe('the layout in the link', () => {
+  const plain = { site: null, cursorMs: null, language: null, view: 'orbit', startDay: null, hours: null, heightM: null, page: 'answer', stats: false } as const
+
+  it('is Larissa\'s layout without the parameter, so a plain link reads back as before', () => {
+    expect(readLink('')).not.toHaveProperty('classic')
+    expect(readLink('?site=CR05&stats=1')).not.toHaveProperty('classic')
+    expect(writeLink(plain)).toBe('')
+  })
+
+  it('opens the classic layout with layout=classic, and writes it back', () => {
+    expect(readLink('?layout=classic').classic).toBe(true)
+    expect(writeLink({ ...plain, classic: true })).toBe('?layout=classic')
+    expect(readLink(writeLink({ ...plain, classic: true, site: 'CR05', view: 'map' }))).toEqual({ ...plain, classic: true, site: 'CR05', view: 'map' })
+  })
+
+  it('reads any other value as no layout parameter', () => {
+    for (const value of ['', 'cards', 'Classic', '1']) expect(readLink(`?layout=${value}`)).not.toHaveProperty('classic')
+  })
+
+  it('survives a change of Site and of page, which rewrite the link from what is open', () => {
+    const open = '?layout=classic&site=001&stats=1'
+    const toSite = writeLink({ ...readLink(open), site: 'CR05' }, open)
+    expect(toSite).toBe('?site=CR05&stats=1&layout=classic')
+    expect(readLink(toSite)).toMatchObject({ site: 'CR05', classic: true })
+    const toProof = writeLink({ ...readLink(toSite), page: 'proof' }, toSite)
+    expect(readLink(toProof)).toMatchObject({ page: 'proof', classic: true })
+    expect(toProof.match(/layout=/g)).toHaveLength(1)
+  })
+
+  it('is not added to a link that did not have it', () => {
+    const open = '?site=001'
+    expect(writeLink({ ...readLink(open), site: 'CR05', page: 'proof' }, open)).toBe('?site=CR05&page=proof')
+  })
+
+  it('does not count as a Query: the plain address with only the layout still opens the cover', () => {
+    expect(linkWithoutLayout('?layout=classic')).toBe('')
+    expect(linkWithoutLayout('')).toBe('')
+    expect(linkWithoutLayout('?layout=classic&site=001')).toBe('?site=001')
+  })
+})

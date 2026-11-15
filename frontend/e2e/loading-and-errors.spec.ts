@@ -1,4 +1,5 @@
-import { expect, test, type Route } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Route } from '@playwright/test'
 
 const problem = (status: number, code: string) => ({
   status,

@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
-import { expect, test, type Page, type Request, type Route } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page, Request, Route } from '@playwright/test'
 
 // the requirement: the day to land and the launch slip, both read from GET /sites/{site_id}/windows.
 // The mock serves one slip answer for every request (Site 001 from the regression fixture, -30 to +150 days),

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { classic } from './classic'
 
 // the requirement: the page opens on an Earthrise written into index.html, ticks real steps, and hands
 // over to the globe once the Moon is dressed.
@@ -65,7 +66,8 @@ test.describe('the hand over', () => {
       await images.gate
       await route.continue()
     })
-    await page.goto('/')
+    // The loading is announced in the answer column, which only the classic layout shows.
+    await page.goto(classic('/'))
 
     // The code runs and the answer is on its way; the terrain waits for the 3D code.
     await expect(step(page, 'sun')).toHaveAttribute('data-state', 'loading')
@@ -132,7 +134,8 @@ test.describe('the hand over', () => {
         body: JSON.stringify({ type: 'https://lunar-api.luizfbm.win/problems/busy', title: 'busy', status: 503, code: 'busy' }),
       }),
     )
-    await page.goto('/')
+    // The error is shown in the answer column, which Larissa's layout does not show.
+    await page.goto(classic('/'))
     await expect(scene(page)).toHaveCount(0)
     await expect(page.getByRole('alert')).toBeVisible()
   })

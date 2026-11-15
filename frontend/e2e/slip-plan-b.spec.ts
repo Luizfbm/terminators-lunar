@@ -1,4 +1,5 @@
-import { expect, test, type Page, type Route } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page, Route } from '@playwright/test'
 
 // the requirement: plan B for a launch that slips, read from GET /sites/{site_id}/neighbours.
 // The mock serves one slip answer (Site 001 from the regression fixture) and one neighbours answer (Site 001
@@ -25,7 +26,14 @@ const slipPanel = (page: Page) => page.getByRole('region', { name: /^(If the lau
 const planB = (page: Page) =>
   page.getByRole('region', { name: /^(If it slips, these nearby Sites still work|Se atrasar, estes Locais vizinhos ainda servem)$/ })
 
-/** The slip as the mock sends it, and every neighbours request the page makes. */
+/**
+ * A neighbours request of Plan B: it asks from a late start of the slip. The line under the numbers
+ * (NearbyLine) asks the same endpoint from the Query's own start, and is not Plan B.
+ */
+const fromLateStart = (slip: { windows: ShiftedWindow[] }, url: URL) =>
+  slip.windows.some((w) => w.shift_days > 0 && w.start === url.searchParams.get('start'))
+
+/** The slip as the mock sends it, and every neighbours request Plan B makes. */
 async function watch(page: Page) {
   const slip: { windows: ShiftedWindow[] } = { windows: [] }
   const asked: URL[] = []
@@ -38,7 +46,9 @@ async function watch(page: Page) {
     await route.fulfill({ response, json: body })
   })
   await page.route('**/sites/*/neighbours?**', async (route: Route) => {
-    asked.push(new URL(route.request().url()))
+    const url = new URL(route.request().url())
+    if (!fromLateStart(slip, url)) return route.fallback()
+    asked.push(url)
     const response = await route.fetch()
     const body = (await response.json()) as Neighbours
     answers.push(body)
@@ -129,6 +139,7 @@ test.describe('in English', () => {
     const { slip } = await watch(page)
     let calls = 0
     await page.route('**/sites/*/neighbours?**', (route: Route) => {
+      if (!fromLateStart(slip, new URL(route.request().url()))) return route.fallback()
       calls += 1
       return calls === 1
         ? route.fulfill({ status: 503, json: { code: 'busy', title: 'Busy', status: 503, type: 'about:blank' } })

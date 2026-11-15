@@ -74,7 +74,9 @@ def test_the_sun_nearly_reaches_the_zenith_at_apollo_11() -> None:
     assert highest <= 90 - math.degrees(lat) + 1.6 + 0.1
 
 
+@pytest.mark.usefixtures("without_global_dem")
 def test_a_custom_site_north_of_80s_is_still_outside_coverage() -> None:
+    # Without LOLA's global map on the server (see test_global_dem.py for the one with it).
     response = client.get(
         "/visibility",
         params={"latitude_deg": 0.67416, "longitude_deg": 23.47314, "start": START},

@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page } from '@playwright/test'
 import { ERROR_SOURCES, NOT_CHECKED } from '../src/domain/proofCaveats'
 
 test.use({ locale: 'en-GB' })

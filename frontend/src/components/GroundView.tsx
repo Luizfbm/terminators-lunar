@@ -9,6 +9,7 @@ import { prepareWith } from '../domain/prepare'
 import { loadGround } from './groundData'
 import { StageLoading } from './StageLoading'
 import { canDraw } from './webgl'
+import { SafetyCircle } from './hazard/safety/SafetyCircle'
 
 type SkyModule = typeof import('./Sky')
 
@@ -91,9 +92,6 @@ export function GroundView({
         )}
         <div className="stage__caption ground-view__caption">
           <p>
-            <CursorSun fraction={sunFraction} className="cursor-sun--ground" />
-          </p>
-          <p>
             {t('sky.caption')}
             {about && (
               <>
@@ -104,10 +102,15 @@ export function GroundView({
               </>
             )}
           </p>
+          {/* Under the hint, never above it: the hint stays the first line over the sky. */}
+          <p>
+            <CursorSun fraction={sunFraction} className="cursor-sun--ground" />
+          </p>
           <p className="ground-view__note" id={aboutId} hidden={!aboutOpen || !about}>
             {about}
           </p>
         </div>
+        <SafetyCircle result={result} />
       </div>
       <div className="ground-view__strip">
         <Ground result={result} cursorMs={cursorMs} mark={mark} compact />

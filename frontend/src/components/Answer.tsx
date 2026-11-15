@@ -8,10 +8,14 @@ import { useI18n } from '../i18n/I18nContext'
 import type { I18n } from '../i18n/i18n'
 import type { MessageKey } from '../i18n/messages'
 import { Extras } from './Extras'
+import { NearbyLine } from './phase4/nearby/NearbyLine'
+import { UncertaintyLine } from './UncertaintyLine'
+import { useUncertainty, type UncertaintyState } from '../hooks/useUncertainty'
 import type { WindowChoice } from './YearPanel'
 import { Nerds } from './Nerds'
 import { FlatLine, FlatMetrics } from './phase4/flat-line/FlatLine'
 import { KnifeEdgeWarning } from './phase4/miss/KnifeEdgeWarning'
+import { FragileLine } from './phase4/fragile/FragileLine'
 import { MissPanel } from './phase4/miss/MissPanel'
 import { useRadius, useScatter } from './phase4/miss/useMiss'
 import { WhenToLand } from './phase4/site-windows/WhenToLand'
@@ -62,6 +66,7 @@ function BodyStatement({
   heading,
   marked,
   onMark,
+  uncertainty,
 }: {
   body: Body
   result: VisibilityResult
@@ -69,6 +74,7 @@ function BodyStatement({
   heading: 'h1' | 'h2'
   marked: boolean
   onMark?: (body: Body) => void
+  uncertainty: UncertaintyState
 }) {
   const i18n = useI18n()
   const { t, formatDay, formatTime, formatSpan } = i18n
@@ -96,6 +102,7 @@ function BodyStatement({
           t('why', { date: formatDay(at), time: formatTime(at), where })
         )}
       </p>
+      <UncertaintyLine uncertainty={uncertainty} event={said.event} events={result.events} />
     </>
   )
 }
@@ -141,15 +148,18 @@ export function Answer({
   // The Landing scatter is asked here so the knife-edge warning and the miss panel read the same answer.
   const radius = useRadius()
   const scatter = useScatter(result, radius[0])
+  // The DEM Uncertainty band, asked once the answer is here; the answer never waits on it.
+  const uncertainty = useUncertainty(result)
   return (
     <>
       {where}
-      <BodyStatement body="sun" result={result} cursorMs={cursorMs} heading="h1" marked={marked === 'sun'} onMark={onMark} />
+      <BodyStatement body="sun" result={result} cursorMs={cursorMs} heading="h1" marked={marked === 'sun'} onMark={onMark} uncertainty={uncertainty} />
       <FlatLine result={result} cursorMs={cursorMs} />
-      <BodyStatement body="earth" result={result} cursorMs={cursorMs} heading="h2" marked={marked === 'earth'} onMark={onMark} />
+      <BodyStatement body="earth" result={result} cursorMs={cursorMs} heading="h2" marked={marked === 'earth'} onMark={onMark} uncertainty={uncertainty} />
       {/* The engine sees this point sunlit, and the mission still ended: say why, here. */}
       {atLanding && <p className="landing-note">{t('landing.im2.note')}</p>}
       <KnifeEdgeWarning scatter={scatter.state} />
+      <FragileLine result={result} onOpenStats={() => onStats?.(true)} />
       <p className="sum">
         {t(summaryKey(metrics), {
           both: formatSpan(metrics.sun_and_earth_hours * HOUR_MS),
@@ -157,12 +167,13 @@ export function Answer({
           dark: formatSpan(metrics.lcsp_hours * HOUR_MS),
         })}
       </p>
+      <NearbyLine result={result} />
       <Reach result={result} cursorMs={cursorMs} />
       <FlatMetrics result={result} />
       <WhenToLand result={result} onWindow={onWindow} />
       <Battery result={result} />
       <PlanCompare result={result} />
-      <Nerds result={result} cursorMs={cursorMs} open={stats} onOpen={(open) => onStats?.(open)} onWindow={onWindow} />
+      <Nerds result={result} cursorMs={cursorMs} open={stats} onOpen={(open) => onStats?.(open)} onWindow={onWindow} uncertainty={uncertainty} />
       {landing && !atLanding && (
         <p className="landing-open">
           <a

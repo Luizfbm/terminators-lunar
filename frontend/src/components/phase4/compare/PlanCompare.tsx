@@ -23,6 +23,7 @@ import { siteName } from '../../siteName'
 import { NumberField } from '../../Where'
 import { span, usePanelText } from '../site-windows/text'
 import { useCoverage, usePlanB, usePlanBLink } from './api'
+import { HazardCompare } from './HazardCompare'
 import { planSentence } from './sentence'
 import { en, pt } from './strings'
 import './planCompare.css'
@@ -240,6 +241,7 @@ function Body({ result, link, onLink, text }: { result: VisibilityResult; link: 
       )}
       {!same && state.status === 'error' && <PanelStatus code={state.code} onRetry={retry} />}
       {!same && state.status === 'ready' && <Table a={result} b={state.data} text={text} />}
+      <HazardCompare siteA={result.query.site} siteB={query.site} />
     </div>
   )
 }

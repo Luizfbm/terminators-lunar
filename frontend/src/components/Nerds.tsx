@@ -1,6 +1,7 @@
 import { useId, type ReactNode } from 'react'
 import type { VisibilityResult } from '../api/client'
 import { sampleAt } from '../domain/sky'
+import type { UncertaintyState } from '../hooks/useUncertainty'
 import { useI18n } from '../i18n/I18nContext'
 import type { MessageKey } from '../i18n/messages'
 import { HorizonsLinks } from './horizons/HorizonsLinks'
@@ -22,12 +23,15 @@ export function Nerds({
   open,
   onOpen,
   onWindow,
+  uncertainty,
 }: {
   result: VisibilityResult
   cursorMs: number
   open: boolean
   onOpen: (open: boolean) => void
   onWindow?: (choice: WindowChoice) => void
+  /** The DEM Uncertainty band, when the route has given one: a range beside each metric it covers. */
+  uncertainty?: UncertaintyState
 }) {
   const { t, locale, formatNumber, formatPercent } = useI18n()
   // A published coordinate is shown with every decimal it came with, not rounded to three.
@@ -79,7 +83,7 @@ export function Nerds({
       </button>
       {open && (
         <div id={panel} className="nerds__panel">
-          <Numbers result={result} />
+          <Numbers result={result} uncertainty={uncertainty} />
           <table className="metrics nerds__facts">
             <caption className="visually-hidden">{t('nerds.caption')}</caption>
             <tbody>

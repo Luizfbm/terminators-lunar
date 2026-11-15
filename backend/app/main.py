@@ -8,11 +8,12 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import FastAPI, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from . import (
     assistant,
@@ -21,10 +22,15 @@ from . import (
     dsn,
     energy,
     ground,
+    hazard,
+    heights,
     horizon,
     neighbours,
+    route,
+    rovers,
     scatter,
     slope,
+    uncertainty,
     windows,
 )
 from . import flat as flat_horizon
@@ -179,10 +185,7 @@ def _query(
             raise missing_site(site_id)
     else:
         assert latitude_deg is not None and longitude_deg is not None
-        if latitude_deg > -80:
-            raise ApiProblem(
-                "outside_coverage", "Outside coverage", "Custom Sites must be at or south of 80°S."
-            )
+        ground.check_custom_latitude(latitude_deg)
         selected = catalog.custom_site(latitude_deg, longitude_deg)
     return selected, instant
 
@@ -430,6 +433,42 @@ def get_visibility_scatter(
     )
 
 
+@app.get("/visibility/uncertainty")
+def get_visibility_uncertainty(
+    site_id: str | None = None,
+    latitude_deg: float | None = Query(None, ge=-90, le=90),
+    longitude_deg: float | None = Query(None, ge=-180, le=180),
+    start: datetime | None = None,
+    duration_hours: float = Query(DEFAULT_DURATION_HOURS, gt=0, le=1440),
+    observer_height_m: float = Query(DEFAULT_OBSERVER_HEIGHT_M, ge=0, le=50),
+) -> Response:
+    """The Uncertainty band: the Query over clones of the DEM, 202 until the job is done."""
+    selected, instant = _query(site_id, latitude_deg, longitude_deg, start, duration_hours)
+    try:
+        outcome = uncertainty.request(selected, instant, duration_hours, observer_height_m)
+    except horizon.DemUnavailable as missing:
+        raise ApiProblem(
+            "outside_coverage",
+            "Outside coverage",
+            f"No DEM covers the Horizon mask of this Site ({missing}).",
+        ) from missing
+    if isinstance(outcome, uncertainty.Pending):
+        return JSONResponse(
+            {
+                "status": "computing",
+                "clones_done": outcome.clones_done,
+                "clones": outcome.clones,
+            },
+            status_code=202,
+            headers={"Retry-After": str(uncertainty.POLL_SECONDS)},
+        )
+    return Response(
+        outcome.body,
+        media_type="application/json",
+        headers={"Cache-Status": _cache_status(outcome.hit)},
+    )
+
+
 @app.get("/terrain")
 def get_terrain(
     site_id: str | None = None,
@@ -441,6 +480,20 @@ def get_terrain(
     """The Slope around a Site; defaults are NASA's Artemis III requirement (see slope.py)."""
     selected = ground.site_for(site_id, latitude_deg, longitude_deg)
     return ground.terrain(selected, radius_m, slope_limit_deg)
+
+
+@app.get("/terrain/heights")
+def get_terrain_heights(
+    site_id: str | None = None,
+    latitude_deg: float | None = Query(None, ge=-90, le=90),
+    longitude_deg: float | None = Query(None, ge=-180, le=180),
+    half_extent_m: float = Query(
+        heights.HALF_EXTENT_DEFAULT_M, ge=heights.HALF_EXTENT_MIN_M, le=heights.HALF_EXTENT_MAX_M
+    ),
+) -> Response:
+    """The DEM's own heights around a Site, for the 3D view from the ground (see heights.py)."""
+    selected = ground.site_for(site_id, latitude_deg, longitude_deg)
+    return Response(ground.terrain_heights(selected, half_extent_m), media_type="application/json")
 
 
 @app.post("/assistant")
@@ -471,4 +524,74 @@ def get_visibility_dsn(
         ) from missing
     return Response(
         answer, media_type="application/json", headers={"Cache-Status": _cache_status(hit)}
+    )
+
+
+@app.get("/sites/{site_id}/hazard")
+async def get_site_hazard(site_id: str) -> dict[str, Any]:
+    """Eduardo's Monte Carlo on the 10 x 10 km grid nearest the Site (the requirement)."""
+    return hazard.site_hazard(site_id)
+
+
+@app.get("/sites/{site_id}/hazard/grid")
+async def get_site_hazard_grid(site_id: str) -> dict[str, Any]:
+    """The grid itself, as the bundle stores it (the requirement)."""
+    return hazard.site_hazard_grid(site_id)
+
+
+@app.get("/sites/{site_id}/hazard/around")
+async def get_site_hazard_around(
+    site_id: str,
+    x_m: float | None = Query(None, ge=-5000, le=5000),
+    y_m: float | None = Query(None, ge=-5000, le=5000),
+    radius_m: float = Query(250, ge=50, le=2000),
+    slope_limit_deg: float = Query(hazard.SLOPE_LIMIT_DEG, gt=0, le=45),
+) -> dict[str, Any]:
+    """The steep cells within a radius of a point of the grid (the requirement)."""
+    return hazard.site_hazard_around(site_id, x_m, y_m, radius_m, slope_limit_deg)
+
+
+@app.get("/rovers")
+async def get_rovers() -> dict[str, Any]:
+    """The eight Rovers of Eduardo's catalogue, each number with its source (the requirement)."""
+    return rovers.listing()
+
+
+@app.get("/sites/{site_id}/route")
+def get_site_route(
+    site_id: str,
+    rover_id: str = "viper",
+    slope_limit_deg: float | None = Query(None, gt=0, le=45),
+    battery_wh: float | None = Query(None, gt=0, le=100000),
+    power_shadow_w: float | None = Query(None, ge=0, le=10000),
+    solar_w: float | None = Query(None, ge=0, le=10000),
+    rtg_w: float | None = Query(None, ge=0, le=10000),
+    start_x_m: float | None = Query(None, ge=-5000, le=5000),
+    start_y_m: float | None = Query(None, ge=-5000, le=5000),
+    goal_x_m: float | None = Query(None, ge=-5000, le=5000),
+    goal_y_m: float | None = Query(None, ge=-5000, le=5000),
+    coarse_m: route.CoarseM = route.CoarseM.M60,
+    confidence_level: Literal["P50", "P90", "P99"] = "P90",
+    sun_fraction: float = Query(0.5, ge=0, le=1),
+    sun_azimuth_deg: float | None = Query(None, ge=0, lt=360),
+    swarm: bool = False,
+) -> dict[str, Any]:
+    """The same drive planned by Normal navigation and by Multiresolution (the requirement)."""
+    return route.compare(
+        site_id,
+        rover_id=rover_id,
+        slope_limit_deg=slope_limit_deg,
+        battery_wh=battery_wh,
+        power_shadow_w=power_shadow_w,
+        solar_w=solar_w,
+        rtg_w=rtg_w,
+        start_x_m=start_x_m,
+        start_y_m=start_y_m,
+        goal_x_m=goal_x_m,
+        goal_y_m=goal_y_m,
+        coarse_m=int(coarse_m),
+        confidence_level=confidence_level,
+        sun_fraction=sun_fraction,
+        sun_azimuth_deg=sun_azimuth_deg,
+        swarm=swarm,
     )

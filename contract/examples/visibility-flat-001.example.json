@@ -122,6 +122,7 @@
       "sun_and_earth_hours": 285.41027777777776,
       "sunlit_hours": 708.73,
       "earth_visible_hours": 285.41027777777776,
+      "earth_visible_hours_any_part": 315.60277777777776,
       "lcip_hours": 708.73,
       "lcsp_hours": 0.0,
       "mean_sun_fraction": 1.0

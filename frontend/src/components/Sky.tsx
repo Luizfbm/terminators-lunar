@@ -3,9 +3,10 @@ import * as THREE from 'three'
 import type { VisibilityResult } from '../api/client'
 import { DIAL_LETTERS, DIAL_TICKS, facingEighth, onDial } from '../domain/compassDial'
 import { earthAttitude, earthNorthAt, earthRoll, subLunarPoint } from '../domain/earthFace'
+import { belowHorizonMask } from '../domain/bodyGuide'
 import { maskElevationAt, sampleAt } from '../domain/sky'
 import { blendRim, canTakeFinest, eyeOnMap, GRAIN_DEPTH, GRAIN_PX, grainRepeat, grainTexels } from '../domain/nearGround'
-import { direction, EARTH_RADIUS_DEG, groundPositions, groundSpacing, horizonFaceShade, stretched, sunOnGround, turnBetween, wrapAzimuth, type GroundSpacing } from '../domain/skyScene'
+import { ballScale, bodyRadiusDeg, direction, discScale, EARTH_RADIUS_DEG, groundPositions, groundSpacing, horizonFaceShade, stretched, sunOnGround, turnBetween, wrapAzimuth, type GroundSpacing } from '../domain/skyScene'
 import {
   beyondHorizon,
   covers,
@@ -19,12 +20,13 @@ import {
   type Patch,
   type PixelBounds,
 } from '../domain/terrain'
+import { groundSource } from '../domain/terrainHeights'
 import { useI18n } from '../i18n/I18nContext'
 import type { GroundMark } from './Ground'
-import { loadGround, loadSiteGround, loadWideGround, type GroundData } from './groundData'
+import { regolithMaterial, SHADOW_FLOOR } from './regolith'
+import { loadGround, loadPatchGround, loadSiteGround, loadWideGround, type GroundData } from './groundData'
+import { EARTH, earthMaterial as makeEarthMaterial, loadEarthMap, SUN } from './spaceBodies'
 
-const SUN = 0xf5bd3a
-const EARTH = 0x9cc0ff
 /** The crest of the horizon: dim all round, and warm where the Sun is behind or beside it. */
 const RIDGE = 0x55565d
 const RIDGE_LIT = 0xe8c070
@@ -48,13 +50,12 @@ const GROUND_MARGIN_M = 10_000
 const SITE_NEAR_M = 4_000
 /** Regolith: a warm grey. */
 const REGOLITH = 0x8d8983
-/** The Sun on the ground with its whole disc in view, and the faint light from the sky that is left without it. */
+/** The Sun on the ground with its whole disc in view. What is left without it is `SHADOW_FLOOR`: the Moon has no sky. */
 const SUNLIGHT = 3.2
-const SKYLIGHT = 0.7
 /** The fine relief of the image is tilted this much more, to go with the stretched heights. */
 const RELIEF = 3
-/** What the two lights above leave on a surface, as a share of its colour: the renderer spreads light over a hemisphere, a division by pi, and the sky's light is a soft blue-grey. */
-const FACE_LIGHT = { sunlight: SUNLIGHT / Math.PI, skylight: (SKYLIGHT * 0.72) / Math.PI }
+/** What the two lights leave on a surface, as a share of its colour: the renderer spreads light over a hemisphere, a division by pi. */
+const FACE_LIGHT = { sunlight: SUNLIGHT / Math.PI, skylight: SHADOW_FLOOR / Math.PI }
 const FIELD_OF_VIEW_DEG = 55
 const PITCH_MIN_DEG = -12
 /**
@@ -72,34 +73,31 @@ const DIAL_TICK_IN_MAJOR = 34
 const DIAL_TICK_IN_MINOR = 38
 /** Below this change of yaw, in degrees, the dial is not redrawn. */
 const DIAL_STEP_DEG = 0.05
+/**
+ * The Sun's and the Earth's arrows, when the body is out of frame or below the horizon: how far
+ * their centres stay from the left and right edges, and from the top and bottom ones, so the
+ * label fits on screen (the dial and the turn buttons sit in the corners); and how far apart the
+ * two sit vertically, so they do not cover each other when both point the same way.
+ */
+const GUIDE_INSET_X_PX = 105
+const GUIDE_INSET_Y_PX = 90
+const GUIDE_STACK_PX = 16
+/** A body is in frame while its centre is inside this share of the half-width and the half-height. */
+const GUIDE_FRAME_X = 0.92
+const GUIDE_FRAME_Y = 0.88
 const PATH_POINTS = 320
-/** The map of the Earth, served beside the page: NASA's Blue Marble, without clouds. */
-const EARTH_MAP = `${import.meta.env.BASE_URL}earth_2k.jpg`
+/** The Sun's mean angular radius, in degrees, for an answer that does not carry its own. */
+const SUN_RADIUS_DEG = 0.27
 
 const vector = (azimuthDeg: number, elevationDeg: number, radius: number) =>
   new THREE.Vector3(...direction(azimuthDeg, elevationDeg)).multiplyScalar(radius)
 
-/** A disc that always faces the Observer, `radiusDeg` wide as seen from there. */
-function disc(radiusDeg: number, colour: number): THREE.Mesh {
-  const radius = BODIES * Math.tan((radiusDeg * Math.PI) / 180)
-  return new THREE.Mesh(new THREE.CircleGeometry(radius, 48), new THREE.MeshBasicMaterial({ color: colour }))
-}
-
-/** A soft halo for the Sun, drawn once into a small canvas. */
-function glowTexture(): THREE.Texture {
-  const size = 128
-  const canvas = document.createElement('canvas')
-  canvas.width = canvas.height = size
-  const context = canvas.getContext('2d')
-  if (context) {
-    const gradient = context.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2)
-    gradient.addColorStop(0, 'rgba(245, 189, 58, 0.55)')
-    gradient.addColorStop(0.35, 'rgba(245, 189, 58, 0.16)')
-    gradient.addColorStop(1, 'rgba(245, 189, 58, 0)')
-    context.fillStyle = gradient
-    context.fillRect(0, 0, size, size)
-  }
-  return new THREE.CanvasTexture(canvas)
+/**
+ * A disc of unit radius that faces the Observer; scaled each frame to `BODIES · tan(r)`, it subtends
+ * exactly the angular radius r of that sample.
+ */
+function disc(colour: number): THREE.Mesh {
+  return new THREE.Mesh(new THREE.CircleGeometry(1, 96), new THREE.MeshBasicMaterial({ color: colour }))
 }
 
 /** The same stars on every visit: a small generator with a fixed seed. */
@@ -148,10 +146,21 @@ export function Sky({
   const { t } = useI18n()
   const frame = useRef<HTMLDivElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
+  // The arrows to the Sun and the Earth: their buttons, where each one turns the view to, and the
+  // language the frame loop writes their labels in.
+  const bodyGuides = useRef<Partial<Record<'sun' | 'earth', HTMLButtonElement>>>({})
+  const guideAim = useRef<Partial<Record<'sun' | 'earth', { yaw: number; pitch: number }>>>({})
+  const guideText = useRef(t)
+  useEffect(() => {
+    guideText.current = t
+  })
   const ring = useRef<SVGGElement>(null)
   const letters = useRef<(SVGTextElement | null)[]>([])
   // The eighth the view faces, for the compass's accessible name: set only when it changes.
   const [facing, setFacing] = useState<number | null>(null)
+  // Where no published polar map holds the Site: the engine's grid on its way, or why it is not there.
+  const [groundStatus, setGroundStatus] = useState<'loading' | 'none' | 'failed' | null>(null)
+  const retryGround = useRef<(() => void) | null>(null)
   // What the frame loop reads: the latest props, and where the camera is turning to.
   const latest = useRef({ result, cursorMs, stretch, mark, onGround, onFailed, pose })
   const aim = useRef<{ yaw: number; pitch: number } | null>(null)
@@ -201,77 +210,28 @@ export function Sky({
     )
     scene.add(stars)
 
-    const sun = disc(1, SUN)
-    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), depthWrite: false, transparent: true }))
+    const sun = disc(SUN)
+    // No halo on the Sun here (issue 104): at its true angular size it would hide where the limb is.
     // The Earth is a ball lit from where the Sun is, so it shows the phase it has from here.
-    // Its own small shader: the Earth is in sunlight whatever the terrain hides from the Site,
-    // while the lights of the scene dim with the Sun's disc and are for the ground.
-    const earthMaterial = new THREE.ShaderMaterial({
-      uniforms: {
-        sunDirection: { value: new THREE.Vector3(0, 1, 0) },
-        colour: { value: new THREE.Color(EARTH) },
-        map: { value: null as THREE.Texture | null },
-        mapped: { value: 0 },
-      },
-      vertexShader: `
-        #include <common>
-        #include <logdepthbuf_pars_vertex>
-        varying vec3 facing;
-        varying vec3 toEye;
-        varying vec2 place;
-        void main() {
-          facing = normalize(mat3(modelMatrix) * normal);
-          toEye = normalize(cameraPosition - (modelMatrix * vec4(position, 1.0)).xyz);
-          place = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          #include <logdepthbuf_vertex>
-        }`,
-      fragmentShader: `
-        #include <common>
-        #include <logdepthbuf_pars_fragment>
-        uniform vec3 sunDirection;
-        uniform vec3 colour;
-        uniform sampler2D map;
-        uniform float mapped;
-        varying vec3 facing;
-        varying vec3 toEye;
-        varying vec2 place;
-        void main() {
-          #include <logdepthbuf_fragment>
-          vec3 out_ = normalize(facing);
-          // Daylight fades over a few degrees at the terminator, as it does through the air.
-          float lit = smoothstep(-0.06, 0.25, dot(out_, sunDirection));
-          vec3 land = mix(colour, texture2D(map, place).rgb, mapped);
-          // The night side keeps a little light, more than it has: enough to tell the continents apart.
-          vec3 shade = land * (0.035 + 1.15 * lit);
-          // The air: a thin blue edge, brightest where the limb is in daylight.
-          float edge = pow(1.0 - max(dot(out_, normalize(toEye)), 0.0), 3.0);
-          shade += vec3(0.35, 0.55, 1.0) * edge * (0.08 + 0.9 * lit);
-          gl_FragColor = vec4(shade, 1.0);
-          #include <colorspace_fragment>
-        }`,
-    })
+    const earthMaterial = makeEarthMaterial()
     // The map arrives after the first frames; until then, and without it, the Earth is its plain blue.
     let earthMap: THREE.Texture | null = null
-    new THREE.TextureLoader().load(EARTH_MAP, (texture) => {
-      if (gone) {
-        texture.dispose()
-        return
-      }
-      texture.colorSpace = THREE.SRGBColorSpace
-      texture.anisotropy = renderer.capabilities.getMaxAnisotropy()
-      earthMap = texture
-      earthMaterial.uniforms.map.value = texture
-      earthMaterial.uniforms.mapped.value = 1
-      target.dataset.earth = 'mapped'
-    })
+    loadEarthMap(
+      earthMaterial,
+      renderer.capabilities.getMaxAnisotropy(),
+      () => gone,
+      (texture) => {
+        earthMap = texture
+        target.dataset.earth = 'mapped'
+      },
+    )
     // How far north leans on the sky, kept from the last instant it could be worked out.
     let earthLean: number | null = null
     const earth = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), earthMaterial)
     const sunlight = new THREE.DirectionalLight(0xfff1dc, SUNLIGHT)
-    // Light from above only: ground facing up keeps a little, ground facing down none.
-    const skylight = new THREE.HemisphereLight(0xaab2c8, 0x000000, SKYLIGHT)
-    scene.add(glow, sun, earth, sunlight, skylight)
+    // No sky light: on the Moon nothing scatters the Sun's. A small neutral floor keeps the shadow side readable.
+    const floor = new THREE.AmbientLight(0xffffff, SHADOW_FLOOR)
+    scene.add(sun, earth, sunlight, floor)
 
     const path = new THREE.Points(
       new THREE.BufferGeometry(),
@@ -325,23 +285,28 @@ export function Sky({
     grain.needsUpdate = true
     const grained = new THREE.Color(REGOLITH).multiplyScalar(1 / (1 - GRAIN_DEPTH / 2))
     const level = (relief: boolean) => {
-      const material = new THREE.MeshStandardMaterial({ color: grained, roughness: 1, metalness: 0, normalScale: new THREE.Vector2(RELIEF, RELIEF) })
+      const material = regolithMaterial({ color: grained, normalScale: new THREE.Vector2(RELIEF, RELIEF) })
       material.map = grain.clone()
       const mesh = new THREE.Mesh(new THREE.BufferGeometry(), material)
       mesh.visible = false
       scene.add(mesh)
-      return { data: null as GroundData | null, mesh, material, relief: null as THREE.Texture | null, reliefAsked: !relief }
+      // `settled`: the map has arrived, or is known not to come, so whether it holds the Site is known.
+      return { data: null as GroundData | null, mesh, material, relief: null as THREE.Texture | null, reliefAsked: !relief, settled: false }
     }
     const fine = level(true)
     const wide = level(true)
     // The 20 m ground right around the Site: its mesh is fine enough to carry its own light, so it has no image of finer relief.
     const site = level(false)
+    // Anywhere no published polar map holds the Site: the engine's own DEM around it, from
+    // /terrain/heights (237 m over most of the Moon). It has no image of finer relief.
+    const patch = level(false)
     type Level = ReturnType<typeof level>
     // A phone, or a modest graphics card, keeps the coarser ground (the requirement).
     const finest = canTakeFinest({ memoryGb: (navigator as { deviceMemory?: number }).deviceMemory, maxTextureSize: renderer.capabilities.maxTextureSize })
     target.dataset.finest = String(finest)
-    // The Site whose 20 m ground was asked for, so another Site asks again.
+    // The Site whose 20 m ground was asked for, so another Site asks again, and the one it has come for.
     let siteAsked: string | null = null
+    let siteSettled: string | null = null
     const askSite = (data: VisibilityResult) => {
       const { latitude_deg, longitude_deg } = data.query.site
       const key = `${latitude_deg},${longitude_deg}`
@@ -350,18 +315,61 @@ export function Sky({
       site.data = null
       if (!finest) return
       void loadSiteGround(latitude_deg, longitude_deg).then((ground) => {
-        if (!gone && siteAsked === key) site.data = ground
+        if (!gone && siteAsked === key) {
+          site.data = ground
+          siteSettled = key
+        }
       })
     }
-    let groundFor: { result: VisibilityResult; stretch: number; fine: GroundData | null; wide: GroundData | null; site: GroundData | null } | null = null
+    // The Site whose grid was asked for, and what the grid is.
+    let patchAsked: string | null = null
+    let patchDem: { product: string; resolutionM: number } | null = null
+    let statusNow: 'loading' | 'none' | 'failed' | null = null
+    const status = (next: 'loading' | 'none' | 'failed' | null, shown: string | null = next) => {
+      if (shown === null) delete target.dataset.groundStatus
+      else target.dataset.groundStatus = shown
+      if (next === statusNow) return
+      statusNow = next
+      setGroundStatus(next)
+    }
+    const askPatch = (data: VisibilityResult, key: string) => {
+      if (patchAsked === key) return
+      patchAsked = key
+      patch.data = null
+      patchDem = null
+      status('loading')
+      void loadPatchGround(data.query.site).then((answer) => {
+        if (gone || patchAsked !== key) return
+        if (answer.ok) {
+          patch.data = answer.ground
+          patchDem = { product: answer.product, resolutionM: answer.resolutionM }
+          status(null, 'ready')
+        } else {
+          // Never a made-up ground: the view says there is none, and keeps the horizon line.
+          status(answer.code === 'outside_coverage' ? 'none' : 'failed')
+        }
+      })
+    }
+    // Try again asks on the next frame.
+    retryGround.current = () => {
+      patchAsked = null
+    }
+    let groundFor: { result: VisibilityResult; stretch: number; fine: GroundData | null; wide: GroundData | null; site: GroundData | null; patch: GroundData | null } | null =
+      null
     void loadGround().then((data) => {
-      if (!gone) fine.data = data
+      if (gone) return
+      fine.data = data
+      fine.settled = true
     })
     // The wider map is a 22 MB file: a phone goes without it.
     if (!coarse) {
       void loadWideGround().then((data) => {
-        if (!gone) wide.data = data
+        if (gone) return
+        wide.data = data
+        wide.settled = true
       })
+    } else {
+      wide.settled = true
     }
     // The finer relief only tilts the light; it comes after the shapes.
     const askRelief = (from: Level) => {
@@ -445,16 +453,32 @@ export function Sky({
       on.mesh.visible = geometry !== null
       if (geometry) askRelief(on)
       if (geometry && on.material.map) {
-        const map = (on === site ? site.data : on === fine ? fine.data : wide.data)?.heights
+        const map = (on === patch ? patch.data : on === site ? site.data : on === fine ? fine.data : wide.data)?.heights
         if (map) on.material.map.repeat.setScalar(grainRepeat(map))
       }
     }
-    const buildGround = (data: VisibilityResult, by: number) => {
-      groundFor = { result: data, stretch: by, fine: fine.data, wide: wide.data, site: site.data }
+    const buildGround = (data: VisibilityResult, by: number, patchData: GroundData | null) => {
+      groundFor = { result: data, stretch: by, fine: fine.data, wide: wide.data, site: site.data, patch: patchData }
       const { latitude_deg, longitude_deg } = data.query.site
       const eye = data.query.observer_height_m
       const horizon = horizonTable(data.horizon.samples)
       const reach = horizonDistanceTable(data.horizon.samples)
+      // No published polar map holds the Site: the engine's grid is all the ground there is,
+      // every point of it (every other one on a phone), under the engine's horizon.
+      if (patchData && patchDem) {
+        show(fine, null)
+        show(wide, null)
+        show(site, null)
+        const stride = coarse ? 2 : 1
+        const grid = patchAround(patchData.heights, latitude_deg, longitude_deg, eye, Infinity, stride)
+        show(patch, groundGeometry(patchData.heights, [{ patch: grid }], horizon, reach, by))
+        target.dataset.ground = 'real'
+        target.dataset.near = 'none'
+        target.dataset.far = 'silhouette'
+        latest.current.onGround?.({ ...groundSpacing(patchDem.resolutionM, stride), product: patchDem.product })
+        return
+      }
+      show(patch, null)
       const fineMap = fine.data && covers(fine.data.heights, latitude_deg, longitude_deg, GROUND_MARGIN_M) ? fine.data.heights : null
       const wideMap = wide.data && covers(wide.data.heights, latitude_deg, longitude_deg, GROUND_MARGIN_M) ? wide.data.heights : null
       // How finely the ground nearest the Site is measured and drawn, for the caption.
@@ -546,10 +570,7 @@ export function Sky({
       path.geometry.dispose()
       path.geometry = new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(dots, 3))
 
-      const sunRadius = (data.timeline.sun_radius_deg ?? 0.27) * by
-      sun.scale.setScalar(sunRadius)
-      glow.scale.setScalar(BODIES * Math.tan((sunRadius * Math.PI) / 180) * 9)
-      earth.scale.setScalar(BODIES * Math.tan((EARTH_RADIUS_DEG * by * Math.PI) / 180))
+      // The discs are sized per sample, at the Cursor, not here.
       builtFor = { result: data, stretch: by }
       litFor = null
     }
@@ -604,22 +625,40 @@ export function Sky({
       if (width === 0 || height === 0) return
       if (builtFor?.result !== state.result || builtFor.stretch !== state.stretch) build(state.result, state.stretch)
       askSite(state.result)
+      // The published polar maps first, as always; the engine's grid only where none of them
+      // holds the Site, once that is known (domain/terrainHeights.ts).
+      const here = state.result.query.site
+      const hereKey = `${here.latitude_deg},${here.longitude_deg}`
+      const holds = (on: Level, settled: boolean, marginM: number) =>
+        settled ? on.data !== null && covers(on.data.heights, here.latitude_deg, here.longitude_deg, marginM) : null
+      const source = groundSource(here.latitude_deg, [
+        holds(fine, fine.settled, GROUND_MARGIN_M),
+        holds(wide, wide.settled, GROUND_MARGIN_M),
+        holds(site, !finest || siteSettled === hereKey, 0),
+      ])
+      target.dataset.groundSource = source
+      if (source === 'patch') askPatch(state.result, hereKey)
+      else if (statusNow !== null || target.dataset.groundStatus) status(null)
+      const patchNow = source === 'patch' && patchAsked === hereKey ? patch.data : null
       if (
-        (fine.data || wide.data || site.data) &&
+        (fine.data || wide.data || site.data || patchNow || groundFor?.patch) &&
         (groundFor?.result !== state.result ||
           groundFor.stretch !== state.stretch ||
           groundFor.fine !== fine.data ||
           groundFor.wide !== wide.data ||
-          groundFor.site !== site.data)
+          groundFor.site !== site.data ||
+          groundFor.patch !== patchNow)
       ) {
-        buildGround(state.result, state.stretch)
+        buildGround(state.result, state.stretch, patchNow)
       }
       const now = sampleAt(state.result.timeline.samples, state.cursorMs)
       if (now) {
         const sunAt = vector(now.sun.azimuth_deg, stretched(now.sun.elevation_deg, state.stretch), BODIES)
         sun.position.copy(sunAt)
-        // The halo sits a little behind the disc, so the two never fight for the same depth.
-        glow.position.copy(sunAt).multiplyScalar(1.02)
+        // Both discs at the angular radius the answer gives for this sample, or at the mean radius
+        // when it gives none: a body is never hidden for lack of a radius. The stretch grows them as before.
+        sun.scale.setScalar(discScale(bodyRadiusDeg(now.sun.angular_radius_deg, state.result.timeline.sun_radius_deg ?? SUN_RADIUS_DEG, state.stretch), BODIES))
+        earth.scale.setScalar(ballScale(bodyRadiusDeg(now.earth.angular_radius_deg, EARTH_RADIUS_DEG, state.stretch), BODIES))
         earth.position.copy(vector(now.earth.azimuth_deg, stretched(now.earth.elevation_deg, state.stretch), BODIES))
         sun.lookAt(0, 0, 0)
         // The ground is lit from where the Sun is at the Cursor, by as much of its disc as the
@@ -667,6 +706,40 @@ export function Sky({
         ;(pin.material as THREE.MeshBasicMaterial).color.set(state.mark.body === 'sun' ? SUN : EARTH)
       }
 
+      // An arrow for each of the Sun and the Earth while it is out of frame or below the horizon:
+      // it points the way and, pressed, turns the view to the body.
+      camera.updateMatrixWorld()
+      for (const body of ['sun', 'earth'] as const) {
+        const guide = bodyGuides.current[body]
+        if (!guide) continue
+        if (!now) {
+          guide.hidden = true
+          continue
+        }
+        const position = body === 'sun' ? sun.position : earth.position
+        const local = position.clone().applyMatrix4(camera.matrixWorldInverse)
+        const projected = position.clone().project(camera)
+        const inFrame = local.z < 0 && Math.abs(projected.x) < GUIDE_FRAME_X && Math.abs(projected.y) < GUIDE_FRAME_Y
+        const below = belowHorizonMask(now[body], state.result.horizon.samples)
+        guide.hidden = inFrame && !below
+        guideAim.current[body] = { yaw: yaw + turnBetween(yaw, now[body].azimuth_deg), pitch: stretched(now[body].elevation_deg, state.stretch) }
+        // The direction in the camera's own axes also works behind the Observer, where projection reverses sign.
+        let dx = local.x
+        const dy = -local.y
+        if (Math.abs(dx) + Math.abs(dy) < 0.001) dx = 1
+        const norm = Math.max(Math.abs(dx), Math.abs(dy))
+        const width = target.clientWidth
+        const height = target.clientHeight
+        guide.style.left = `${width / 2 + (dx / norm) * Math.max(0, width / 2 - GUIDE_INSET_X_PX)}px`
+        guide.style.top = `${height / 2 + (dy / norm) * Math.max(0, height / 2 - GUIDE_INSET_Y_PX) + (body === 'sun' ? -GUIDE_STACK_PX : GUIDE_STACK_PX)}px`
+        const arrow = guide.firstElementChild as HTMLElement
+        arrow.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`
+        const name = guideText.current(`strip.${body}`)
+        const text = below ? guideText.current('sky.guide.below', { body: name }) : name
+        const label = guide.lastElementChild as HTMLElement
+        if (label.textContent !== text) label.textContent = text
+      }
+
       renderer.render(scene, camera)
       target.dataset.ready = 'true'
       target.dataset.yaw = wrapAzimuth(yaw).toFixed(1)
@@ -705,24 +778,59 @@ export function Sky({
       target.removeEventListener('pointermove', move)
       target.removeEventListener('pointerup', up)
       target.removeEventListener('pointercancel', up)
-      for (const object of [stars, path, wall, ridge, sun, earth, pin, fine.mesh, wide.mesh, site.mesh]) {
+      retryGround.current = null
+      for (const object of [stars, path, wall, ridge, sun, earth, pin, fine.mesh, wide.mesh, site.mesh, patch.mesh]) {
         object.geometry.dispose()
         ;(object.material as THREE.Material).dispose()
       }
       fine.relief?.dispose()
       wide.relief?.dispose()
-      for (const on of [fine, wide, site]) on.material.map?.dispose()
+      for (const on of [fine, wide, site, patch]) on.material.map?.dispose()
       grain.dispose()
       earthMap?.dispose()
-      glow.material.map?.dispose()
-      glow.material.dispose()
       renderer.dispose()
     }
   }, [])
 
   return (
     <div className="sky" ref={frame}>
+      {(['sun', 'earth'] as const).map((body) => (
+        <button
+          key={body}
+          type="button"
+          className="sky__body-guide"
+          hidden
+          aria-label={t(`sky.guide.${body}`)}
+          ref={(element) => {
+            if (element) bodyGuides.current[body] = element
+            else delete bodyGuides.current[body]
+          }}
+          onClick={() => {
+            const destination = guideAim.current[body]
+            if (destination && aim.current) {
+              aim.current.yaw = destination.yaw
+              aim.current.pitch = destination.pitch
+            }
+          }}
+        >
+          <span aria-hidden="true">→</span>
+          <b aria-hidden="true">{t(`strip.${body}`)}</b>
+        </button>
+      ))}
       <canvas ref={canvas} role="img" aria-label={t('sky.label', { site: result.query.site.name })} />
+      {groundStatus !== null && (
+        <p className="sky__ground-status" data-state={groundStatus} aria-live="polite">
+          {t(`sky.ground.${groundStatus}` as 'sky.ground.loading')}
+          {groundStatus === 'failed' && (
+            <>
+              {' '}
+              <button type="button" onClick={() => retryGround.current?.()}>
+                {t('sky.ground.retry')}
+              </button>
+            </>
+          )}
+        </p>
+      )}
       {facing !== null && (
         <div className="sky__dial" role="img" aria-label={t('sky.facing', { direction: t(`direction.${facing}` as 'direction.0') })}>
           <svg viewBox="-50 -50 100 100" aria-hidden="true">

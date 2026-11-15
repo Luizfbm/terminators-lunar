@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { beyondHorizon, covers, gridTriangles, heightAt, heightMapOf, horizonDistanceTable, horizonTable, mapBoundsOn, patchAround, patchBounds, pixelOf, type HeightMap } from './terrain'
+import { beyondHorizon, covers, geoOf, gridTriangles, heightAt, heightMapOf, horizonDistanceTable, horizonTable, mapBoundsOn, patchAround, patchBounds, pixelOf, planeOf, type HeightMap } from './terrain'
 
 const R = 1_737_400
 const RAD = Math.PI / 180
@@ -294,3 +294,71 @@ describe('ground beyond the horizon', () => {
   })
 })
 
+
+describe('the maps of /terrain/heights, on the DEM\'s own projection (Phase C, 15/11/2026)', () => {
+  // Before: every height map was south polar stereographic, so a Site north of 60°S had no ground
+  // at all (covers said no) and the view from the ground was the horizon line alone.
+  const flatOn = (projection: HeightMap['projection'], xMinM: number, yMaxM: number, size = 101, metresPerPixel = 236.9): HeightMap => ({
+    size,
+    metresPerPixel,
+    xMinM,
+    yMaxM,
+    sphereRadiusM: R,
+    at0M: 0,
+    at65535M: 1,
+    data: new Uint16Array(size * size),
+    projection,
+  })
+
+  it('leaves the south polar maps exactly as they were: the same numbers with or without the field', () => {
+    const before = map(400)
+    const marked: HeightMap = { ...before, projection: { kind: 'south_polar' } }
+    for (const [lat, lon] of [[-89.9, 30], [-89.95, -150], [-89.8, 179.9]]) {
+      expect(pixelOf(marked, lat, lon)).toEqual(pixelOf(before, lat, lon))
+      // Written out as the module had it before the projections were added.
+      const rho = 2 * R * Math.tan((45 + lat / 2) * RAD)
+      expect(planeOf(before, lat, lon)).toEqual({ x: rho * Math.sin(lon * RAD), y: rho * Math.cos(lon * RAD) })
+    }
+  })
+
+  it('goes there and back on the simple cylindrical map centred on 180°E', () => {
+    // A map around 0°N 0°E: x = R (lon - 180°), so 0°E is at -pi R.
+    const grid = flatOn({ kind: 'equirectangular', centerLongitudeDeg: 180 }, -Math.PI * R - 50 * 236.9, 50 * 236.9)
+    const { x, y } = planeOf(grid, 0.1, 0.2)
+    expect(y).toBeCloseTo(R * 0.1 * RAD, 6)
+    // East of 0°E, so just past -pi R, not at the far end of the Moon.
+    expect(x).toBeCloseTo(-Math.PI * R + R * 0.2 * RAD, 6)
+    const back = geoOf(grid, x, y)
+    expect(back.lat / RAD).toBeCloseTo(0.1, 9)
+    expect((((back.lon / RAD) % 360) + 360) % 360).toBeCloseTo(0.2, 9)
+    // West of 0°E the map runs on beyond -pi R, continuous across the seam.
+    expect(planeOf(grid, 0, -0.2).x).toBeCloseTo(-Math.PI * R - R * 0.2 * RAD, 6)
+    expect(covers(grid, 0, 0, 5_000)).toBe(true)
+    expect(covers(grid, 0, 90, 0)).toBe(false)
+  })
+
+  it('goes there and back on the north polar map, 0°E down', () => {
+    const grid = flatOn({ kind: 'north_polar' }, -50 * 240, 50 * 240, 101, 240)
+    const near = planeOf(grid, 89.9, 0)
+    expect(near.x).toBeCloseTo(0, 6)
+    expect(near.y).toBeLessThan(0)
+    expect(planeOf(grid, 89.9, 90).x).toBeGreaterThan(0)
+    const back = geoOf(grid, near.x, near.y)
+    expect(back.lat / RAD).toBeCloseTo(89.9, 9)
+    expect(covers(grid, 89.95, 45, 1_000)).toBe(true)
+    expect(covers(grid, -89.95, 45, 0)).toBe(false)
+  })
+
+  it('builds the ground of a Site on the equator from the cylindrical map', () => {
+    const grid = flatOn({ kind: 'equirectangular', centerLongitudeDeg: 180 }, -Math.PI * R - 50.5 * 236.9, 50.5 * 236.9)
+    const patch = patchAround(grid, 0, 0, 2, Infinity, 1)
+    expect(patch.columns).toBe(101)
+    expect(patch.rows).toBe(101)
+    // The point a few pixels due east is east of the eye, a little below its level on the round Moon.
+    const east = nearest(patch, 90, 900, 1_300)
+    expect(patch.azimuthDeg[east]).toBeCloseTo(90, 0)
+    expect(patch.elevationDeg[east]).toBeLessThan(0)
+    const north = nearest(patch, 0, 900, 1_300)
+    expect(Math.min(patch.azimuthDeg[north], 360 - patch.azimuthDeg[north])).toBeLessThan(1)
+  })
+})

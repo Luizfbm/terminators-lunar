@@ -1,8 +1,10 @@
 """The Curated Sites catalog and the cache, through the HTTP API only."""
 
+import importlib.util
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,6 +13,14 @@ from app import cache
 from app.main import app
 
 client = TestClient(app)
+
+# The Sites outside the polar DEMs are the ones deploy/crop_offpole.py cuts a terrain window for.
+_REPO = next(p for p in Path(__file__).resolve().parents if (p / "contract").is_dir())
+_SPEC = importlib.util.spec_from_file_location("crop_offpole", _REPO / "deploy" / "crop_offpole.py")
+assert _SPEC and _SPEC.loader
+_crop = importlib.util.module_from_spec(_SPEC)
+_SPEC.loader.exec_module(_crop)
+OFFPOLE_SITES: dict[str, tuple[float, float, str]] = _crop.SITES
 
 # NASA's October 2024 list of nine Artemis III candidate regions, as named in
 # Wueller et al. 2026, Table 1.
@@ -32,20 +42,23 @@ def test_the_130_wueller_sites_and_16_regions() -> None:
     assert sum(region["site_count"] for region in regions) == 130
 
 
-def test_every_site_carries_its_citation_and_sits_near_the_pole() -> None:
+def test_every_site_carries_its_citation_and_sits_near_the_pole_or_has_its_own_window() -> None:
     for site in client.get("/sites").json():
         assert site["curated"] is True
         assert site["source_reference"]
-        if site["id"] in (
-            "APOLLO11",
-            "BG1",
-            "CH3",
-        ):  # outside the pole on purpose (the requirement)
+        if site["latitude_deg"] > -80:
+            # Outside the pole on purpose (issue #26, and the mission landing sites of
+            # data/missions/): only where a terrain window is cut for it, at the same place.
+            assert site["id"] in OFFPOLE_SITES, f"{site['id']} has no off-pole DEM window"
+            lat, lon, _ = OFFPOLE_SITES[site["id"]]
+            assert (lat, lon) == (site["latitude_deg"], site["longitude_deg"])
             assert site["region_id"] is None
-            continue
-        assert -90 <= site["latitude_deg"] <= -80
+        else:
+            assert -90 <= site["latitude_deg"] <= -80
         if site["source"] == "wueller2026":
             assert "10.1029/2025JE009434" in site["source_reference"]
+        if site["source"] == "lroc2016":
+            assert "2016_LROC_Coordinates_of_Human_Features.pdf" in site["source_reference"]
 
 
 def test_default_site_and_the_5m_dem_flags() -> None:

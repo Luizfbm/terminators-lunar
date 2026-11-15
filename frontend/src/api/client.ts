@@ -10,6 +10,7 @@ export type Occluder = components['schemas']['Occluder']
 export type LadderResult = components['schemas']['LadderResult']
 export type SiteYear = components['schemas']['SiteYear']
 export type Validation = components['schemas']['Validation']
+export type TerrainHeights = components['schemas']['TerrainHeights']
 
 export const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL || 'https://lunar-api.luizfbm.win'
@@ -99,6 +100,17 @@ export function getLadder(query: Query, signal: AbortSignal): Promise<LadderResu
 export function getYear(siteId: string, year: number, observerHeightM: number, signal: AbortSignal): Promise<SiteYear> {
   const params = new URLSearchParams({ year: String(year), observer_height_m: String(observerHeightM) })
   return getJson<SiteYear>(`/sites/${encodeURIComponent(siteId)}/year`, params, signal)
+}
+
+/**
+ * The DEM's own heights around a Site, for the view from the ground where no published polar map
+ * holds it. A Curated Site by its code, so the engine reads its own window; a typed point by its coordinate.
+ */
+export function getTerrainHeights(site: Pick<Site, 'id' | 'curated' | 'latitude_deg' | 'longitude_deg'>, signal: AbortSignal): Promise<TerrainHeights> {
+  const params: Record<string, string> = site.curated
+    ? { site_id: site.id }
+    : { latitude_deg: String(site.latitude_deg), longitude_deg: String(site.longitude_deg) }
+  return getJson<TerrainHeights>('/terrain/heights', new URLSearchParams(params), signal)
 }
 
 export function getValidations(signal: AbortSignal): Promise<Validation[]> {

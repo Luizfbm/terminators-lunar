@@ -1,4 +1,5 @@
-import { expect, test, type Page, type Route } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page, Route } from '@playwright/test'
 
 // the requirement: the Site picker is a searchable list grouped by Region. The mock only has a couple
 // of Sites, so these tests serve their own list, and answer /visibility for whichever Site was asked.

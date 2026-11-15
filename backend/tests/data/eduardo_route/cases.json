@@ -1,0 +1,71 @@
+{
+  "note": "Inputs of make_references.js and of test_route.py. `rover` is his model id in rovers_eduardo.json; `overrides` use the API's names. start and goal are metres in the tile's plane. plane_azimuth_deg is the Sun's direction in that plane: the local azimuth (from local north) plus the Site's longitude, derived on paper from x = rho sin(lon), y = rho cos(lon) and checked in test_route.py against a displacement projected on the grid plane.",
+  "cases": [
+    {
+      "id": "ar06-viper-60-p90",
+      "note": "The contract example (contract/examples/route-ar06.example.json).",
+      "site_id": "AR06", "tile": "DM1", "rover": "viper",
+      "start": [609.9, 1159.0], "goal": [2009.9, 2259.0],
+      "coarse_m": 60, "confidence_level": "P90", "sun_fraction": 0.5,
+      "swarm_detail": "all"
+    },
+    {
+      "id": "ar06-viper-20-p90",
+      "site_id": "AR06", "tile": "DM1", "rover": "viper",
+      "start": [609.9, 1159.0], "goal": [2009.9, 2259.0],
+      "coarse_m": 20, "confidence_level": "P90", "sun_fraction": 0.5
+    },
+    {
+      "id": "ar06-viper-60-p99-solar",
+      "site_id": "AR06", "tile": "DM1", "rover": "viper",
+      "start": [609.9, 1159.0], "goal": [2009.9, 2259.0],
+      "coarse_m": 60, "confidence_level": "P99", "sun_fraction": 0.8,
+      "sun_azimuth_deg": 100.0, "site_longitude_deg": 69.1606, "plane_azimuth_deg": 169.1606
+    },
+    {
+      "id": "hw02-mapp-60-p90",
+      "site_id": "HW02", "tile": "Haworth", "rover": "mapp",
+      "start": [2167.2, -544.9], "goal": [-1000.0, 1800.0],
+      "coarse_m": 60, "confidence_level": "P90", "sun_fraction": 0.3
+    },
+    {
+      "id": "001-curiosity-20-p50-solar",
+      "site_id": "001", "tile": "Site01", "rover": "curiosity",
+      "start": [-51.9, 169.5], "goal": [-2500.0, -2000.0],
+      "coarse_m": 20, "confidence_level": "P50", "sun_fraction": 1.0,
+      "sun_azimuth_deg": 250.0, "site_longitude_deg": -136.949, "plane_azimuth_deg": 113.051
+    },
+    {
+      "id": "011-mapp-battery-drain",
+      "site_id": "011", "tile": "Site11", "rover": "mapp",
+      "overrides": { "battery_wh": 100.0 },
+      "start": [-331.0, -89.8], "goal": [1900.0, 1700.0],
+      "coarse_m": 60, "confidence_level": "P90", "sun_fraction": 0.0
+    },
+    {
+      "id": "dgr103-ltv-corner-to-corner",
+      "site_id": "dGR103", "tile": "SL2", "rover": "ltv",
+      "start": [-4900.0, -4900.0], "goal": [4900.0, 4900.0],
+      "coarse_m": 60, "confidence_level": "P99", "sun_fraction": 0.6
+    },
+    {
+      "id": "ar06-viper-same-cell",
+      "site_id": "AR06", "tile": "DM1", "rover": "viper",
+      "start": [100.0, 100.0], "goal": [110.0, 110.0],
+      "coarse_m": 60, "confidence_level": "P90", "sun_fraction": 0.5
+    },
+    {
+      "id": "synthetic-flat-wall",
+      "note": "Not an API case: uniform ground with a wall, so the heap's ties decide the path.",
+      "synthetic": true, "tile": "synthetic-flat-wall", "rover": "viper",
+      "start": [-3000.0, -1000.0], "goal": [3000.0, 1000.0],
+      "coarse_m": 60, "confidence_level": "P90", "sun_fraction": 0.5
+    },
+    {
+      "id": "dgkm02-lrv-60-p90",
+      "site_id": "dGKM02", "tile": "Site42", "rover": "lrv",
+      "start": [-1237.6, -1061.2], "goal": [162.4, 38.8],
+      "coarse_m": 60, "confidence_level": "P90", "sun_fraction": 0.5
+    }
+  ]
+}

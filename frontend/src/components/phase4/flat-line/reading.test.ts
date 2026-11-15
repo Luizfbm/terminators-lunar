@@ -16,7 +16,7 @@ const endMs = Date.parse(END)
 const HOUR_MS = 3_600_000
 const MINUTE_MS = 60_000
 
-const METRICS = { sun_and_earth_hours: 0, sunlit_hours: 0, earth_visible_hours: 0, lcip_hours: 0, lcsp_hours: 0, mean_sun_fraction: 0 }
+const METRICS = { sun_and_earth_hours: 0, sunlit_hours: 0, earth_visible_hours: 0, earth_visible_hours_any_part: 0, lcip_hours: 0, lcsp_hours: 0, mean_sun_fraction: 0 }
 
 function flatWith(events: FlatEvent[], searchEnd = '2027-06-11T12:43:48Z', sunlit = 700): FlatResult {
   const query = (example.value as unknown as FlatResult).query

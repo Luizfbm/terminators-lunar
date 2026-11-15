@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test, type Page, type Request, type Route } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Locator, Page, Request, Route } from '@playwright/test'
 
 // Plan A x Plan B: the Query on screen against a second one, from the same /visibility. The Prism mock
 // answers every request with the contract's example, so the two plans would always tie. Plan B is the
@@ -26,6 +27,9 @@ const moreEarthLongerNight = (metrics: Record<string, number>) => {
 }
 
 const panel = (page: Page, name: string) => page.getByRole('region', { name })
+// The comparison of the two plans. Eduardo's hazard comparison (HazardCompare) sits in the same
+// panel with tables of its own, so the plans' table is the one outside it.
+const plansTable = (region: Locator) => region.locator('table:not(.hazard-compare__table)')
 
 test.describe('in English', () => {
   test.use({ locale: 'en-GB' })
@@ -42,7 +46,7 @@ test.describe('in English', () => {
     await compare.getByRole('button', { name: 'Compare this plan with another one' }).click()
     // Plan B starts as Plan A: the same Query, so there is nothing to compare and nothing asked.
     await expect(compare.getByText(/Plan B asks the same Query as Plan A/)).toBeVisible()
-    await expect(compare.getByRole('table')).toHaveCount(0)
+    await expect(plansTable(compare)).toHaveCount(0)
     await expect(page).toHaveURL(/compare=1/)
 
     const asked = page.waitForRequest(isB)
@@ -113,14 +117,14 @@ test.describe('in English', () => {
     const compare = panel(page, 'Plan A × Plan B')
     await expect(compare.getByRole('alert')).toBeVisible()
     await compare.getByRole('button', { name: 'Try again' }).click()
-    await expect(compare.getByRole('table')).toBeVisible()
+    await expect(plansTable(compare)).toBeVisible()
   })
 
   test('closing the comparison takes Plan B out of the link', async ({ page }) => {
     await page.goto(`/?compare=1&bstart=${B_START}`)
     const compare = panel(page, 'Plan A × Plan B')
     await compare.getByRole('button', { name: 'Compare this plan with another one' }).click()
-    await expect(compare.getByRole('table')).toHaveCount(0)
+    await expect(plansTable(compare)).toHaveCount(0)
     await expect(page).not.toHaveURL(/compare=|bstart=/)
   })
 
@@ -132,7 +136,7 @@ test.describe('in English', () => {
     ]) {
       await page.setViewportSize(viewport)
       await page.goto(`/?compare=1&bstart=${B_START}`)
-      await expect(panel(page, 'Plan A × Plan B').getByRole('table')).toBeVisible()
+      await expect(plansTable(panel(page, 'Plan A × Plan B'))).toBeVisible()
       const { violations } = await new AxeBuilder({ page }).include('.plan-compare').withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()
       expect(violations.map((rule) => `${rule.id}: ${rule.nodes.map((node) => node.target.join(' ')).join(' | ')}`)).toEqual([])
     }
@@ -141,7 +145,7 @@ test.describe('in English', () => {
   test('fits a phone: no sideways scroll with the table open', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto(`/?compare=1&bstart=${B_START}`)
-    const table = panel(page, 'Plan A × Plan B').getByRole('table')
+    const table = plansTable(panel(page, 'Plan A × Plan B'))
     await expect(table).toBeVisible()
     await table.scrollIntoViewIfNeeded()
     const box = await table.boundingBox()

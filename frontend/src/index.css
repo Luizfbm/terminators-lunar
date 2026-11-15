@@ -77,7 +77,7 @@ input[type='date']:focus-within {
   white-space: nowrap;
 }
 
-/* The Moon on the left, the answer in words on the right, time along the bottom. */
+/* The classic layout (`?layout=classic`): the Moon on the left, the answer in words on the right, time along the bottom. */
 .screen {
   display: grid;
   height: 100%;
@@ -87,6 +87,29 @@ input[type='date']:focus-within {
     'bar bar'
     'stage answer'
     'strip strip';
+}
+
+/*
+ * The default layout (Larissa's): the Moon across the whole width, time along the bottom. The header (Guide,
+ * About, Ask, PT/EN) and the answer column are not shown. They stay mounted, so the Moon and the timeline
+ * keep their data and the classic layout is only a link away. Everything below this block is shared.
+ */
+.screen:not([data-layout='classic']) {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'stage'
+    'strip';
+}
+
+.screen:not([data-layout='classic']) > .bar,
+.screen:not([data-layout='classic']) > .answer {
+  display: none;
+}
+
+/* The Proof page takes the stage and the strip: the header is not shown, so the grid has two rows. */
+.screen:not([data-layout='classic']) > .proof {
+  grid-row: 1 / 3;
 }
 
 .bar {
@@ -289,6 +312,8 @@ footer[data-guide='true'] {
   position: relative;
   min-height: 0;
   overflow: hidden;
+  /* The width the globe's menu takes in the corner of the stage: what the caption keeps clear of. */
+  --menu-w: calc(clamp(250px, 20vw, 420px) * 0.85);
 }
 
 .globe,
@@ -358,6 +383,7 @@ footer[data-guide='true'] {
 }
 
 .globe[data-dressed='false'] .globe__pin,
+.globe[data-dressed='false'] .globe__planets,
 .globe[data-dressed='false'] .globe__grid {
   visibility: hidden;
 }
@@ -423,6 +449,29 @@ footer[data-guide='true'] {
     0 0 2px var(--bg);
 }
 
+.globe__planets {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* The name of a planet in the sky behind the Moon: small and dim, beside its point of light. */
+.globe__planets span {
+  position: absolute;
+  transform: translate(0, -50%);
+  color: var(--dim);
+  font-size: 11px;
+  line-height: 14px;
+  white-space: nowrap;
+  text-shadow:
+    0 0 6px var(--bg),
+    0 0 2px var(--bg);
+}
+
+.globe__planets span[data-side='left'] {
+  transform: translate(-100%, -50%);
+}
+
 .globe__pin--left {
   transform: translate(calc(-100% - 12px), -50%);
 }
@@ -431,46 +480,31 @@ footer[data-guide='true'] {
   white-space: normal;
 }
 
-/* The Sun and the Earth, marked on the side of the Moon where each lies (seen from orbit). */
-.globe__body {
+/* The letters N and S of the poles of the Moon, over the stage; the Equator, the circle and the dots are drawn in the scene. */
+.globe__poles {
   position: absolute;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transform: translate(-7px, -50%);
-  font-size: var(--small);
-  white-space: nowrap;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
   pointer-events: none;
-  text-shadow:
-    0 0 6px var(--bg),
-    0 0 2px var(--bg);
 }
 
-.globe__body::before {
-  content: '';
-  flex: none;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
+.globe__poles line {
+  stroke: rgba(255, 255, 255, 0.75);
 }
 
-.globe__body--sun::before {
-  background: var(--sun);
-  box-shadow: 0 0 14px 3px color-mix(in srgb, var(--sun) 55%, transparent);
+.globe__poles text {
+  fill: #fff;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  paint-order: stroke;
+  stroke: #000;
+  stroke-linejoin: round;
 }
 
-.globe__body--earth::before {
-  background: radial-gradient(circle at 35% 35%, #cfe1ff, var(--earth) 55%, #3f6fc4);
-  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--earth) 45%, transparent);
-}
-
-/* Against the right edge the word goes on the inner side of the dot. */
-.globe__body--left {
-  flex-direction: row-reverse;
-  transform: translate(calc(-100% + 7px), -50%);
-}
-
-.globe[data-dressed='false'] .globe__body {
+.globe[data-dressed='false'] .globe__poles {
   visibility: hidden;
 }
 
@@ -668,11 +702,79 @@ footer[data-guide='true'] {
   border-color: var(--dim);
 }
 
+/* An arrow to the Sun or the Earth while it is out of frame or below the horizon: pressed, it turns the view there. */
+.sky__body-guide {
+  position: absolute;
+  z-index: 4;
+  padding: 5px 8px;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  color: var(--fg);
+  font-size: 0.75rem;
+  line-height: 1.3;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+}
+
+.sky__body-guide[hidden] {
+  display: none;
+}
+
+.sky__body-guide:hover {
+  border-color: var(--dim);
+}
+
+.sky__body-guide:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
+}
+
+.sky__body-guide span {
+  display: inline-block;
+  margin-right: 5px;
+}
+
+@media (pointer: coarse) {
+  .sky__body-guide {
+    min-height: 44px;
+  }
+}
+
 @media (pointer: coarse) {
   .sky__turn button {
     width: 44px;
     height: 44px;
   }
+}
+
+/* Where no published polar map holds the Site: the engine's grid on its way, or why it is not there. */
+.sky__ground-status {
+  /* Above the compass and the turn buttons, clear of the caption at the top left. */
+  position: absolute;
+  bottom: 96px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(46ch, calc(100% - 2 * var(--gutter)));
+  margin: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  color: var(--fg);
+  font-size: 0.85rem;
+  text-align: center;
+  pointer-events: auto;
+}
+
+.sky__ground-status button {
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
 }
 
 .ground__path {
@@ -733,6 +835,11 @@ footer[data-guide='true'] {
   color: var(--dim);
   font-size: 13px;
   pointer-events: none;
+}
+
+/* On the map the menu of the globe is in the top left corner: the caption starts beside it. */
+.stage__caption {
+  left: calc(var(--menu-w) + 16px);
 }
 
 .ground-view__caption p {
@@ -1213,8 +1320,25 @@ footer[data-guide='true'] {
     min-height: 100%;
   }
 
+  /* With the Printable brief button the header no longer fits one line at 390 px: it wraps
+     instead of pushing the language buttons off the screen. */
   .bar {
+    flex-wrap: wrap;
+    row-gap: 8px;
     padding-top: 16px;
+  }
+
+  .bar__nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    white-space: normal;
+  }
+
+  /* Wrapped, the buttons' negative margins would pull a second line over the app's name. */
+  .bar__nav button,
+  .bar__nav .ask-button.ask-button {
+    margin: 0;
   }
 
   /* The picture takes at least half the screen, and the foot of the stage sits below it (the requirement). */
@@ -1798,4 +1922,186 @@ button.site {
 .cursor-sun--ground {
   color: var(--fg);
   font-weight: 500;
+}
+
+/* ---- DEM Uncertainty band (src/components/UncertaintyLine.tsx, Numbers.tsx) ---- */
+/* The window an Event can fall in sits right under its time, so the reason and the window read as one. */
+.band-line {
+  max-width: 36ch;
+  margin: 0 0 clamp(16px, 3.5vh, 32px);
+  color: var(--dim);
+  font-size: var(--small);
+}
+
+.why:has(+ .band-line) {
+  margin-bottom: 2px;
+}
+
+.band-line--working {
+  font-style: italic;
+}
+
+/* In the Numbers table the range takes a line of its own under the value, so a narrow screen never overflows. */
+.metrics__band {
+  display: block;
+  margin-top: 2px;
+  color: var(--dim);
+  font-family: inherit;
+  font-size: 0.92em;
+  white-space: normal;
+}
+
+/*
+ * The menu on the left of the globe: nine push buttons on a dark glass panel, in the top left corner of
+ * the globe's own box. Sizes scale with the window; `--s` scales them all by one number.
+ */
+.globe-menu {
+  /* 85% of the design size, in the very corner of the globe. */
+  --s: 0.85;
+  --adj: 0.78;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  box-sizing: border-box;
+  width: calc(clamp(250px, 20vw, 420px) * var(--s));
+  padding: calc(clamp(12px, 1.1vw, 22px) * var(--s)) calc(clamp(12px, 1.1vw, 22px) * var(--s)) calc(clamp(6px, 0.55vw, 12px) * var(--s));
+  border-radius: calc(10px * var(--s));
+  background: rgba(60, 60, 60, 0.72);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  /* Nine buttons and a rule are tall: if the stage is lower than that, the menu scrolls rather than being cut.
+     On a wide screen the view buttons sit over the bottom of the stage, and the menu stops above them. */
+  max-height: calc(100% - 64px);
+  overflow-y: auto;
+}
+
+/* Under 900 px the view buttons are below the picture, so the menu may use all of its height. */
+@media (max-width: 899px) {
+  .globe-menu {
+    max-height: 100%;
+  }
+}
+
+/* On a phone the panel does not fit beside the Moon: it folds into a button in the corner. */
+.globe-menu__toggle {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .stage {
+    --menu-w: 44px;
+  }
+
+  .globe-menu__toggle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 6;
+    display: block;
+    box-sizing: border-box;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 8px;
+    background: rgba(60, 60, 60, 0.72);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    cursor: pointer;
+  }
+
+  /* Three bars. */
+  .globe-menu__toggle span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 18px;
+    height: 2px;
+    background: #fff;
+    box-shadow:
+      0 -6px 0 #fff,
+      0 6px 0 #fff;
+    transform: translate(-50%, -50%);
+  }
+
+  .globe-menu__toggle:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+
+  /* The panel opens under the button, and is not there while it is folded. */
+  .globe-menu {
+    top: 48px;
+    max-height: calc(100% - 48px);
+  }
+
+  .globe-menu[data-open='false'] {
+    display: none;
+  }
+}
+
+/* The rule between the two levels at the top and the buttons of the orbit. */
+.globe-menu__rule {
+  height: 0;
+  margin: calc(clamp(2px, 0.2vw, 4px) * var(--s)) 0 calc(clamp(8px, 0.7vw, 14px) * var(--s));
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.globe-menu__button {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  /* The 6vh keeps them all inside a low stage. */
+  height: calc(min(clamp(40px, 3.2vw, 64px), 6vh) * var(--s));
+  margin: 0 0 calc(clamp(6px, 0.55vw, 12px) * var(--s));
+  padding: 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-top-color: rgba(255, 255, 255, 0.3);
+  border-bottom-color: rgba(0, 0, 0, 0.4);
+  border-radius: 3px;
+  background: #857b6c;
+  /* Black, not #1f1414: on #857b6c that one was 4.3:1, under WCAG AA's 4.5:1. */
+  color: #000;
+  /* Orbitron is wide: the factor keeps "Northern Hemisphere" on one line. */
+  font-family: Orbitron, system-ui, sans-serif;
+  font-weight: 600;
+  font-size: calc(clamp(15px, 1.35vw, 26px) * var(--s) * var(--adj));
+  line-height: 1;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  cursor: pointer;
+  /* A raised button: a thin light edge on top and a short shadow below. */
+  box-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition:
+    background 80ms,
+    box-shadow 80ms,
+    color 80ms;
+}
+
+.globe-menu__button:hover:not([aria-pressed='true']) {
+  background: #908676;
+}
+
+/* Pressed, and while the mouse is down: sunk, the shadow inside at the top and the left, the word 1 px lower. */
+.globe-menu__button[aria-pressed='true'],
+.globe-menu__button:active {
+  padding-top: 2px;
+  border-color: rgba(0, 0, 0, 0.35);
+  background: #464139;
+  /* 5.4:1 on #464139; #8e8e8e was 3.1:1, under WCAG AA. */
+  color: #bdbdbd;
+  box-shadow:
+    inset 2px 2px 6px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.globe-menu__button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }

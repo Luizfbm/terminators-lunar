@@ -1,0 +1,300 @@
+/* The printable brief: a white A4 sheet on the screen, and the only thing on the paper when printed. */
+
+/* Where the Proof page sits: in place of the stage and the answer. */
+.brief {
+  grid-column: 1 / -1;
+  grid-row: 2 / 4;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px var(--gutter) 48px;
+}
+
+.brief__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  max-width: 210mm;
+  margin: 0 auto 12px;
+}
+
+.brief__back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--dim);
+  font-size: var(--small);
+}
+
+.brief__back:hover {
+  color: var(--fg);
+}
+
+.brief__print {
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid var(--edge);
+  border-radius: 4px;
+  background: var(--field);
+  cursor: pointer;
+}
+
+.brief__print:hover:not(:disabled) {
+  border-color: var(--dim);
+}
+
+.brief__print:disabled {
+  color: var(--dim);
+  cursor: progress;
+}
+
+.brief__wait {
+  flex-basis: 100%;
+  color: var(--dim);
+  font-size: var(--small);
+}
+
+/* The sheet has its own light colours: the app's are for a dark screen, and paper is white. */
+.brief__sheet {
+  --bg: #fff;
+  --fg: #111;
+  --dim: #4a4a4a;
+  --line: #c9c9c9;
+  --sun: #8a5a00;
+  --earth: #1b4f9c;
+  --terrain: #d9d9d9;
+  --track: #555;
+  max-width: 210mm;
+  margin: 0 auto;
+  padding: 14mm;
+  background: #fff;
+  color: #111;
+  font-size: 10.5pt;
+  line-height: 1.4;
+}
+
+.brief__sheet h1 {
+  margin: 0 0 6mm;
+  font-family: var(--serif);
+  font-size: 26pt;
+  line-height: 1.1;
+  font-weight: 400;
+}
+
+.brief__sheet h2 {
+  margin: 6mm 0 2mm;
+  padding-bottom: 1mm;
+  border-bottom: 1px solid var(--line);
+  color: var(--dim);
+  font-size: 9pt;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.brief__sheet h3 {
+  margin: 0;
+  font-size: 10.5pt;
+  font-weight: 600;
+}
+
+.brief__kicker {
+  color: var(--dim);
+  font-size: 9pt;
+}
+
+.brief__demo {
+  margin-bottom: 4mm;
+  padding: 2mm 3mm;
+  border: 1px solid #111;
+  font-weight: 600;
+}
+
+.brief__facts {
+  display: grid;
+  gap: 1.5mm;
+  margin: 0;
+}
+
+.brief__facts > div {
+  display: grid;
+  grid-template-columns: 38mm minmax(0, 1fr);
+  gap: 4mm;
+}
+
+.brief__facts dt {
+  color: var(--dim);
+}
+
+.brief__facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.brief__say {
+  font-family: var(--serif);
+  font-size: 17pt;
+  line-height: 1.2;
+}
+
+.brief__say + .brief__say {
+  margin-top: 2mm;
+}
+
+.brief__note {
+  margin-top: 2mm;
+  color: var(--dim);
+  font-size: 9pt;
+}
+
+.brief__events {
+  display: grid;
+  gap: 3mm;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.brief__events .band-line {
+  max-width: none;
+  margin: 0.5mm 0 0;
+  font-size: 9pt;
+}
+
+.brief__figure {
+  margin: 0;
+}
+
+.brief__figure svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.brief__figure figcaption {
+  margin-top: 1.5mm;
+  color: var(--dim);
+  font-size: 9pt;
+}
+
+.brief__sun-path {
+  fill: var(--sun);
+  opacity: 0.7;
+}
+
+.brief__earth-path {
+  fill: var(--earth);
+  opacity: 0.7;
+}
+
+.brief__terrain {
+  fill: var(--terrain);
+}
+
+.brief__ridge {
+  fill: none;
+  stroke: var(--track);
+  stroke-width: 1.2;
+}
+
+.brief__compass {
+  fill: var(--dim);
+  font-size: 13px;
+}
+
+.brief__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1mm 6mm;
+  margin: 0 0 1mm;
+  padding: 0;
+  list-style: none;
+}
+
+.brief__legend li::before {
+  content: '';
+  display: inline-block;
+  width: 3mm;
+  height: 3mm;
+  margin-right: 1.5mm;
+  vertical-align: -0.5mm;
+  border-radius: 50%;
+}
+
+.brief__legend-mask::before {
+  background: var(--terrain);
+  border: 1px solid var(--track);
+}
+
+.brief__legend-sun::before {
+  background: var(--sun);
+}
+
+.brief__legend-earth::before {
+  background: var(--earth);
+}
+
+.brief__foot a {
+  color: inherit;
+}
+
+/* Paper: only the sheet is printed, on a clean white page, in one or two A4 pages. */
+@page {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
+@media print {
+  html,
+  body,
+  #root {
+    height: auto;
+    background: #fff;
+    color: #111;
+  }
+
+  /* The app's own frame (bar, stage, answer, time strip, cover, guide) and anything portalled out of it. */
+  .screen > :not(.brief),
+  body > :not(#root) {
+    display: none !important;
+  }
+
+  .screen {
+    display: block;
+    height: auto;
+  }
+
+  .brief {
+    overflow: visible;
+    padding: 0;
+  }
+
+  .brief__toolbar {
+    display: none;
+  }
+
+  .brief__sheet {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* A block never starts at the foot of one page and ends on the next: the figure is never cut. */
+  .brief__keep,
+  .brief__event,
+  .brief__figure,
+  .brief__facts > div,
+  .brief__sheet tr {
+    break-inside: avoid;
+  }
+
+  .brief__sheet h2 {
+    break-after: avoid;
+  }
+
+  .brief__foot a {
+    text-decoration: none;
+  }
+}
