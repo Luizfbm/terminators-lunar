@@ -1,0 +1,11 @@
+/* "Our horizon reaches 300 km" and the rule of the disc: two quiet lines under the summary. */
+.reach {
+  max-width: 44ch;
+  margin: -8px 0 24px;
+  color: var(--dim);
+  font-size: var(--small);
+}
+
+.reach p {
+  margin: 0 0 6px;
+}
