@@ -1,0 +1,7 @@
+/* One quiet line under the summary: the nearby Site that serves, when there is one. */
+.nearby {
+  max-width: 44ch;
+  margin: 0 0 24px;
+  color: var(--dim);
+  font-size: var(--small);
+}
