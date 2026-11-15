@@ -582,6 +582,11 @@ footer[data-guide='true'] {
   grid-template-rows: minmax(0, 1fr) clamp(84px, 22%, 150px) 60px;
 }
 
+/* Larissa's layout (the default) has no strip: the sky and the row for the view buttons. */
+.ground-view--bare {
+  grid-template-rows: minmax(0, 1fr) 60px;
+}
+
 .ground-view__sky,
 .ground-view__strip {
   position: relative;
@@ -1363,6 +1368,10 @@ footer[data-guide='true'] {
   /* No row left free for the view buttons: they are below the picture now. */
   .ground-view {
     grid-template-rows: minmax(0, 1fr) clamp(84px, 22%, 150px);
+  }
+
+  .ground-view.ground-view--bare {
+    grid-template-rows: minmax(0, 1fr);
   }
 
   .answer {

@@ -412,7 +412,7 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
         {stage.shown === 'map' && stage.phase === 'idle' && <p className="stage__caption">{t(touchScreen() ? 'map.caption.touch' : 'map.caption')}</p>}
         {result && scenes.groundMounted && (
           <div className="stage__ground" data-fade={scenes.groundFade ?? undefined} style={{ animationDuration: `${fadeMs(still)}ms` }}>
-            <GroundView result={result} cursorMs={cursorMs} mark={mark} pose={scenes.skyPose} />
+            <GroundView result={result} cursorMs={cursorMs} mark={mark} pose={scenes.skyPose} classic={link.classic === true} />
           </div>
         )}
         {view === 'ground' && (

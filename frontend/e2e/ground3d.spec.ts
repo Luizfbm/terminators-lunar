@@ -21,8 +21,9 @@ async function open(page: Page, path = '/?view=ground') {
   return body
 }
 
-test('opens looking at the Sun, where the API says it is, with the unrolled horizon as a strip under the sky', async ({ page }) => {
-  const body = await open(page)
+test('in the classic layout it opens looking at the Sun, where the API says it is, with the unrolled horizon as a strip under the sky', async ({ page }) => {
+  // The strip is only in the classic layout: Larissa's layout leaves it out (Luiz, 15/11/2026).
+  const body = await open(page, classic('/?view=ground'))
   // The Cursor sits between two samples of the timeline: the view looks at the Sun of one of them.
   const azimuths: number[] = body.timeline.samples.map((sample: { sun: { azimuth_deg: number } }) => sample.sun.azimuth_deg)
   await expect
@@ -40,6 +41,26 @@ test('opens looking at the Sun, where the API says it is, with the unrolled hori
   const stripBox = (await strip.boundingBox())!
   expect(stripBox.y).toBeGreaterThanOrEqual(skyBox.y + skyBox.height - 1)
   expect(skyBox.height).toBeGreaterThan(stripBox.height)
+})
+
+test('in Larissa\'s layout the ground view has no strip, and arrows in the sky point to the Sun once it is out of frame', async ({ page }) => {
+  await open(page)
+  // The unrolled horizon is not drawn at all, not just hidden.
+  await expect(page.locator('.ground-view')).toBeVisible()
+  await expect(page.locator('.ground-view__strip')).toHaveCount(0)
+  await expect(page.locator('.ground-view .ground')).toHaveCount(0)
+  // The view opens on the Sun, so its arrow is not needed yet.
+  await expect.poll(() => yaw(page)).not.toBeNaN()
+  const start = await yaw(page)
+  await expect(page.getByRole('button', { name: 'Turn to the Sun' })).toBeHidden()
+  // Half a turn away the Sun is out of frame: its arrow shows, and pressing it turns the view back.
+  for (let step = 0; step < 6; step++) await page.getByRole('button', { name: 'Look right' }).click()
+  await expect.poll(async () => apart(await yaw(page), (start + 180) % 360)).toBeLessThan(0.5)
+  const arrow = page.getByRole('button', { name: 'Turn to the Sun' })
+  await expect(arrow).toBeVisible()
+  await arrow.click()
+  await expect.poll(async () => apart(await yaw(page), start)).toBeLessThan(2)
+  await expect(arrow).toBeHidden()
 })
 
 test('the two arrows turn the view 30 degrees each way, without a mouse on the sky', async ({ page }) => {
@@ -82,8 +103,8 @@ test('marking what hides the Earth turns the view to it', async ({ page }) => {
 test.describe('on a phone, 390 px wide', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
-  test('the sky, the strip and the view buttons each have their room, and nothing runs off the side', async ({ page }) => {
-    await open(page)
+  test('in the classic layout the sky, the strip and the view buttons each have their room, and nothing runs off the side', async ({ page }) => {
+    await open(page, classic('/?view=ground'))
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390)
     const skyBox = (await sky(page).boundingBox())!
     const strip = (await page.locator('.ground-view__strip').boundingBox())!
