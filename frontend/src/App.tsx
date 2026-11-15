@@ -27,6 +27,7 @@ import {
 import { IM2_LANDING } from './domain/landing'
 import { DIVE_MS, fadeMs, scenesOf, startStage, stepStage } from './domain/stageMove'
 import { chosenGlobeSite } from './domain/chosenSite'
+import { levelOfView } from './domain/globeLevels'
 import { sampleAt, subPointsAt, type LatLon } from './domain/sky'
 import { isUp, statement, type Body } from './domain/statement'
 import { useAnswer, useSites, type Answer as Answered } from './hooks/useAnswer'
@@ -311,6 +312,8 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
               unavailable={t('globe.unavailable')}
               onSelect={setSiteRef}
               mode={stage.globeMode}
+              level={levelOfView(view)}
+              onLevel={setView}
               dive={scenes.globeDived}
               paused={!scenes.globeShown}
               onDive={(atSite) => {
