@@ -97,6 +97,11 @@ test('the view from the ground reads the same at the Cursor', async ({ page }) =
   await page.goto(`${link}&lang=en&view=ground`)
   await expect(page.locator('.sky canvas')).toHaveAttribute('data-ready', 'true')
   const onGround = page.locator('.ground-view__caption .cursor-sun')
+  // Regression: the reading was the first line of the caption and pushed the hint down, so the hint was
+  // no longer the first line over the sky (stage-free.spec.ts, default-query.spec.ts). The hint stays
+  // first, the reading sits right under it.
+  await expect(page.locator('.stage__caption > p').first()).toHaveText('Drag to look around. About this view')
+  await expect(page.locator('.stage__caption > p').nth(1)).toHaveText(/^Sun: /)
   await slider(page).press('Home')
   await expect(onGround).toHaveText('Sun: 30% of the disc')
   await slider(page).press('ArrowRight')

@@ -91,9 +91,6 @@ export function GroundView({
         )}
         <div className="stage__caption ground-view__caption">
           <p>
-            <CursorSun fraction={sunFraction} className="cursor-sun--ground" />
-          </p>
-          <p>
             {t('sky.caption')}
             {about && (
               <>
@@ -103,6 +100,10 @@ export function GroundView({
                 </button>
               </>
             )}
+          </p>
+          {/* Under the hint, never above it: the hint stays the first line over the sky. */}
+          <p>
+            <CursorSun fraction={sunFraction} className="cursor-sun--ground" />
           </p>
           <p className="ground-view__note" id={aboutId} hidden={!aboutOpen || !about}>
             {about}
