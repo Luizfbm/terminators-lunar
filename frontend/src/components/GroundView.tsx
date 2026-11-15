@@ -1,8 +1,10 @@
 import { lazy, Suspense, useId, useMemo, useState } from 'react'
 import type { VisibilityResult } from '../api/client'
+import { sampleAt } from '../domain/sky'
 import { groundCaption, stretchFor, type GroundSpacing } from '../domain/skyScene'
 import { useI18n } from '../i18n/I18nContext'
 import { Ground, type GroundMark } from './Ground'
+import { CursorSun } from './cursorSun/CursorSun'
 import { prepareWith } from '../domain/prepare'
 import { loadGround } from './groundData'
 import { StageLoading } from './StageLoading'
@@ -72,6 +74,7 @@ export function GroundView({
       ]),
     [result],
   )
+  const sunFraction = sampleAt(result.timeline.samples, cursorMs)?.sun.fraction ?? null
   if (!supported) return <Ground result={result} cursorMs={cursorMs} mark={mark} />
   const about = [...groundCaption(groundStep, { t, formatNumber }), stretch > 1 && t('sky.caption.stretched', { times: formatNumber(Math.round(stretch * 10) / 10) })]
     .filter(Boolean)
@@ -87,6 +90,9 @@ export function GroundView({
           </Suspense>
         )}
         <div className="stage__caption ground-view__caption">
+          <p>
+            <CursorSun fraction={sunFraction} className="cursor-sun--ground" />
+          </p>
           <p>
             {t('sky.caption')}
             {about && (

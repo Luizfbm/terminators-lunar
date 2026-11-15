@@ -12,10 +12,13 @@ import { ScatterFigure } from './ScatterFigure'
 import { SlopeScale } from './SlopeScale'
 import { fill, missStrings, type MissStrings } from './copy'
 import type { MetricKey, ScatterResult, TerrainResult } from './types'
-import { useRadius, useScatter, useSeconds, useTerrain } from './useMiss'
+import { useSeconds, useTerrain } from './useMiss'
 import './miss.css'
 
 const HOUR_MS = 3_600_000
+
+/** The panel's address on the page, for the knife-edge warning that points to it. */
+export const MISS_PANEL_ID = 'miss-panel'
 
 /** The radii offered: Artemis III's landing accuracy, the IM-2 miss, and a wide margin. */
 export const RADII = [100, 250, 500] as const
@@ -312,7 +315,7 @@ export function MissView(props: MissViewProps) {
   const notForSite = scatter.status === 'error' && scatter.code === 'outside_coverage'
   const slopeRadius = props.terrain.status === 'ready' ? props.terrain.data.radius_m : 100
   return (
-    <section className="miss" aria-labelledby={title}>
+    <section id={MISS_PANEL_ID} tabIndex={-1} className="miss" aria-labelledby={title}>
       {/* h3: the Countdown's two sentences are the page's h1 and h2, and nothing else competes with them. */}
       <h3 id={title} className="miss__title">
         {s.title}
@@ -366,14 +369,23 @@ function openLadder(openStats: () => void, label: string): void {
 }
 
 /**
- * "If the lander misses" for the answer on screen. It asks for its own data once the answer is in,
- * so the slow Landing scatter never holds the rest of the screen back.
+ * "If the lander misses" for the answer on screen. The Landing scatter and its radius come from the
+ * caller (`useRadius`, `useScatter`), which shares them with the knife-edge warning; the Slope it asks
+ * for itself. Both start once the answer is in, so the slow scatter never holds the rest of the screen back.
  */
-export function MissPanel({ result, onOpenStats }: { result: VisibilityResult; onOpenStats?: () => void }) {
+export function MissPanel({
+  result,
+  radius: [radiusM, setRadiusM],
+  scatter,
+  onOpenStats,
+}: {
+  result: VisibilityResult
+  radius: [number, (radiusM: number) => void]
+  scatter: { state: PanelState<ScatterResult>; retry: () => void }
+  onOpenStats?: () => void
+}) {
   const { t } = useI18n()
-  const [radiusM, setRadiusM] = useRadius()
   const [metric, setMetric] = useState<MetricKey>('sun_and_earth_hours')
-  const scatter = useScatter(result, radiusM)
   const terrain = useTerrain(result)
   const { query } = result
   const asked = [query.site.latitude_deg, query.site.longitude_deg, query.start, query.duration_hours, query.observer_height_m, radiusM]

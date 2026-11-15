@@ -11,9 +11,13 @@ import { Extras } from './Extras'
 import type { WindowChoice } from './YearPanel'
 import { Nerds } from './Nerds'
 import { FlatLine, FlatMetrics } from './phase4/flat-line/FlatLine'
+import { KnifeEdgeWarning } from './phase4/miss/KnifeEdgeWarning'
 import { MissPanel } from './phase4/miss/MissPanel'
+import { useRadius, useScatter } from './phase4/miss/useMiss'
 import { WhenToLand } from './phase4/site-windows/WhenToLand'
 import { Battery } from './phase4/battery/Battery'
+import { Reach } from './phase4/reach/Reach'
+import { PlanCompare } from './phase4/compare/PlanCompare'
 
 const HOUR_MS = 3_600_000
 
@@ -134,6 +138,9 @@ export function Answer({
   const { t, formatSpan } = i18n
   const { metrics } = result
   const atLanding = result.query.site.id === IM2_SITE_ID
+  // The Landing scatter is asked here so the knife-edge warning and the miss panel read the same answer.
+  const radius = useRadius()
+  const scatter = useScatter(result, radius[0])
   return (
     <>
       {where}
@@ -142,6 +149,7 @@ export function Answer({
       <BodyStatement body="earth" result={result} cursorMs={cursorMs} heading="h2" marked={marked === 'earth'} onMark={onMark} />
       {/* The engine sees this point sunlit, and the mission still ended: say why, here. */}
       {atLanding && <p className="landing-note">{t('landing.im2.note')}</p>}
+      <KnifeEdgeWarning scatter={scatter.state} />
       <p className="sum">
         {t(summaryKey(metrics), {
           both: formatSpan(metrics.sun_and_earth_hours * HOUR_MS),
@@ -149,9 +157,11 @@ export function Answer({
           dark: formatSpan(metrics.lcsp_hours * HOUR_MS),
         })}
       </p>
+      <Reach result={result} cursorMs={cursorMs} />
       <FlatMetrics result={result} />
       <WhenToLand result={result} onWindow={onWindow} />
       <Battery result={result} />
+      <PlanCompare result={result} />
       <Nerds result={result} cursorMs={cursorMs} open={stats} onOpen={(open) => onStats?.(open)} onWindow={onWindow} />
       {landing && !atLanding && (
         <p className="landing-open">
@@ -166,7 +176,7 @@ export function Answer({
           </a>
         </p>
       )}
-      <MissPanel result={result} onOpenStats={() => onStats?.(true)} />
+      <MissPanel result={result} radius={radius} scatter={scatter} onOpenStats={() => onStats?.(true)} />
       <Extras result={result} />
     </>
   )
