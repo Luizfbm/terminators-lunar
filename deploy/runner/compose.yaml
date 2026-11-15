@@ -1,0 +1,49 @@
+# The CI runners, apart from the app stack (deploy/compose.yaml) so a test never shares a
+# container or a network with production. Run from this folder on the VPS:
+#   RUNNER_TOKEN=<registration token> docker compose up -d --build
+# The token is only read on a runner's first start; afterwards its registration lives in
+# its volume.
+#
+# Two runners, so two CI jobs run at once. The VPS has 5 cores and 7.9 GB and production
+# mostly idles (backend about 0.6 GB, ai-memory about 0.5 GB), so each runner may use every
+# core, but with a CPU weight far below production's: when the app or ai-memory needs the
+# CPU, the kernel gives it to them first and the tests wait. Memory is capped per runner,
+# and a runner is the first thing the kernel kills if memory runs out, never the site.
+x-runner: &runner
+  build: .
+  restart: unless-stopped
+  environment:
+    RUNNER_TOKEN: ${RUNNER_TOKEN:-}
+  cpus: 5
+  # docker's default is 1024; 128 is an eighth of the app's weight and far below
+  # ai-memory's systemd default.
+  cpu_shares: 128
+  mem_limit: 3g
+  # pytest runs on 3 workers of about 650 MB each; 4 did not fit in 2.5 GB.
+  oom_score_adj: 900
+  # Playwright's Chromium needs more shared memory than Docker's 64 MB default.
+  shm_size: 1g
+
+services:
+  runner:
+    <<: *runner
+    environment:
+      RUNNER_TOKEN: ${RUNNER_TOKEN:-}
+      RUNNER_NAME: lunar-vps
+    volumes:
+      - runner:/runner
+      - cache:/root/.cache
+  runner-2:
+    <<: *runner
+    environment:
+      RUNNER_TOKEN: ${RUNNER_TOKEN:-}
+      RUNNER_NAME: lunar-vps-2
+    volumes:
+      - runner-2:/runner
+      - cache:/root/.cache
+
+volumes:
+  runner:
+  runner-2:
+  # uv, npm and Playwright caches, shared by both runners and kept across jobs.
+  cache:
