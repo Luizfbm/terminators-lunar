@@ -6,6 +6,7 @@ did not compute the same way: the timeline samples, a second request, or a fixed
 
 import itertools
 import json
+import math
 import os
 import re
 import subprocess
@@ -1637,3 +1638,76 @@ def test_route_takes_the_coarse_grid_as_a_query_string() -> None:
         assert body["coarse_m"] == coarse
         seen[coarse] = (body["plans"][0]["hazards_hit"], body["plans"][0]["distance_m"])
     assert seen == {60: (11, 2289), 20: (12, 2356)}
+
+
+def _sphere_limb_deg(radius_km: float, distance_km: float) -> float:
+    return math.degrees(math.asin(radius_km / distance_km))
+
+
+@pytest.mark.parametrize(
+    "where",
+    [
+        pytest.param({"site_id": "001"}, id="polar-site-001"),
+        pytest.param({"site_id": "APOLLO11"}, id="off-pole-apollo-11"),
+        pytest.param({"latitude_deg": 10.0, "longitude_deg": 20.0}, id="global-point-level-1"),
+    ],
+)
+def test_the_sun_and_earth_radius_matches_an_independent_ephemeris_computation(
+    where: dict[str, Any], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Issue #123 (Larissa, 15/11/2026): in the level-1 landings (Explore the Moon, global points
+    # answered from LOLA's global map) the Sun and the Earth look small in the ground view. Before
+    # drawing anything, check the number the view is given: the answer's `angular_radius_deg`
+    # against one worked out here from SPICE state vectors, not through app.engine: the body's
+    # position from the Moon's centre (LT+S, MOON_ME), minus the Observer's own vector (a
+    # 1737.4 km sphere plus 2 m), then asin(radius / distance). Same answer at the pole, off the
+    # pole and for a typed point over the global map: the radii do not depend on the Horizon mask.
+    import numpy as np
+    import spiceypy as spice
+
+    from tests.test_global_dem import _write_global
+
+    if "site_id" not in where:
+        # The global map is not in the fixtures: a flat synthetic LDEM_128 stands in for it.
+        _write_global(tmp_path)
+        monkeypatch.setenv("LUNAR_DEM_DIR", str(tmp_path))
+    params = {
+        **where,
+        "start": "2026-11-15T00:00:00Z",
+        "duration_hours": 48,
+        "observer_height_m": 2,
+    }
+    payload = visibility(params)
+    site = payload["query"]["site"]
+    lat, lon = math.radians(site["latitude_deg"]), math.radians(site["longitude_deg"])
+    observer = (1737.4 + 0.002) * np.array(
+        [math.cos(lat) * math.cos(lon), math.cos(lat) * math.sin(lon), math.sin(lat)]
+    )
+    samples = payload["timeline"]["samples"]
+    assert len(samples) > 100
+    # IAU 2015: the Sun's nominal radius 695,700 km; the Earth's equatorial 6378.1366 km, polar
+    # 6356.7519 km (its disc is an ellipse, the limb lies between the two) and mean 6371.0 km.
+    for sample in samples[::12]:
+        epoch = spice.str2et(sample["t"].removesuffix("Z"))
+        sun_distance, earth_distance = (
+            float(
+                np.linalg.norm(
+                    np.array(spice.spkpos(body, epoch, "MOON_ME", "LT+S", "MOON")[0]) - observer
+                )
+            )
+            for body in ("SUN", "EARTH")
+        )
+        sun = sample["sun"]["angular_radius_deg"]
+        earth = sample["earth"]["angular_radius_deg"]
+        at = sample["t"]
+        assert sun == pytest.approx(_sphere_limb_deg(695_700.0, sun_distance), abs=1e-5), at
+        # Published sizes from the Moon: about 0.26-0.27 deg for the Sun, 0.90-0.99 deg for the Earth.
+        assert 0.258 < sun < 0.276
+        assert 0.88 < earth < 1.04
+        polar = _sphere_limb_deg(6356.7519, earth_distance)
+        equatorial = _sphere_limb_deg(6378.1366, earth_distance)
+        mean = _sphere_limb_deg(6371.0, earth_distance)
+        assert polar - 1e-5 <= earth <= equatorial + 1e-5, sample["t"]
+        # The contract names the equatorial radius; the mean one is 0.11% smaller.
+        assert earth == pytest.approx(equatorial, abs=1e-5), sample["t"]
+        assert earth == pytest.approx(mean, rel=2e-3), sample["t"]

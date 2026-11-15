@@ -6,7 +6,7 @@ import { earthAttitude, earthNorthAt, earthRoll, subLunarPoint } from '../domain
 import { belowHorizonMask } from '../domain/bodyGuide'
 import { maskElevationAt, sampleAt } from '../domain/sky'
 import { blendRim, canTakeFinest, eyeOnMap, GRAIN_DEPTH, GRAIN_PX, grainRepeat, grainTexels } from '../domain/nearGround'
-import { ballScale, bodyRadiusDeg, direction, discScale, EARTH_RADIUS_DEG, groundPositions, groundSpacing, horizonFaceShade, stretched, sunOnGround, turnBetween, wrapAzimuth, type GroundSpacing } from '../domain/skyScene'
+import { ballScale, bodyRadiusDeg, direction, discScale, EARTH_RADIUS_DEG, GROUND_FIELD_OF_VIEW_DEG, groundPositions, groundSpacing, horizonFaceShade, stretched, sunOnGround, turnBetween, wrapAzimuth, type GroundSpacing } from '../domain/skyScene'
 import {
   beyondHorizon,
   covers,
@@ -56,7 +56,7 @@ const SUNLIGHT = 3.2
 const RELIEF = 3
 /** What the two lights leave on a surface, as a share of its colour: the renderer spreads light over a hemisphere, a division by pi. */
 const FACE_LIGHT = { sunlight: SUNLIGHT / Math.PI, skylight: SHADOW_FLOOR / Math.PI }
-const FIELD_OF_VIEW_DEG = 55
+const FIELD_OF_VIEW_DEG = GROUND_FIELD_OF_VIEW_DEG
 const PITCH_MIN_DEG = -12
 /**
  * Coming down from the globe (the requirement) the view starts looking at the ground under the

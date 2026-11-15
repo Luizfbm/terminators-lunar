@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { createI18n } from '../i18n/i18n'
-import { ballScale, bodyRadiusDeg, direction, discScale, EARTH_RADIUS_DEG, groundPositions, HORIZON_CLEARANCE_DEG, horizonFaceShade, MAX_STRETCH, stretched, stretchFor, groundCaption, groundSpacing, sunlitShare, sunOnGround, turnBetween, wrapAzimuth } from './skyScene'
+import { ballScale, bodyRadiusDeg, direction, discScale, EARTH_RADIUS_DEG, groundPositions, HORIZON_CLEARANCE_DEG, horizonFaceShade, MAX_STRETCH, stretched, stretchFor, groundCaption, groundSpacing, GROUND_FIELD_OF_VIEW_DEG, sunlitShare, sunOnGround, turnBetween, wrapAzimuth } from './skyScene'
+import { projectedRadiusPx } from './spaceScale'
 
 const close = (a: number[], b: number[]) => a.forEach((value, index) => expect(value).toBeCloseTo(b[index], 9))
 
@@ -282,5 +283,51 @@ describe('the true angular size of the Sun and the Earth (15/11/2026)', () => {
   it('keeps the disc growing with the stretch, as it did before', () => {
     expect(bodyRadiusDeg(0.2712, 0.27, 4)).toBeCloseTo(0.2712 * 4, 12)
     expect(bodyRadiusDeg(undefined, EARTH_RADIUS_DEG, 4)).toBeCloseTo(EARTH_RADIUS_DEG * 4, 12)
+  })
+})
+
+describe('how big the Sun and the Earth are on the screen in the view from the ground (issue 123)', () => {
+  // The numbers the backend gives for a level-1 point (lat 10, lon 20) on 15/11/2026, checked there
+  // against SPICE: the Sun 0.2697 deg, the Earth 0.9066 deg of radius.
+  const SUN_DEG = 0.2697
+  const EARTH_DEG = 0.9066
+  const STAGE_PX = 800
+  const rad = (degrees: number) => (degrees * Math.PI) / 180
+  /** A pinhole camera, written out: a point at tan(angle) off the axis lands that far from the centre of a stage. */
+  const pinholePx = (edgeOverDistance: number) => (STAGE_PX / 2) * edgeOverDistance / Math.tan(rad(GROUND_FIELD_OF_VIEW_DEG) / 2)
+
+  it('looks 55 degrees from the bottom of the stage to the top, as Sky.tsx has it', () => {
+    expect(GROUND_FIELD_OF_VIEW_DEG).toBe(55)
+    expect(readFileSync(new URL('../components/Sky.tsx', import.meta.url), 'utf8')).toContain('new THREE.PerspectiveCamera(FIELD_OF_VIEW_DEG,')
+  })
+
+  it('takes half the stage when the body is half the field of view away from the centre', () => {
+    expect(projectedRadiusPx(GROUND_FIELD_OF_VIEW_DEG / 2, GROUND_FIELD_OF_VIEW_DEG, STAGE_PX)).toBeCloseTo(STAGE_PX / 2, 9)
+  })
+
+  it('draws the true Sun about 3.6 px in radius and the true Earth about 12.2 px on an 800 px stage (a level-1 Site)', () => {
+    // Where the Sun climbs high the stretch is 1: the discs are the size the sky has.
+    expect(stretchFor([-2, 40, 80])).toBe(1)
+    expect(projectedRadiusPx(bodyRadiusDeg(SUN_DEG, 0.27, 1), GROUND_FIELD_OF_VIEW_DEG, STAGE_PX)).toBeCloseTo(3.617, 3)
+    expect(projectedRadiusPx(bodyRadiusDeg(EARTH_DEG, EARTH_RADIUS_DEG, 1), GROUND_FIELD_OF_VIEW_DEG, STAGE_PX)).toBeCloseTo(12.159, 3)
+  })
+
+  it('draws a polar Site six times larger, which is why it looks bigger there', () => {
+    expect(stretchFor([-2, 1.5, 3.2])).toBe(MAX_STRETCH)
+    expect(projectedRadiusPx(bodyRadiusDeg(SUN_DEG, 0.27, MAX_STRETCH), GROUND_FIELD_OF_VIEW_DEG, STAGE_PX)).toBeCloseTo(21.707, 3)
+    expect(projectedRadiusPx(bodyRadiusDeg(EARTH_DEG, EARTH_RADIUS_DEG, MAX_STRETCH), GROUND_FIELD_OF_VIEW_DEG, STAGE_PX)).toBeCloseTo(73.17, 2)
+  })
+
+  it('has the meshes of the scene land on the same pixels: the disc and the ball, at the distance Sky.tsx puts them', () => {
+    const BODIES = 20000
+    expect(pinholePx(discScale(SUN_DEG, BODIES) / BODIES)).toBeCloseTo(projectedRadiusPx(SUN_DEG, GROUND_FIELD_OF_VIEW_DEG, STAGE_PX), 9)
+    // The ball's silhouette is seen at asin(rho / D) from the centre, not at rho / D: its edge, projected, is tan of that.
+    const silhouette = Math.asin(ballScale(EARTH_DEG, BODIES) / BODIES)
+    expect(pinholePx(Math.tan(silhouette))).toBeCloseTo(projectedRadiusPx(EARTH_DEG, GROUND_FIELD_OF_VIEW_DEG, STAGE_PX), 9)
+  })
+
+  it('grows with the height of the stage and not with its width', () => {
+    const phone = projectedRadiusPx(EARTH_DEG, GROUND_FIELD_OF_VIEW_DEG, 400)
+    expect(projectedRadiusPx(EARTH_DEG, GROUND_FIELD_OF_VIEW_DEG, 800)).toBeCloseTo(2 * phone, 9)
   })
 })
