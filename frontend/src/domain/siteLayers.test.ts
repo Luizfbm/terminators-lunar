@@ -24,10 +24,10 @@ describe('which switch governs a Site', () => {
 })
 
 describe('which Sites are shown', () => {
-  it('starts with the Artemis Sites shown and the missions hidden', () => {
-    expect(initialLayers()).toEqual({ sites: true, missions: false })
+  it('starts with the Artemis Sites and the missions both shown, so the four landing points of today stay on the globe', () => {
+    expect(initialLayers()).toEqual({ sites: true, missions: true })
     expect(siteShown(artemis, initialLayers(), null)).toBe(true)
-    for (const mission of [apollo, isro, clps, lroc]) expect(siteShown(mission, initialLayers(), null)).toBe(false)
+    for (const mission of [apollo, isro, clps, lroc]) expect(siteShown(mission, initialLayers(), null)).toBe(true)
   })
 
   it('shows the missions when Lunar Missions is pressed, with or without Sites', () => {
@@ -47,7 +47,7 @@ describe('which Sites are shown', () => {
   })
 
   it('always shows the chosen Site, whichever switch is released', () => {
-    expect(siteShown(apollo, initialLayers(), 'APOLLO11')).toBe(true)
+    expect(siteShown(apollo, only({ sites: true }), 'APOLLO11')).toBe(true)
     expect(siteShown(artemis, only({ missions: true }), 'CR01')).toBe(true)
   })
 
@@ -58,7 +58,8 @@ describe('which Sites are shown', () => {
   it('counts the dots of a mixed list as the switches ask', () => {
     const all = [artemis, { id: 'CR02', source: 'wueller2026' }, { id: 'HW01', source: 'wueller2026' }, apollo, isro, lroc]
     const count = (layers: Layers, chosen: string | null) => all.filter((site) => siteShown(site, layers, chosen)).length
-    expect(count(initialLayers(), 'CR01')).toBe(3)
+    expect(count(initialLayers(), 'CR01')).toBe(6)
+    expect(count(only({ sites: true }), 'CR01')).toBe(3)
     expect(count(only({}), 'CR01')).toBe(1)
     expect(count(only({ missions: true }), 'CR01')).toBe(4)
     expect(count({ sites: true, missions: true }, 'CR01')).toBe(6)

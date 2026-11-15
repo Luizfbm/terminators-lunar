@@ -18,7 +18,7 @@ export interface PoleMark {
 }
 
 /**
- * The mark of a pole of the Moon on the stage, as in `globo_hemisferios.html`. The letter belongs to
+ * The mark of a pole of the Moon on the stage. The letter belongs to
  * the pole and to nothing else: it stands on the pole's own line, `POLE_LETTER_RADII` out from the
  * Moon's centre, so it turns with the Moon. It is drawn when the pole faces the eye, and when the pole
  * is behind the Moon but the letter, projected, is still outside the disc. It is fainter once the pole

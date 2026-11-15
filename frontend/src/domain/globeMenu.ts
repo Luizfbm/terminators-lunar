@@ -16,8 +16,8 @@ export const MENU_ITEMS = [
 export type MenuId = (typeof MENU_ITEMS)[number]['id']
 export type MenuState = Record<MenuId, boolean>
 
-/** Only "Sites" starts pressed. */
-export const initialMenu = (): MenuState => ({ initial: false, dark_side: false, north: false, south: false, missions: false, sites: true })
+/** "Lunar Missions" and "Sites" start pressed: all the dots are shown, as before the menu. */
+export const initialMenu = (): MenuState => ({ initial: false, dark_side: false, north: false, south: false, missions: true, sites: true })
 
 /** The four buttons that turn the Moon: pressing one releases the other three, as the Moon can only face one way. */
 export const VIEW_BUTTONS = ['initial', 'dark_side', 'north', 'south'] as const

@@ -2,18 +2,18 @@ import { expect, test, type Page } from '@playwright/test'
 
 // The menu on the left of the globe: two level buttons on top (exclusive, in step with the view buttons under
 // the stage), a rule, and six push buttons. What the Moon-turning buttons and the two switches do is in
-// globe-land and globe-layers; here it is which button is pressed.
+// globe-layers; here it is which button is pressed.
 test.use({ locale: 'en-US' })
 
 const LEVELS = ['Explore the Moon', 'South Pole in detail']
 const BUTTONS = ['Initial position', 'Dark side', 'Northern Hemisphere', 'Southern Hemisphere', 'Lunar Missions', 'Sites']
 const LABELS = [...LEVELS, ...BUTTONS]
-/** The buttons pressed when the page opens: the level of the orbit view and the Artemis Sites. */
-const OPENS_PRESSED = ['Explore the Moon', 'Sites']
+/** The buttons pressed when the page opens: the level of the orbit view and the two switches of the dots. */
+const OPENS_PRESSED = ['Explore the Moon', 'Lunar Missions', 'Sites']
 const button = (page: Page, name: string) => page.getByRole('button', { name, exact: true })
 const pressed = async (page: Page, name: string) => (await button(page, name).getAttribute('aria-pressed')) === 'true'
 
-test('has the eight buttons, in English and in this order, with only Explore the Moon and Sites pressed', async ({ page }) => {
+test('has the eight buttons, in English and in this order, with Explore the Moon, Lunar Missions and Sites pressed', async ({ page }) => {
   await page.goto('/')
   const menu = page.getByRole('group', { name: 'Globe menu' })
   await expect(menu).toBeVisible()
@@ -45,8 +45,8 @@ test('Space and Enter press and release a button from the keyboard', async ({ pa
 
 test('has the colours of the reference: taupe when released, dark and sunk when pressed', async ({ page }) => {
   await page.goto('/')
-  await expect(button(page, 'Lunar Missions')).toHaveCSS('background-color', 'rgb(133, 123, 108)')
-  await expect(button(page, 'Lunar Missions')).toHaveCSS('color', 'rgb(31, 20, 20)')
+  await expect(button(page, 'Dark side')).toHaveCSS('background-color', 'rgb(133, 123, 108)')
+  await expect(button(page, 'Dark side')).toHaveCSS('color', 'rgb(31, 20, 20)')
   await expect(button(page, 'Sites')).toHaveCSS('background-color', 'rgb(70, 65, 57)')
   await expect(button(page, 'Sites')).toHaveCSS('color', 'rgb(142, 142, 142)')
   await expect(page.getByRole('group', { name: 'Globe menu' })).toHaveCSS('background-color', 'rgba(60, 60, 60, 0.72)')
@@ -80,7 +80,6 @@ test('sits in the very top left corner of the globe, at 85% of a fifth of the wi
 
 test('the three buttons that turn the Moon release one another, and Sites and Missions stay their own', async ({ page }) => {
   await page.goto('/')
-  await button(page, 'Lunar Missions').click()
   await button(page, 'Southern Hemisphere').click()
   expect(await pressed(page, 'Southern Hemisphere')).toBe(true)
   await button(page, 'Northern Hemisphere').click()
@@ -150,7 +149,7 @@ test('on the map the menu has only the two levels, and the buttons of the orbit 
   await expect(button(page, 'Explore the Moon')).toHaveAttribute('aria-pressed', 'false')
   await button(page, 'Explore the Moon').click()
   await expect(menu.getByRole('button')).toHaveText(LABELS)
-  // What was pressed before is as it was: Sites pressed, the level of the orbit pressed.
+  // What was pressed before is as it was: both switches pressed, the level of the orbit pressed.
   for (const label of LABELS) await expect(button(page, label)).toHaveAttribute('aria-pressed', OPENS_PRESSED.includes(label) ? 'true' : 'false')
 })
 

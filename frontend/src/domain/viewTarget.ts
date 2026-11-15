@@ -6,7 +6,7 @@ export type MoonView = 'initial' | 'dark' | 'north' | 'south'
 /**
  * The camera's distance from the Moon's centre, in radii, in every view of the globe. At 5 the Moon fills
  * 71% of the height of the stage, so it is not cut by the screen (at 3.4 it was 107%). Chosen by the
- * Larissa by trying it.
+ * trying it.
  */
 export const VIEW_DISTANCE = 5
 /**

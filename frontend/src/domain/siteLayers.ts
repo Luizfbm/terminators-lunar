@@ -6,8 +6,8 @@ export interface Layers {
   missions: boolean
 }
 
-/** Only the Artemis Sites start shown. */
-export const initialLayers = (): Layers => ({ sites: true, missions: false })
+/** Both start shown: the landing points of the missions that flew (IM-2, Blue Ghost 1, Apollo 11, Chandrayaan-3) are on the globe from the start. */
+export const initialLayers = (): Layers => ({ sites: true, missions: true })
 
 /** The `source` the 130 Artemis Sites come from; every other curated source is a mission's landing. */
 export const ARTEMIS_SOURCE = 'wueller2026'
