@@ -8,6 +8,7 @@ import { useI18n } from '../i18n/I18nContext'
 import type { I18n } from '../i18n/i18n'
 import type { MessageKey } from '../i18n/messages'
 import { Extras } from './Extras'
+import { NearbyLine } from './phase4/nearby/NearbyLine'
 import { UncertaintyLine } from './UncertaintyLine'
 import { useUncertainty, type UncertaintyState } from '../hooks/useUncertainty'
 import type { WindowChoice } from './YearPanel'
@@ -164,6 +165,7 @@ export function Answer({
           dark: formatSpan(metrics.lcsp_hours * HOUR_MS),
         })}
       </p>
+      <NearbyLine result={result} />
       <Reach result={result} cursorMs={cursorMs} />
       <FlatMetrics result={result} />
       <WhenToLand result={result} onWindow={onWindow} />
