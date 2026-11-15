@@ -181,10 +181,7 @@ def _query(
             raise missing_site(site_id)
     else:
         assert latitude_deg is not None and longitude_deg is not None
-        if latitude_deg > -80:
-            raise ApiProblem(
-                "outside_coverage", "Outside coverage", "Custom Sites must be at or south of 80°S."
-            )
+        ground.check_custom_latitude(latitude_deg)
         selected = catalog.custom_site(latitude_deg, longitude_deg)
     return selected, instant
 

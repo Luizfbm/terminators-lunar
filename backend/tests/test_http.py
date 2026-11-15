@@ -38,6 +38,7 @@ def test_visibility_shape_period_tiling_and_metrics() -> None:
         assert abs(sum(p["duration_hours"] for p in periods) - 24) < 1e-6
 
 
+@pytest.mark.usefixtures("without_global_dem")
 def test_custom_site_height_and_problem_codes() -> None:
     base = {
         "latitude_deg": -89.5,

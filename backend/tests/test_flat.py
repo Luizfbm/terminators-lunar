@@ -83,6 +83,7 @@ def test_the_dip_is_worked_by_hand_and_zero_on_the_ground() -> None:
         ({**NOVEMBER_2026, "observer_height_m": -1}, 422, "invalid_parameter"),
     ],
 )
+@pytest.mark.usefixtures("without_global_dem")
 def test_the_query_rules_and_problems_are_those_of_visibility(
     params: dict[str, Any], status: int, code: str
 ) -> None:
