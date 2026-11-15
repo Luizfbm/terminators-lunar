@@ -250,7 +250,8 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
 
   return (
     <div className="screen">
-      <header className="bar">
+      {/* The header (Guide, About, Ask, PT/EN) is not shown: the stage takes the screen. It stays mounted, and the stylesheet hides it. The language comes from the link and the browser. */}
+      <header className="bar" hidden>
         <p>
           <strong>{t('app.name')}</strong> · {t('app.place')}
         </p>

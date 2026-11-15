@@ -1,5 +1,8 @@
 import { expect, test, type Route } from '@playwright/test'
 
+// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+test.fixme(true, 'depends on the answer column and the header, not shown (issue #78)')
+
 const problem = (status: number, code: string) => ({
   status,
   contentType: 'application/problem+json',

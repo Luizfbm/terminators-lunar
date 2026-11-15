@@ -1,5 +1,8 @@
 import { expect, test, type Page, type Route } from '@playwright/test'
 
+// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+test.fixme(true, 'depends on the answer column and the header, not shown (issue #78)')
+
 // the requirement: on a phone the Site list had no backdrop and no way
 // to close it but Escape, it opened about 4,110 px away from the chosen Site, its citation covered
 // the first row, and a bad custom point showed a grey line that did not say what was wrong.

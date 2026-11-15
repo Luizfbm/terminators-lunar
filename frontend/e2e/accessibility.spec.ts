@@ -30,14 +30,16 @@ for (const [name, viewport] of [
       expect(await violations(page)).toEqual([])
     })
 
-    test('the main screen, from the ground, with an Occluder marked', async ({ page }) => {
+    // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+    test.fixme('the main screen, from the ground, with an Occluder marked', async ({ page }) => {
       await open(page)
       await page.locator('.why__show').first().click()
       await expect(page.locator('.ground__mark')).toBeVisible()
       expect(await violations(page)).toEqual([])
     })
 
-    test('the open Site list', async ({ page }) => {
+    // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+    test.fixme('the open Site list', async ({ page }) => {
       await open(page)
       await page.locator('.site-pick button').first().click()
       await expect(page.getByRole('listbox')).toBeVisible()
@@ -69,7 +71,8 @@ test('the Cursor moves with the arrow keys', async ({ page }) => {
   expect(Number(await cursor.getAttribute('aria-valuenow'))).toBe(before)
 })
 
-test('Tab reaches every control on the main screen, and each shows where the focus is', async ({ page }) => {
+// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+test.fixme('Tab reaches every control on the main screen, and each shows where the focus is', async ({ page }) => {
   await open(page)
   const wanted = await page
     .locator('button:visible, input:visible, a[href]:visible, [role="slider"]:visible, summary:visible')
@@ -96,7 +99,8 @@ test('Tab reaches every control on the main screen, and each shows where the foc
   expect(reached.size).toBeGreaterThanOrEqual(wanted)
 })
 
-test('a screen reader hears the Countdown and the metrics as text', async ({ page }) => {
+// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+test.fixme('a screen reader hears the Countdown and the metrics as text', async ({ page }) => {
   // The metrics are inside "Stats for nerds" (the requirement).
   await open(page, '/?stats=1')
   // The Countdown is a heading with the whole sentence in it, number and unit included.
@@ -126,7 +130,8 @@ test.describe('on a phone, 390 px wide', () => {
     expect(cut).toEqual([])
   })
 
-  test('every section is reachable by scrolling, down to the Proof link', async ({ page }) => {
+  // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+  test.fixme('every section is reachable by scrolling, down to the Proof link', async ({ page }) => {
     await open(page)
     const proof = page.locator('.extras__proof a')
     await proof.scrollIntoViewIfNeeded()

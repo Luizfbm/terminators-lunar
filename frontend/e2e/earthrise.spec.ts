@@ -124,7 +124,8 @@ test.describe('the hand over', () => {
     await expect(scene(page)).toHaveCount(0)
   })
 
-  test('an answer that fails hands over to the error', async ({ page }) => {
+  // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+  test.fixme('an answer that fails hands over to the error', async ({ page }) => {
     await page.route((url: URL) => url.pathname === '/visibility', (route) =>
       route.fulfill({
         status: 503,

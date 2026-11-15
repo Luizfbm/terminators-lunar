@@ -1,5 +1,8 @@
 import { expect, test, type Page } from '@playwright/test'
 
+// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+test.fixme(true, 'depends on the answer column and the header, not shown (issue #78)')
+
 // The Prism mock answers every Query with Connecting Ridge CR01 from 20 Nov 2026 12:00 UTC: the Sun sets
 // behind the rim of Shackleton, 4.6 km away, and the Earth sets behind Mons Malapert, 134 km away.
 // The engine walks the terrain out to 300 km (backend/app/horizon.py).

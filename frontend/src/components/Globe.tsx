@@ -469,7 +469,7 @@ export function Globe(props: GlobeProps) {
       let best: { id: string; distance: number } | null = null
       for (const site of live.current.sites) {
         // A Site whose dot is hidden cannot be picked.
-        if (!siteShown(site, layersLive.current, live.current.site.id)) continue
+        if (!siteShown(site, layersLive.current)) continue
         const spot = onScreen(site)
         const distance = Math.hypot(spot.x - (event.clientX - box.left), spot.y - (event.clientY - box.top))
         if (spot.facing && distance <= PICK_RADIUS_PX && (!best || distance < best.distance)) best = { id: site.id, distance }
@@ -711,7 +711,7 @@ export function Globe(props: GlobeProps) {
       let dotsShown = 0
       for (const dot of dots.children as THREE.Mesh[]) {
         const chosen = dot.userData.id === state.site.id
-        dot.visible = siteShown({ id: dot.userData.id, source: dot.userData.source }, layersLive.current, state.site.id)
+        dot.visible = siteShown({ id: dot.userData.id, source: dot.userData.source }, layersLive.current)
         if (dot.visible) dotsShown += 1
         ;(dot.material as THREE.MeshBasicMaterial).color.set(chosen ? (state.sunUp ? SUN : DOT) : onMap ? DOT_ON_MAP : DOT_OTHER)
         dot.scale.setScalar((chosen ? 1.8 : 1) * dotSize)

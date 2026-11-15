@@ -26,7 +26,8 @@ test.describe('the line without terrain', () => {
   test.describe('in English', () => {
     test.use({ locale: 'en-GB' })
 
-    test('says how much later the Sun would set without terrain, and asks once for both readers', async ({ page }) => {
+    // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+    test.fixme('says how much later the Sun would set without terrain, and asks once for both readers', async ({ page }) => {
       let asked = 0
       page.on('request', (request) => {
         if (request.url().includes('/visibility/flat?')) asked += 1
@@ -38,7 +39,8 @@ test.describe('the line without terrain', () => {
       expect(asked).toBe(1)
     })
 
-    test('asks for the Query on screen', async ({ page }) => {
+    // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+    test.fixme('asks for the Query on screen', async ({ page }) => {
       const asked = page.waitForRequest((request) => request.url().includes('/visibility/flat?'))
       await open(page)
       const url = new URL((await asked).url())
@@ -48,7 +50,8 @@ test.describe('the line without terrain', () => {
       expect(url.searchParams.get('observer_height_m')).toBe('2')
     })
 
-    test('shows no number while the flat answer is on its way', async ({ page }) => {
+    // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+    test.fixme('shows no number while the flat answer is on its way', async ({ page }) => {
       let release!: () => void
       const gate = new Promise<void>((resolve) => {
         release = resolve
@@ -65,7 +68,8 @@ test.describe('the line without terrain', () => {
       await expect(line(page)).toContainText('84 d 9 h later')
     })
 
-    test('shows no number when the flat answer fails, and tries again', async ({ page }) => {
+    // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+    test.fixme('shows no number when the flat answer fails, and tries again', async ({ page }) => {
       let calls = 0
       await page.route(FLAT, async (route: Route) => {
         calls += 1
@@ -88,13 +92,15 @@ test.describe('the line without terrain', () => {
       await route.fulfill({ response, json: body })
     }
 
-    test('names the end of the search when the flat Sun never sets in it', async ({ page }) => {
+    // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+    test.fixme('names the end of the search when the flat Sun never sets in it', async ({ page }) => {
       await page.route(FLAT, withoutSunEvents())
       await open(page)
       await expect(line(page)).toHaveText('Without terrain the Sun would not set before 11 Jun 2027, 180\u00a0days after this Window.')
     })
 
-    test('says where the data ends when coverage stops before the 180 days', async ({ page }) => {
+    // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+    test.fixme('says where the data ends when coverage stops before the 180 days', async ({ page }) => {
       await page.route(FLAT, withoutSunEvents('2027-03-01T00:00:00Z'))
       await open(page)
       await expect(line(page)).toHaveText('Without terrain the Sun would not set before 1 Mar 2027, where our data ends.')
@@ -104,7 +110,8 @@ test.describe('the line without terrain', () => {
   test.describe('in Portuguese', () => {
     test.use({ locale: 'pt-BR' })
 
-    test('says it in Portuguese', async ({ page }) => {
+    // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+    test.fixme('says it in Portuguese', async ({ page }) => {
       await open(page)
       await expect(line(page)).toHaveText(/^Sem relevo, o Sol se poria 84\sd 9\sh mais tarde\.$/)
       await page.getByRole('button', { name: 'Quanto desta resposta vem do relevo?' }).click()
@@ -118,7 +125,8 @@ test.describe('the line without terrain', () => {
 test.describe('the Window without terrain', () => {
   test.use({ locale: 'en-GB' })
 
-  test('opens beside the real metrics and stays open across a reload', async ({ page }) => {
+  // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+  test.fixme('opens beside the real metrics and stays open across a reload', async ({ page }) => {
     await open(page)
     const button = page.getByRole('button', { name: 'How much of this answer is the terrain?' })
     await expect(button).toHaveAttribute('aria-expanded', 'false')
@@ -140,7 +148,8 @@ test.describe('the Window without terrain', () => {
     await expect(page).not.toHaveURL(/flat=1/)
   })
 
-  test('says it is computing, then that it failed, and tries again', async ({ page }) => {
+  // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+  test.fixme('says it is computing, then that it failed, and tries again', async ({ page }) => {
     let calls = 0
     let release!: () => void
     const gate = new Promise<void>((resolve) => {
@@ -218,7 +227,8 @@ test.describe('the Classroom figure', () => {
 test.describe('at 390 px wide', () => {
   test.use({ locale: 'en-GB', viewport: { width: 390, height: 844 } })
 
-  test('the line, the panel and the sheet fit without scrolling sideways', async ({ page }) => {
+  // Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+  test.fixme('the line, the panel and the sheet fit without scrolling sideways', async ({ page }) => {
     await open(page, '/?flat=1')
     await expect(line(page)).toContainText('84 d 9 h later')
     await expect(page.getByRole('table', { name: 'This Window with and without terrain' })).toBeVisible()

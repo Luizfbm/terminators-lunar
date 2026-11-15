@@ -66,7 +66,8 @@ test('dragging the sky to the left brings what is on the right into view', async
   expect(((await yaw(page)) - start + 360) % 360).toBeLessThan(180)
 })
 
-test('marking what hides the Earth turns the view to it', async ({ page }) => {
+// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+test.fixme('marking what hides the Earth turns the view to it', async ({ page }) => {
   await page.goto('/')
   await page.locator('.why__show').first().click()
   await expect(page).toHaveURL(/view=ground/)

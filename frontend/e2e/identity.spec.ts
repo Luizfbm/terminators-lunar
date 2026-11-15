@@ -39,7 +39,8 @@ test('a slow network does not hold the Moon back for ever', async ({ page }) => 
   await expect(page.locator('.globe')).toHaveAttribute('data-dressed', 'true', { timeout: 60_000 })
 })
 
-test('the Query line and the views look like controls, not like text', async ({ page }) => {
+// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+test.fixme('the Query line and the views look like controls, not like text', async ({ page }) => {
   // Luiz: "it is not clear where to click". They were dotted or plain text.
   await page.goto('/')
   await expect(page.getByRole('slider', { name: 'Cursor' })).toBeVisible()
@@ -63,7 +64,8 @@ test('the Query line and the views look like controls, not like text', async ({ 
   expect(await fill(chosen)).not.toBe(await fill(other))
 })
 
-test('the statements are set in the serif, the numbers inside them in the mono', async ({ page }) => {
+// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+test.fixme('the statements are set in the serif, the numbers inside them in the mono', async ({ page }) => {
   await page.goto('/')
   const statement = page.getByRole('heading', { level: 1 })
   await expect(statement).toBeVisible()

@@ -1,6 +1,9 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page, type Request, type Route } from '@playwright/test'
 
+// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+test.fixme(true, 'depends on the answer column and the header, not shown (issue #78)')
+
 // Plan A x Plan B: the Query on screen against a second one, from the same /visibility. The Prism mock
 // answers every request with the contract's example, so the two plans would always tie. Plan B is the
 // request that starts on 2027-03-01: its answer is the mock's with the numbers moved, so the table, the

@@ -145,7 +145,8 @@ test('a slow ground holds the globe at the Site, with no loading mark in the mid
   await expect(sky(page)).toHaveAttribute('data-ready', 'true')
 })
 
-test('a click on another Site moves the ring at once and keeps the last answer, dimmed, until the new one is in', async ({ page }) => {
+// Depends on the answer column or the header, which are not shown (issue #78): fixme until the cards and drawer layout (#63) brings them back.
+test.fixme('a click on another Site moves the ring at once and keeps the last answer, dimmed, until the new one is in', async ({ page }) => {
   let release = () => {}
   const held = new Promise<void>((resolve) => (release = resolve))
   // Every answer after the first is held. (The first version held only Sites other than 001 and
