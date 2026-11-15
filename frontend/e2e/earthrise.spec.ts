@@ -89,7 +89,7 @@ test.describe('the hand over', () => {
     await expect(scene(page)).toHaveCount(0)
   })
 
-  test('the Moon is dressed under the picture before it fades, and nothing waits after that', async ({ page }) => {
+  test('the Moon is dressed under the picture before it fades, and nothing waits after that', { tag: '@timing' }, async ({ page }) => {
     await page.addInitScript(() => {
       const seen: Record<string, unknown> = {}
       ;(window as unknown as { earthrise: typeof seen }).earthrise = seen
