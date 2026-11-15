@@ -1,0 +1,23 @@
+# Secrets on the VPS live next to the checkout, never in git
+.env
+
+# Python
+__pycache__/
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+playwright-report/
+test-results/
+
+.DS_Store
+fixtures/dem/LDEM_*.TIF
+
+# Mutation testing
+mutants/
+fixtures/dem/offpole/
+fixtures/dem/offpole.tar

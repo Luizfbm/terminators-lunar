@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# Automatic reviews are off for now: the plan's review limit runs out too quickly.
+# Ask for one by hand with a comment: @coderabbitai review
+reviews:
+  # No "Review skipped" comment either.
+  review_status: false
+  auto_review:
+    enabled: false

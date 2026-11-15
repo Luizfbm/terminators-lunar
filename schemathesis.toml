@@ -1,0 +1,105 @@
+# 503 busy (a full engine queue) is documented on the three engine routes.
+# The contract documents these rejections, but JSON Schema can't express them:
+# GET /visibility returns 422 for a Window outside 2025-2032, a custom Site north
+# of the coverage limit, or site_id together with coordinates; an unknown Site is 404.
+[[operations]]
+include-name = "GET /visibility"
+checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422", "503"]
+
+[[operations]]
+include-name = "GET /sites/{site_id}"
+checks.positive_data_acceptance.expected-statuses = ["2xx", "404"]
+
+# A year is computed month by month: about 4.4 s cold on a laptop and over 10 s on a CI
+# runner (35 thousand engine samples), so keep the examples few and give it room.
+# request-timeout is only the HTTP client's timeout; --checks all also turns on
+# max_response_time (ST112) at 10 s, which a cold year on a runner crosses by luck
+# (the implementation), so that limit is raised too. Outside 2025-2032 it is a 422 that JSON Schema
+# doesn't express.
+[[operations]]
+include-name = "GET /sites/{site_id}/year"
+generation.max-examples = 8
+request-timeout = 60
+checks.max_response_time = 60.0
+checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422", "503"]
+
+# The ladder runs the Query three times (about 3.8 s cold on a laptop) and rejects what
+# GET /visibility rejects. Same ST112 limit as the year, for the same reason.
+[[operations]]
+include-name = "GET /visibility/ladder"
+generation.max-examples = 20
+request-timeout = 60
+checks.max_response_time = 60.0
+checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422", "503"]
+
+# The Landing scatter runs the Query at 19 points, one after the other: about 21 s cold
+# over a synodic month on a laptop, past the 10 s client timeout and ST112 limit. Few
+# examples, room up to Cloudflare's 100 s cut-off, and what GET /visibility rejects.
+[[operations]]
+include-name = "GET /visibility/scatter"
+generation.max-examples = 8
+request-timeout = 100
+checks.max_response_time = 100.0
+checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422", "503"]
+
+# The same Window started on other days asks the engine month by month, like the year:
+# up to 16 months for a 60-day Window over -30 to +366 days (a cold 13 months took
+# 3.9 s on a laptop). Every Window outside coverage is a 422 JSON Schema doesn't express.
+[[operations]]
+include-name = "GET /sites/{site_id}/windows"
+generation.max-examples = 8
+request-timeout = 60
+checks.max_response_time = 60.0
+checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422", "503"]
+
+# The battery is the /visibility answer plus one pass over its timeline, and rejects what
+# GET /visibility rejects.
+[[operations]]
+include-name = "GET /visibility/energy"
+checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422", "503"]
+
+# The flat Query walks the Window and 180 days past it on the 15 min grid (about 20
+# thousand engine steps, 5 to 6 s cold on a laptop) and rejects what GET /visibility
+# rejects. Same ST112 limit as the ladder, for the same reason.
+[[operations]]
+include-name = "GET /visibility/flat"
+generation.max-examples = 20
+request-timeout = 60
+checks.max_response_time = 60.0
+checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422", "503"]
+
+# The Slope reads a small window of one DEM (well under a second). It rejects what
+# GET /visibility rejects about the Site, and a Site no DEM covers is a 422.
+[[operations]]
+include-name = "GET /terrain"
+checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422"]
+
+# The Query on screen follows GET /visibility's rules, which JSON Schema can't express
+# (a Window outside coverage, a custom Site off the pole, an unknown Site, site_id with
+# coordinates); /assistant answers all of them with its one documented 422. A question
+# may run the engine, or a whole year offline, so it gets the year's room.
+[[operations]]
+include-name = "POST /assistant"
+request-timeout = 60
+checks.max_response_time = 60.0
+checks.positive_data_acceptance.expected-statuses = ["2xx", "422", "503"]
+
+# The DSN link runs the Query, then follows the Moon from three antennas over the
+# Window (the requirement), and rejects what GET /visibility rejects. Same ST112 limit as
+# the ladder, for the same reason.
+[[operations]]
+include-name = "GET /visibility/dsn"
+generation.max-examples = 20
+request-timeout = 60
+checks.max_response_time = 60.0
+checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422", "503"]
+
+# The nearby Sites for a slip run the Query once per neighbour (a Region holds up to a dozen
+# Sites), so give it the scatter's room. It rejects what GET /visibility rejects: a 422 for a
+# Window outside 2025-2032, which JSON Schema doesn't express, and 404 for an unknown Site.
+[[operations]]
+include-name = "GET /sites/{site_id}/neighbours"
+generation.max-examples = 8
+request-timeout = 100
+checks.max_response_time = 100.0
+checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422", "503"]

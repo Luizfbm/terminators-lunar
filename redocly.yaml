@@ -1,0 +1,5 @@
+extends:
+  - recommended
+rules:
+  # Read-only public API: most operations have no client error to report.
+  operation-4xx-response: off
