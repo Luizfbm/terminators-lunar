@@ -23,7 +23,9 @@ the default Site first, then every other Curated Site over the default Window (A
 it starts at 00:00 UTC of the current day), then the default Site's Landing scatter over
 that Window with the default radius, then the default Site's current and next year,
 then every Curated Site over tomorrow's default Window, so a visitor just after midnight
-finds the new day's answers ready instead of waiting for this thread to start over.
+finds the new day's answers ready instead of waiting for this thread to start over, and
+last the Uncertainty band of every Curated Site over today's default Window
+(`uncertainty.py`, ADR 0006), which keeps its own cache.
 """
 
 import json
@@ -166,6 +168,21 @@ def _is_warming() -> bool:
     return bool(getattr(_warming_thread, "on", False))
 
 
+@contextmanager
+def engine_slot(polite: bool = False) -> Iterator[None]:
+    """Hold one engine slot of the gate for the block: any piece of engine work takes one.
+
+    `polite` lets a visitor already queued go first; the steps of a long job, such as the
+    points of a Landing scatter or the clones of an Uncertainty band, ask for it that way.
+    """
+    warming = _is_warming()
+    _gate.acquire(warming, polite)
+    try:
+        yield
+    finally:
+        _gate.release(warming)
+
+
 def engine_run(
     site: Site,
     start: datetime,
@@ -179,12 +196,8 @@ def engine_run(
     `polite` lets a visitor already queued go first; the Landing scatter asks each of
     its points that way.
     """
-    warming = _is_warming()
-    _gate.acquire(warming, polite)
-    try:
+    with engine_slot(polite):
         answer: dict[str, Any] = engine.calculate(site, start, duration_hours, height_m, finest_m)
-    finally:
-        _gate.release(warming)
     return answer
 
 
@@ -370,12 +383,14 @@ def _warm_ids() -> list[str]:
 
 
 _SCATTER = -2
+_BAND = -3
 
 
 def _warm_once(site_ids: list[str], stop: threading.Event | None = None) -> None:
     start = default_start()
-    # (Site id, year, None for today's default Window, -1 for tomorrow's or _SCATTER for
-    # the Landing scatter over today's), most wanted first.
+    # (Site id, year, None for today's default Window, -1 for tomorrow's, _SCATTER for
+    # the Landing scatter over today's or _BAND for the Uncertainty band over today's),
+    # most wanted first.
     jobs: list[tuple[str, int | None]] = [(site_id, None) for site_id in site_ids]
     default = catalog.meta()["defaults"]["site_id"]
     if default in site_ids:
@@ -387,6 +402,10 @@ def _warm_once(site_ids: list[str], stop: threading.Event | None = None) -> None
     # catalog (about 270 answers of 0.8 MB) still fit under MAX_ENTRIES and MAX_BYTES.
     tomorrow = start + timedelta(days=1)
     jobs += [(site_id, -1) for site_id in site_ids]
+    # The Uncertainty band of every Curated Site over today's default Window, after all of
+    # that: a band is 32 engine runs per Site, and the page asks for it only after the
+    # main answer. Each clone takes the warming slot, so visitors still go first.
+    jobs += [(site_id, _BAND) for site_id in site_ids]
     for site_id, year_number in jobs:
         # Shutdown stops between jobs; a job already running finishes.
         if stop is not None and stop.is_set():
@@ -397,6 +416,16 @@ def _warm_once(site_ids: list[str], stop: threading.Event | None = None) -> None
         try:
             if year_number == -1:
                 calculate(site, tomorrow, DEFAULT_DURATION_HOURS, DEFAULT_OBSERVER_HEIGHT_M)
+            elif year_number == _BAND:
+                from . import uncertainty
+
+                uncertainty.compute_now(
+                    site,
+                    start,
+                    DEFAULT_DURATION_HOURS,
+                    DEFAULT_OBSERVER_HEIGHT_M,
+                    should_stop=stop.is_set if stop is not None else None,
+                )
             elif year_number == _SCATTER:
                 from .scatter import DEFAULT_RADIUS_M
 

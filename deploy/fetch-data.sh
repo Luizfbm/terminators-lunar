@@ -51,7 +51,19 @@ for k in "${DSN_KERNELS[@]}"; do get_naif "$k"; done
 mv kernels/.dsn.tm.part kernels/dsn.tm
 
 P=https://pgda.gsfc.nasa.gov/data/LOLA_20mpp
-for f in LDEM_80S_20MPP_ADJ LDEM_80S_80MPP_ADJ LDEM_60S_60MPP_ADJ LDEM_60S_240MPP_ADJ LDEM_80S_20MPP_ADJ_ERR; do get dem "$P/$f.TIF"; done
+for f in LDEM_80S_20MPP_ADJ LDEM_80S_80MPP_ADJ LDEM_60S_60MPP_ADJ LDEM_60S_240MPP_ADJ LDEM_80S_20MPP_ADJ_ERR LDEM_80S_80MPP_ADJ_ERR LDEM_60S_240MPP_ADJ_ERR; do get dem "$P/$f.TIF"; done
+# The per-pixel surface height error of the three polar DEMs (PGDA product 90, "LDEM surface
+# height error (in meters)", Barker et al. 2023), on the DEMs' own grids: what the Uncertainty
+# band perturbs them by (ADR 0006). PGDA also publishes LDEM_60S_60MPP_ADJ_ERR (4.2 GB), but
+# only an off-pole crop would read it and deploy/crop_offpole.py does not cut it, so it is
+# not fetched and Chandrayaan-3's band is `uncovered`; SLDEM2015 has no error product.
+# Sizes are the server's Content-Length of 2026-11-15; a download that stopped short fails here.
+err_size() { # err_size <name> <bytes>
+  [ "$(stat -c %s "dem/$1.TIF")" = "$2" ] || { echo "$1 is not the $2 bytes the server announced" >&2; exit 1; }
+}
+err_size LDEM_80S_20MPP_ADJ_ERR 3954709201
+err_size LDEM_80S_80MPP_ADJ_ERR 254808965
+err_size LDEM_60S_240MPP_ADJ_ERR 267005175
 # Permanently shadowed regions down to 85°S (the requirement): PGDA product 69, LOLA team,
 # Mazarico et al. 2011 (Icarus 211, doi:10.1016/j.icarus.2010.10.030). GeoTIFF of the PDS
 # IMG, 5058 x 5058 cells of 60 m in south polar stereographic on the 1737.4 km sphere,

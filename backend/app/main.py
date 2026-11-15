@@ -13,6 +13,7 @@ from typing import Annotated, Any
 from fastapi import FastAPI, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from . import (
     assistant,
@@ -25,6 +26,7 @@ from . import (
     neighbours,
     scatter,
     slope,
+    uncertainty,
     windows,
 )
 from . import flat as flat_horizon
@@ -427,6 +429,42 @@ def get_visibility_scatter(
         ) from missing
     return Response(
         answer, media_type="application/json", headers={"Cache-Status": _cache_status(hit)}
+    )
+
+
+@app.get("/visibility/uncertainty")
+def get_visibility_uncertainty(
+    site_id: str | None = None,
+    latitude_deg: float | None = Query(None, ge=-90, le=90),
+    longitude_deg: float | None = Query(None, ge=-180, le=180),
+    start: datetime | None = None,
+    duration_hours: float = Query(DEFAULT_DURATION_HOURS, gt=0, le=1440),
+    observer_height_m: float = Query(DEFAULT_OBSERVER_HEIGHT_M, ge=0, le=50),
+) -> Response:
+    """The Uncertainty band: the Query over clones of the DEM, 202 until the job is done."""
+    selected, instant = _query(site_id, latitude_deg, longitude_deg, start, duration_hours)
+    try:
+        outcome = uncertainty.request(selected, instant, duration_hours, observer_height_m)
+    except horizon.DemUnavailable as missing:
+        raise ApiProblem(
+            "outside_coverage",
+            "Outside coverage",
+            f"No DEM covers the Horizon mask of this Site ({missing}).",
+        ) from missing
+    if isinstance(outcome, uncertainty.Pending):
+        return JSONResponse(
+            {
+                "status": "computing",
+                "clones_done": outcome.clones_done,
+                "clones": outcome.clones,
+            },
+            status_code=202,
+            headers={"Retry-After": str(uncertainty.POLL_SECONDS)},
+        )
+    return Response(
+        outcome.body,
+        media_type="application/json",
+        headers={"Cache-Status": _cache_status(outcome.hit)},
     )
 
 
