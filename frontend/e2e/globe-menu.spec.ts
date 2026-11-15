@@ -8,12 +8,14 @@ test.use({ locale: 'en-US' })
 const LEVELS = ['Explore the Moon', 'South Pole in detail']
 const BUTTONS = ['Initial position', 'Dark side', 'Northern Hemisphere', 'Southern Hemisphere', 'Lunar Missions', 'Sites', 'Planets']
 const LABELS = [...LEVELS, ...BUTTONS]
-/** The buttons pressed when the page opens: the level of the orbit view and the three switches. */
-const OPENS_PRESSED = ['Explore the Moon', 'Lunar Missions', 'Sites', 'Planets']
+/** The buttons pressed when the page opens: the level of the orbit view, Sites and Planets. Lunar Missions starts released. */
+const OPENS_PRESSED = ['Explore the Moon', 'Sites', 'Planets']
+/** On the polar map the menu keeps the two levels and the two switches of the dots. */
+const MAP_LABELS = [...LEVELS, 'Lunar Missions', 'Sites']
 const button = (page: Page, name: string) => page.getByRole('button', { name, exact: true })
 const pressed = async (page: Page, name: string) => (await button(page, name).getAttribute('aria-pressed')) === 'true'
 
-test('has the nine buttons, in English and in this order, with Explore the Moon and the three switches pressed', async ({ page }) => {
+test('has the nine buttons, in English and in this order, with Explore the Moon, Sites and Planets pressed', async ({ page }) => {
   await page.goto('/')
   const menu = page.getByRole('group', { name: 'Globe menu' })
   await expect(menu).toBeVisible()
@@ -89,7 +91,7 @@ test('the buttons that turn the Moon release one another, and the three switches
   expect(await pressed(page, 'Dark side')).toBe(true)
   expect(await pressed(page, 'Northern Hemisphere')).toBe(false)
   // The three switches were not touched by any of it.
-  expect(await pressed(page, 'Lunar Missions')).toBe(true)
+  expect(await pressed(page, 'Lunar Missions')).toBe(false)
   expect(await pressed(page, 'Sites')).toBe(true)
   expect(await pressed(page, 'Planets')).toBe(true)
 })
@@ -197,16 +199,17 @@ test('a level takes the stage to its view, and the view buttons press the level 
   await expect(button(page, 'Explore the Moon')).toHaveAttribute('aria-pressed', 'false')
 })
 
-test('on the map the menu has only the two levels, and the buttons of the orbit are back when you return', async ({ page }) => {
+// Regression (2026-11-15): on the map the menu had only the two levels, so Sites and Lunar Missions could not be switched there.
+test('on the map the menu has the two levels and the two switches of the dots, and the buttons of the orbit are back when you return', async ({ page }) => {
   await page.goto('/?view=map')
   const menu = page.getByRole('group', { name: 'Globe menu' })
   await expect(menu).toBeVisible()
-  await expect(menu.getByRole('button')).toHaveText(LEVELS)
+  await expect(menu.getByRole('button')).toHaveText(MAP_LABELS)
   await expect(button(page, 'South Pole in detail')).toHaveAttribute('aria-pressed', 'true')
   await expect(button(page, 'Explore the Moon')).toHaveAttribute('aria-pressed', 'false')
   await button(page, 'Explore the Moon').click()
   await expect(menu.getByRole('button')).toHaveText(LABELS)
-  // What was pressed before is as it was: the three switches pressed, the level of the orbit pressed.
+  // What was pressed before is as it was: Sites and Planets pressed, the level of the orbit pressed.
   for (const label of LABELS) await expect(button(page, label)).toHaveAttribute('aria-pressed', OPENS_PRESSED.includes(label) ? 'true' : 'false')
 })
 

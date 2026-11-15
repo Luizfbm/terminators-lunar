@@ -406,7 +406,7 @@ export function Globe(props: GlobeProps) {
     const rebuildDots = (sites: readonly GlobeSite[], layers: Layers, chosen: string) => {
       dotsDrawn = 0
       for (const [points, layer] of [[siteDots, 'sites'], [missionDots, 'missions']] as const) {
-        const shown = sites.filter((site) => layerOf(site.source) === layer && siteShown(site, layers, chosen))
+        const shown = sites.filter((site) => layerOf(site.source) === layer && siteShown(site, layers))
         const at = new Float32Array(shown.length * 3)
         shown.forEach((site, index) => at.set(toVector(site.latitude_deg, site.longitude_deg).map((value) => value * MARK_RADIUS), index * 3))
         points.geometry.dispose()
@@ -555,7 +555,7 @@ export function Globe(props: GlobeProps) {
       if (mode === 'map') {
         const open = map.places.regions.find((entry) => entry.id === map.region)
         list = [...(open?.sites ?? []), ...map.places.loose]
-      } else list = state.sites.filter((site) => siteShown(site, layersLive.current, state.site.id))
+      } else list = state.sites.filter((site) => siteShown(site, layersLive.current))
       const targets: { id: string; x: number; y: number; site: MapSite }[] = []
       for (const site of list) {
         const spot = onScreen(site)
@@ -1103,7 +1103,7 @@ export function Globe(props: GlobeProps) {
         for (const site of state.sites) {
           const button = markElements.get(site.id)
           if (!button) continue
-          const spot = showMarks && siteShown(site, layersNow, state.site.id) ? onScreen(site) : null
+          const spot = showMarks && siteShown(site, layersNow) ? onScreen(site) : null
           const inside = spot !== null && spot.facing && spot.x >= 0 && spot.x <= host.clientWidth && spot.y >= 0 && spot.y <= host.clientHeight
           button.hidden = !inside
           if (!inside) continue

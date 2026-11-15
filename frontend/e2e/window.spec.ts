@@ -1,4 +1,5 @@
-import { expect, test, type Page, type Request } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page, Request } from '@playwright/test'
 
 // The Prism mock always answers with the contract's example (CR01, 20/11/2026 12:00 UTC for 10 days,
 // 2 m), so these tests check what the app asks for and what the link says, not the numbers.

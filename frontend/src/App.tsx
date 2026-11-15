@@ -23,6 +23,7 @@ import {
   initialCursor,
   isCoordinate,
   isCustomSite,
+  linkWithoutLayout,
   readLink,
   siteKey,
   writeLink,
@@ -97,7 +98,8 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
   const [page, setPage] = useState<Page>(link.page)
   const [stats, setStats] = useState(link.stats)
   // The cover is for the plain address, once per browser: a link with a Query goes to its answer.
-  const [cover, setCover] = useState(() => window.location.search === '' && !coverSeen())
+  // The plain address opens the cover. `layout=classic` says only which layout, not which Query, so it does not count as a link.
+  const [cover, setCover] = useState(() => linkWithoutLayout(window.location.search) === '' && !coverSeen())
   const [guideStep, setGuideStep] = useState<number | null>(null)
   const closeCover = useCallback(() => {
     rememberCover()
@@ -284,7 +286,8 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
   const customOutside = state.status === 'error' && state.code === 'outside_coverage' && isCoordinate(siteRef)
 
   return (
-    <div className="screen">
+    <div className="screen" data-layout={link.classic ? 'classic' : undefined}>
+      {/* Larissa's layout is the default: no header, no answer column (the stylesheet hides them). `?layout=classic` shows both. */}
       <header className="bar">
         <p>
           <strong>{t('app.name')}</strong> · {t('app.place')}
@@ -470,7 +473,7 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
             stats={stats}
             onStats={setStats}
             landing={{
-              href: writeLink({ site: IM2_LANDING.site, cursorMs: null, language: linkLanguage, view, ...IM2_LANDING.choice, page: 'answer', stats }),
+              href: writeLink({ site: IM2_LANDING.site, cursorMs: null, language: linkLanguage, view, ...IM2_LANDING.choice, page: 'answer', stats, classic: link.classic }),
               open: () => {
                 setSiteRef(IM2_LANDING.site)
                 setChoice(IM2_LANDING.choice)

@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
-import { expect, test, type Locator, type Page, type Route } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Locator, Page, Route } from '@playwright/test'
 
 // the requirement. A validation check found the floating "Ask/Perguntar" button at (296, 677),
 // 78×44 px, on a 390×844 phone, lying over the end of the headline, the October to December columns

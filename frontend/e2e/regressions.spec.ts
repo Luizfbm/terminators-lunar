@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page } from '@playwright/test'
 
 // One test per defect we have shipped or nearly shipped. Each says what broke and when.
 

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page } from '@playwright/test'
 
 // Read at run time, not imported: the web image has only frontend/ and its build type-checks
 // this file (the requirement).

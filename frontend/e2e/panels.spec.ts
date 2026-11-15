@@ -1,4 +1,5 @@
-import { expect, test, type Route } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Route } from '@playwright/test'
 
 // The mock answers with the contract's examples: the ladder of CR05 (Sunset 5 h 44 min later at
 // 240 m than at 20 m) and the year 2027 at Site 001.

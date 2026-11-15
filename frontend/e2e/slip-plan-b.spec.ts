@@ -1,4 +1,5 @@
-import { expect, test, type Page, type Route } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page, Route } from '@playwright/test'
 
 // the requirement: plan B for a launch that slips, read from GET /sites/{site_id}/neighbours.
 // The mock serves one slip answer (Site 001 from the regression fixture) and one neighbours answer (Site 001

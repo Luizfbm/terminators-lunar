@@ -123,8 +123,9 @@
   position: absolute;
   inset: 5px;
   border-radius: 50%;
-  background: #cfd3dc;
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--bg) 70%, transparent);
+  /* The colour of the Sites layer in orbit (domain/markers.ts), so a Site looks the same at both levels. */
+  background: #5ef2c8;
+  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.75);
   transition: transform 0.15s ease;
 }
 
@@ -136,6 +137,20 @@
 .globe__site .globe__name {
   left: 22px;
   top: 1px;
+}
+
+/* A mission's landing on the map: its own colour, and its name in view, as in orbit. */
+.globe__site[data-mission='true']::before {
+  background: #fff;
+  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.75);
+}
+
+.globe__site[data-mission='true'] .globe__name {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 14px;
+  visibility: visible;
 }
 
 /* The chosen Site already has its name beside it. */

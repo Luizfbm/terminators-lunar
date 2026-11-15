@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Route } from '@playwright/test'
+import { classic } from './classic'
 
 // the requirement: the dive to the ground and back, nothing fetched in the middle of the move, and no
 // blank answer on a Site change. The globe's canvas says where its camera is in `data-dive`
@@ -14,9 +15,9 @@ const sky = (page: Page) => page.locator('.sky canvas')
 /** A loading mark someone can see: not one inside the hidden globe. */
 const visibleLoading = (page: Page) => page.locator('.stage__loading:visible')
 
-async function openOnGlobe(page: Page) {
+async function openOnGlobe(page: Page, url = '/') {
   const answered = page.waitForResponse((response) => new URL(response.url()).pathname === '/visibility')
-  await page.goto('/')
+  await page.goto(url)
   await answered
   await expect(globe(page)).toHaveAttribute('data-ready', 'true')
 }
@@ -157,7 +158,8 @@ test('a click on another Site moves the ring at once and keeps the last answer, 
     if (answers > 1) await held
     await route.continue()
   })
-  await openOnGlobe(page)
+  // The Site list is in the answer column, which Larissa's layout does not show: this test opens the classic one.
+  await openOnGlobe(page, classic('/'))
   const heading = await page.getByRole('heading', { level: 1 }).textContent()
   // The ring marks the Site of the answer on screen.
   const trigger = await page.getByRole('button', { name: /^Site: / }).textContent()
