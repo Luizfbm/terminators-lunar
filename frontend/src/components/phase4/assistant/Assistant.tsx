@@ -4,7 +4,6 @@ import { ApiError, type VisibilityResult } from '../../../api/client'
 import { yearOf } from '../../../domain/year'
 import { useI18n } from '../../../i18n/I18nContext'
 import { askAssistant, assistantRequest, BusyError } from './api'
-import { AskButton } from './AskButton'
 import { AssistantPanel } from './AssistantPanel'
 import { revealSource, sourceHref } from './reveal'
 import type { AskStatus, Turn } from './types'
@@ -19,13 +18,13 @@ type Conversation = { turns: Turn[]; status: AskStatus; draft: string }
 const EMPTY: Conversation = { turns: [], status: { status: 'idle' }, draft: '' }
 
 /**
- * The assistant on the screen (the requirement): its button in the top bar and its sheet. It owns the
+ * The assistant on the screen (the requirement): its sheet. The way in is the menu's "Ask" item, which
+ * the App owns (`open`), so the same conversation stays whichever view the menu is on. It owns the
  * conversation, which lives in this component's memory only: nothing goes in the link or in
  * storage, and closing the tab ends it.
  */
-export function Assistant({ result }: { result: VisibilityResult | null }) {
+export function Assistant({ result, open, onOpenChange }: { result: VisibilityResult | null; open: boolean; onOpenChange: (open: boolean) => void }) {
   const { locale, t } = useI18n()
-  const [open, setOpen] = useState(false)
   const [conversation, setConversation] = useState<Conversation>(EMPTY)
   const [slow, setSlow] = useState(false)
   const inFlight = useRef<AbortController | null>(null)
@@ -96,11 +95,10 @@ export function Assistant({ result }: { result: VisibilityResult | null }) {
 
   return (
     <>
-      <AskButton open={open} onOpen={() => setOpen(true)} />
       {createPortal(
         <AssistantPanel
           open={open}
-          onClose={() => setOpen(false)}
+          onClose={() => onOpenChange(false)}
           context={query ? { site: query.site.name, startMs: Date.parse(query.start), durationHours: query.duration_hours } : null}
           turns={turns}
           status={status}
@@ -122,7 +120,7 @@ export function Assistant({ result }: { result: VisibilityResult | null }) {
           }}
           hrefFor={sourceHref}
           onSource={(source) => {
-            setOpen(false)
+            onOpenChange(false)
             revealSource(source, panels)
           }}
         />,

@@ -1,5 +1,8 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
-import { Answer, occluderLabel } from './components/Answer'
+import { AnswerCard, AnswerDetails, occluderLabel } from './components/Answer'
+import { AppNav } from './components/AppNav'
+import { Drawer } from './components/Drawer'
+import { GlobeMenu } from './components/GlobeMenu'
 import { Assistant } from './components/phase4/assistant/Assistant'
 import { StageLoading } from './components/StageLoading'
 import { Cover, coverSeen, rememberCover } from './components/Cover'
@@ -16,6 +19,7 @@ import {
   clampCursor,
   initialCursor,
   isCoordinate,
+  goToPage,
   isCustomSite,
   readLink,
   writeLink,
@@ -83,6 +87,9 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
   const globeMounted = globeSeen || scenes.globeShown
   const [page, setPage] = useState<Page>(link.page)
   const [stats, setStats] = useState(link.stats)
+  // The drawer of details over the globe, and the assistant's sheet: both live in the link or the App, not in the panels.
+  const [details, setDetails] = useState(link.details === true)
+  const [askOpen, setAskOpen] = useState(false)
   // The cover is for the plain address, once per browser: a link with a Query goes to its answer.
   const [cover, setCover] = useState(() => window.location.search === '' && !coverSeen())
   const [guideStep, setGuideStep] = useState<number | null>(null)
@@ -94,7 +101,11 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
   // While the cover is up the app waits behind it, out of reach of the mouse and the keyboard.
   const coverOpen = cover && page === 'answer'
   useEffect(() => {
-    const follow = () => setPage(readLink(window.location.search).page)
+    const follow = () => {
+      const now = readLink(window.location.search)
+      setPage(now.page)
+      setDetails(now.details === true)
+    }
     window.addEventListener('popstate', follow)
     return () => window.removeEventListener('popstate', follow)
   }, [])
@@ -184,11 +195,11 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
     if (playing) return
     const timer = window.setTimeout(() => {
       // What the App does not own (a panel's own setting) passes through from the current link.
-      const query = writeLink({ ...readLink(window.location.search), site: siteRef, cursorMs: movedCursor, language: linkLanguage, view, ...choice, page, stats }, window.location.search)
+      const query = writeLink({ ...readLink(window.location.search), site: siteRef, cursorMs: movedCursor, language: linkLanguage, view, ...choice, page, stats, details }, window.location.search)
       window.history.replaceState(null, '', `${window.location.pathname}${query}`)
     }, 300)
     return () => window.clearTimeout(timer)
-  }, [playing, siteRef, movedCursor, linkLanguage, view, choice, page, stats])
+  }, [playing, siteRef, movedCursor, linkLanguage, view, choice, page, stats, details])
 
   const play = () => {
     if (!playing && result && cursorMs >= endMs) setMovedCursor(startMs)
@@ -245,52 +256,59 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
     if (!showing && view === 'orbit') setView('ground')
   }
 
+  // What the top bar held is at the foot of the globe's menu now; the same items are on the solo menu
+  // when the globe is not on screen (the view from the ground, the Proof page).
+  const nav = (close: () => void) => (
+    <AppNav
+      page={page}
+      locale={locale}
+      askOpen={askOpen}
+      onGuide={() => {
+        closeCover()
+        setDetails(false)
+        setPage('answer')
+        setGuideStep(0)
+      }}
+      onAbout={() => {
+        setGuideStep(null)
+        setDetails(false)
+        setPage('answer')
+        setCover(true)
+      }}
+      onAsk={() => setAskOpen(true)}
+      onProof={() => {
+        setDetails(false)
+        goToPage('proof')
+      }}
+      onLocale={(code) => {
+        setLinkLanguage(code)
+        onLocale(code)
+      }}
+      onDone={close}
+    />
+  )
+  const globeMenuShown = page === 'answer' && result !== null && globeMounted && scenes.globeShown
+
   // A link can carry a point north of the polar maps: say so, and offer the way back.
   const customOutside = state.status === 'error' && state.code === 'outside_coverage' && isCoordinate(siteRef)
 
   return (
     <div className="screen">
-      <header className="bar">
-        <p>
-          <strong>{t('app.name')}</strong> · {t('app.place')}
-        </p>
-        <p className="bar__nav">
-          <button
-            type="button"
-            onClick={() => {
-              closeCover()
-              setPage('answer')
-              setGuideStep(0)
-            }}
-          >
-            {t('bar.guide')}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setGuideStep(null)
-              setPage('answer')
-              setCover(true)
-            }}
-          >
-            {t('bar.about')}
-          </button>
-          <Assistant result={result} />
-        </p>
-        <p className="bar__lang">
-          {(['pt', 'en'] as const).map((code) => (
-            <button key={code} type="button" lang={code} aria-pressed={locale === code} aria-label={`${code.toUpperCase()} ${t(`lang.${code}`)}`}
-              onClick={() => {
-                setLinkLanguage(code)
-                onLocale(code)
-              }}
-            >
-              {code.toUpperCase()}
-            </button>
-          ))}
-        </p>
-      </header>
-
+      {!globeMenuShown && (
+        // The globe's menu is not there (the view from the ground, the Proof page, the first answer on its way):
+        // this one carries the levels and the app's own items.
+        <GlobeMenu
+          mode="map"
+          level={page === 'proof' ? null : levelOfView(view)}
+          onLevel={(next) => {
+            if (page === 'proof') goToPage('answer')
+            setView(next)
+          }}
+          onView={() => undefined}
+          onLayers={() => undefined}
+          nav={coverOpen ? undefined : nav}
+        />
+      )}
       {page === 'proof' && <Proof />}
 
       <section className="stage" hidden={page === 'proof'} inert={coverOpen}>
@@ -314,6 +332,7 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
               mode={stage.globeMode}
               level={levelOfView(view)}
               onLevel={setView}
+              nav={coverOpen ? undefined : nav}
               dive={scenes.globeDived}
               paused={!scenes.globeShown}
               onDive={(atSite) => {
@@ -338,7 +357,43 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
             <GroundView result={result} cursorMs={cursorMs} mark={mark} pose={scenes.skyPose} />
           </div>
         )}
-        {/* Under 900 px wide the foot sits below the picture, never on it (the requirement). */}
+        {/* The essentials over the globe, top right; the rest is behind Details. While the next Site is asked for, the last answer stays, dimmed: never a blank card. */}
+        <section className="card" aria-label={t('card.label')} data-stale={state.status === 'loading' && answer !== null} aria-busy={state.status === 'loading'}>
+          <p className="card__app">
+            <strong>{t('app.name')}</strong> · {t('app.place')}
+          </p>
+          {result?.provenance.synthetic && <p className="demo">{t('demo')}</p>}
+          {state.status === 'loading' && (
+            <p className="status" role="status">
+              {t(isCoordinate(siteRef) ? 'sites.custom.loading' : 'status.loading')}
+            </p>
+          )}
+          {state.status === 'error' && (
+            <div className="status status--error" role="alert">
+              <p className="status__title">{t('error.title')}</p>
+              {customOutside ? (
+                <>
+                  <p>{t('sites.custom.outside')}</p>
+                  <button type="button" className="status__retry" onClick={() => setSiteRef(null)}>
+                    {t('sites.custom.backToDefault')}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p>{t(ERROR_KEYS[state.code] ?? 'error.unknown')}</p>
+                  <button type="button" className="status__retry" onClick={retry}>
+                    {t('error.retry')}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+          {result && answer && <AnswerCard result={result} cursorMs={cursorMs} marked={marked} onMark={onMark} />}
+          <button type="button" className="card__details" aria-haspopup="dialog" aria-expanded={details && page === 'answer'} onClick={() => setDetails(true)}>
+            {t('details.open')}
+          </button>
+        </section>
+        {/* The foot of the stage: the view buttons. */}
         <div className="stage__foot">
           <p className="views">
             {(['orbit', 'map', 'ground'] as const).map((name) => (
@@ -351,44 +406,15 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
         </div>
       </section>
 
-      {/* While the next Site is asked for, the last answer stays, dimmed: never a blank column. */}
-      <main className="answer" hidden={page === 'proof'} inert={coverOpen} data-stale={state.status === 'loading' && answer !== null} aria-busy={state.status === 'loading'}>
-        {result?.provenance.synthetic && <p className="demo">{t('demo')}</p>}
-        {state.status === 'loading' && (
-          <p className="status" role="status">
-            {t(isCoordinate(siteRef) ? 'sites.custom.loading' : 'status.loading')}
-          </p>
-        )}
-        {state.status === 'error' && (
-          <div className="status status--error" role="alert">
-            <p className="status__title">{t('error.title')}</p>
-            {customOutside ? (
-              <>
-                <p>{t('sites.custom.outside')}</p>
-                <button type="button" className="status__retry" onClick={() => setSiteRef(null)}>
-                  {t('sites.custom.backToDefault')}
-                </button>
-              </>
-            ) : (
-              <>
-                <p>{t(ERROR_KEYS[state.code] ?? 'error.unknown')}</p>
-                <button type="button" className="status__retry" onClick={retry}>
-                  {t('error.retry')}
-                </button>
-              </>
-            )}
-          </div>
-        )}
+      <Drawer open={details && page === 'answer'} onClose={() => setDetails(false)} stale={state.status === 'loading' && answer !== null}>
         {result && answer && (
-          <Answer
+          <AnswerDetails
             result={result}
             cursorMs={cursorMs}
             where={
               <Where result={result} meta={answer.meta} sites={sites} choice={choice} onSite={setSiteRef} onCoordinate={setSiteRef} onChoice={setChoice} />
             }
             // A Window starts on a whole UTC day in the Query, so a best Window opens from its first day.
-            marked={marked}
-            onMark={onMark}
             onWindow={(best) => setChoice({ ...choice, startDay: best.start.slice(0, 10), hours: best.durationHours })}
             stats={stats}
             onStats={setStats}
@@ -400,13 +426,13 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
                 // The Cursor goes back to the start of the new Window.
                 setMovedCursor(null)
                 // The link sits under the numbers; the new answer is read from its first line.
-                document.querySelector('main.answer')?.scrollTo({ top: 0 })
-                window.scrollTo({ top: 0 })
+                document.querySelector('.drawer__body')?.scrollTo({ top: 0 })
               },
             }}
           />
         )}
-      </main>
+      </Drawer>
+      <Assistant result={result} open={askOpen} onOpenChange={setAskOpen} />
 
       {result && answer && page === 'answer' && (
         <TimeStrip
@@ -424,6 +450,11 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
       )}
       {coverOpen && (
         <Cover
+          locale={locale}
+          onLocale={(code) => {
+            setLinkLanguage(code)
+            onLocale(code)
+          }}
           onStart={() => {
             closeCover()
             setGuideStep(0)

@@ -104,13 +104,36 @@ function summaryKey(metrics: VisibilityResult['metrics']): MessageKey {
   return 'summary'
 }
 
-export function Answer({
+/**
+ * The essentials, for the card over the globe: the plain sentence for the Sun, the Countdown to its Sunset
+ * and the one to the Earthset, each with its Occluder.
+ */
+export function AnswerCard({
+  result,
+  cursorMs,
+  marked = null,
+  onMark,
+}: {
+  result: VisibilityResult
+  cursorMs: number
+  /** Whose Occluder is marked on the horizon, if any, and the way to mark one. */
+  marked?: Body | null
+  onMark?: (body: Body) => void
+}) {
+  return (
+    <>
+      <BodyStatement body="sun" result={result} cursorMs={cursorMs} heading="h1" marked={marked === 'sun'} onMark={onMark} />
+      <BodyStatement body="earth" result={result} cursorMs={cursorMs} heading="h2" marked={marked === 'earth'} onMark={onMark} />
+    </>
+  )
+}
+
+/** Everything else the answer says, for the drawer: the Query line, the metrics, the panels and the way to the Proof. */
+export function AnswerDetails({
   result,
   cursorMs,
   where,
   onWindow,
-  marked = null,
-  onMark,
   landing,
   stats = false,
   onStats,
@@ -121,9 +144,6 @@ export function Answer({
   where: ReactNode
   /** Picking one of the year's best Windows puts it in the Query. */
   onWindow?: (choice: WindowChoice) => void
-  /** Whose Occluder is marked on the horizon, if any, and the way to mark one. */
-  marked?: Body | null
-  onMark?: (body: Body) => void
   /** The way to the IM-2 landing: a real address, and what a click on it does. */
   landing?: { href: string; open: () => void }
   /** Whether "Stats for nerds" is open, and the way to open or close it. */
@@ -137,9 +157,7 @@ export function Answer({
   return (
     <>
       {where}
-      <BodyStatement body="sun" result={result} cursorMs={cursorMs} heading="h1" marked={marked === 'sun'} onMark={onMark} />
       <FlatLine result={result} cursorMs={cursorMs} />
-      <BodyStatement body="earth" result={result} cursorMs={cursorMs} heading="h2" marked={marked === 'earth'} onMark={onMark} />
       {/* The engine sees this point sunlit, and the mission still ended: say why, here. */}
       {atLanding && <p className="landing-note">{t('landing.im2.note')}</p>}
       <p className="sum">

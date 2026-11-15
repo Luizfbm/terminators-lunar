@@ -157,6 +157,25 @@ describe('"Stats for nerds" in the link', () => {
   })
 })
 
+describe('the Details drawer in the link', () => {
+  const closed = { site: null, cursorMs: null, language: null, view: 'orbit', startDay: null, hours: null, heightM: null, page: 'answer', stats: false } as const
+
+  it('goes in the link when open and comes back', () => {
+    expect(writeLink({ ...closed, details: true })).toBe('?details=1')
+    expect(readLink('?details=1')).toEqual({ ...closed, details: true })
+  })
+
+  it('is left out when closed, so the plain address stays the plain screen', () => {
+    expect(writeLink({ ...closed, details: false })).toBe('')
+    expect(readLink('?details=0').details).toBeUndefined()
+    expect(readLink('?details=yes').details).toBeUndefined()
+  })
+
+  it('rides along with the rest of the Query', () => {
+    expect(writeLink({ ...closed, site: 'CR05', stats: true, details: true })).toBe('?site=CR05&stats=1&details=1')
+  })
+})
+
 describe('the link and the panels', () => {
   // the requirement: a panel keeps its own setting in the link, and the App's link writer used to drop it.
   it('carries the parameters it does not own', () => {

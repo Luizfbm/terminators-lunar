@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { earthAttitude, subLunarPoint } from '../domain/earthFace'
@@ -84,6 +84,8 @@ export interface GlobeProps {
   level?: LevelId | null
   /** A level of the menu was clicked: the view to go to. */
   onLevel?: (view: View) => void
+  /** Items the app adds at the foot of the menu. */
+  nav?: (close: () => void) => ReactNode
 }
 
 const GRID_LATITUDES = [-88, -86, -84, -82, -80]
@@ -1065,7 +1067,27 @@ export function Globe(props: GlobeProps) {
     return () => window.clearTimeout(waited)
   }, [])
 
-  if (!supported) return <p className="stage__note">{props.unavailable}</p>
+  // Also where the globe cannot be drawn: the app's own items live in this menu.
+  const menu = (
+    <GlobeMenu
+      mode={mode}
+      level={props.level === undefined ? levelOfView(mode) : props.level}
+      onLevel={props.onLevel}
+      onView={(view) => {
+        turnAsked.current = view
+      }}
+      onLayers={setLayers}
+      nav={props.nav}
+    />
+  )
+
+  if (!supported)
+    return (
+      <>
+        <p className="stage__note">{props.unavailable}</p>
+        {menu}
+      </>
+    )
 
   return (
     <div className="globe" ref={frame} data-dressed={dressed} data-mode={mode}>
@@ -1110,15 +1132,7 @@ export function Globe(props: GlobeProps) {
           <span key={latitude}>{`${-latitude}°\u00a0S`}</span>
         ))}
       </div>
-      <GlobeMenu
-        mode={mode}
-        level={props.level === undefined ? levelOfView(mode) : props.level}
-        onLevel={props.onLevel}
-        onView={(view) => {
-          turnAsked.current = view
-        }}
-        onLayers={setLayers}
-      />
+      {menu}
     </div>
   )
 }

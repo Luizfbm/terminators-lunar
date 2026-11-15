@@ -74,9 +74,6 @@ export function TimeStrip({
       <p className="strip__now">
         <span>{t('strip.cursor')}</span> {formatDateTime(cursorMs)}
       </p>
-      {/* On a phone the assistant's Ask button is put here, so it never floats over the page
-          (the requirement). React leaves it empty; AskButton fills it through a portal. */}
-      <span className="strip__ask" />
       <div
         className="strip__track"
         role="slider"

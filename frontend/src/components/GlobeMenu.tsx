@@ -1,6 +1,6 @@
 import '@fontsource/orbitron/latin-500.css'
 import '@fontsource/orbitron/latin-600.css'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { initialMenu, layersOf, MENU_ITEMS, releasedTurns, toggled, type MenuId, type MenuState } from '../domain/globeMenu'
 import { LEVEL_ITEMS, levelPressed, type LevelId } from '../domain/globeLevels'
 import type { View } from '../domain/query'
@@ -20,6 +20,8 @@ export interface GlobeMenuProps {
   onView: (view: MoonView) => void
   /** The switches that show and hide the dots, told on every change. */
   onLayers: (layers: Layers) => void
+  /** Items the app adds at the foot of the menu (its Guide, About, Proof and languages); told how to fold the panel. */
+  nav?: (close: () => void) => ReactNode
 }
 
 /**
@@ -30,7 +32,7 @@ export interface GlobeMenuProps {
  * not kept between visits. On a phone the panel does not fit beside the Moon: it folds into a button in the
  * corner that opens it (the stylesheet decides where; on a wide screen the button is not there).
  */
-export function GlobeMenu({ mode, level, onLevel, onView, onLayers }: GlobeMenuProps) {
+export function GlobeMenu({ mode, level, onLevel, onView, onLayers, nav }: GlobeMenuProps) {
   const [pressed, setPressed] = useState<MenuState>(initialMenu)
   const [open, setOpen] = useState(false)
   // The camera goes its own way when the view changes, so no turn of the Moon is left pressed.
@@ -86,6 +88,7 @@ export function GlobeMenu({ mode, level, onLevel, onView, onLayers }: GlobeMenuP
             ))}
           </>
         )}
+        {nav?.(() => setOpen(false))}
       </div>
     </>
   )

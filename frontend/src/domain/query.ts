@@ -121,6 +121,8 @@ export interface LinkState extends Choice {
   page: Page
   /** Whether "Stats for nerds" is open. */
   stats: boolean
+  /** Whether the Details drawer is open over the globe. */
+  details?: boolean
   /** Outer radius of the Landing scatter; null is the default. Kept by its panel, not by the App. */
   radiusM?: number | null
 }
@@ -156,13 +158,15 @@ export function readLink(search: string): LinkState {
     view: readView(params.get('view')),
     page: params.get('page') === 'proof' ? 'proof' : 'answer',
     stats: params.get('stats') === '1',
+    // Only when the link has it, so a link without it reads back exactly as before.
+    ...(params.get('details') === '1' ? { details: true } : {}),
     // Only when the link has one, so a link without it reads back exactly as before.
     ...(Number.isFinite(radius) && radius >= RADIUS_MIN_M && radius <= RADIUS_MAX_M ? { radiusM: radius } : {}),
   }
 }
 
 /** The parameters `writeLink` owns. Any other one belongs to a panel and is carried over by `keep`. */
-const LINK_KEYS = new Set(['lat', 'lon', 'site', 't', 'lang', 'view', 'start', 'hours', 'height', 'stats', 'page', 'radius'])
+const LINK_KEYS = new Set(['lat', 'lon', 'site', 't', 'lang', 'view', 'start', 'hours', 'height', 'stats', 'details', 'page', 'radius'])
 
 /**
  * The query string for a state. Defaults are left out, so the plain address stays the plain screen.
@@ -186,6 +190,7 @@ export function writeLink(state: LinkState, keep = ''): string {
   if (state.hours !== null) params.set('hours', String(state.hours))
   if (state.heightM !== null) params.set('height', String(state.heightM))
   if (state.stats) params.set('stats', '1')
+  if (state.details) params.set('details', '1')
   if (state.radiusM != null) params.set('radius', String(state.radiusM))
   if (state.page === 'proof') params.set('page', 'proof')
   const text = params.toString()
@@ -205,5 +210,14 @@ export function clampCursor(ms: number, windowStartMs: number, windowEndMs: numb
 export function goToPage(page: Page): void {
   const query = writeLink({ ...readLink(window.location.search), page }, window.location.search)
   window.history.pushState(null, '', `${window.location.pathname}${query}`)
+  window.dispatchEvent(new PopStateEvent('popstate'))
+}
+
+/** Opens the Details drawer from outside the App (the assistant's sources): the link changes and the App follows it. */
+export function openDetails(): void {
+  const current = readLink(window.location.search)
+  if (current.details) return
+  const query = writeLink({ ...current, details: true }, window.location.search)
+  window.history.replaceState(null, '', `${window.location.pathname}${query}`)
   window.dispatchEvent(new PopStateEvent('popstate'))
 }

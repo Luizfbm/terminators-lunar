@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'react'
 import { useI18n } from '../i18n/I18nContext'
 import type { MessageKey } from '../i18n/messages'
 
-/** What each tip points at: the Site, the time strip with its Cursor, the three views. */
-const TARGETS = ['.where button.site', 'footer.strip', '.views'] as const
+/** What each tip points at: the way to the Site (the Details button), the time strip with its Cursor, the three views. */
+const TARGETS = ['.card__details', 'footer.strip', '.views'] as const
 export const GUIDE_STEPS = TARGETS.length
 
 /**

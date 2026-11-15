@@ -1,7 +1,7 @@
 // Where each source of an answer shows on the screen (the requirement). The assistant is mounted with
 // one element and no hold on the App's state, so it moves the screen the way a visitor would: the
 // page through the link, "Stats for nerds" and its panels through their own buttons.
-import { goToPage, readLink, writeLink } from '../../../domain/query'
+import { goToPage, openDetails, readLink, writeLink } from '../../../domain/query'
 import type { AssistantSource } from './types'
 
 /** The panel inside "Stats for nerds" that shows an operation, by the label of its button. */
@@ -23,8 +23,10 @@ export function revealSource(source: AssistantSource, panels: PanelLabels): void
     return
   }
   if (readLink(window.location.search).page !== 'answer') goToPage('answer')
-  // The answer page renders on the next frame after a page change; the nerds panel after its click.
-  requestAnimationFrame(() => {
+  // What the answer says beyond the card is in the Details drawer: it is opened first.
+  openDetails()
+  // The answer page and the drawer render on the next frame; the nerds panel after its click.
+  requestAnimationFrame(() => requestAnimationFrame(() => {
     if (source.operation === 'listSites' || source.operation === 'getSite') {
       // The Site picker is the first control of the Query line.
       const where = document.querySelector<HTMLElement>('.where button')
@@ -44,5 +46,5 @@ export function revealSource(source: AssistantSource, panels: PanelLabels): void
       target?.scrollIntoView({ block: 'start' })
       target?.focus()
     })
-  })
+  }))
 }

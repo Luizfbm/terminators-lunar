@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useI18n } from '../i18n/I18nContext'
+import type { Locale } from '../i18n/messages'
 
 const KEY = 'lunar.cover'
 
@@ -28,7 +29,11 @@ export function Cover({
   onStart,
   onLanding,
   onClose,
+  locale,
+  onLocale,
 }: {
+  locale: Locale
+  onLocale: (locale: Locale) => void
   onStart: () => void
   onLanding: () => void
   onClose: () => void
@@ -47,6 +52,14 @@ export function Cover({
 
   return (
     <div className="cover" role="dialog" aria-modal="true" aria-labelledby="cover-title">
+      {/* The menu waits behind the cover with the rest of the app, so the language is changed from here. */}
+      <p className="cover__lang">
+        {(['pt', 'en'] as const).map((code) => (
+          <button key={code} type="button" lang={code} aria-pressed={locale === code} aria-label={`${code.toUpperCase()} ${t(`lang.${code}`)}`} onClick={() => onLocale(code)}>
+            {code.toUpperCase()}
+          </button>
+        ))}
+      </p>
       <div className="cover__text">
         <h1 id="cover-title" className="cover__title">
           {t('cover.title')}
