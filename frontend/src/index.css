@@ -358,6 +358,7 @@ footer[data-guide='true'] {
 }
 
 .globe[data-dressed='false'] .globe__pin,
+.globe[data-dressed='false'] .globe__planets,
 .globe[data-dressed='false'] .globe__grid {
   visibility: hidden;
 }
@@ -421,6 +422,29 @@ footer[data-guide='true'] {
   text-shadow:
     0 0 6px var(--bg),
     0 0 2px var(--bg);
+}
+
+.globe__planets {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* The name of a planet in the sky behind the Moon: small and dim, beside its point of light. */
+.globe__planets span {
+  position: absolute;
+  transform: translate(0, -50%);
+  color: var(--dim);
+  font-size: 11px;
+  line-height: 14px;
+  white-space: nowrap;
+  text-shadow:
+    0 0 6px var(--bg),
+    0 0 2px var(--bg);
+}
+
+.globe__planets span[data-side='left'] {
+  transform: translate(-100%, -50%);
 }
 
 .globe__pin--left {

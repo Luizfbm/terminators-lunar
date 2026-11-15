@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { EARTH_ANGULAR_RADIUS_DEG, projectedRadiusPx, SUN_ANGULAR_RADIUS_DEG } from '../src/domain/spaceScale'
-import { findOnStage, readGlobe, settle, zoomAllTheWay } from './orbit'
+import { findOnStage, readGlobe, settle, tipTo, turn, zoomAllTheWay } from './orbit'
 
 // The Prism mock answers every Query with the contract's example: Connecting Ridge CR01, a Window from
 // 20/11/2026 12:00 UTC to 30/11/2026 12:00 UTC, with Sunsets behind the rim of Shackleton, two Short
@@ -222,6 +222,49 @@ test.describe('from orbit the Sun and the Earth pass in the sky behind the Moon'
       expect(earth.found.r).toBeGreaterThan(sun.found.r)
     })
   }
+
+  // ADR 0007: the planets are points of light in the same sky, named beside the point, and a name never
+  // covers the Site's name or the view buttons. Which planets are on the stage depends on the Cursor and
+  // the turn of the camera, so the test goes round the Moon until one is named.
+  test.describe('the planets', () => {
+    test.use({ locale: 'pt-BR' })
+
+    test('are named in the language of the page, clear of the Site and of the view buttons', async ({ page }) => {
+      await page.goto('/')
+      await expect(page.locator('.globe')).toHaveAttribute('data-dressed', 'true', { timeout: 20_000 })
+      await settle(page)
+      await zoomAllTheWay(page, 'out')
+      const named = async () => (await page.locator('.globe').getAttribute('data-planet-names')) ?? ''
+      search: for (const polar of [90, 70, 110, 50, 130]) {
+        await tipTo(page, polar)
+        for (let step = 0; step < 24; step++) {
+          if ((await named()) !== '') break search
+          await turn(page, 15)
+        }
+      }
+      const ids = (await named()).split(',')
+      expect(ids.length).toBeGreaterThan(0)
+      const portuguese: Record<string, string> = {
+        mercury: 'Mercúrio',
+        venus: 'Vênus',
+        mars: 'Marte',
+        jupiter: 'Júpiter',
+        saturn: 'Saturno',
+        uranus: 'Urano',
+        neptune: 'Netuno',
+      }
+      const labels = page.locator('.globe__planets span:not([hidden])')
+      expect(await labels.allTextContents()).toEqual(expect.arrayContaining(ids.map((id) => portuguese[id])))
+      for (const box of await labels.evaluateAll((elements) => elements.map((element) => element.getBoundingClientRect().toJSON()))) {
+        for (const other of ['.stage__foot', '.globe__pin']) {
+          const against = await page.locator(other).first().boundingBox()
+          if (!against) continue
+          const apart = box.right <= against.x || against.x + against.width <= box.left || box.bottom <= against.y || against.y + against.height <= box.top
+          expect(apart, `a planet's name over ${other}`).toBe(true)
+        }
+      }
+    })
+  })
 
   test("the orbit keeps the camera's limits: no closer than 1.04 Moon radii and no further than 6", async ({ page }) => {
     await page.goto('/')
