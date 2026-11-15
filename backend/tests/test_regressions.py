@@ -1559,3 +1559,44 @@ def test_the_uncertainty_of_a_global_point_names_each_unvaried_dem_once(
     )
     assert response.status_code == 200, response.text
     assert response.json()["uncovered"] == [horizon.GLOBAL_PRODUCT]
+
+
+def test_the_sampling_step_argument_leaves_the_horizon_mask_as_it_was() -> None:
+    """regression guard, 15/11/2026: the convergence check (validation/test_convergence.py)
+    needed `horizon._compute` to take a step scale. Its default has to be the engine's
+    answer: 720 rays every 0.5°, half a pixel along each. The expected elevations are the
+    Site 001 mask at 2 m, read off the code before the argument existed (every 30th ray).
+    """
+    expected = [
+        0.7246977,
+        -0.0390404,
+        -1.2253873,
+        -1.6225507,
+        -2.0754625,
+        -1.485687,
+        -1.1593553,
+        -2.2465989,
+        -1.6714597,
+        -1.5624739,
+        -2.2112717,
+        -1.250739,
+        -1.2956555,
+        -0.7432153,
+        -0.1958176,
+        -0.9819816,
+        -0.9530123,
+        -1.6000338,
+        -0.8342478,
+        -0.5363619,
+        -0.0686374,
+        0.2632918,
+        0.6462246,
+        0.97551,
+    ]
+    payload = visibility({**MARCH_2025, "observer_height_m": 2})
+    samples = payload["horizon"]["samples"]
+    assert len(samples) == 720
+    assert payload["horizon"]["azimuth_step_deg"] == 0.5
+    assert [samples[i]["elevation_deg"] for i in range(0, 720, 30)] == pytest.approx(
+        expected, abs=1e-6
+    )

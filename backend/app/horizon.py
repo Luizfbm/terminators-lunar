@@ -437,20 +437,28 @@ def _compute(
     longitude_deg: float,
     height_m: float,
     reads: Reads,
+    step_scale: float = 1.0,
 ) -> Mask:
-    """The Horizon mask over `bands`. `reads` may already hold a band's pixels (the clones')."""
-    azimuths: Array = np.arange(HORIZON_SAMPLES, dtype=np.float64) * AZIMUTH_STEP_DEG
+    """The Horizon mask over `bands`. `reads` may already hold a band's pixels (the clones').
+
+    `step_scale` multiplies both sampling steps, the one between rays and the one along each
+    ray: 1.0 is the engine's (720 rays, half a pixel), 0.5 is half the step in both (1440
+    rays, a quarter of a pixel). Only the convergence check in validation/ passes anything
+    else, to see whether the sampling changes the mask.
+    """
+    rays = round(HORIZON_SAMPLES / step_scale)
+    azimuths: Array = np.arange(rays, dtype=np.float64) * (AZIMUTH_STEP_DEG * step_scale)
     first = bands[0]
     site_x, site_y = _project(first, np.array([latitude_deg]), np.array([longitude_deg]))
     site_height = float(_heights(Path(folder), first, site_x, site_y, reads)[0])
     observer_radius = MOON_RADIUS_M + site_height + height_m
 
-    best = np.full(HORIZON_SAMPLES, -math.inf)
-    best_distance = np.zeros(HORIZON_SAMPLES)
-    best_lat = np.zeros(HORIZON_SAMPLES)
-    best_lon = np.zeros(HORIZON_SAMPLES)
-    best_height = np.zeros(HORIZON_SAMPLES)
-    rows = np.arange(HORIZON_SAMPLES)
+    best = np.full(rays, -math.inf)
+    best_distance = np.zeros(rays)
+    best_lat = np.zeros(rays)
+    best_lon = np.zeros(rays)
+    best_height = np.zeros(rays)
+    rows = np.arange(rays)
 
     def look(distances: Array, band: Band) -> tuple[Array, Array, Array, Array]:
         lat, lon = _destination(latitude_deg, longitude_deg, azimuths, distances)
@@ -465,7 +473,7 @@ def _compute(
 
     def band_peaks(band: Band) -> tuple[Array, Array, Array, Array, Array]:
         """The highest point of every ray inside one band, after the peak zoom."""
-        step = _step_of(band)
+        step = _step_of(band) * step_scale
         start = max(band.inner_m, step)
         coarse: Array = np.arange(start, band.outer_m + step / 2, step)
         elevation, _, _, _ = look(coarse, band)
@@ -476,17 +484,17 @@ def _compute(
         count = min(PEAKS_PER_RAY, coarse.size)
         picks = np.argpartition(-ranked, count - 1, axis=1)[:, :count]
         centre = np.broadcast_to(coarse[picks], picks.shape).copy()
-        half = np.full(HORIZON_SAMPLES, step)
+        half = np.full(rays, step)
         offsets = np.linspace(-1.0, 1.0, ZOOM_POINTS)
         low, high = start, band.outer_m
         for _ in range(ZOOM_ROUNDS):
             grid = np.clip(
                 centre[:, :, None] + half[:, None, None] * offsets[None, None, :], low, high
-            ).reshape(HORIZON_SAMPLES, -1)
+            ).reshape(rays, -1)
             values, lat, lon, terrain = look(grid, band)
-            values = values.reshape(HORIZON_SAMPLES, count, ZOOM_POINTS)
+            values = values.reshape(rays, count, ZOOM_POINTS)
             centre = np.take_along_axis(
-                grid.reshape(HORIZON_SAMPLES, count, ZOOM_POINTS),
+                grid.reshape(rays, count, ZOOM_POINTS),
                 values.argmax(axis=2)[:, :, None],
                 axis=2,
             )[:, :, 0]
@@ -525,7 +533,7 @@ def _compute(
                 "terrain_height_m": float(best_height[i]),
             },
         }
-        for i in range(HORIZON_SAMPLES)
+        for i in range(rays)
     ]
     used: list[dict[str, Any]] = []
     for band in bands:
