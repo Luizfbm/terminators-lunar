@@ -138,7 +138,16 @@ def without_added_fields(answer: dict[str, Any]) -> dict[str, Any]:
     return answer
 
 
+def without_disc_radii(answer: dict[str, Any]) -> dict[str, Any]:
+    """Every sample's apparent radius of the Sun and the Earth, added since (Larissa's #80): there, then gone."""
+    for sample in answer["timeline"]["samples"]:
+        for body in ("sun", "earth"):
+            assert sample[body]["angular_radius_deg"] > 0, sample["t"]
+            del sample[body]["angular_radius_deg"]
+    return answer
+
+
 def test_visibility_answers_what_it_did_before_the_ladder() -> None:
     for name, case in json.loads(BEFORE_THE_LADDER.read_text("utf-8")).items():
-        after = without_added_fields(get("/visibility", case["params"]))
+        after = without_disc_radii(without_added_fields(get("/visibility", case["params"])))
         same(case["answer"], after, name)

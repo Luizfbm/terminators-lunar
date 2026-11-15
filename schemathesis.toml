@@ -112,3 +112,10 @@ checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422", "503"]
 include-name = "GET /visibility/uncertainty"
 generation.max-examples = 8
 checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422", "503"]
+
+# /terrain/heights (Larissa's #52): 422 when no DEM holds the ground around the point, 404 for an
+# unknown Site, 503 when the engine slots or the per-IP cap are full.
+[[operations]]
+include-name = "GET /terrain/heights"
+generation.max-examples = 8
+checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422", "503"]

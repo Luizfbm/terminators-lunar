@@ -21,4 +21,9 @@ def test_the_cold_path_answers_what_it_did_before() -> None:
         # Added since the golden answers were written (the Earth by any part of its disc).
         assert "earth_visible_hours_any_part" in after["metrics"], name
         del after["metrics"]["earth_visible_hours_any_part"]
+        # And every sample's apparent radius of the Sun and the Earth (Larissa's #80).
+        for sample in after["timeline"]["samples"]:
+            for body in ("sun", "earth"):
+                assert sample[body]["angular_radius_deg"] > 0, name
+                del sample[body]["angular_radius_deg"]
         same(case["answer"], after, name)

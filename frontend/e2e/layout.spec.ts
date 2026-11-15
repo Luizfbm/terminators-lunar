@@ -45,3 +45,21 @@ test('the layout stays in the link when the app rewrites it, so a reload is on t
   await expect(page.locator('.screen')).toHaveAttribute('data-layout', 'classic')
   await expect(column(page)).toBeVisible()
 })
+
+test.describe('on a first visit', () => {
+  // A browser that has never seen the cover: the other tests start from one that has (playwright.config.ts).
+  test.use({ storageState: { cookies: [], origins: [] } })
+
+  test('the plain address opens on the globe, with no cover and no guide (Luiz, 15/11/2026)', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.locator('.globe canvas')).toHaveAttribute('data-ready', 'true')
+    await expect(page.getByRole('dialog', { name: 'Will your lander see the Sun?' })).toHaveCount(0)
+    await expect(page.locator('.guide')).toHaveCount(0)
+    await expect(stage(page)).not.toHaveAttribute('inert', /.*/)
+  })
+
+  test('layout=classic still opens on the cover', async ({ page }) => {
+    await page.goto('/?layout=classic')
+    await expect(page.getByRole('dialog', { name: 'Will your lander see the Sun?' })).toBeVisible()
+  })
+})

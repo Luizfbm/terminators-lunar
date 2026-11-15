@@ -99,7 +99,10 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
   const [stats, setStats] = useState(link.stats)
   // The cover is for the plain address, once per browser: a link with a Query goes to its answer.
   // The plain address opens the cover. `layout=classic` says only which layout, not which Query, so it does not count as a link.
-  const [cover, setCover] = useState(() => linkWithoutLayout(window.location.search) === '' && !coverSeen())
+  // Larissa's layout (the default) has no cover and no guide (Luiz, 15/11/2026): only `layout=classic` opens them.
+  const [cover, setCover] = useState(
+    () => new URLSearchParams(window.location.search).get('layout') === 'classic' && linkWithoutLayout(window.location.search) === '' && !coverSeen(),
+  )
   const [guideStep, setGuideStep] = useState<number | null>(null)
   const closeCover = useCallback(() => {
     rememberCover()
