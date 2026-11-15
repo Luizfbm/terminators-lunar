@@ -1,69 +1,62 @@
 import { describe, expect, it } from 'vitest'
 import {
   angularRadiusDeg,
-  CAMERA_FAR,
   discRadius,
-  EARTH_DISTANCE,
-  EARTH_RADIUS,
+  EARTH_ANGULAR_RADIUS_DEG,
   moonHides,
   projectedRadiusPx,
-  STAR_DISTANCE,
   SUN_ANGULAR_RADIUS_DEG,
-  SUN_DISPLAY_DISTANCE,
+  sphereRadius,
 } from './spaceScale'
 
-describe('the Earth in Moon radii', () => {
-  it('is 384,400 km away and 6,371 km across the radius, about 221.3 and 3.667 Moon radii', () => {
-    expect(EARTH_DISTANCE).toBeCloseTo(221.25, 1)
-    expect(EARTH_RADIUS).toBeCloseTo(3.667, 3)
+describe('how big the Earth and the Sun are in the sky of the Moon', () => {
+  it('has the Earth 1.9 degrees across, from 6,371 km at 384,400 km', () => {
+    expect(EARTH_ANGULAR_RADIUS_DEG).toBeCloseTo(0.9496, 3)
+    expect(2 * EARTH_ANGULAR_RADIUS_DEG).toBeCloseTo(1.9, 1)
   })
 
-  it('spans a little under 1 degree of radius, and nearly 2 across, in the sky of the Moon', () => {
-    // The Earth's angular diameter seen from the Moon is about 1.9 degrees.
-    expect(2 * angularRadiusDeg(EARTH_RADIUS, EARTH_DISTANCE)).toBeCloseTo(1.9, 1)
+  it('has the Sun 0.53 degrees across, from its radius and the astronomical unit', () => {
+    expect(SUN_ANGULAR_RADIUS_DEG).toBeCloseTo(0.2665, 3)
+    expect(2 * SUN_ANGULAR_RADIUS_DEG).toBeCloseTo(0.533, 3)
+  })
+
+  it('has the Earth about 3.6 times the width of the Sun', () => {
+    expect(EARTH_ANGULAR_RADIUS_DEG / SUN_ANGULAR_RADIUS_DEG).toBeGreaterThan(3.4)
+    expect(EARTH_ANGULAR_RADIUS_DEG / SUN_ANGULAR_RADIUS_DEG).toBeLessThan(3.8)
   })
 })
 
-describe('the Sun', () => {
-  it('spans about 0.53 degrees across, whatever the distance it is drawn at', () => {
-    expect(SUN_ANGULAR_RADIUS_DEG * 2).toBeCloseTo(0.5329, 3)
-    const radius = discRadius(SUN_DISPLAY_DISTANCE, SUN_ANGULAR_RADIUS_DEG)
-    expect(angularRadiusDeg(radius, SUN_DISPLAY_DISTANCE)).toBeCloseTo(SUN_ANGULAR_RADIUS_DEG, 4)
-    // The radius of a disc 12,000 radii away that fills 0.2665 degrees: about 55.8.
-    expect(radius).toBeCloseTo(55.8, 1)
-    // Twice as far, twice as big: the same angle.
-    expect(discRadius(2 * SUN_DISPLAY_DISTANCE, SUN_ANGULAR_RADIUS_DEG)).toBeCloseTo(2 * radius, 9)
+describe('a body drawn at any distance spans the angle it is given', () => {
+  it('gives a ball the radius that spans that angle', () => {
+    for (const distance of [10, 400, 12_000]) {
+      expect(angularRadiusDeg(sphereRadius(distance, EARTH_ANGULAR_RADIUS_DEG), distance)).toBeCloseTo(EARTH_ANGULAR_RADIUS_DEG, 9)
+    }
   })
 
-  it('is drawn beyond the Earth, in front of the stars, and inside what the camera sees', () => {
-    expect(SUN_DISPLAY_DISTANCE).toBeGreaterThan(EARTH_DISTANCE * 10)
-    expect(SUN_DISPLAY_DISTANCE).toBeLessThan(STAR_DISTANCE)
-    expect(STAR_DISTANCE).toBeLessThan(CAMERA_FAR)
+  it('gives a disc the radius that spans that angle, twice as big twice as far', () => {
+    const near = discRadius(500, SUN_ANGULAR_RADIUS_DEG)
+    expect(near).toBeCloseTo(2.325, 2)
+    expect(discRadius(1000, SUN_ANGULAR_RADIUS_DEG)).toBeCloseTo(2 * near, 9)
+    expect(Math.atan(near / 500) / (Math.PI / 180)).toBeCloseTo(SUN_ANGULAR_RADIUS_DEG, 9)
+  })
+
+  it('has a ball and a disc agree for such small angles', () => {
+    expect(sphereRadius(500, SUN_ANGULAR_RADIUS_DEG)).toBeCloseTo(discRadius(500, SUN_ANGULAR_RADIUS_DEG), 3)
   })
 })
 
 describe('how big a body is on the stage', () => {
-  it('fills half the height when its limb is at the edge of the field of view', () => {
-    // A sphere of radius 1 seen from 1 / sin(16 degrees) away has its limb 16 degrees off axis.
-    expect(projectedRadiusPx(1, 1 / Math.sin((16 * Math.PI) / 180), 32, 800)).toBeCloseTo(400, 6)
+  it('fills half the height when its angle is half the field of view', () => {
+    expect(projectedRadiusPx(16, 32, 800)).toBeCloseTo(400, 9)
   })
 
-  it('shrinks with distance, and has no edge from inside', () => {
-    expect(projectedRadiusPx(1, 6, 32, 800)).toBeLessThan(projectedRadiusPx(1, 3, 32, 800))
-    expect(projectedRadiusPx(1, 1, 32, 800)).toBe(Infinity)
+  it('draws the Sun a few pixels wide and the Earth about 25, on a desktop stage', () => {
+    expect(projectedRadiusPx(SUN_ANGULAR_RADIUS_DEG, 32, 800)).toBeCloseTo(6.5, 1)
+    expect(projectedRadiusPx(EARTH_ANGULAR_RADIUS_DEG, 32, 800)).toBeCloseTo(23.1, 1)
   })
 
-  it('draws the Sun a few pixels wide on a desktop stage, as small as it is in the sky', () => {
-    const px = projectedRadiusPx(discRadius(SUN_DISPLAY_DISTANCE, SUN_ANGULAR_RADIUS_DEG), SUN_DISPLAY_DISTANCE, 32, 800)
-    // 0.2665 degrees against a 16-degree half field, on 400 px of half height.
-    expect(px).toBeCloseTo(6.5, 1)
-  })
-
-  it('draws the Earth nearly four times the Sun from the Moon', () => {
-    const sun = projectedRadiusPx(discRadius(SUN_DISPLAY_DISTANCE, SUN_ANGULAR_RADIUS_DEG), SUN_DISPLAY_DISTANCE, 32, 800)
-    const earth = projectedRadiusPx(EARTH_RADIUS, EARTH_DISTANCE, 32, 800)
-    expect(earth / sun).toBeGreaterThan(3)
-    expect(earth / sun).toBeLessThan(4)
+  it('grows with the height of the stage', () => {
+    expect(projectedRadiusPx(EARTH_ANGULAR_RADIUS_DEG, 32, 1600)).toBeCloseTo(2 * projectedRadiusPx(EARTH_ANGULAR_RADIUS_DEG, 32, 800), 9)
   })
 })
 
@@ -78,8 +71,8 @@ describe('the Moon hiding a body', () => {
     expect(moonHides([0, 0, 3.4], [0, 0, 100])).toBe(false)
   })
 
-  it('hides a body behind it from far away too', () => {
-    expect(moonHides([0, 0, 300], [0, 0, -12_000])).toBe(true)
-    expect(moonHides([0, 3, 300], [0, 0, -12_000])).toBe(false)
+  it('hides a body in the sky behind it by a point far along the same direction', () => {
+    expect(moonHides([0, 0, 6], [0, 0, -1e6])).toBe(true)
+    expect(moonHides([0, 1.2, 6], [0, 0, -1e6])).toBe(false)
   })
 })

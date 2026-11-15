@@ -3,7 +3,17 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { earthAttitude, subLunarPoint } from '../domain/earthFace'
 import { groundDirection, toVector, type LatLon } from '../domain/sky'
-import { CAMERA_FAR, discRadius, EARTH_DISTANCE, EARTH_RADIUS, moonHides, STAR_DISTANCE, SUN_ANGULAR_RADIUS_DEG, SUN_DISPLAY_DISTANCE } from '../domain/spaceScale'
+import {
+  BACKDROP_EARTH_DISTANCE,
+  BACKDROP_FAR,
+  BACKDROP_NEAR,
+  BACKDROP_SUN_DISTANCE,
+  discRadius,
+  EARTH_ANGULAR_RADIUS_DEG,
+  moonHides,
+  SUN_ANGULAR_RADIUS_DEG,
+  sphereRadius,
+} from '../domain/spaceScale'
 import { useRegions } from '../hooks/useRegions'
 import { useI18n } from '../i18n/I18nContext'
 import { MAP_EDGE_LATITUDE, mapPlaces, mapStep, pointOnMap, regionHeight, type MapEvent, type MapRegion, type MapView } from './globeMap/map'
@@ -70,10 +80,6 @@ const PICK_RADIUS_PX = 16
 const FIELD_OF_VIEW_DEG = 32
 /** The Sun's halo reaches this many times the radius of its disc. */
 const HALO_REACH = 7
-/** How far from the Moon's centre the wheel takes the camera in orbit, in Moon radii: the Earth is 221 away, so it can be framed beside the Moon. */
-const ORBIT_MAX_DISTANCE = 700
-/** From this far out the wheel takes bigger steps. */
-const FAR_ZOOM_FROM = 8
 /** How long the stage waits for the images of the Moon before showing it without them. */
 const DRESS_WAIT_MS = 6000
 /** The Site name starts this far from its dot and keeps this far from the edge of the stage. */
@@ -166,7 +172,7 @@ export function Globe(props: GlobeProps) {
 
     let renderer: THREE.WebGLRenderer
     try {
-      renderer = new THREE.WebGLRenderer({ canvas: target, antialias: true, logarithmicDepthBuffer: true })
+      renderer = new THREE.WebGLRenderer({ canvas: target, antialias: true })
     } catch {
       // `canDraw` said yes and the context still failed, as it does when the graphics process
       // is out of room: say so, like a browser that cannot draw at all, instead of loading for ever.
@@ -175,9 +181,11 @@ export function Globe(props: GlobeProps) {
       return
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    // The sky behind the Moon is drawn first and the Moon over it: each frame clears by hand.
+    renderer.autoClear = false
 
     const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(FIELD_OF_VIEW_DEG, 1, 0.01, CAMERA_FAR)
+    const camera = new THREE.PerspectiveCamera(FIELD_OF_VIEW_DEG, 1, 0.01, 50)
     // Stars behind the Moon, the same on every visit.
     let seed = 20261114
     const random = () => {
@@ -189,7 +197,7 @@ export function Globe(props: GlobeProps) {
       const height = random() * 2 - 1
       const round = random() * Math.PI * 2
       const flat = Math.sqrt(1 - height * height)
-      starAt.set([flat * Math.cos(round) * STAR_DISTANCE, height * STAR_DISTANCE, flat * Math.sin(round) * STAR_DISTANCE], at)
+      starAt.set([flat * Math.cos(round) * 40, height * 40, flat * Math.sin(round) * 40], at)
     }
     const stars = new THREE.Points(
       new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(starAt, 3)),
@@ -211,13 +219,16 @@ export function Globe(props: GlobeProps) {
     const sunlight = new THREE.DirectionalLight(0xfff4e0, 3.2)
     scene.add(sunlight)
 
-    // The Sun and the Earth, out in the scene at their real scale (the requirement), the way the
-    // view from the ground draws them: the Earth a ball of its real size at its mean distance, with
-    // the Blue Marble, lit from the Sun's side so it shows its phase; the Sun a disc that spans the
-    // angle it spans in the Moon's sky, with a soft halo. Each sits in the direction the answer gives
-    // and the Moon hides it when it is in the way, so going round the Moon finds them. The distances
-    // are means, for display only (see `spaceScale`): the answers come from the ephemeris.
+    // The Sun and the Earth are in the sky behind the Moon: a backdrop scene of their own, drawn before
+    // the Moon and seen by a camera that turns as the main camera turns and never moves (the Sun and
+    // the Earth are too far for the camera's position to matter). So they pass behind the Moon as the
+    // orbit is dragged, the Moon covers them where it is in front of them, and the Moon itself is
+    // drawn as it always was. Each is only a direction and the angle it spans in the Moon's sky (see
+    // `spaceScale`, mean values for display): the Sun a disc with a soft halo, the Earth a ball with
+    // the Blue Marble, lit from the Sun's side so it shows its phase.
     let gone = false
+    const sky = new THREE.Scene()
+    const skyCamera = new THREE.PerspectiveCamera(FIELD_OF_VIEW_DEG, 1, BACKDROP_NEAR, BACKDROP_FAR)
     const sunDisc = new THREE.Mesh(new THREE.CircleGeometry(1, 48), new THREE.MeshBasicMaterial({ color: SUN }))
     const sunHalo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), depthWrite: false, transparent: true }))
     const earthShade = makeEarthMaterial()
@@ -234,17 +245,12 @@ export function Globe(props: GlobeProps) {
     const earthBall = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 48), earthShade)
     for (const body of [sunHalo, sunDisc, earthBall]) {
       body.visible = false
-      scene.add(body)
+      sky.add(body)
     }
-    // Where each is on the stage, for whoever needs to know: pixels from its top left, its radius, and
-    // how far the eye is from it in Moon radii. Empty when it is off the stage or behind the Moon.
-    const publish = (name: 'sun' | 'earth', body: { x: number; y: number; r: number; distance: number } | null) => {
-      const values = {
-        X: body ? String(Math.round(body.x)) : '',
-        Y: body ? String(Math.round(body.y)) : '',
-        R: body ? body.r.toFixed(2) : '',
-        Distance: body ? body.distance.toFixed(1) : '',
-      }
+    // Where each is on the stage, for whoever needs to know: pixels from its top left, and its radius.
+    // Empty when it is off the stage or the Moon is in front of it.
+    const publish = (name: 'sun' | 'earth', body: { x: number; y: number; r: number } | null) => {
+      const values = { X: body ? String(Math.round(body.x)) : '', Y: body ? String(Math.round(body.y)) : '', R: body ? body.r.toFixed(2) : '' }
       for (const [axis, value] of Object.entries(values)) {
         const key = `${name}${axis}`
         if (host.dataset[key] !== value) host.dataset[key] = value
@@ -316,13 +322,7 @@ export function Globe(props: GlobeProps) {
     controls.enablePan = false
     // Close enough to read the 22.5 m level around the Sites.
     controls.minDistance = 1.04
-    // Out to where the Earth, 221 Moon radii away, and the Moon can be framed together.
-    controls.maxDistance = ORBIT_MAX_DISTANCE
-    // The camera goes all the way round the Moon: every azimuth, and from pole to pole.
-    controls.minAzimuthAngle = -Infinity
-    controls.maxAzimuthAngle = Infinity
-    controls.minPolarAngle = 0
-    controls.maxPolarAngle = Math.PI
+    controls.maxDistance = 6
     controls.enabled = false
 
     // The one orchestrated moment: from the whole Moon down to the south pole and the Site.
@@ -565,8 +565,6 @@ export function Globe(props: GlobeProps) {
       } else if (mode === 'orbit') {
         // Near the ground a drag moves the view as far as it moves far away, so it is slowed down.
         controls.rotateSpeed = Math.min(1, Math.max(0.03, (camera.position.length() - 1) / 2))
-        // The wheel takes bigger steps far out, where the way to the Earth is long, and small ones near the ground.
-        controls.zoomSpeed = camera.position.length() > FAR_ZOOM_FROM ? 3 : 1
         controls.update()
       }
 
@@ -595,30 +593,28 @@ export function Globe(props: GlobeProps) {
         dot.scale.setScalar((chosen ? 1.8 : 1) * dotSize)
       }
 
-      // The Sun and the Earth, set where the answer says they are at the Cursor.
-      camera.updateMatrixWorld()
-      const stageWidth = host.clientWidth
-      const stageHeight = host.clientHeight
-      const eye = camera.position
-      const ahead = camera.getWorldDirection(new THREE.Vector3())
-      const across = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0)
+      // The sky behind the Moon: the Sun and the Earth where the answer says they are at the Cursor.
+      skyCamera.quaternion.copy(camera.quaternion)
+      skyCamera.aspect = camera.aspect
+      skyCamera.fov = camera.fov
+      skyCamera.updateProjectionMatrix()
+      skyCamera.updateMatrixWorld()
       const sunWay = state.sun ? vector(state.sun.latitude_deg, state.sun.longitude_deg).normalize() : null
-      const sunRadius = discRadius(SUN_DISPLAY_DISTANCE, SUN_ANGULAR_RADIUS_DEG)
+      const earthWay = state.earth ? vector(state.earth.latitude_deg, state.earth.longitude_deg).normalize() : null
       sunDisc.visible = sunHalo.visible = sunWay !== null
       if (sunWay) {
-        sunDisc.position.copy(sunWay).multiplyScalar(SUN_DISPLAY_DISTANCE)
+        const radius = discRadius(BACKDROP_SUN_DISTANCE, SUN_ANGULAR_RADIUS_DEG)
+        sunDisc.position.copy(sunWay).multiplyScalar(BACKDROP_SUN_DISTANCE)
         // The halo sits a little behind the disc, so the two never fight for the same depth.
         sunHalo.position.copy(sunDisc.position).multiplyScalar(1.02)
-        sunDisc.scale.setScalar(sunRadius)
-        sunHalo.scale.setScalar(sunRadius * 2 * HALO_REACH)
-        sunDisc.lookAt(eye)
-        // The light that lights the Moon comes from the same direction.
+        sunDisc.scale.setScalar(radius)
+        sunHalo.scale.setScalar(radius * 2 * HALO_REACH)
+        sunDisc.lookAt(0, 0, 0)
       }
-      const earthWay = state.earth ? vector(state.earth.latitude_deg, state.earth.longitude_deg).normalize() : null
       earthBall.visible = earthWay !== null
-      if (earthWay) {
-        earthBall.position.copy(earthWay).multiplyScalar(EARTH_DISTANCE)
-        earthBall.scale.setScalar(EARTH_RADIUS)
+      if (earthWay && state.earth) {
+        earthBall.position.copy(earthWay).multiplyScalar(BACKDROP_EARTH_DISTANCE)
+        earthBall.scale.setScalar(sphereRadius(BACKDROP_EARTH_DISTANCE, EARTH_ANGULAR_RADIUS_DEG))
         // Lit from where the Sun is, so it shows the phase it has from the Moon.
         if (sunWay) earthShade.uniforms.sunDirection.value.copy(sunWay)
         // The face turned to the Moon at the Cursor faces the Moon. Which way north leans is only
@@ -632,21 +628,25 @@ export function Globe(props: GlobeProps) {
           }
         }
       }
-      // Where the eye sees each one, and how wide, from its centre and its edge as the camera projects
-      // them: null when it is out of the picture, behind the camera or behind the Moon.
-      const placed = (body: THREE.Object3D, visible: boolean, radius: number) => {
-        const way = body.position.clone().sub(eye)
-        if (!visible || way.dot(ahead) <= 0 || moonHides(eye.toArray(), body.position.toArray())) return null
-        const centre = body.position.clone().project(camera)
-        const edge = body.position.clone().addScaledVector(across, radius).project(camera)
-        const x = ((centre.x + 1) / 2) * stageWidth
-        const y = ((1 - centre.y) / 2) * stageHeight
-        if (x < 0 || x > stageWidth || y < 0 || y > stageHeight) return null
-        return { x, y, r: (Math.abs(edge.x - centre.x) / 2) * stageWidth, distance: way.length() }
+      // Where the eye sees each, and how wide, from its centre and its edge as the backdrop camera
+      // projects them: null when it is off the stage, behind the camera or behind the Moon.
+      const across = new THREE.Vector3().setFromMatrixColumn(skyCamera.matrixWorld, 0)
+      const ahead = skyCamera.getWorldDirection(new THREE.Vector3())
+      const placed = (body: THREE.Object3D, way: THREE.Vector3 | null, radius: number) => {
+        if (!way || way.dot(ahead) <= 0) return null
+        // The Moon is in front of it when the line from the camera along its direction goes through the Moon.
+        const far = way.clone().multiplyScalar(1e6).add(camera.position)
+        if (moonHides(camera.position.toArray(), far.toArray())) return null
+        const centre = body.position.clone().project(skyCamera)
+        const edge = body.position.clone().addScaledVector(across, radius).project(skyCamera)
+        const x = ((centre.x + 1) / 2) * host.clientWidth
+        const y = ((1 - centre.y) / 2) * host.clientHeight
+        if (x < 0 || x > host.clientWidth || y < 0 || y > host.clientHeight) return null
+        return { x, y, r: (Math.abs(edge.x - centre.x) / 2) * host.clientWidth }
       }
-      publish('sun', placed(sunDisc, sunWay !== null, sunRadius))
-      publish('earth', placed(earthBall, earthWay !== null, EARTH_RADIUS))
-      // Where the camera is round the Moon: its distance in Moon radii, and its angle from the north pole and east of 0°.
+      publish('sun', placed(sunDisc, sunWay, discRadius(BACKDROP_SUN_DISTANCE, SUN_ANGULAR_RADIUS_DEG)))
+      publish('earth', placed(earthBall, earthWay, sphereRadius(BACKDROP_EARTH_DISTANCE, EARTH_ANGULAR_RADIUS_DEG)))
+      // Where the camera is round the Moon: its distance in Moon radii, and its angles from the north pole and from 0°.
       const away = camera.position.length()
       const facts = {
         cameraDistance: away.toFixed(2),
@@ -657,6 +657,10 @@ export function Globe(props: GlobeProps) {
         if (host.dataset[key] !== value) host.dataset[key] = value
       }
 
+      // First the sky, then the Moon over it with a clean depth buffer.
+      renderer.clear()
+      renderer.render(sky, skyCamera)
+      renderer.clearDepth()
       renderer.render(scene, camera)
       target.dataset.ready = 'true'
 

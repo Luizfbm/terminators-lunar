@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
-import { discRadius, EARTH_DISTANCE, EARTH_RADIUS, projectedRadiusPx, SUN_ANGULAR_RADIUS_DEG, SUN_DISPLAY_DISTANCE } from '../src/domain/spaceScale'
-import { findOnStage, readGlobe, settle, tipTo, turn, zoomOutTo } from './orbit'
+import { EARTH_ANGULAR_RADIUS_DEG, projectedRadiusPx, SUN_ANGULAR_RADIUS_DEG } from '../src/domain/spaceScale'
+import { findOnStage, readGlobe, settle, zoomAllTheWay } from './orbit'
 
 // The Prism mock answers every Query with the contract's example: Connecting Ridge CR01, a Window from
 // 20/11/2026 12:00 UTC to 30/11/2026 12:00 UTC, with Sunsets behind the rim of Shackleton, two Short
@@ -178,51 +178,44 @@ test('a shared link has a preview image and the tab has an icon, both served by 
   expect(drawn.headers()['content-type']).toContain('image/svg+xml')
 })
 
-test.describe('from orbit the Sun and the Earth are out there, at their real scale', () => {
-  // Each test turns the camera with the mouse, and waits for its glide to end after every move.
-  test.describe.configure({ timeout: 240_000 })
-  // Luiz, regression: "I don't see the Sun and the Earth when I am in 'From orbit'", and then: they
-  // must not be icons pinned to the Moon's rim but bodies in space. The Earth is 221 Moon radii away
-  // and the Sun is drawn as wide as it is in the Moon's sky, so from near the Moon neither is in the
-  // picture until the camera goes round and looks past it. The globe says where each is on the stage
-  // in data-sun-x/y/r/distance and data-earth-x/y/r/distance, empty while it is off the stage or
-  // behind the Moon.
+test.describe('from orbit the Sun and the Earth pass in the sky behind the Moon', () => {
+  // Luiz, regression: "I don't see the Sun and the Earth when I am in 'From orbit'". They are not
+  // markers on the Moon's rim but bodies in the sky behind it, at the angle they span in the Moon's
+  // sky; the Moon is as it always was. Dragging the orbit takes the camera round the Moon, and the
+  // Earth and the Sun come out from behind it. The globe says where each is on the stage in
+  // data-sun-x/y/r and data-earth-x/y/r, empty while it is off the stage or behind the Moon.
+  // Each test turns the camera with the mouse and waits for its glide to end after every move.
+  test.describe.configure({ timeout: 600_000 })
+
   for (const size of [{ width: 1280, height: 800 }, { width: 375, height: 812 }]) {
-    test(`the Earth and the Sun come into view when the camera goes round the Moon, at ${size.width} px`, async ({ page }) => {
+    test(`the Earth and the Sun come into view when the orbit is dragged round, at ${size.width} px`, async ({ page }) => {
       await page.setViewportSize(size)
       await page.goto('/')
       await expect(page.locator('.globe')).toHaveAttribute('data-dressed', 'true', { timeout: 20_000 })
       await settle(page)
-      const opening = await readGlobe(page)
-      // The opening framing is the Moon filling the picture, a few radii away.
-      expect(opening.distance).toBeGreaterThan(2.5)
-      expect(opening.distance).toBeLessThan(5)
       // The Earth has its Blue Marble, not just its plain blue.
       await expect(page.locator('.globe canvas')).toHaveAttribute('data-earth', 'mapped', { timeout: 20_000 })
-
-      // Out where the Earth and the Moon can be framed together: the Moon is always at the middle.
-      await zoomOutTo(page, 300)
-      const height = (await page.locator('.globe').evaluate((element) => element.clientHeight))
-      const width = (await page.locator('.globe').evaluate((element) => element.clientWidth))
+      // As far from the Moon as the orbit lets the camera go: the most room round the Moon's disc.
+      await zoomAllTheWay(page, 'out')
+      const stage = await page.locator('.globe').evaluate((element) => ({ width: element.clientWidth, height: element.clientHeight }))
 
       const earth = await findOnStage(page, 'earth')
-      // Seen from the Moon the Earth is 221 radii away; from the camera, as far as the camera is from the Moon more or less.
-      expect(earth.found.distance).toBeGreaterThan(0)
-      expect(earth.found.distance).toBeLessThan(EARTH_DISTANCE + earth.distance + 1)
-      const earthExpected = projectedRadiusPx(EARTH_RADIUS, earth.found.distance, 32, height)
-      // The radius is measured on the screen from the camera's own projection; the formula is for a body straight ahead.
+      expect(earth.found.x).toBeGreaterThanOrEqual(0)
+      expect(earth.found.x).toBeLessThanOrEqual(stage.width)
+      expect(earth.found.y).toBeGreaterThanOrEqual(0)
+      expect(earth.found.y).toBeLessThanOrEqual(stage.height)
+      // The Earth spans 0.95° of radius in the Moon's sky; the radius is measured on the screen from
+      // the camera's own projection, a little off the formula for a body straight ahead.
+      const earthExpected = projectedRadiusPx(EARTH_ANGULAR_RADIUS_DEG, 32, stage.height)
       expect(earth.found.r).toBeGreaterThan(earthExpected * 0.9)
       expect(earth.found.r).toBeLessThan(earthExpected * 1.1)
-      expect(earth.found.x).toBeGreaterThanOrEqual(0)
-      expect(earth.found.x).toBeLessThanOrEqual(width)
-      expect(earth.found.y).toBeGreaterThanOrEqual(0)
-      expect(earth.found.y).toBeLessThanOrEqual(height)
 
       const sun = await findOnStage(page, 'sun')
-      // The Sun is drawn 12,000 radii away, as wide as the 0.53° it spans in the Moon's sky.
-      expect(sun.found.distance).toBeGreaterThan(SUN_DISPLAY_DISTANCE - sun.distance - 1)
-      expect(sun.found.distance).toBeLessThan(SUN_DISPLAY_DISTANCE + sun.distance + 1)
-      const sunExpected = projectedRadiusPx(discRadius(SUN_DISPLAY_DISTANCE, SUN_ANGULAR_RADIUS_DEG), sun.found.distance, 32, height)
+      expect(sun.found.x).toBeGreaterThanOrEqual(0)
+      expect(sun.found.x).toBeLessThanOrEqual(stage.width)
+      expect(sun.found.y).toBeGreaterThanOrEqual(0)
+      expect(sun.found.y).toBeLessThanOrEqual(stage.height)
+      const sunExpected = projectedRadiusPx(SUN_ANGULAR_RADIUS_DEG, 32, stage.height)
       expect(sun.found.r).toBeGreaterThan(sunExpected * 0.9)
       expect(sun.found.r).toBeLessThan(sunExpected * 1.1)
       // And the Earth is the bigger of the two, as it is in the sky of the Moon.
@@ -230,31 +223,17 @@ test.describe('from orbit the Sun and the Earth are out there, at their real sca
     })
   }
 
-  test('the camera goes all the way round the Moon, from pole to pole, and out as far as the Earth', async ({ page }) => {
+  test("the orbit keeps the camera's limits: no closer than 1.04 Moon radii and no further than 6", async ({ page }) => {
     await page.goto('/')
     await expect(page.locator('.globe')).toHaveAttribute('data-dressed', 'true', { timeout: 20_000 })
     await settle(page)
-    // Turned a step at a time, it keeps going the same way, over the azimuth where a limit would stop it.
-    let previous = (await readGlobe(page)).azimuth
-    const wrap = (degrees: number) => ((((degrees + 180) % 360) + 360) % 360) - 180
-    const steps: number[] = []
-    for (let step = 0; step < 10; step++) {
-      await turn(page, 45)
-      const now = (await readGlobe(page)).azimuth
-      steps.push(wrap(now - previous))
-      previous = now
-    }
-    expect(steps.every((step) => Math.abs(step) > 10)).toBe(true)
-    expect(new Set(steps.map(Math.sign)).size).toBe(1)
-    // From the north pole to the south pole.
-    await tipTo(page, 12)
-    expect((await readGlobe(page)).polar).toBeLessThan(16)
-    await tipTo(page, 168)
-    expect((await readGlobe(page)).polar).toBeGreaterThan(164)
-    // Out far enough to frame the Earth and the Moon together, and no further than that.
-    await zoomOutTo(page, 690)
-    const far = await readGlobe(page)
-    expect(far.distance).toBeGreaterThan(600)
-    expect(far.distance).toBeLessThanOrEqual(700.01)
+    await zoomAllTheWay(page, 'out')
+    const far = (await readGlobe(page)).distance
+    expect(far).toBeGreaterThan(5.9)
+    expect(far).toBeLessThanOrEqual(6.01)
+    await zoomAllTheWay(page, 'in')
+    const near = (await readGlobe(page)).distance
+    expect(near).toBeGreaterThanOrEqual(1.03)
+    expect(near).toBeLessThan(1.15)
   })
 })

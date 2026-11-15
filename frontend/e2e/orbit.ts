@@ -3,13 +3,12 @@ import { expect, type Page } from '@playwright/test'
 // Driving the camera of the globe the way a person does, with the mouse, and reading where it is and
 // where the Sun and the Earth are on the stage from the data attributes of `.globe`: the camera's
 // distance in Moon radii and its angles round the Moon, and for each body its place and radius in
-// pixels and its distance from the eye, empty while it is off the stage or behind the Moon.
+// pixels, empty while it is off the stage or behind the Moon.
 
 export interface BodyOnStage {
   x: number
   y: number
   r: number
-  distance: number
 }
 
 export interface GlobeState {
@@ -30,8 +29,7 @@ export const readGlobe = (page: Page): Promise<GlobeState> =>
       const x = number(`${name}-x`)
       const y = number(`${name}-y`)
       const r = number(`${name}-r`)
-      const distance = number(`${name}-distance`)
-      return x === null || y === null || r === null || distance === null ? null : { x, y, r, distance }
+      return x === null || y === null || r === null ? null : { x, y, r }
     }
     return {
       distance: number('camera-distance') ?? NaN,
@@ -44,7 +42,7 @@ export const readGlobe = (page: Page): Promise<GlobeState> =>
 
 const near = (a: number | null, b: number | null, within: number) => (a === null || b === null ? a === b : Math.abs(a - b) <= within)
 const sameBody = (a: BodyOnStage | null, b: BodyOnStage | null) =>
-  a === null || b === null ? a === b : near(a.x, b.x, 4) && near(a.y, b.y, 4) && near(a.r, b.r, 0.5) && near(a.distance, b.distance, 3)
+  a === null || b === null ? a === b : near(a.x, b.x, 4) && near(a.y, b.y, 4) && near(a.r, b.r, 0.5)
 const sameState = (a: GlobeState, b: GlobeState) =>
   near(a.distance, b.distance, a.distance * 0.01) &&
   near(a.polar, b.polar, 1) &&
@@ -105,30 +103,35 @@ export async function tipTo(page: Page, polarDeg: number) {
   }
 }
 
-/** Takes the camera out with the wheel until it is `distance` Moon radii from the Moon's centre or more. */
-export async function zoomOutTo(page: Page, distance: number) {
+/** Turns the wheel until the camera stops coming closer (`in`) or going away (`out`): where the controls stop it. */
+export async function zoomAllTheWay(page: Page, way: 'in' | 'out') {
   const { centre } = await stage(page)
   await page.mouse.move(centre.x, centre.y)
-  for (let attempt = 0; attempt < 80; attempt++) {
-    if ((await readGlobe(page)).distance >= distance) break
-    await page.mouse.wheel(0, 200)
-    await page.waitForTimeout(80)
+  let last = (await readGlobe(page)).distance
+  for (let attempt = 0; attempt < 60; attempt++) {
+    await page.mouse.wheel(0, way === 'out' ? 300 : -300)
+    await page.waitForTimeout(100)
+    const now = (await readGlobe(page)).distance
+    // The glide goes on after the wheel, so two equal readings in a row are the stop.
+    if (attempt > 3 && Math.abs(now - last) < 0.005) break
+    last = now
   }
   await settle(page)
 }
 
 /**
- * Goes round the Moon, a level of latitude at a time, until `body` is on the stage. The camera
- * looks at the Moon, so the body comes into view when it is beside the Moon in that view and not behind it.
+ * Goes round the Moon, a level of latitude at a time, until `body` is on the stage. The Sun and the
+ * Earth are far behind the Moon in the sky, so each shows beside the Moon's disc only when the camera
+ * looks past the Moon at it, and the Moon hides it when it is in the way.
  */
 export async function findOnStage(page: Page, body: 'sun' | 'earth'): Promise<GlobeState & { found: BodyOnStage }> {
-  for (const polar of [90, 65, 115, 40, 140]) {
+  for (const polar of [90, 80, 100, 70, 110, 60, 120, 50, 130, 40, 140, 30, 150]) {
     await tipTo(page, polar)
-    for (let step = 0; step < 18; step++) {
+    for (let step = 0; step < 60; step++) {
       const state = await readGlobe(page)
       const found = state[body]
       if (found) return { ...state, found }
-      await turn(page, 20)
+      await turn(page, 6)
     }
   }
   throw new Error(`the ${body} never came into view`)

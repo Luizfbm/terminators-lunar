@@ -1,14 +1,13 @@
 /**
- * Where the Sun and the Earth stand in the 3D scene of the Moon, in Moon radii.
+ * How big the Sun and the Earth are in the sky of the Moon, for the backdrop the globe draws behind
+ * the Moon.
  *
- * These are mean values, for display only: they put the two bodies out there at the scale of
- * the real thing so that the camera can go round the Moon and find them. They are not an
- * ephemeris. The engine's answers (where the Sun and the Earth are at the Cursor, and when they
- * are hidden) come from the ephemeris; the frontend only takes the direction from them.
+ * Only their angular sizes matter there: the backdrop turns with the camera and never moves with it,
+ * so a body in it is as far as the sky. These are mean values, for display only. The engine's answers
+ * (where the Sun and the Earth are at the Cursor, and when they are hidden) come from the ephemeris;
+ * the frontend only takes the direction from them.
  */
 
-/** Mean radius of the Moon: IAU 2015 / NASA Moon Fact Sheet, 1737.4 km. One scene unit. */
-export const MOON_RADIUS_KM = 1737.4
 /** Mean radius of the Earth: IAU 2015 nominal value / NASA Earth Fact Sheet, 6371.0 km. */
 export const EARTH_RADIUS_KM = 6371.0
 /** Mean distance between the centres of the Earth and the Moon: NASA Moon Fact Sheet, 384,400 km. */
@@ -18,37 +17,34 @@ export const SUN_RADIUS_KM = 695_700
 /** The astronomical unit: IAU 2012 Resolution B2, 149,597,870.7 km. The Sun's mean distance from the Moon, to a fraction of a percent. */
 export const ASTRONOMICAL_UNIT_KM = 149_597_870.7
 
-/** The Earth's distance and radius in Moon radii: about 221.3 and 3.667. */
-export const EARTH_DISTANCE = EARTH_MOON_DISTANCE_KM / MOON_RADIUS_KM
-export const EARTH_RADIUS = EARTH_RADIUS_KM / MOON_RADIUS_KM
-
-/** How big the Sun looks from the Moon, as an angle of radius: a little over a quarter of a degree (0.53° across). */
-export const SUN_ANGULAR_RADIUS_DEG = (Math.asin(SUN_RADIUS_KM / ASTRONOMICAL_UNIT_KM) * 180) / Math.PI
-
-/**
- * The Sun is drawn at this distance, in Moon radii, not at its real 86,000: far beyond the Earth
- * and inside the camera's far plane, so the depth buffer keeps its precision. Its size is set from
- * the distance so that it spans the angle it really spans in the sky of the Moon.
- */
-export const SUN_DISPLAY_DISTANCE = 12_000
-/** The stars sit beyond the Sun. */
-export const STAR_DISTANCE = 18_000
-/** The camera sees as far as this, past the stars. */
-export const CAMERA_FAR = 20_000
-
 const RAD = Math.PI / 180
-
-/** The radius of a disc that spans `angularRadiusDeg` of the sky when it is `distance` away. */
-export const discRadius = (distance: number, angularRadiusDeg: number): number => distance * Math.tan(angularRadiusDeg * RAD)
 
 /** The angle, in degrees, that a sphere of `radius` spans (from its centre to its limb) when its centre is `distance` away. */
 export const angularRadiusDeg = (radius: number, distance: number): number => Math.asin(Math.min(1, radius / distance)) / RAD
 
-/** How many pixels a sphere's radius takes on a stage `heightPx` tall, from a camera with a vertical field of view of `fieldOfViewDeg`. */
-export function projectedRadiusPx(radius: number, distance: number, fieldOfViewDeg: number, heightPx: number): number {
-  if (distance <= radius) return Infinity
-  return ((heightPx / 2) * Math.tan(Math.asin(radius / distance))) / Math.tan((fieldOfViewDeg * RAD) / 2)
-}
+/** How big the Earth looks from the Moon, as an angle of radius: about 0.95° (1.9° across). */
+export const EARTH_ANGULAR_RADIUS_DEG = angularRadiusDeg(EARTH_RADIUS_KM, EARTH_MOON_DISTANCE_KM)
+/** How big the Sun looks from the Moon, as an angle of radius: about 0.2665° (0.53° across). */
+export const SUN_ANGULAR_RADIUS_DEG = angularRadiusDeg(SUN_RADIUS_KM, ASTRONOMICAL_UNIT_KM)
+
+/** In the backdrop's own units, which mean nothing outside it: how far the two are drawn, and what its camera sees. */
+export const BACKDROP_EARTH_DISTANCE = 400
+export const BACKDROP_SUN_DISTANCE = 500
+export const BACKDROP_NEAR = 1
+export const BACKDROP_FAR = 1000
+
+/** The radius of a ball `distance` away that spans `angularRadiusDeg` of the sky. */
+export const sphereRadius = (distance: number, angularRadiusDeg: number): number => distance * Math.sin(angularRadiusDeg * RAD)
+
+/** The radius of a flat disc that faces the eye, `distance` away, and spans `angularRadiusDeg` of the sky. */
+export const discRadius = (distance: number, angularRadiusDeg: number): number => distance * Math.tan(angularRadiusDeg * RAD)
+
+/**
+ * How many pixels a body of angular radius `angularRadiusDeg` takes, in radius, straight ahead on a
+ * stage `heightPx` tall seen with a vertical field of view of `fieldOfViewDeg`.
+ */
+export const projectedRadiusPx = (angularRadiusDeg: number, fieldOfViewDeg: number, heightPx: number): number =>
+  ((heightPx / 2) * Math.tan(angularRadiusDeg * RAD)) / Math.tan((fieldOfViewDeg * RAD) / 2)
 
 type Vec3 = readonly [number, number, number]
 
