@@ -2,7 +2,7 @@
 
 import itertools
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any
 
 from .constants import SHORT_SHADOW_MAX_HOURS
 from .timeutil import iso_z
@@ -11,9 +11,7 @@ Sample = dict[str, Any]
 Period = dict[str, Any]
 
 
-def periods(
-    boundaries: list[datetime], states: list[bool], body: Literal["sun", "earth"]
-) -> list[Period]:
+def periods(boundaries: list[datetime], states: list[bool], body: str) -> list[Period]:
     """One period per gap between boundaries; `states[i]` says if the body is up in gap i."""
     out: list[Period] = []
     for (begin, end), up in zip(itertools.pairwise(boundaries), states, strict=True):
@@ -31,7 +29,9 @@ def periods(
     return out
 
 
-def metrics(period_list: list[Period], samples: list[Sample]) -> dict[str, float]:
+def metrics(
+    period_list: list[Period], samples: list[Sample], earth_any_part_hours: float
+) -> dict[str, float]:
     sun_visible = _hours(period_list, "sun", "visible")
     sun_hidden = _hours(period_list, "sun", "hidden")
     earth_visible = _hours(period_list, "earth", "visible")
@@ -39,6 +39,7 @@ def metrics(period_list: list[Period], samples: list[Sample]) -> dict[str, float
         "sun_and_earth_hours": _intersection_hours(period_list),
         "sunlit_hours": sum(sun_visible),
         "earth_visible_hours": sum(earth_visible),
+        "earth_visible_hours_any_part": earth_any_part_hours,
         "lcip_hours": max(sun_visible, default=0.0),
         "lcsp_hours": max(sun_hidden, default=0.0),
         "mean_sun_fraction": sum(float(s["sun"]["fraction"]) for s in samples) / len(samples),

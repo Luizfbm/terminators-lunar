@@ -75,7 +75,11 @@ def compute(site: Site, start: datetime, duration_hours: float, height_m: float)
         "horizon_elevation_deg": float(mask.elevations_deg[0]) + 0.0,
         "search_end": iso_z(stop),
         "events": events,
-        "metrics": metrics(period_list, [item.sample() for item in window]),
+        "metrics": metrics(
+            period_list,
+            [item.sample() for item in window],
+            engine.earth_any_part_hours(start, end, window, look),
+        ),
         "provenance": {
             "engine_version": ENGINE_VERSION,
             "synthetic": False,
