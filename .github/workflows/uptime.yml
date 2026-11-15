@@ -1,0 +1,57 @@
+name: Uptime
+
+# A cheap alarm for the judging days: every 10 minutes GitHub checks the public page and
+# the API from outside. A failed run is red in Actions and GitHub emails the repo owner
+# about failed scheduled runs, so nothing new is needed to hear about it. A failure also
+# opens (or comments on) one issue labelled "outage", which shows on the phone app.
+# GitHub may start scheduled runs late under load; that is fine for an alarm.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+concurrency:
+  group: uptime
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Page, /health and the default Query
+        run: |
+          API=https://lunar-api.luizfbm.win
+          check() {
+            curl -sf --max-time 20 https://lunar.luizfbm.win | grep -q 'id="root"' || { echo "page"; return 1; }
+            curl -sf --max-time 10 $API/health | jq -e '.status == "ok"' >/dev/null || { echo "/health"; return 1; }
+            # The default Query is warmed every day, so it must answer from the cache.
+            curl -sf --max-time 30 "$API/visibility?site_id=001&start=$(date -u +%F)T00:00:00Z" \
+              | jq -e '.horizon.samples | length == 720' >/dev/null || { echo "default Query"; return 1; }
+          }
+          # Three tries a minute apart, so one dropped connection is not an alarm.
+          for i in 1 2 3; do
+            if what=$(check); then echo "ok"; exit 0; fi
+            echo "try $i failed at: $what"
+            sleep 60
+          done
+          echo "FAILED=$what" >> "$GITHUB_ENV"
+          exit 1
+      - name: Raise the alarm
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          body="Uptime check failed at ${FAILED:-unknown} ($(date -u '+%F %H:%M UTC')): $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          open=$(gh issue list --label outage --state open --json number -q '.[0].number')
+          if [ -n "$open" ]; then
+            gh issue comment "$open" --body "$body"
+          else
+            gh label create outage --color B60205 --description "Uptime alarm" 2>/dev/null || true
+            gh issue create --title "Live service is down" --label outage --assignee Luizfbm --body "$body"
+          fi

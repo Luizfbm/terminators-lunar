@@ -1,0 +1,139 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Each side's jobs skip until its folder exists. Conventions the workers follow:
+# - backend/ is a uv project exposing the FastAPI app at app.main:app
+# - frontend/ has npm scripts lint, typecheck, test, e2e and generate:types
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      contract: ${{ steps.d.outputs.contract }}
+      backend: ${{ steps.d.outputs.backend }}
+      frontend: ${{ steps.d.outputs.frontend }}
+      validation: ${{ steps.d.outputs.validation }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: d
+        run: |
+          echo "contract=$([ -f contract/openapi.yaml ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "backend=$([ -f backend/pyproject.toml ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "frontend=$([ -f frontend/package.json ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "validation=$([ -d validation ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+  contract:
+    needs: detect
+    if: needs.detect.outputs.contract == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: npx --yes @redocly/cli@2.77.0 lint contract/openapi.yaml
+
+  backend:
+    needs: detect
+    if: needs.detect.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+      - name: DEM fixtures
+        uses: actions/cache@v6
+        with:
+          path: |
+            fixtures/dem/LDEM_*.TIF
+            fixtures/dem/offpole
+          key: dem-${{ hashFiles('fixtures/dem/SHA256SUMS') }}
+      - run: "$GITHUB_WORKSPACE/fixtures/dem/fetch.sh"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy .
+      - run: uv run pytest
+
+  validation:
+    needs: detect
+    if: needs.detect.outputs.validation == 'true' && needs.detect.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+      - name: DEM fixtures
+        uses: actions/cache@v6
+        with:
+          path: |
+            fixtures/dem/LDEM_*.TIF
+            fixtures/dem/offpole
+          key: dem-${{ hashFiles('fixtures/dem/SHA256SUMS') }}
+      - run: "$GITHUB_WORKSPACE/fixtures/dem/fetch.sh"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: uv sync --locked --project backend
+      - run: uv run --project backend pytest validation
+
+  schemathesis:
+    needs: detect
+    if: needs.detect.outputs.backend == 'true' && needs.detect.outputs.contract == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+      - name: DEM fixtures
+        uses: actions/cache@v6
+        with:
+          path: |
+            fixtures/dem/LDEM_*.TIF
+            fixtures/dem/offpole
+          key: dem-${{ hashFiles('fixtures/dem/SHA256SUMS') }}
+      - run: "$GITHUB_WORKSPACE/fixtures/dem/fetch.sh"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: uv sync --locked --project backend
+      - name: Start API
+        working-directory: backend
+        # The assistant's cap is 10 questions a minute from one address unless it is set.
+        # The fuzzer asks far more than that, and every answer past the cap would be a 503.
+        env:
+          LUNAR_ASSISTANT_IP_LIMIT_PER_MINUTE: "0"
+        run: |
+          uv run uvicorn app.main:app --port 8000 &
+          for i in $(seq 30); do curl -sf localhost:8000/health && exit 0; sleep 1; done
+          exit 1
+      - run: uvx schemathesis run contract/openapi.yaml --url http://localhost:8000 --checks all
+
+  frontend:
+    needs: detect
+    if: needs.detect.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test -- --run
+      - name: Generated types match the contract
+        run: |
+          npm run generate:types
+          git diff --exit-code -- .
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e

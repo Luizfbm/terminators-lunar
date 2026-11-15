@@ -1,0 +1,97 @@
+name: Mutation
+
+# Heavy: about two thousand copies of the backend, each with one small error, and the
+# tests run against every one. It does not block a change or the deploy.
+# Manual only for now: the full run is 20 shards, and on
+# the four cache shards and names-year-0 still hit the 45 minute cut, so a
+# run on every merge would be red for reasons nobody can act on. The --plan --since
+# path that mutates only what a merge changed stays in the script for when it fits.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: mutation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Which shards to run (scripts/mutation_gate.py --plan). A dispatch runs all twenty;
+  # the whole run does not fit in one runner's 45 minutes and costs about 400 runner
+  # minutes.
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      shards: ${{ steps.plan.outputs.shards }}
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v10.3.3
+      - run: uv sync --locked
+      - id: plan
+        env:
+          SINCE: ${{ github.event_name == 'push' && github.event.before || '' }}
+        run: |
+          if [ -n "$SINCE" ] && git cat-file -e "$SINCE" 2>/dev/null; then
+            shards=$(uv run python -m scripts.mutation_gate --plan --since "$SINCE")
+          else
+            shards=$(uv run python -m scripts.mutation_gate --plan)
+          fi
+          echo "shards=$shards" >> "$GITHUB_OUTPUT"
+          echo "shards: $shards"
+
+  shard:
+    needs: plan
+    if: needs.plan.outputs.shards != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+      # The engine reads terrain since the implementation; without the DEM windows every Visibility
+      # test gets a problem answer and the run stops before the first mutant.
+      - name: DEM fixtures
+        uses: actions/cache@v6
+        with:
+          path: |
+            fixtures/dem/LDEM_*.TIF
+            fixtures/dem/offpole
+          key: dem-${{ hashFiles('fixtures/dem/SHA256SUMS') }}
+      - run: "$GITHUB_WORKSPACE/fixtures/dem/fetch.sh"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: uv sync --locked
+      - run: uv run python -m scripts.mutation_gate --shard ${{ matrix.shard }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: shard-${{ matrix.shard }}
+          path: backend/mutants/shard-${{ matrix.shard }}.json
+          if-no-files-found: ignore
+
+  gate:
+    needs: [plan, shard]
+    if: always() && needs.plan.result == 'success'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+      - run: uv sync --locked
+      - uses: actions/download-artifact@v4
+        with:
+          path: shards
+      - run: >-
+          uv run python -m scripts.mutation_gate
+          --combine "$GITHUB_WORKSPACE/shards" --expect '${{ needs.plan.outputs.shards }}'
