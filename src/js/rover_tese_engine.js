@@ -579,37 +579,72 @@
     const base = evaluateWaypoints(0, baseRaw);
     const tese = evaluateWaypoints(4, teseRaw);
 
-    // Gerações de Neuroevolução (enxame de candidatos convergindo da Geração 1 à Geração 5)
+    // Gerações de Neuroevolução: 100 rovers por geração saindo da origem e "morrendo" nos perigos >15°
     const generations = [];
     const spanDist = Math.max(200, Math.hypot(goal.x - start.x, goal.y - start.y));
     const dx = goal.x - start.x, dy = goal.y - start.y;
     const nx = -dy / spanDist, ny = dx / spanDist;
+    const N_AGENTS = 100;
 
     for (let g = 1; g <= 5; g++) {
       const progress = g / 5; // 0.2 -> 1.0
-      const amp = (1 - progress * 0.88) * Math.min(900, spanDist * 0.42);
+      const amp = Math.pow(1 - progress, 1.8) * Math.min(950, spanDist * 0.42);
+      const agents = [];
       const paths = [];
-      for (let k = 0; k < 8; k++) {
-        const phase = ((k - 3.5) / 3.5);
-        const cand = tese.path.map((p, idx) => {
-          const t = idx / Math.max(1, tese.path.length - 1);
+      let survivors = 0;
+
+      for (let k = 0; k < N_AGENTS; k++) {
+        // Pseudo-aleatório determinístico por geração/agente
+        const h1 = Math.sin(k * 12.9898 + g * 78.233) * 43758.5453;
+        const r1 = h1 - Math.floor(h1);
+        const h2 = Math.sin(k * 39.346 + g * 19.17) * 24634.6345;
+        const r2 = h2 - Math.floor(h2);
+
+        const phase = (r1 * 2 - 1);
+        const freq = 1 + Math.floor(r2 * 3);
+        // Primeiras gerações têm mistura alta com linha reta; últimas convergem na rota A*
+        const isElite = r2 < (progress * 0.92);
+        const blend = isElite ? 1.0 : (0.15 + 0.5 * progress);
+        const agAmp = isElite ? amp * 0.22 : amp;
+
+        const pts = [];
+        let dead = false;
+        const maxSteps = Math.max(4, tese.path.length);
+
+        for (let idx = 0; idx < maxSteps; idx++) {
+          const t = idx / Math.max(1, maxSteps - 1);
           const env = Math.sin(t * Math.PI);
-          // Mistura entre linha reta (gen inicial) e rota ótima Tese (gen final)
+          const p = tese.path[Math.min(idx, tese.path.length - 1)];
           const lx = start.x + dx * t;
           const ly = start.y + dy * t;
-          const blend = 0.25 + 0.75 * progress;
-          const wave = Math.sin(t * Math.PI * (1 + (k % 3))) * amp * phase * env;
-          return {
-            x: lx * (1 - blend) + p.x * blend + nx * wave,
-            y: ly * (1 - blend) + p.y * blend + ny * wave
-          };
-        });
-        paths.push(cand);
+          const wave = Math.sin(t * Math.PI * freq + r1 * 3.14) * agAmp * phase * env;
+          const wx = lx * (1 - blend) + p.x * blend + nx * wave;
+          const wy = ly * (1 - blend) + p.y * blend + ny * wave;
+          pts.push({ x: wx, y: wy });
+
+          // Checa se o rover "morreu" em declive > slopeLim (ou falha exploratória nas primeiras gerações)
+          if (idx >= 2 && idx < maxSteps - 1) {
+            const c = sampleGrid(grid, wx, wy);
+            const effLim = g <= 2 ? slopeLim * (0.72 + g * 0.1) : slopeLim;
+            if (c.slp5 > effLim || (g === 1 && t > 0.18 + r2 * 0.52 && c.slp5 > slopeLim * 0.55)) {
+              dead = true;
+              break;
+            }
+          }
+        }
+        if (!dead) survivors++;
+        agents.push({ pts, dead });
+        if (k < 8) paths.push(pts);
       }
+
       generations.push({
         gen: g,
-        candidates: paths.length,
+        total: N_AGENTS,
+        survivors,
+        deadCount: N_AGENTS - survivors,
+        candidates: N_AGENTS,
         bestHazards: g === 5 ? tese.hazardsHit : Math.max(tese.hazardsHit, Math.round((base.hazardsHit + 2) * (1 - progress * 0.85))),
+        agents,
         paths
       });
     }

@@ -41,6 +41,8 @@
     walkDistM: 0,
     walkHazardsHit: 0,
     walkVetoes: 0,
+    solarPickups: [],
+    pickupsCollected: 0,
     lastStepMs: 0
   };
 
@@ -187,11 +189,11 @@
     const modal = document.getElementById("tese-inspector-modal");
     if (!modal) return;
     modal.hidden = false;
-    document.getElementById("insp-title").textContent = `🔬 Inspetor 10×10 km · ${entry.sitio} (PGDA 78)`;
+    document.getElementById("insp-title").textContent = `🔬 Área de Pouso 10×10 km · ${entry.sitio} (Polo Sul Lunar)`;
     const lroc = entry.lroc || {};
     const ts = entry.terrain_stats || {};
     document.getElementById("insp-meta").textContent =
-      `${Math.abs(entry.lat).toFixed(3)}°S · ${entry.lon.toFixed(3)}°E | LROC NAC: ${lroc.melhor_res_m_px ? lroc.melhor_res_m_px + " m/px (" + lroc.n_cobrindo + " imgs)" : "sem cobertura"} | LDEC>0: ${ts.pct_ldec_pos ?? "—"}%`;
+      `Recorte 10×10 km ao redor de ${entry.sitio} (${Math.abs(entry.lat).toFixed(3)}°S, ${entry.lon.toFixed(3)}°E) · LROC NAC: ${lroc.melhor_res_m_px ? lroc.melhor_res_m_px + " m/px (" + lroc.n_cobrindo + " imgs)" : "sem cobertura"} · Tiros LOLA LDEC>0: ${ts.pct_ldec_pos ?? "—"}%`;
 
     updateInspectorStats();
     const grid = await loadPgdaGrid(entry.sitio);
@@ -263,12 +265,20 @@
 
     for (let py = 0; py < H; py++) {
       const gy = Math.min(n - 1, Math.floor((py / H) * n));
+      const gyU = Math.max(0, gy - 1), gyD = Math.min(n - 1, gy + 1);
       for (let px = 0; px < W; px++) {
         const gx = Math.min(n - 1, Math.floor((px / W) * n));
+        const gxL = Math.max(0, gx - 1), gxR = Math.min(n - 1, gx + 1);
         const idx = gy * n + gx;
+
+        // Relevo lunar sombreado (hillshade real de grid.surf)
+        const nx = -(grid.surf[gy * n + gxR] - grid.surf[gy * n + gxL]) / (2 * grid.cellM);
+        const ny = -(grid.surf[gyD * n + gx] - grid.surf[gyU * n + gx]) / (2 * grid.cellM);
+        const nl = Math.hypot(nx, ny, 1);
+        const hill = Math.max(0.18, Math.min(1.0, 0.45 + ((nx * 0.65 + ny * 0.55 + 0.25) / nl) * 0.72));
         const elevN = (grid.surf[idx] - grid.zMin) / zSpan;
-        const base = Math.round(35 + elevN * 125);
-        let r = base, g = base + 6, b = base + 14;
+        const base = Math.round(32 + elevN * 68 + hill * 64);
+        let r = base, g = base + 3, b = base + 8;
 
         const coarseSlp = stateTese.inspCoarse === "20m" ? grid.slp20[idx] : grid.slp60[idx];
         const isRight = px >= splitX;
@@ -276,30 +286,29 @@
         if (!isRight) {
           // LADO ESQUERDO: Grade Grossa (60m ou 20m)
           if (coarseSlp > slopeLim) {
-            r = 210; g = 75; b = 60;
+            r = Math.round(base * 0.45 + 150); g = Math.round(base * 0.35); b = Math.round(base * 0.35);
           }
         } else {
           // LADO DIREITO: Tese (5m + LDEC + Escudo P50/P90/P99)
           const realSlp = grid.slp5[idx];
-          const ldecAny = grid.ldecAny[idx];
           const ldecDen = grid.ldecDen[idx];
           const sig = ldecDen >= 0.12 ? Math.max(0.8, grid.slperr[idx] * 0.35) : Math.max(2.0, grid.slperr[idx] * 0.75);
           const shieldSlp = realSlp + 1.0 + zConf * sig;
 
           if (realSlp > slopeLim && coarseSlp <= slopeLim) {
-            // Perigo ESCONDIDO pela grade grossa -> acende em vermelho/laranja vivo!
-            r = 255; g = 65; b = 55;
+            // Perigo ESCONDIDO pela grade grossa -> acende em vermelho vivo
+            r = 248; g = 68; b = 58;
           } else if (realSlp > slopeLim) {
-            r = 220; g = 45; b = 45;
+            r = Math.round(base * 0.4 + 165); g = Math.round(base * 0.28); b = Math.round(base * 0.28);
           } else if (shieldSlp > slopeLim) {
-            // Vetado pela margem do Escudo P90/P99
-            r = Math.min(255, base + 75); g = Math.min(255, base + 35); b = 30;
+            // Vetado pela margem do Escudo P90/P99 (âmbar sutil)
+            r = Math.min(255, base + 58); g = Math.min(255, base + 26); b = Math.max(18, base - 25);
           }
-          if (ldecAny) {
-            // Tiros reais LOLA (LDEC > 0) em ciano
-            r = Math.round(r * 0.45);
-            g = Math.min(255, Math.round(g * 0.6 + 115));
-            b = Math.min(255, Math.round(b * 0.6 + 135));
+          if (ldecDen >= 0.10) {
+            // Tiros reais LOLA (densidade real LDEC > 0) em ciano sutil sem apagar o relevo
+            r = Math.round(r * 0.72);
+            g = Math.min(255, Math.round(g * 0.85 + 32));
+            b = Math.min(255, Math.round(b * 0.85 + 52));
           }
         }
 
@@ -309,19 +318,55 @@
     }
     ctx.putImageData(img, 0, 0);
 
+    // Alvo central (ponto de pouso no centro do recorte 10×10 km)
+    ctx.save();
+    ctx.strokeStyle = "rgba(250, 204, 21, 0.9)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(W / 2, H / 2, 10, 0, Math.PI * 2);
+    ctx.moveTo(W / 2 - 15, H / 2); ctx.lineTo(W / 2 + 15, H / 2);
+    ctx.moveTo(W / 2, H / 2 - 15); ctx.lineTo(W / 2, H / 2 + 15);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(4, 10, 22, 0.8)";
+    ctx.fillRect(W / 2 + 14, H / 2 - 10, 86, 16);
+    ctx.fillStyle = "#fde047";
+    ctx.font = "700 10px 'Segoe UI', sans-serif";
+    ctx.fillText(`Pouso ${grid.sitio}`, W / 2 + 18, H / 2 + 2);
+    ctx.restore();
+
     // Linha divisória da cortina + rótulos
     ctx.strokeStyle = "#00e5ff";
     ctx.lineWidth = 2.5;
     ctx.beginPath(); ctx.moveTo(splitX, 0); ctx.lineTo(splitX, H); ctx.stroke();
 
-    ctx.fillStyle = "rgba(4, 10, 22, 0.84)";
-    ctx.fillRect(8, 8, 175, 24);
-    ctx.fillRect(W - 238, 8, 230, 24);
-    ctx.font = "800 12px 'Segoe UI', sans-serif";
+    ctx.fillStyle = "rgba(4, 10, 22, 0.86)";
+    ctx.fillRect(8, 8, 152, 22);
+    ctx.fillRect(W - 216, 8, 208, 22);
+    ctx.font = "800 11px 'Segoe UI', sans-serif";
     ctx.fillStyle = "#ffb36b";
-    ctx.fillText(`ANTES: Grade ${stateTese.inspCoarse}`, 14, 24);
+    ctx.fillText(`ANTES: Grade ${stateTese.inspCoarse}`, 14, 23);
     ctx.fillStyle = "#5dff9b";
-    ctx.fillText(`DEPOIS: Tese 5m + LDEC + ${stateTese.inspShield}`, W - 230, 24);
+    ctx.fillText(`DEPOIS: 5m + LDEC + ${stateTese.inspShield}`, W - 210, 23);
+
+    // Barra de escala (2 km = 20% de 10 km) + legenda no rodapé do mapa
+    ctx.fillStyle = "rgba(4, 10, 22, 0.84)";
+    ctx.fillRect(8, H - 30, 148, 22);
+    ctx.strokeStyle = "#f8fafc";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(14, H - 14); ctx.lineTo(14 + W * 0.2, H - 14);
+    ctx.moveTo(14, H - 18); ctx.lineTo(14, H - 10);
+    ctx.moveTo(14 + W * 0.2, H - 18); ctx.lineTo(14 + W * 0.2, H - 10);
+    ctx.stroke();
+    ctx.fillStyle = "#e2e8f0";
+    ctx.font = "700 10px 'Segoe UI', sans-serif";
+    ctx.fillText("2 km (10×10 km)", 14 + W * 0.2 + 6, H - 11);
+
+    ctx.fillStyle = "rgba(4, 10, 22, 0.84)";
+    ctx.fillRect(W - 216, H - 30, 208, 22);
+    ctx.fillStyle = "#cbd5e1";
+    ctx.font = "700 10px 'Segoe UI', sans-serif";
+    ctx.fillText("🔴 >15°  🟡 Escudo  🔵 Tiros LOLA", W - 210, H - 15);
   }
 
   function landOnInspectorSite() {
@@ -392,46 +437,138 @@
     renderMiniMap();
   }
 
+  function lockLandedRoverOrientation() {
+    if (typeof Rover3D !== "undefined" && Rover3D && Rover3D.views) {
+      const lv = Rover3D.views.get("landed");
+      if (lv) {
+        lv.speed = 0;
+        lv.userYaw = 0;
+        lv.baseYaw = Math.PI;
+      }
+    }
+  }
+
+  function generateSolarPickups(grid, cmp, sim) {
+    if (!grid || !cmp) return;
+    const sunAz = ((sim && sim.sun ? sim.sun.az : 35) * Math.PI) / 180;
+    const sdx = Math.sin(sunAz), sdy = Math.cos(sunAz);
+    const slopeLim = getActiveRoverSlopeLimit();
+
+    const isLit = (x, y) => {
+      const c = global.TeseEngine.sampleGrid(grid, x, y);
+      if (c.slp5 > slopeLim) return false;
+      const eL = global.TeseEngine.sampleGrid(grid, x - 50, y).surf;
+      const eR = global.TeseEngine.sampleGrid(grid, x + 50, y).surf;
+      const eD = global.TeseEngine.sampleGrid(grid, x, y - 50).surf;
+      const eU = global.TeseEngine.sampleGrid(grid, x, y + 50).surf;
+      const nx = -(eR - eL) / 100;
+      const ny = -(eU - eD) / 100;
+      const dot = (nx * sdx + ny * sdy + 0.18) / Math.hypot(nx, ny, 1);
+      return dot > 0.04;
+    };
+
+    const candidates = [];
+    const mainPath = (stateTese.degrau === 0 && cmp.base ? cmp.base.path : cmp.tese ? cmp.tese.path : []) || [];
+    for (let i = 2; i < mainPath.length - 1; i += 3) {
+      candidates.push(mainPath[i]);
+    }
+    const genAux = cmp.generations && cmp.generations[2] ? cmp.generations[2].paths : null;
+    if (genAux && genAux[1]) {
+      for (let i = 4; i < genAux[1].length - 2; i += 6) candidates.push(genAux[1][i]);
+    }
+
+    const out = [];
+    for (const pt of candidates) {
+      if (out.length >= 16) break;
+      if (!isLit(pt.x, pt.y)) continue;
+      if (out.some((q) => Math.hypot(q.x - pt.x, q.y - pt.y) < 160)) continue;
+      out.push({ x: pt.x, y: pt.y, wh: 180, collected: false });
+    }
+    stateTese.solarPickups = out;
+    stateTese.pickupsCollected = 0;
+  }
+
+  function ensureRoutePlanned(openSimModal) {
+    if (!stateTese.target) {
+      stateTese.target = { x: stateTese.pos.x + 1200, y: stateTese.pos.y + 1200 };
+    }
+    const sim = _surface() && _surface().sim;
+    if (stateTese.activeGrid && sim) {
+      const rParams = getActiveRoverParams();
+      const sFrac = sim.sunFrac || 0.5;
+      stateTese.plannedComparison = global.TeseEngine.simulateRouteComparison(
+        stateTese.activeGrid, stateTese.pos, stateTese.target,
+        rParams, sFrac, stateTese.shieldLevel, "60m"
+      );
+      stateTese.autoWpIdx = 1;
+      generateSolarPickups(stateTese.activeGrid, stateTese.plannedComparison, sim);
+      if (openSimModal && global.RouteSimV18) {
+        global.RouteSimV18.open(
+          stateTese.activeGrid, stateTese.pos, stateTese.target,
+          stateTese.plannedComparison, sim.sun ? sim.sun.az : 35,
+          getActiveRoverSlopeLimit(), stateTese.shieldLevel,
+          rParams, sFrac
+        );
+      }
+    }
+  }
+
+  function acceptPlannedRoute(which) {
+    const deg = which === "base" ? 0 : 4;
+    setDegrau(deg);
+    stateTese.autoWpIdx = 1;
+    const sim = _surface() && _surface().sim;
+    if (stateTese.activeGrid && stateTese.plannedComparison && sim) {
+      generateSolarPickups(stateTese.activeGrid, stateTese.plannedComparison, sim);
+    }
+    toggleTacticalZoom(true);
+    updateScan();
+    renderMiniMap();
+    _toast(which === "base"
+      ? "⚠️ Plano Sem Tese (Degrau 0) aceito! Rota e raios solares ativos."
+      : `🛡️ Plano Com Tese (Degrau 4 · Escudo ${stateTese.shieldLevel}) aceito! Siga a rota ou colete ⚡ nas partes claras.`);
+  }
+
   function toggleWalkMode() {
     stateTese.walkMode = !stateTese.walkMode;
+    document.body.classList.toggle("tese-walk-active", stateTese.walkMode);
     const panel = document.getElementById("tese-walk-panel");
     const btn = document.getElementById("btn-walk-mode");
     const banner = document.getElementById("mission-banner");
     if (panel) panel.hidden = !stateTese.walkMode;
     if (btn) btn.classList.toggle("active", stateTese.walkMode);
     if (banner && stateTese.walkMode) banner.hidden = true;
+    lockLandedRoverOrientation();
     if (stateTese.walkMode) {
+      if (!stateTese.plannedComparison) ensureRoutePlanned(false);
       updateScan();
       renderMiniMap();
+    } else {
+      stateTese.keys = {};
+      const holder = document.getElementById("landed-rover-holder");
+      if (holder) {
+        holder.style.left = "";
+        holder.style.top = "";
+        holder.style.bottom = "";
+        holder.style.transform = "";
+        holder.style.opacity = "";
+      }
     }
   }
 
   function setControlMode(mode) {
     stateTese.controlMode = mode === "auto" ? "auto" : "manual";
+    lockLandedRoverOrientation();
     const bm = document.getElementById("btn-ctrl-manual");
     const ba = document.getElementById("btn-ctrl-auto");
     if (bm) bm.classList.toggle("active", stateTese.controlMode === "manual");
     if (ba) ba.classList.toggle("active", stateTese.controlMode === "auto");
 
     if (stateTese.controlMode === "auto") {
-      if (!stateTese.target) {
-        stateTese.target = { x: stateTese.pos.x + 1200, y: stateTese.pos.y + 1200 };
-      }
-      const sim = _surface() && _surface().sim;
-      if (stateTese.activeGrid && sim) {
-        stateTese.plannedComparison = global.TeseEngine.simulateRouteComparison(
-          stateTese.activeGrid, stateTese.pos, stateTese.target,
-          getActiveRoverParams(), sim.sunFrac || 0.5, stateTese.shieldLevel
-        );
-        if (global.RouteSimV18) {
-          global.RouteSimV18.open(
-            stateTese.activeGrid, stateTese.pos, stateTese.target,
-            stateTese.plannedComparison, sim.sun ? sim.sun.az : 35,
-            getActiveRoverSlopeLimit(), stateTese.shieldLevel
-          );
-        }
-      }
+      ensureRoutePlanned(true);
       toggleTacticalZoom(true);
+    } else {
+      if (!stateTese.plannedComparison) ensureRoutePlanned(false);
     }
     updateScan();
     renderMiniMap();
@@ -490,15 +627,17 @@
     const cell = global.TeseEngine.sampleGrid(grid, stateTese.pos.x, stateTese.pos.y);
     const socPct = Math.round((sim.bat / sim.capWh) * 100);
     const decTxt = stateTese.lastScan ? stateTese.lastScan.decisionText : "Pronto para caminhar (clique no mini-mapa ou use WASD/setas)";
+    const totalPk = (stateTese.solarPickups || []).length;
     info.innerHTML = `
       <div><b>Terreno:</b> ${grid.sitio}${grid.synthetic ? " (sintético)" : " (PGDA78 5m)"} · <b>LDEC:</b> ${cell.ldecAny ? "DISPARO REAL" : "interpolado"}</div>
-      <div><b>Declive 5m / 60m:</b> ${cell.slp5.toFixed(1)}° / ${cell.slp60.toFixed(1)}° · <b>SOC:</b> ${socPct}% · <b>Dist:</b> ${Math.round(stateTese.walkDistM)} m</div>
+      <div><b>Declive 5m / 60m:</b> ${cell.slp5.toFixed(1)}° / ${cell.slp60.toFixed(1)}° · <b>SOC:</b> ${socPct}% · <b>Dist:</b> ${Math.round(stateTese.walkDistM)} m · <b>⚡:</b> ${stateTese.pickupsCollected}/${totalPk}</div>
       <div class="tese-dec">${decTxt}</div>
     `;
   }
 
   function stepRover(dtReal) {
     if (!stateTese.walkMode || !stateTese.activeGrid || !_surface() || !_surface().sim) return;
+    lockLandedRoverOrientation();
     const sim = _surface().sim;
     const grid = stateTese.activeGrid;
     const roverParams = getActiveRoverParams();
@@ -514,7 +653,7 @@
       if (stateTese.controlMode === "auto") setControlMode("manual");
     }
 
-    // Piloto automático traçado pelo planejamento (só no modo Automático)
+    // Piloto automático segue exatamente os waypoints da rota planejada (A* Tese / Base)
     if (stateTese.controlMode === "auto" && stateTese.target && moveSpeed === 0 && turnDeg === 0) {
       const rem = Math.hypot(stateTese.target.x - stateTese.pos.x, stateTese.target.y - stateTese.pos.y);
       if (rem < 60) {
@@ -523,9 +662,27 @@
         if (typeof _toast === "function") _toast("🎯 Destino alcançado na borda da PSR!");
       } else {
         updateScan();
-        const prop = stateTese.lastScan ? stateTese.lastScan.proposedRelDeg : 0;
+        const cmp = stateTese.plannedComparison;
+        const activePath = cmp
+          ? (stateTese.degrau === 0 && cmp.base ? cmp.base.path : cmp.tese ? cmp.tese.path : null)
+          : null;
+
+        let prop = stateTese.lastScan ? stateTese.lastScan.proposedRelDeg : 0;
+        if (activePath && activePath.length > 1) {
+          let wpIdx = stateTese.autoWpIdx || 1;
+          while (wpIdx < activePath.length - 1 &&
+                 Math.hypot(activePath[wpIdx].x - stateTese.pos.x, activePath[wpIdx].y - stateTese.pos.y) < 65) {
+            wpIdx++;
+          }
+          stateTese.autoWpIdx = wpIdx;
+          const wp = activePath[Math.min(wpIdx, activePath.length - 1)];
+          const wpBrg = ((Math.atan2(wp.x - stateTese.pos.x, wp.y - stateTese.pos.y) * 180 / Math.PI) % 360 + 360) % 360;
+          let diff = ((wpBrg - (sim.heading || 0)) % 360 + 360) % 360;
+          if (diff > 180) diff -= 360;
+          prop = diff;
+        }
         const sf = stateTese.lastScan ? stateTese.lastScan.speedFactor : 1.0;
-        turnDeg = Math.max(-65 * dtReal, Math.min(65 * dtReal, prop * 1.8 * dtReal));
+        turnDeg = Math.max(-95 * dtReal, Math.min(95 * dtReal, prop * 2.6 * dtReal));
         moveSpeed = 85 * sf * dtReal;
         if (stateTese.lastScan && stateTese.lastScan.shieldVetoed) stateTese.walkVetoes++;
       }
@@ -535,6 +692,7 @@
       sim.heading = ((sim.heading + turnDeg) % 360 + 360) % 360;
       updateScan();
     }
+    const cellNow = global.TeseEngine.sampleGrid(grid, stateTese.pos.x, stateTese.pos.y);
     if (moveSpeed !== 0) {
       const rad = sim.heading * Math.PI / 180;
       const nx = Math.max(-4800, Math.min(4800, stateTese.pos.x + Math.sin(rad) * moveSpeed));
@@ -556,27 +714,41 @@
       const slopePen = 1 + Math.max(0, cell.slp5 - 5) * 0.04;
       sim.bat = Math.max(0, sim.bat - roverParams.powerShadowW * slopePen * dtH * 0.25);
 
-      // Inclinação visual e afastamento do rover 3D quando a câmera sobe para a visão tática IA
-      const holder = document.getElementById("landed-rover-holder");
-      if (holder) {
-        const z = global.Surface3DTerrain ? global.Surface3DTerrain.camZoom : 0;
-        const sc = 1 - z * 0.72;
-        const tilt = Math.max(-10, Math.min(10, (cell.slp5 - 6) * 0.45)) * (1 - z);
-        const bob = Math.sin(stateTese.walkDistM * 0.35) * 2.5 * (1 - z);
-        holder.style.transform = `translateX(-50%) translateY(${bob.toFixed(1)}px) scale(${sc.toFixed(2)}) rotate(${tilt.toFixed(1)}deg)`;
-        holder.style.opacity = String(Math.max(0.25, 1 - z * 0.65));
+      // Coleta de raios solares amarelos nas partes iluminadas da rota
+      if (stateTese.solarPickups && stateTese.solarPickups.length) {
+        for (const pk of stateTese.solarPickups) {
+          if (!pk.collected && Math.hypot(nx - pk.x, ny - pk.y) < 55) {
+            pk.collected = true;
+            stateTese.pickupsCollected++;
+            sim.bat = Math.min(sim.capWh, sim.bat + pk.wh);
+            _toast(`⚡ +${pk.wh} Wh coletado na zona iluminada! (${stateTese.pickupsCollected}/${stateTese.solarPickups.length})`);
+          }
+        }
       }
 
       updateScan();
       renderMiniMap();
-    } else {
-      const holder = document.getElementById("landed-rover-holder");
-      if (holder) {
-        const z = global.Surface3DTerrain ? global.Surface3DTerrain.camZoom : 0;
-        const sc = 1 - z * 0.72;
-        holder.style.transform = `translateX(-50%) scale(${sc.toFixed(2)})`;
-        holder.style.opacity = String(Math.max(0.25, 1 - z * 0.65));
+    }
+
+    // Alinha o rover 3D exatamente sobre a origem (0,0,0) da trilha e do Escudo no terreno 3D
+    const holder = document.getElementById("landed-rover-holder");
+    if (holder) {
+      const z = global.Surface3DTerrain ? global.Surface3DTerrain.camZoom : 0;
+      const orig = global.Surface3DTerrain && global.Surface3DTerrain.getOriginScreenPos
+        ? global.Surface3DTerrain.getOriginScreenPos()
+        : null;
+      const sc = 1 - z * 0.72;
+      const tilt = moveSpeed !== 0 ? Math.max(-10, Math.min(10, (cellNow.slp5 - 6) * 0.45)) * (1 - z) : 0;
+      const bob = moveSpeed !== 0 ? Math.sin(stateTese.walkDistM * 0.35) * 2.5 * (1 - z) : 0;
+      if (orig && orig.valid) {
+        holder.style.left = `${orig.x.toFixed(1)}px`;
+        holder.style.top = `${(orig.y - 210 * sc + bob).toFixed(1)}px`;
+        holder.style.bottom = "auto";
+      } else {
+        holder.style.left = "50%";
       }
+      holder.style.transform = `translateX(-50%) scale(${sc.toFixed(2)}) rotate(${tilt.toFixed(1)}deg)`;
+      holder.style.opacity = String(Math.max(0.35, 1 - z * 0.55));
     }
   }
 
@@ -626,8 +798,27 @@
       ctx.restore();
     };
     if (stateTese.plannedComparison) {
+      const genAux = stateTese.plannedComparison.generations && stateTese.plannedComparison.generations[2]
+        ? stateTese.plannedComparison.generations[2].paths : null;
+      if (genAux) {
+        for (let a = 0; a < 3; a++) {
+          if (genAux[a * 2 + 1]) drawPath(genAux[a * 2 + 1], "rgba(56,189,248,0.45)", [2, 2]);
+        }
+      }
       drawPath(stateTese.plannedComparison.base.path, "#f59e0b", [3, 3]);
       drawPath(stateTese.plannedComparison.tese.path, "#10b981", null);
+    }
+
+    // Raios solares amarelos no mini-mapa
+    if (stateTese.solarPickups && stateTese.solarPickups.length) {
+      ctx.fillStyle = "#facc15";
+      for (const pk of stateTese.solarPickups) {
+        if (pk.collected) continue;
+        const pq = toPx(pk.x, pk.y);
+        ctx.beginPath();
+        ctx.arc(pq.px, pq.py, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
     // Trilha percorrida
@@ -777,6 +968,9 @@
   document.addEventListener("keyup", (e) => {
     stateTese.keys[e.code] = false;
   });
+  window.addEventListener("blur", () => {
+    stateTese.keys = {};
+  });
 
   function toggleTacticalZoom(force) {
     if (!global.Surface3DTerrain) return;
@@ -793,7 +987,9 @@
     const u = (e.clientX - rect.left) / rect.width;
     const v = (e.clientY - rect.top) / rect.height;
     stateTese.target = { x: u * 10000 - 5000, y: 5000 - v * 10000 };
-    setControlMode("auto");
+    ensureRoutePlanned(true);
+    updateScan();
+    renderMiniMap();
   }
 
   function holdKey(code, down) {
@@ -830,6 +1026,7 @@
     openTeseCompare,
     onMiniMapClick,
     toggleTacticalZoom,
+    acceptPlannedRoute,
     holdKey,
     nudgeRover
   };

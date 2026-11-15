@@ -1046,6 +1046,9 @@
     .landed-rover-stage.descending {
       transform: translate(-50%, -420px) scale(0.55);
     }
+    body.tese-walk-active .landed-rover-stage {
+      transition: none;
+    }
 
     .surface-hud-top {
       position: absolute;
@@ -2164,8 +2167,9 @@
     .insp-pill-grp { display: inline-flex; gap: 4px; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 8px; }
     .insp-pill-grp button { border: 0; background: transparent; color: #b7cde4; padding: 4px 9px; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 11px; }
     .insp-pill-grp button.active { background: #00e5ff; color: #04101a; }
-    .insp-canvas-wrap { display: flex; justify-content: center; background: #030710; border: 1px solid rgba(255,255,255,0.14); border-radius: 10px; overflow: hidden; }
-    #insp-canvas { width: 100%; max-width: 520px; height: auto; aspect-ratio: 1 / 1; display: block; }
+    #tese-inspector-modal .tese-modal-box { max-width: 600px; }
+    .insp-canvas-wrap { display: flex; justify-content: center; background: transparent; border: none; border-radius: 10px; overflow: hidden; }
+    #insp-canvas { width: 100%; max-width: 520px; height: auto; aspect-ratio: 1 / 1; display: block; border-radius: 10px; border: 1px solid rgba(56,189,248,0.28); }
     .insp-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 8px; margin-top: 10px; }
     .insp-kpi { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 6px 9px; font-size: 11px; }
     .insp-kpi span { display: block; color: #9fb6d6; }
@@ -2192,7 +2196,9 @@
     #v18-sim-modal .tese-modal-box { max-width: 980px; }
     .v18-dual { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     @media (max-width: 760px) { .v18-dual { grid-template-columns: 1fr; } }
-    .v18-pane { background: rgba(6, 12, 24, 0.85); border: 1px solid rgba(148,163,184,0.2); border-radius: 10px; padding: 6px; }
+    .v18-pane { background: rgba(6, 12, 24, 0.85); border: 2px solid rgba(148,163,184,0.22); border-radius: 10px; padding: 6px; cursor: pointer; transition: border-color .15s, box-shadow .15s, transform .12s; }
+    .v18-pane:hover { border-color: #38bdf8; box-shadow: 0 0 18px rgba(56,189,248,0.28); transform: translateY(-1px); }
+    .v18-pane.selected { border-color: #10b981; box-shadow: 0 0 22px rgba(16,185,129,0.42); }
     .v18-pane-head { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 700; padding: 2px 4px 6px; color: #cbd5e1; }
     .v18-pane-head .tag-base { color: #f59e0b; }
     .v18-pane-head .tag-tese { color: #10b981; }
@@ -2530,8 +2536,8 @@
           </div>
         </div>
         <div class="insp-pill-grp" style="width:100%;display:grid;grid-template-columns:1fr 1fr;margin-bottom:6px;" role="group" aria-label="Modo de controle da missão">
-          <button type="button" id="btn-ctrl-manual" class="active" onclick="TeseUI.setControlMode('manual')" title="Controle manual pelo teclado (WASD / Setas)">🎮 Manual (Teclado)</button>
-          <button type="button" id="btn-ctrl-auto" onclick="TeseUI.setControlMode('auto')" title="Piloto automático traçado pelo planejamento (Degraus 0–4)">🤖 Automático (Rota)</button>
+          <button type="button" id="btn-ctrl-manual" class="active" onclick="TeseUI.setControlMode('manual')" title="Controle manual pelo teclado (WASD / Setas) seguindo a rota e coletando raios solares">🎮 Manual (Teclado)</button>
+          <button type="button" id="btn-ctrl-auto" onclick="TeseUI.setControlMode('auto')" title="Navegação autônoma: rota traçada e seguida automaticamente">🤖 Autônoma (Rota)</button>
         </div>
         <div class="degrau-list" role="group" aria-label="Seletor dos 5 Degraus">
           <button type="button" class="degrau-btn" data-d="0" onclick="TeseUI.setDegrau(0)" title="Base 60/20m">0: Base</button>
@@ -2638,7 +2644,7 @@
       <div class="tese-modal-head">
         <div>
           <h2>🛰️ Zoom-Out LOLA &amp; Neuroevolução (Sem Tese × Com Tese)</h2>
-          <div class="tese-modal-meta" id="v18-sub-meta">Mapa LOLA sob o rover · Enxame evolutivo em 5 gerações sobre terreno real PGDA 5 m</div>
+          <div class="tese-modal-meta" id="v18-sub-meta">Mapa LOLA sob o rover · Enxame evolutivo em 5 gerações · Clique em um dos quadros para aceitar o plano</div>
         </div>
         <button type="button" class="cmp-x" onclick="RouteSimV18.close()" aria-label="Fechar">✕</button>
       </div>
@@ -2656,18 +2662,17 @@
           <button type="button" class="v18-spd-btn" data-s="4" onclick="RouteSimV18.setSpeed(4)">4×</button>
         </div>
         <span id="v18-gen-pill" class="v18-gen-pill">🧬 Geração 1/5</span>
-        <button type="button" class="or-primary" style="margin-left:auto;" onclick="RouteSimV18.close()">🎥 Acompanhar no 3D</button>
       </div>
       <div class="v18-prog"><i id="v18-prog-fill"></i></div>
       <div class="v18-dual">
-        <div class="v18-pane">
+        <div id="v18-pane-base" class="v18-pane" onclick="RouteSimV18.acceptPlan('base')" title="Clique neste quadro para aceitar o plano Sem Tese (Degrau 0)">
           <div class="v18-pane-head">
             <span class="tag-base">⚠️ SEM TESE (Degrau 0 · Grade <span id="v18-lbl-grid">60 m</span>)</span>
             <span id="v18-stat-base">Perigos: 0 · 0 m</span>
           </div>
           <canvas id="v18-canvas-base" width="440" height="340"></canvas>
         </div>
-        <div class="v18-pane">
+        <div id="v18-pane-tese" class="v18-pane" onclick="RouteSimV18.acceptPlan('tese')" title="Clique neste quadro para aceitar o plano Com Tese (Degrau 4 + Escudo)">
           <div class="v18-pane-head">
             <span class="tag-tese">🛡️ COM TESE (5 m + Escudo <span id="v18-lbl-shield">P90</span> + IA)</span>
             <span id="v18-stat-tese">Perigos: 0 · Vetos: 0</span>
@@ -6427,10 +6432,16 @@
         { duration: 950, easing: "cubic-bezier(0.65, 0, 0.35, 1)", fill: "forwards" });
       roverFlight = { el, from: A, to: B };
       anim.onfinish = () => {
-        // continua o giro exatamente de onde parou
-        const t = performance.now() / 1000;
-        const yaw = fv.baseYaw + t * fv.speed + fv.userYaw;
-        bv.userYaw = yaw - bv.baseYaw - t * bv.speed;
+        // continua o giro exatamente de onde parou (exceto na superfície, onde fica travado)
+        if (B.view === "landed") {
+          bv.speed = 0;
+          bv.userYaw = 0;
+          bv.baseYaw = Math.PI;
+        } else {
+          const t = performance.now() / 1000;
+          const yaw = fv.baseYaw + t * fv.speed + fv.userYaw;
+          bv.userYaw = yaw - bv.baseYaw - t * bv.speed;
+        }
         A.el.classList.remove("fly-hidden"); B.el.classList.remove("fly-hidden");
         el.style.display = "none";
         anim.cancel();
@@ -7033,7 +7044,15 @@
       document.getElementById("surf-stat-slope").textContent = site.slope != null ? `${String(site.slope).replace(".", ",")}°` : "—";
 
       const holder = document.getElementById("landed-rover-holder");
-      if (Rover3D) Rover3D.views.get("landed").roverIdx = state.selectedRoverIdx;
+      if (Rover3D) {
+        const lv = Rover3D.views.get("landed");
+        if (lv) {
+          lv.roverIdx = state.selectedRoverIdx;
+          lv.speed = 0;
+          lv.userYaw = 0;
+          lv.baseYaw = Math.PI;
+        }
+      }
       else holder.textContent = rover.name;
       holder.classList.add("descending");
 

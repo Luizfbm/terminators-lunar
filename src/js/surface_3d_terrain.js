@@ -22,11 +22,15 @@
   let trailLine = null;
   let routeBaseLine = null;
   let routeTeseLine = null;
+  let auxLines = [];
+  let pickupsGroup = null;
+  let pickupMeshes = [];
   let rocksGroup = null;
   let rockMeshes = [];
   let initialized = false;
   let camZoom = 0;       // 0 = 3ª pessoa na superfície, 1 = visão tática afastada estilo v18
   let targetCamZoom = 0;
+  const originScreen = { x: 0, y: 0, valid: false };
 
   function init(canvas) {
     if (initialized || !canvas || typeof THREE === "undefined") return;
@@ -109,6 +113,19 @@
       new THREE.LineBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.95 })
     );
     scene.add(routeTeseLine);
+
+    for (let a = 0; a < 3; a++) {
+      const al = new THREE.Line(
+        new THREE.BufferGeometry(),
+        new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.36 })
+      );
+      al.visible = false;
+      scene.add(al);
+      auxLines.push(al);
+    }
+
+    pickupsGroup = new THREE.Group();
+    scene.add(pickupsGroup);
 
     resize();
   }
@@ -324,6 +341,59 @@
     setRouteGeom(routeBaseLine, cmp && cmp.base ? cmp.base.path : null);
     setRouteGeom(routeTeseLine, cmp && cmp.tese ? cmp.tese.path : null);
 
+    // Rotas auxiliares do enxame (visíveis tanto no Manual quanto na Autônoma)
+    const genAux = cmp && cmp.generations && cmp.generations[2] ? cmp.generations[2].paths : null;
+    for (let a = 0; a < auxLines.length; a++) {
+      const cand = genAux && genAux[a * 2 + 1] ? genAux[a * 2 + 1] : null;
+      setRouteGeom(auxLines[a], cand);
+    }
+
+    // Raios solares amarelos flutuantes nas partes iluminadas da rota
+    const pickups = teseState.solarPickups || [];
+    while (pickupMeshes.length < pickups.length) {
+      const grp = new THREE.Group();
+      const boltGeo = new THREE.OctahedronGeometry(1.5, 0);
+      boltGeo.scale(0.65, 1.45, 0.65);
+      const boltMat = new THREE.MeshStandardMaterial({
+        color: 0xfacc15,
+        emissive: 0xeab308,
+        emissiveIntensity: 0.9,
+        roughness: 0.25,
+        metalness: 0.2
+      });
+      const bolt = new THREE.Mesh(boltGeo, boltMat);
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(1.8, 2.3, 18),
+        new THREE.MeshBasicMaterial({ color: 0xfde047, side: THREE.DoubleSide, transparent: true, opacity: 0.55 })
+      );
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.y = -1.7;
+      grp.add(bolt);
+      grp.add(ring);
+      pickupsGroup.add(grp);
+      pickupMeshes.push(grp);
+    }
+    const nowS = performance.now() * 0.001;
+    for (let i = 0; i < pickupMeshes.length; i++) {
+      const m = pickupMeshes[i];
+      const pk = pickups[i];
+      if (!teseState.walkMode || !pk || pk.collected) {
+        m.visible = false;
+        continue;
+      }
+      const dx = pk.x - pos.x;
+      const dy = pk.y - pos.y;
+      if (Math.hypot(dx, dy) > 950) {
+        m.visible = false;
+        continue;
+      }
+      const th = sampleElev(grid, pk.x, pk.y) - baseElev;
+      const bob = Math.sin(nowS * 2.8 + i) * 0.45;
+      m.position.set(dx, th + 2.4 + bob, -dy);
+      m.children[0].rotation.y = nowS * 1.8 + i;
+      m.visible = true;
+    }
+
     // Câmera 3D interpolada entre 3ª pessoa (camZoom=0) e visão tática aérea estilo v18 (camZoom=1)
     const camDist = 26 + camZoom * 340;
     const camHeight = 11.5 + camZoom * 370;
@@ -332,6 +402,15 @@
     const lookY = -2.5 * (1 - camZoom);
     camera.position.set(-fwdX * camDist, camHeight, -fwdZ * camDist);
     camera.lookAt(fwdX * lookAhead, lookY, fwdZ * lookAhead);
+    camera.updateMatrixWorld();
+
+    const v0 = new THREE.Vector3(0, 0, 0).project(camera);
+    const rect = renderer.domElement.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      originScreen.x = (v0.x * 0.5 + 0.5) * rect.width;
+      originScreen.y = (-v0.y * 0.5 + 0.5) * rect.height;
+      originScreen.valid = true;
+    }
 
     renderer.render(scene, camera);
   }
@@ -340,12 +419,17 @@
     targetCamZoom = on ? 1 : 0;
   }
 
+  function getOriginScreenPos() {
+    return originScreen;
+  }
+
   global.Surface3DTerrain = {
     init,
     resize,
     render,
     sampleElev,
     setTacticalZoom,
+    getOriginScreenPos,
     get camZoom() { return camZoom; },
     get tacticalMode() { return targetCamZoom > 0.5; }
   };
