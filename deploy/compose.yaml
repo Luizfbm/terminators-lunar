@@ -1,0 +1,75 @@
+# Production stack on the VPS. Run from the repo root:
+#   docker compose -f deploy/compose.yaml --env-file .env up -d --build
+# .env holds TUNNEL_TOKEN for the Cloudflare tunnel "lunar" and the assistant's
+# OpenRouter key, and is not in git. deploy/env.example names every variable it takes.
+# The engine data comes from deploy/fetch-data.sh into LUNAR_DATA_DIR (default
+# /opt/lunar-data) and is mounted read-only.
+name: lunar
+
+services:
+  backend:
+    build: ../backend
+    restart: unless-stopped
+    environment:
+      LUNAR_META_KERNEL: /data/kernels/meta.tm
+      LUNAR_DEM_DIR: /data/dem
+      # Map of permanently shadowed regions (the requirement, deploy/fetch-data.sh). Until the
+      # file is there, /terrain leaves `permanent_shadow` out.
+      LUNAR_PSR_MAP: /data/psr/LPSR_85S_060M_201608.TIF
+      # Compute every Curated Site over the default Window in the background after
+      # start and after each UTC midnight (ADR 0004). /health answers meanwhile.
+      LUNAR_WARM_CACHE: all
+      # Engine routes per client IP per minute (backend/app/ratelimit.py). A classroom of
+      # 40 behind one NAT, each opening a Site every 4 s, is 600; the page itself opens
+      # one /visibility per Site, so no real visitor gets near it.
+      LUNAR_IP_LIMIT_PER_MINUTE: "600"
+      # The assistant (the requirement) reaches its model through OpenRouter. The key and the
+      # model id come from .env on the server; with either one empty the route answers in
+      # offline mode, so the stack starts without them. The credit limit set on the key
+      # at OpenRouter is the money ceiling; the daily cap here is a second guard.
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      LUNAR_ASSISTANT_MODEL: ${LUNAR_ASSISTANT_MODEL:-}
+      LUNAR_ASSISTANT_DAILY_REQUESTS: ${LUNAR_ASSISTANT_DAILY_REQUESTS:-300}
+      LUNAR_ASSISTANT_IP_LIMIT_PER_MINUTE: ${LUNAR_ASSISTANT_IP_LIMIT_PER_MINUTE:-10}
+    volumes:
+      - ${LUNAR_DATA_DIR:-/opt/lunar-data}:/data:ro
+    # Capacity testing measured 562 MiB with the current Window warm for every Curated
+    # Site. Four cold engine runs asked at once took it to 1.1 GiB, and another day's
+    # Window adds about 110 MB when it warms. The phase 4 routes run the engine many times
+    # per request (19 for a Landing scatter, a year of months for the Windows by start
+    # day), so the cap goes from 1.5 to 2.5 GB. The machine has 7.9 GB and about 6 GB
+    # available. A runaway still gets killed and restarted instead of taking the machine
+    # down with the other services on it.
+    mem_limit: 2560m
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+  caddy:
+    # Caddy plus the built frontend (deploy/Dockerfile.web).
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+    restart: unless-stopped
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - ${LUNAR_DATA_DIR:-/opt/lunar-data}/moon:/srv/moon:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.7
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?TUNNEL_TOKEN missing from .env}
+    depends_on:
+      - caddy
+
+volumes:
+  caddy_data:

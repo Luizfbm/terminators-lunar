@@ -1,0 +1,6 @@
+LEAPSECONDS_KERNEL = naif0012.tls
+SPK_KERNEL         = de440_2023_2032.bsp
+  SOURCE_SPK_KERNEL = de440.bsp
+    BODIES          = 10, 3, 399, 301
+    BEGIN_TIME      = 2023 JUL 01 00:00:00 TDB
+    END_TIME        = 2033 JAN 31 00:00:00 TDB

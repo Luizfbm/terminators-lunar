@@ -1,0 +1,11 @@
+# Caddy with the built frontend inside. Build context: the repo root.
+FROM node:22-alpine AS build
+WORKDIR /repo/frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend ./
+# The API address is the default in src/api/client.ts: https://lunar-api.luizfbm.win
+RUN npm run build
+
+FROM caddy:2.11.9-alpine
+COPY --from=build /repo/frontend/dist /srv/www

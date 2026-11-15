@@ -1,0 +1,47 @@
+# TLS ends at Cloudflare; the tunnel reaches Caddy over plain HTTP inside the
+# compose network, so Caddy only routes by host.
+{
+	auto_https off
+	admin off
+}
+
+# Frontend: the static build from frontend/, copied into this image by Dockerfile.web.
+http://lunar.luizfbm.win {
+	encode zstd gzip
+	# Globe images built by deploy/globe_assets.py on the VPS (the requirement), from the data
+	# volume, not from the image: they are too big for git.
+	handle_path /moon/* {
+		root * /srv/moon
+		# The day of cache is for images that exist. A missing one must be asked for again:
+		# a browser that kept a 404 for a day never saw the image once it arrived (#137).
+		@there file
+		header @there Cache-Control "public, max-age=86400"
+		@missing not file
+		header @missing Cache-Control "no-store"
+		header Access-Control-Allow-Origin "*"
+		file_server
+	}
+	handle {
+		root * /srv/www
+		# Vite names these files by their content, so they never change under the same name.
+		@hashed path /assets/*
+		header @hashed Cache-Control "public, max-age=31536000, immutable"
+		# The page itself is always asked for again, so a deploy shows up at once.
+		@page path / /index.html
+		header @page Cache-Control "no-cache"
+		# One page: any path that is not a file is the app.
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+# Backend: the FastAPI service from backend/.
+http://lunar-api.luizfbm.win {
+	# The generated API docs are not ours to publish: the contract is
+	# contract/openapi.yaml, the frontend never reads these and CI tests against the file.
+	@docs path /docs /docs/* /redoc /redoc/* /openapi.json
+	respond @docs 404
+	# A default-Window answer is about 0.8 MB of JSON and about 0.16 MB compressed.
+	encode zstd gzip
+	reverse_proxy backend:8000
+}
