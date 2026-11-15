@@ -1119,3 +1119,134 @@ def test_the_model_gets_durations_in_the_app_format_and_where_they_count_from(
     rules = scripted.bodies[0]["messages"][0]["content"]
     assert "5 d 23 h" in rules and "never as decimal days" in rules
     assert "from the start of the Window" in rules and "Cursor" in rules
+
+
+# 15/11/2026, the 17 mission Sites: Apollo 15 (3.6°E), Surveyor 6 (1.4°W) and Surveyor 7
+# (11.5°W) answered 422 outside-coverage. SLDEM2015's map has its seam at 0°E, where x jumps
+# by a whole Moon; a ray that crossed it read x a world away from the Site's window. The
+# engine now keeps x continuous around the Site and deploy/crop_offpole.py cuts windows that
+# run on past the seam, with the other side's pixels (the far window of the three was also
+# labelled 275 km from where its heights were). The windows are cut data, not in git.
+SEAM_SITES = {
+    "APOLLO15": (26.13239, 3.6333),
+    "SURVEYOR6": (0.4742, -1.4275),
+    "SURVEYOR7": (-40.9812, -11.5127),
+}
+_OFFPOLE = Path(__file__).resolve().parents[2] / "fixtures" / "dem" / "offpole"
+_SEAM_WINDOWS = [
+    _OFFPOLE / site / f"{product}.TIF"
+    for site in SEAM_SITES
+    for product in ("SLDEM2015_512", "SLDEM2015_128")
+]
+_NO_WINDOWS = (
+    "the off-pole DEM windows of Apollo 15, Surveyor 6 and Surveyor 7 are not in "
+    f"{_OFFPOLE} (cut by deploy/crop_offpole.py, gitignored): "
+    + ", ".join(str(w.relative_to(_OFFPOLE)) for w in _SEAM_WINDOWS if not w.is_file())
+)
+_MOON_RADIUS_M = 1_737_400.0
+
+
+def _bilinear(grid: Any, transform: Any, x: Any, y: Any) -> Any:
+    """Bilinear height at map points, written for this test (the engine has its own)."""
+    import numpy as np
+
+    col = (x - transform.c) / transform.a - 0.5
+    row = (y - transform.f) / transform.e - 0.5
+    c0, r0 = np.floor(col).astype(int), np.floor(row).astype(int)
+    fc, fr = col - c0, row - r0
+    return (
+        grid[r0, c0] * (1 - fc) * (1 - fr)
+        + grid[r0, c0 + 1] * fc * (1 - fr)
+        + grid[r0 + 1, c0] * (1 - fc) * fr
+        + grid[r0 + 1, c0 + 1] * fc * fr
+    )
+
+
+def _ray_elevation_deg(
+    site: tuple[float, float], azimuth_deg: float, observer_m: float, windows: dict[str, Any]
+) -> tuple[float, float]:
+    """The horizon elevation along one azimuth, read straight off the windows, and its distance.
+
+    A great circle built from 3-D vectors (not the engine's destination formula), sampled every
+    0.1 m to 500 m, 1 m to 5 km and 10 m to 100 km on the 512 window, every 50 m to 300 km on
+    the 128 one. Peaks of a bilinear DEM sit on its nodes and a ray's elevation changes fast
+    near the Site (a 25 m walk was 0.04° under the engine's zoom, a 1 m walk 0.009°, both at
+    ridges 140 to 450 m out). The x of each
+    point is the Site's x plus the radians between the two longitudes, so it runs on past
+    +-pi*R across the seam, as the windows do.
+    """
+    import math
+
+    import numpy as np
+
+    lat, lon = math.radians(site[0]), math.radians(site[1])
+    up = np.array([math.cos(lat) * math.cos(lon), math.cos(lat) * math.sin(lon), math.sin(lat)])
+    east = np.array([-math.sin(lon), math.cos(lon), 0.0])
+    north = np.cross(up, east)
+    bearing = math.radians(azimuth_deg)
+    heading = math.cos(bearing) * north + math.sin(bearing) * east
+    site_x = _MOON_RADIUS_M * math.radians((site[1] % 360.0) - 180.0)
+    best, where = -math.inf, 0.0
+    for product, steps in (
+        (
+            "SLDEM2015_512",
+            ((0.1, 0.1, 500.0), (1.0, 501.0, 5_000.0), (10.0, 5_010.0, 100_000.0)),
+        ),
+        ("SLDEM2015_128", ((50.0, 100_050.0, 300_000.0),)),
+    ):
+        grid, transform = windows[product]
+        d = np.concatenate([np.arange(low, high, step) for step, low, high in steps])
+        theta = d / _MOON_RADIUS_M
+        point = up[None, :] * np.cos(theta)[:, None] + heading[None, :] * np.sin(theta)[:, None]
+        p_lat = np.arcsin(point[:, 2])
+        p_lon = np.arctan2(point[:, 1], point[:, 0])
+        dlon = (p_lon - lon + math.pi) % (2.0 * math.pi) - math.pi
+        terrain = _bilinear(grid, transform, site_x + _MOON_RADIUS_M * dlon, _MOON_RADIUS_M * p_lat)
+        r = _MOON_RADIUS_M + terrain
+        elevation = np.degrees(
+            np.arctan2(r * np.cos(theta) - (_MOON_RADIUS_M + observer_m), r * np.sin(theta))
+        )
+        k = int(np.argmax(elevation))
+        if elevation[k] > best:
+            best, where = float(elevation[k]), float(d[k])
+    return best, where
+
+
+@pytest.mark.skipif(not all(w.is_file() for w in _SEAM_WINDOWS), reason=_NO_WINDOWS)
+@pytest.mark.parametrize("site_id", list(SEAM_SITES))
+def test_sites_near_the_sldem_seam_answer_with_a_horizon_that_matches_the_dem(
+    site_id: str,
+) -> None:
+    import math
+
+    import numpy as np
+    import rasterio
+
+    payload = visibility({"site_id": site_id, "start": "2026-11-15T00:00:00Z"})
+    samples = payload["horizon"]["samples"]
+    assert len(samples) == 720
+    assert all(math.isfinite(s["elevation_deg"]) for s in samples)
+    assert all(0 < s["occluder"]["distance_m"] <= 300_000 for s in samples)
+
+    windows: dict[str, Any] = {}
+    for product in ("SLDEM2015_512", "SLDEM2015_128"):
+        with rasterio.open(_OFFPOLE / site_id / f"{product}.TIF") as dataset:
+            windows[product] = (dataset.read(1).astype(np.float64), dataset.transform)
+    site = SEAM_SITES[site_id]
+    # The Observer height of the default Query is 2 m; the Site's own ground comes from the
+    # finest window, read at the Site.
+    grid, transform = windows["SLDEM2015_512"]
+    site_x = _MOON_RADIUS_M * math.radians((site[1] % 360.0) - 180.0)
+    ground = float(_bilinear(grid, transform, site_x, _MOON_RADIUS_M * math.radians(site[0])))
+    observer = ground + payload["query"]["observer_height_m"]
+
+    # The walk can only miss a peak the engine's zoom finds, so it is never above the engine
+    # and under it by little. Eight azimuths all round: some rays cross 0°E, some do not.
+    for azimuth in (0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0):
+        sample = samples[round(azimuth / 0.5)]
+        independent, _ = _ray_elevation_deg(site, azimuth, observer, windows)
+        assert independent - 0.0005 <= sample["elevation_deg"] <= independent + 0.003, (
+            azimuth,
+            sample["elevation_deg"],
+            independent,
+        )
