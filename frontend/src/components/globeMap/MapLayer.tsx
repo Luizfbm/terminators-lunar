@@ -1,4 +1,6 @@
 import { useEffect, useRef, type RefObject } from 'react'
+import { missionLabel } from '../../domain/markers'
+import { layerOf } from '../../domain/siteLayers'
 import { useI18n } from '../../i18n/I18nContext'
 import { fill, STRINGS } from './strings'
 import type { MapEvent, MapRegion, MapSite } from './map'
@@ -95,12 +97,14 @@ export function MapLayer({
             type="button"
             className="globe__site"
             aria-label={site.name}
+            title={site.name}
             aria-current={site.id === chosenId ? 'true' : undefined}
+            data-mission={layerOf(site.source) === 'missions' || undefined}
             onClick={() => onEvent({ type: 'site', id: site.id })}
             hidden
           >
             <span className="globe__name" aria-hidden="true">
-              {site.name}
+              {layerOf(site.source) === 'missions' ? missionLabel(site.name) : site.name}
             </span>
           </button>
         ))}

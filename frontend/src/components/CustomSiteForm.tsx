@@ -3,6 +3,7 @@ import type { Site } from '../api/client'
 import { isCustomSite, type Coordinate } from '../domain/query'
 import { readCoordinate, type CoordinateProblems } from '../domain/sites'
 import { useI18n } from '../i18n/I18nContext'
+import { limitText } from './stageStatus/format'
 import type { MessageKey } from '../i18n/messages'
 
 const NO_PROBLEMS: CoordinateProblems = { latitude: null, longitude: null }
@@ -32,7 +33,7 @@ export function CustomSiteForm({
   maxLatitudeDeg: number
   onCoordinate: (coordinate: Coordinate) => void
 }) {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const custom = isCustomSite(site)
   const [latitude, setLatitude] = useState(custom ? String(site.latitude_deg) : '')
   const [longitude, setLongitude] = useState(custom ? String(site.longitude_deg) : '')
@@ -105,7 +106,7 @@ export function CustomSiteForm({
       </div>
       {any && (
         <div className="site-list__problems" role="alert">
-          {problems.latitude && <p id={latitudeProblemId}>{t(LATITUDE_MESSAGE[problems.latitude])}</p>}
+          {problems.latitude && <p id={latitudeProblemId}>{t(LATITUDE_MESSAGE[problems.latitude], { limit: limitText(maxLatitudeDeg, locale) })}</p>}
           {problems.longitude && <p id={longitudeProblemId}>{t(LONGITUDE_MESSAGE[problems.longitude])}</p>}
         </div>
       )}

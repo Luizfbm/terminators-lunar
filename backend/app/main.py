@@ -21,6 +21,7 @@ from . import (
     dsn,
     energy,
     ground,
+    heights,
     horizon,
     neighbours,
     scatter,
@@ -179,10 +180,7 @@ def _query(
             raise missing_site(site_id)
     else:
         assert latitude_deg is not None and longitude_deg is not None
-        if latitude_deg > -80:
-            raise ApiProblem(
-                "outside_coverage", "Outside coverage", "Custom Sites must be at or south of 80°S."
-            )
+        ground.check_custom_latitude(latitude_deg)
         selected = catalog.custom_site(latitude_deg, longitude_deg)
     return selected, instant
 
@@ -441,6 +439,20 @@ def get_terrain(
     """The Slope around a Site; defaults are NASA's Artemis III requirement (see slope.py)."""
     selected = ground.site_for(site_id, latitude_deg, longitude_deg)
     return ground.terrain(selected, radius_m, slope_limit_deg)
+
+
+@app.get("/terrain/heights")
+def get_terrain_heights(
+    site_id: str | None = None,
+    latitude_deg: float | None = Query(None, ge=-90, le=90),
+    longitude_deg: float | None = Query(None, ge=-180, le=180),
+    half_extent_m: float = Query(
+        heights.HALF_EXTENT_DEFAULT_M, ge=heights.HALF_EXTENT_MIN_M, le=heights.HALF_EXTENT_MAX_M
+    ),
+) -> Response:
+    """The DEM's own heights around a Site, for the 3D view from the ground (see heights.py)."""
+    selected = ground.site_for(site_id, latitude_deg, longitude_deg)
+    return Response(ground.terrain_heights(selected, half_extent_m), media_type="application/json")
 
 
 @app.post("/assistant")

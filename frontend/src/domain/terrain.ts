@@ -5,6 +5,9 @@
  * The map is a square in south polar stereographic metres, the projection of the engine's own
  * DEMs: the pole at (0, 0), 0° longitude up (+y), 90°E to the right (+x), and a point's distance
  * from the pole 2R tan(45° + lat/2). A pixel's value is the height at its centre.
+ *
+ * Away from the pole the map comes from `/terrain/heights` instead, on the DEM's own projection
+ * (`HeightMap.projection`): north polar stereographic, or simple cylindrical.
  */
 
 const RAD = Math.PI / 180
@@ -22,6 +25,50 @@ export interface HeightMap {
   at65535M: number
   /** Row by row from the top left. */
   data: Uint16Array
+  /** The map's projection. Left out, it is south polar stereographic: every published map of `/moon/`. */
+  projection?: MapProjection
+}
+
+/**
+ * The projections of the engine's DEMs, as `/terrain/heights` names them (the contract's
+ * `TerrainHeights`). On the north polar map 0° longitude points down (-y); on the simple
+ * cylindrical one x is R times the longitude from its central meridian, and y R times the latitude.
+ */
+export type MapProjection =
+  | { kind: 'south_polar' }
+  | { kind: 'north_polar' }
+  | { kind: 'equirectangular'; centerLongitudeDeg: number }
+
+/** Where a latitude and a longitude fall on the map's plane, in metres. */
+export function planeOf(map: HeightMap, latitudeDeg: number, longitudeDeg: number): { x: number; y: number } {
+  const projection = map.projection
+  if (projection?.kind === 'equirectangular') {
+    // x runs on continuously over the map, even where it crosses 0°E: the longitude is taken
+    // within half a turn of the map's own middle.
+    const middleX = map.xMinM + (map.size * map.metresPerPixel) / 2
+    const middleLongitudeDeg = projection.centerLongitudeDeg + middleX / map.sphereRadiusM / RAD
+    const apart = ((((longitudeDeg - middleLongitudeDeg) % 360) + 540) % 360) - 180
+    return { x: middleX + map.sphereRadiusM * apart * RAD, y: map.sphereRadiusM * latitudeDeg * RAD }
+  }
+  if (projection?.kind === 'north_polar') {
+    const rho = 2 * map.sphereRadiusM * Math.tan((45 - latitudeDeg / 2) * RAD)
+    return { x: rho * Math.sin(longitudeDeg * RAD), y: -rho * Math.cos(longitudeDeg * RAD) }
+  }
+  const rho = 2 * map.sphereRadiusM * Math.tan((45 + latitudeDeg / 2) * RAD)
+  return { x: rho * Math.sin(longitudeDeg * RAD), y: rho * Math.cos(longitudeDeg * RAD) }
+}
+
+/** The latitude and the longitude, in radians, of a point of the map's plane. */
+export function geoOf(map: HeightMap, x: number, y: number): { lat: number; lon: number } {
+  const projection = map.projection
+  if (projection?.kind === 'equirectangular') {
+    return { lat: y / map.sphereRadiusM, lon: projection.centerLongitudeDeg * RAD + x / map.sphereRadiusM }
+  }
+  const rho = Math.hypot(x, y)
+  if (projection?.kind === 'north_polar') {
+    return { lat: Math.PI / 2 - 2 * Math.atan(rho / (2 * map.sphereRadiusM)), lon: Math.atan2(x, -y) }
+  }
+  return { lat: 2 * Math.atan(rho / (2 * map.sphereRadiusM)) - Math.PI / 2, lon: Math.atan2(x, y) }
 }
 
 /** What `south_pole_fine.json` must say for its height map to be used. */
@@ -38,9 +85,7 @@ export function heightMapOf(doc: unknown, data: Uint16Array, width: number): Hei
 
 /** Where a latitude and a longitude fall on the map, in pixels from the centre of the top left pixel. */
 export function pixelOf(map: HeightMap, latitudeDeg: number, longitudeDeg: number): { column: number; row: number } {
-  const rho = 2 * map.sphereRadiusM * Math.tan((45 + latitudeDeg / 2) * RAD)
-  const x = rho * Math.sin(longitudeDeg * RAD)
-  const y = rho * Math.cos(longitudeDeg * RAD)
+  const { x, y } = planeOf(map, latitudeDeg, longitudeDeg)
   return { column: (x - map.xMinM) / map.metresPerPixel - 0.5, row: (map.yMaxM - y) / map.metresPerPixel - 0.5 }
 }
 
@@ -58,8 +103,10 @@ export function heightAt(map: HeightMap, column: number, row: number): number {
 
 /** Whether the map holds the Site with at least `marginM` of ground on every side of it. */
 export function covers(map: HeightMap, latitudeDeg: number, longitudeDeg: number, marginM: number): boolean {
-  // North of the equator the south polar plane folds back on itself.
-  if (latitudeDeg > -60) return false
+  // North of the equator the south polar plane folds back on itself, and the north polar one south of it.
+  const kind = map.projection?.kind ?? 'south_polar'
+  if (kind === 'south_polar' && latitudeDeg > -60) return false
+  if (kind === 'north_polar' && latitudeDeg < 60) return false
   const { column, row } = pixelOf(map, latitudeDeg, longitudeDeg)
   const margin = marginM / map.metresPerPixel
   return column >= margin && row >= margin && column <= map.size - 1 - margin && row <= map.size - 1 - margin
@@ -114,9 +161,7 @@ export function patchAround(map: HeightMap, latitudeDeg: number, longitudeDeg: n
     for (let i = 0; i < columns; i++) {
       const column = firstColumn + i * stride
       const x = map.xMinM + (column + 0.5) * map.metresPerPixel
-      const rho = Math.hypot(x, y)
-      const lat = 2 * Math.atan(rho / (2 * map.sphereRadiusM)) - Math.PI / 2
-      const lon = Math.atan2(x, y)
+      const { lat, lon } = geoOf(map, x, y)
       const radius = map.sphereRadiusM + metres(map, map.data[row * map.size + column])
       const dx = radius * Math.cos(lat) * Math.cos(lon) - eye[0]
       const dy = radius * Math.cos(lat) * Math.sin(lon) - eye[1]

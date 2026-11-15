@@ -119,7 +119,7 @@ test('the map dives to the ground and comes back to the map', async ({ page }) =
   await page.getByRole('button', { name: 'Map', exact: true }).click()
   await expect(groundLayer(page)).toHaveCount(0, { timeout: 2_000 })
   await expect(page.locator('.globe')).toHaveAttribute('data-mode', 'map')
-  await expect(page.locator('.stage__caption')).toHaveText(/Click a Region to see its Sites, or double-click any point to ask about it\.$/)
+  await expect(page.locator('.stage__caption')).toHaveText(/Click a Region to see its Sites, click any point to land there, or double-click it to ask about it from the map\.$/)
 })
 
 test('a slow ground holds the globe at the Site, with no loading mark in the middle of the move', async ({ page }) => {

@@ -7,8 +7,8 @@ import csv
 from pathlib import Path
 from typing import Any, TypedDict
 
+from . import horizon
 from .constants import (
-    CUSTOM_MAX_LATITUDE_DEG,
     DEFAULT_DURATION_HOURS,
     DEFAULT_OBSERVER_HEIGHT_M,
     ENGINE_VERSION,
@@ -79,7 +79,8 @@ def meta() -> dict[str, Any]:
         "kernels": kernel_names(),
         "dems": [],
         "coverage": {
-            "custom_max_latitude_deg": CUSTOM_MAX_LATITUDE_DEG,
+            # -80 on the polar DEMs alone, 90 once the server has LOLA's global map.
+            "custom_max_latitude_deg": horizon.custom_max_latitude_deg(),
             "window_min": iso_z(WINDOW_MIN),
             "window_max": iso_z(WINDOW_MAX),
             "max_duration_hours": MAX_DURATION_HOURS,

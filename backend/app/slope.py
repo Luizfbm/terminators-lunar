@@ -18,7 +18,9 @@ ground distance between them:
   pole. At colatitude c from the pole the map is k = 1 / cos²(c / 2) = 2 / (1 − sin φ)
   times larger than the ground, the same in every direction: 1.0077 at 80°S, so ignoring it
   would add about 0.08° to a 10° slope there.
-- SLDEM2015's simple cylindrical keeps meridians true (k = 1 along y) and stretches
+- North polar stereographic (LOLA's LDEM_60N_240M) is the same with the north pole:
+  k = 2 / (1 + sin φ).
+- SLDEM2015's and LDEM_128's simple cylindrical keeps meridians true (k = 1 along y) and stretches
   parallels by k = 1 / cos φ along x, so the two axes get different factors.
 
 Both factors are taken at the Site's latitude and held over the radius: across 2 km at
@@ -36,7 +38,6 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 import rasterio  # type: ignore[import-untyped]
-from rasterio.windows import Window  # type: ignore[import-untyped]
 
 from . import horizon
 
@@ -76,6 +77,9 @@ def map_scale(projection: str, latitude_deg: float) -> tuple[float, float]:
     phi = math.radians(latitude_deg)
     if projection == "eqc":
         return 1.0 / math.cos(phi), 1.0
+    if projection == "polar_north":
+        k = 2.0 / (1.0 + math.sin(phi))
+        return k, k
     k = 2.0 / (1.0 - math.sin(phi))
     return k, k
 
@@ -93,7 +97,9 @@ def measure(
     neighbours are all inside the raster, and none of them is missing data. Raises
     `horizon.DemUnavailable` when no DEM does.
     """
-    folder, ladder = horizon.ladder_for(site_id)
+    # A typed point north of 80°S, with the global map on the server, tries the DEMs the
+    # Horizon mask walks there (horizon.beyond_polar); every other Site its own ladder.
+    folder, ladder = horizon.slope_bands(site_id, latitude_deg)
     reasons: list[str] = []
     for band in ladder:
         path = folder / f"{band.product}.TIF"
@@ -134,10 +140,13 @@ def _measure(
         row0 = math.floor(row - reach_rows) - 1
         col1 = math.ceil(col + reach_cols) + 2
         row1 = math.ceil(row + reach_rows) + 2
-        if col0 < 0 or row0 < 0 or col1 > dataset.width or row1 > dataset.height:
+        outside_cols = col0 < 0 or col1 > dataset.width
+        if row0 < 0 or row1 > dataset.height or (outside_cols and not band.wraps):
             return "the radius runs past the edge of the DEM"
-        window = Window(col0, row0, col1 - col0, row1 - row0)
-        grid = dataset.read(1, window=window).astype(np.float64)
+        if col1 - col0 > dataset.width:
+            return "the radius spans every longitude of the map"
+        # Across 0°E the global map reads on from its other edge (horizon.read_window).
+        grid = horizon.read_window(dataset, col0, row0, col1, row1, band.wraps)
         nodata = dataset.nodata
     if nodata is not None:
         grid[grid == nodata] = np.nan

@@ -16,6 +16,16 @@ export const MENU_ITEMS = [
 export type MenuId = (typeof MENU_ITEMS)[number]['id']
 export type MenuState = Record<MenuId, boolean>
 
+/** The two switches of the layers, the only buttons of the orbit that also make sense on the polar map. */
+export const LAYER_BUTTONS = ['missions', 'sites'] as const
+
+/**
+ * The buttons under the levels for a view: all six in orbit; on the polar map only the two switches, since
+ * the map does not turn the Moon. The switches are the same in both, so their state carries over.
+ */
+export const menuItemsFor = (mode: 'orbit' | 'map') =>
+  mode === 'orbit' ? MENU_ITEMS : MENU_ITEMS.filter((item) => (LAYER_BUTTONS as readonly string[]).includes(item.id))
+
 /** Only "Sites" starts pressed. */
 export const initialMenu = (): MenuState => ({ initial: false, dark_side: false, north: false, south: false, missions: false, sites: true })
 

@@ -141,11 +141,14 @@ test('a level takes the stage to its view, and the view buttons press the level 
   await expect(button(page, 'Explore the Moon')).toHaveAttribute('aria-pressed', 'false')
 })
 
-test('on the map the menu has only the two levels, and the buttons of the orbit are back when you return', async ({ page }) => {
+// Regression (2026-11-15): on the map the menu had only the two levels, so Sites and Lunar Missions could not
+// be switched at level 2.
+test('on the map the menu has the two levels and the two switches, and the buttons of the orbit are back when you return', async ({ page }) => {
   await page.goto('/?view=map')
   const menu = page.getByRole('group', { name: 'Globe menu' })
   await expect(menu).toBeVisible()
-  await expect(menu.getByRole('button')).toHaveText(LEVELS)
+  await expect(menu.getByRole('button')).toHaveText([...LEVELS, 'Lunar Missions', 'Sites'])
+  await expect(menu.getByRole('separator')).toBeVisible()
   await expect(button(page, 'South Pole in detail')).toHaveAttribute('aria-pressed', 'true')
   await expect(button(page, 'Explore the Moon')).toHaveAttribute('aria-pressed', 'false')
   await button(page, 'Explore the Moon').click()
@@ -180,4 +183,19 @@ test('the double click on the map still asks about that point after going there 
   const url = new URL((await asked).url())
   expect(Number(url.searchParams.get('latitude_deg'))).toBeLessThan(-89)
   expect(url.searchParams.get('site_id')).toBeNull()
+})
+
+test('a switch pressed on the map stays pressed in orbit, and the other way round', async ({ page }) => {
+  await page.goto('/?view=map')
+  await button(page, 'Lunar Missions').click()
+  await button(page, 'Sites').click()
+  expect(await pressed(page, 'Lunar Missions')).toBe(true)
+  expect(await pressed(page, 'Sites')).toBe(false)
+  await button(page, 'Explore the Moon').click()
+  await expect(button(page, 'Lunar Missions')).toHaveAttribute('aria-pressed', 'true')
+  await expect(button(page, 'Sites')).toHaveAttribute('aria-pressed', 'false')
+  await button(page, 'Sites').click()
+  await button(page, 'South Pole in detail').click()
+  await expect(button(page, 'Sites')).toHaveAttribute('aria-pressed', 'true')
+  await expect(button(page, 'Lunar Missions')).toHaveAttribute('aria-pressed', 'true')
 })

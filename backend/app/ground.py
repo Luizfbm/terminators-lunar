@@ -1,15 +1,15 @@
 """`GET /terrain`: the ground around a Site, a property of the Site with no Window.
 
 The Slope (slope.py) and, when the server has the map, the nearest permanently shadowed
-region (psr.py).
+region (psr.py). `GET /terrain/heights`: the DEM's own heights around it (heights.py).
 """
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
-from . import catalog, horizon, psr, slope
-from .constants import CUSTOM_MAX_LATITUDE_DEG
+from . import catalog, heights, horizon, psr, slope
 from .problems import ApiProblem, missing_site
 
 
@@ -32,11 +32,28 @@ def site_for(
             raise missing_site(site_id)
         return found
     assert latitude_deg is not None and longitude_deg is not None
-    if latitude_deg > CUSTOM_MAX_LATITUDE_DEG:
-        raise ApiProblem(
-            "outside_coverage", "Outside coverage", "Custom Sites must be at or south of 80°S."
-        )
+    check_custom_latitude(latitude_deg)
     return catalog.custom_site(latitude_deg, longitude_deg)
+
+
+def check_custom_latitude(latitude_deg: float) -> None:
+    """The coverage problem of a typed point, shared with /visibility and its kin.
+
+    80°S on the polar DEMs alone; the whole Moon once the server has LOLA's global map
+    (horizon.custom_max_latitude_deg, published as /meta coverage.custom_max_latitude_deg).
+    """
+    limit = horizon.custom_max_latitude_deg()
+    if latitude_deg > limit:
+        raise ApiProblem(
+            "outside_coverage",
+            "Outside coverage",
+            f"Custom Sites must be at or south of {_latitude(limit)}.",
+        )
+
+
+def _latitude(value: float) -> str:
+    """80°S for -80, the way the limit has always been written."""
+    return f"{abs(value):g}°{'S' if value < 0 else 'N'}"
 
 
 def terrain(site: catalog.Site, radius_m: float, slope_limit_deg: float) -> dict[str, Any]:
@@ -72,3 +89,23 @@ def terrain(site: catalog.Site, radius_m: float, slope_limit_deg: float) -> dict
     if shadow is not psr.ABSENT:
         answer["permanent_shadow"] = shadow
     return answer
+
+
+def terrain_heights(site: catalog.Site, half_extent_m: float) -> bytes:
+    """The contract's `TerrainHeights` as JSON, or the 422 that says why there is none."""
+    try:
+        found = heights.grid(
+            site["latitude_deg"],
+            site["longitude_deg"],
+            half_extent_m,
+            site["id"] if site["curated"] else None,
+        )
+    except horizon.DemUnavailable as missing:
+        # Never a flat or made-up ground: without a DEM there is no grid.
+        raise ApiProblem(
+            "outside_coverage",
+            "Outside coverage",
+            f"No DEM holds the ground {half_extent_m:g} m around this Site ({missing}).",
+        ) from missing
+    body = {"site": site, **heights.as_json(found, half_extent_m)}
+    return json.dumps(body, separators=(",", ":"), allow_nan=False).encode()

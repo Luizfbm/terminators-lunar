@@ -238,4 +238,13 @@ describe('the caption’s sentences about the ground', () => {
   it('has no sentence for the silhouette', () => {
     expect(groundCaption(null, pt)).toEqual([])
   })
+
+  it('names the real cell and the DEM where the ground is the engine’s grid away from the pole', () => {
+    // Phase C, 15/11/2026: away from the pole the ground comes from /terrain/heights; LDEM_128's
+    // cell is 236.9 m, and the caption must say 237 m, not the 90 m of the polar map.
+    const grid = { ...groundSpacing(236.9, 1), product: 'LDEM_128' }
+    expect(groundCaption(grid, en)).toEqual([en.t('sky.caption.ground', { metres: '237' }), en.t('sky.caption.product', { product: 'LDEM_128' })])
+    const [, , desenhado] = groundCaption({ ...groundSpacing(59.2, 2), product: 'SLDEM2015_512' }, pt)
+    expect(desenhado).toBe('Desenhado a cada 118 m neste aparelho.')
+  })
 })

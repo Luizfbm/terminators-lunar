@@ -2,8 +2,12 @@ import { expect, test, type Page, type Route } from '@playwright/test'
 
 // The two switches of the globe menu: "Sites" shows the Artemis Sites (source wueller2026) and "Lunar Missions"
 // the landings of missions that flew (every other curated source). The canvas says how many dots it draws in
-// `data-dots`. The Site that is chosen is always drawn, with either switch released. The mock only has a couple of
-// Sites, so these tests serve their own list.
+// `data-dots`. The chosen Site is no dot: it has a ring of its own, which does not make a released layer look
+// pressed. On the polar map (level 2) the same switches show only what lies south of the map's edge. The mock
+// only has a couple of Sites, so these tests serve their own list.
+//
+// Regression (2026-11-15): Sites and Lunar Missions showed nothing to the eye (dots about 0.7 px across,
+// grey on the grey Moon), the missions had no names, and the map ignored both switches.
 
 test.use({ locale: 'en-US' })
 
@@ -26,6 +30,8 @@ const SITES = [
   site('HW01', 'Haworth HW01', 'wueller2026', 'HW', -87.2, -20),
   site('APOLLO11', 'Apollo 11', 'apollo', null, 0.6741, 23.4733),
   site('SURVEYOR7', 'Surveyor 7', 'lroc2016', null, -40.98, -11.47),
+  // A mission inside the polar cap, with no Region: on the map it is a Site button of its own.
+  site('IM2', 'IM-2 Athena landing point', 'clps', null, -84.7906, 29.1957),
 ]
 const REGIONS = [
   { id: 'CR', name: 'Connecting Ridge', site_count: 2, artemis_iii_current: false, source_reference: 'Wueller 2026' },
@@ -50,30 +56,79 @@ async function open(page: Page, link = '/') {
 const canvas = (page: Page) => page.locator('.globe canvas')
 const dots = (page: Page, count: number) => expect(canvas(page)).toHaveAttribute('data-dots', String(count))
 const press = (page: Page, name: 'Sites' | 'Lunar Missions') => page.getByRole('button', { name, exact: true }).click()
+const pressed = (page: Page, name: 'Sites' | 'Lunar Missions', yes: boolean) =>
+  expect(page.getByRole('button', { name, exact: true })).toHaveAttribute('aria-pressed', String(yes))
+const missionName = (page: Page, name: string) => page.locator('.globe-mark', { hasText: name })
+const level = (page: Page, name: 'Explore the Moon' | 'South Pole in detail') => page.getByRole('button', { name, exact: true }).click()
 
-test('opens with the three Artemis Sites drawn and the two missions not', async ({ page }) => {
+test('opens with the three Artemis Sites drawn and the three missions not', async ({ page }) => {
   await open(page)
   await dots(page, 3)
-  await expect(page.getByRole('button', { name: 'Sites', exact: true })).toHaveAttribute('aria-pressed', 'true')
-  await expect(page.getByRole('button', { name: 'Lunar Missions', exact: true })).toHaveAttribute('aria-pressed', 'false')
+  await pressed(page, 'Sites', true)
+  await pressed(page, 'Lunar Missions', false)
+  await expect(page.locator('.globe-mark:visible')).toHaveCount(0)
 })
 
-test('Lunar Missions shows the two landings of missions, and releasing it hides them again', async ({ page }) => {
+test('Lunar Missions shows the landings of missions, and releasing it hides them again', async ({ page }) => {
   await open(page)
   await dots(page, 3)
   await press(page, 'Lunar Missions')
-  await dots(page, 5)
+  await dots(page, 6)
   await press(page, 'Lunar Missions')
   await dots(page, 3)
 })
 
-test('Sites hides the Artemis Sites but not the chosen one, and pressing it shows them again', async ({ page }) => {
+test('the missions on the near side carry their names, and a name lands on its mission', async ({ page }) => {
+  await open(page)
+  await press(page, 'Lunar Missions')
+  // Turned to the south, IM-2 near the pole faces the camera; Apollo 11 at the Equator may too.
+  await page.getByRole('button', { name: 'Southern Hemisphere', exact: true }).click()
+  await page.waitForTimeout(2400)
+  const im2 = missionName(page, 'IM-2 Athena landing point')
+  await expect(im2).toBeVisible()
+  // With room beside its dot the name is in view; without it (next to the chosen Site's name, say) it
+  // waits for the hover or the focus. Either way the mission is reached.
+  const name = im2.locator('.globe-mark__name')
+  const request = page.waitForRequest((r) => r.url().includes('/visibility?') && r.url().includes('site_id=IM2'))
+  if ((await im2.getAttribute('data-quiet')) === 'false') {
+    await expect(name).toBeVisible()
+    await name.click()
+  } else {
+    await im2.focus()
+    await expect(name).toBeVisible()
+    await page.keyboard.press('Enter')
+  }
+  await request
+  await expect(page.locator('.stage__ground')).toBeVisible({ timeout: 15_000 })
+})
+
+test('a mission on the far side has neither a name nor a dot to click', async ({ page }) => {
+  await open(page)
+  await press(page, 'Lunar Missions')
+  // Turned to the north, the south polar IM-2 is behind the Moon.
+  await page.getByRole('button', { name: 'Northern Hemisphere', exact: true }).click()
+  await page.waitForTimeout(2400)
+  await expect(missionName(page, 'IM-2 Athena landing point')).toBeHidden()
+})
+
+test('every mission keeps a button reachable from the keyboard, named for landing there', async ({ page }) => {
+  await open(page)
+  await press(page, 'Lunar Missions')
+  await page.getByRole('button', { name: 'Southern Hemisphere', exact: true }).click()
+  await page.waitForTimeout(2400)
+  const im2 = page.getByRole('button', { name: 'Land at IM-2 Athena landing point' })
+  await im2.focus()
+  await expect(im2.locator('.globe-mark__name')).toBeVisible()
+})
+
+test('Sites hides the Artemis Sites, the chosen one too: it keeps only its ring and its name', async ({ page }) => {
   await open(page)
   await dots(page, 3)
   await press(page, 'Sites')
-  // 001 is chosen: its dot stays, with its ring and its name.
-  await dots(page, 1)
+  // 001 is chosen: no dot of its own, its ring and its name stay.
+  await dots(page, 0)
   await expect(page.locator('.globe__pin')).toHaveText('Connecting Ridge (NASA site 001)')
+  await expect(page.locator('.globe__chosen')).toHaveCount(1)
   await press(page, 'Sites')
   await dots(page, 3)
 })
@@ -82,37 +137,86 @@ test('the two switches are independent', async ({ page }) => {
   await open(page)
   await press(page, 'Lunar Missions')
   await press(page, 'Sites')
-  // Both missions and the chosen Site.
+  // The three missions only.
   await dots(page, 3)
   await press(page, 'Sites')
-  await dots(page, 5)
+  await dots(page, 6)
   await press(page, 'Lunar Missions')
   await press(page, 'Sites')
-  // Neither: only the chosen Site is left.
-  await dots(page, 1)
+  // Neither: no dot at all.
+  await dots(page, 0)
 })
 
-test('the chosen Site of a mission is drawn with Lunar Missions released', async ({ page }) => {
+test('the chosen Site of a mission is no dot with Lunar Missions released', async ({ page }) => {
   await open(page, '/?site=APOLLO11')
-  // The three Artemis Sites and Apollo 11, which is chosen.
-  await dots(page, 4)
+  // The three Artemis Sites; Apollo 11 is chosen and has its ring, not a dot.
+  await dots(page, 3)
   await press(page, 'Sites')
-  await dots(page, 1)
+  await dots(page, 0)
   await expect(page.locator('.globe__pin')).toHaveText('Apollo 11')
   await expect(page.locator('.globe__chosen')).toHaveCount(1)
   await press(page, 'Lunar Missions')
-  await dots(page, 2)
+  await dots(page, 3)
 })
 
-test('the switches keep their state across the map and back, and the map draws no dots of its own', async ({ page }) => {
-  await open(page)
-  await press(page, 'Lunar Missions')
-  await dots(page, 5)
-  await page.getByRole('button', { name: 'South Pole in detail', exact: true }).click()
-  await expect(page.locator('.globe')).toHaveAttribute('data-mode', 'map')
-  // The map has its Region markers instead of dots.
-  await dots(page, 0)
-  await page.getByRole('button', { name: 'Explore the Moon', exact: true }).click()
-  await dots(page, 5)
-  await expect(page.getByRole('button', { name: 'Lunar Missions', exact: true })).toHaveAttribute('aria-pressed', 'true')
+test.describe('the polar map (South Pole in detail)', () => {
+  const regionButton = (page: Page, name: string) => page.locator('.globe__region', { hasText: name })
+  const siteButton = (page: Page, name: string) => page.getByRole('button', { name, exact: true }).and(page.locator('.globe__site'))
+
+  test('keeps the switches in its menu, in the state they had in orbit, and draws no dots of its own', async ({ page }) => {
+    await open(page)
+    await press(page, 'Lunar Missions')
+    await dots(page, 6)
+    await level(page, 'South Pole in detail')
+    await expect(page.locator('.globe')).toHaveAttribute('data-mode', 'map')
+    await pressed(page, 'Lunar Missions', true)
+    await pressed(page, 'Sites', true)
+    // The map has its Region markers and Site buttons instead of dots.
+    await dots(page, 0)
+    await level(page, 'Explore the Moon')
+    await dots(page, 6)
+    await pressed(page, 'Lunar Missions', true)
+  })
+
+  test('shows only the polar cap: the polar mission is there, the missions away from the pole are not', async ({ page }) => {
+    await open(page)
+    await press(page, 'Lunar Missions')
+    await level(page, 'South Pole in detail')
+    await expect(page.locator('.globe__grid span').first()).toBeVisible({ timeout: 10_000 })
+    await expect(siteButton(page, 'IM-2 Athena landing point')).toBeVisible()
+    await expect(page.locator('.globe__site', { hasText: 'Apollo 11' })).toHaveCount(0)
+    await expect(page.locator('.globe__site', { hasText: 'Surveyor 7' })).toHaveCount(0)
+    await expect(page.locator('.globe-mark:visible')).toHaveCount(0)
+    // A mission keeps its name in view on the map.
+    await expect(siteButton(page, 'IM-2 Athena landing point').locator('.globe__name')).toBeVisible()
+  })
+
+  test('going to the map does not press Sites by itself, and Sites released there hides the Regions', async ({ page }) => {
+    await open(page)
+    await press(page, 'Sites')
+    await level(page, 'South Pole in detail')
+    await expect(page.locator('.globe__grid span').first()).toBeVisible({ timeout: 10_000 })
+    await pressed(page, 'Sites', false)
+    await expect(page.locator('.globe__region')).toHaveCount(0)
+    await press(page, 'Sites')
+    await expect(regionButton(page, 'Haworth')).toBeVisible()
+    await press(page, 'Lunar Missions')
+    await expect(siteButton(page, 'IM-2 Athena landing point')).toBeVisible()
+    await press(page, 'Lunar Missions')
+    await expect(page.locator('.globe__site', { hasText: 'IM-2' })).toHaveCount(0)
+  })
+
+  test('back on the whole Moon the whole set is back, as the switches say', async ({ page }) => {
+    await open(page, '/?view=map')
+    await press(page, 'Lunar Missions')
+    await level(page, 'Explore the Moon')
+    await dots(page, 6)
+  })
+
+  test('a chosen Site north of the map edge has no ring there', async ({ page }) => {
+    await open(page, '/?site=APOLLO11&view=map')
+    await expect(page.locator('.globe__grid span').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('.globe__chosen')).toBeHidden()
+    await expect(page.locator('.globe__pin')).toBeHidden()
+  })
 })

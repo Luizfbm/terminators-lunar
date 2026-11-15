@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { initialMenu, layersOf, MENU_ITEMS, releasedTurns, toggled } from './globeMenu'
+import { initialMenu, layersOf, MENU_ITEMS, menuItemsFor, releasedTurns, toggled } from './globeMenu'
 import { initialLayers } from './siteLayers'
 
 describe('the menu on the left of the globe', () => {
@@ -63,5 +63,15 @@ describe('the menu on the left of the globe', () => {
     const state = toggled(toggled(initialMenu(), 'missions'), 'dark_side')
     expect(releasedTurns(state)).toEqual({ initial: false, dark_side: false, north: false, south: false, missions: true, sites: true })
     expect(state.dark_side).toBe(true)
+  })
+
+  it('has all six buttons in orbit', () => {
+    expect(menuItemsFor('orbit')).toEqual(MENU_ITEMS)
+  })
+
+  // Regression (2026-11-15): on the polar map the menu had only the two levels, so Sites and Lunar
+  // Missions could not be switched there.
+  it('keeps the two switches on the polar map, and drops the four buttons that turn the Moon', () => {
+    expect(menuItemsFor('map').map((item) => item.label)).toEqual(['Lunar Missions', 'Sites'])
   })
 })
