@@ -36,7 +36,11 @@ def test_every_site_carries_its_citation_and_sits_near_the_pole() -> None:
     for site in client.get("/sites").json():
         assert site["curated"] is True
         assert site["source_reference"]
-        if site["id"] in ("APOLLO11", "BG1", "CH3"):  # outside the pole on purpose (the requirement)
+        if site["id"] in (
+            "APOLLO11",
+            "BG1",
+            "CH3",
+        ):  # outside the pole on purpose (the requirement)
             assert site["region_id"] is None
             continue
         assert -90 <= site["latitude_deg"] <= -80
