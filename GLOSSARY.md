@@ -13,7 +13,7 @@ A named area that contains Sites, such as one of the Artemis III candidate regio
 _Avoid_: zone, area (as a proper term)
 
 **Curated Site**:
-A Site that comes from a cited list (Wueller 2026, CLPS targets, Apollo), as opposed to a custom one.
+A Site that comes from a cited list (Wueller 2026, CLPS targets, Apollo, the LROC 2016 table of past-mission landing sites), as opposed to a custom one.
 
 **Landing ellipse**:
 The area around a Site where a lander may actually touch down, given descent error. 100 m radius by default.

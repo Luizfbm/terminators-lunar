@@ -65,7 +65,7 @@ At Site CR05, the 240 m terrain puts the Sunset 5.7 h later than the 20 m terrai
 ## What the application provides
 
 - **The Occluder of every Sunset, Sunrise, Earthset and Earthrise**, with its azimuth, its distance and the name of the IAU feature it sits on.
-- **134 Sites:** the 130 Artemis Sites of Wueller et al. 2026, plus the IM-2 and Blue Ghost 1 landing points, Apollo 11 and Chandrayaan-3 (`/sites`: 130 `wueller2026`, 2 `clps`, 1 `apollo`, 1 `isro`).
+- **151 Sites:** the 130 Artemis Sites of Wueller et al. 2026, plus the IM-2 and Blue Ghost 1 landing points, Chandrayaan-3, and 18 landing sites of earlier missions (Apollo, Surveyor, Luna, Chang'e 3) (`/sites`: 130 `wueller2026`, 2 `clps`, 6 `apollo`, 1 `isro`, 12 `lroc2016`).
 - **The Resolution ladder:** any Query at three DEM resolutions, with the range between them.
 - **A Site's year:** every month of a year, and the Windows with the most time with both the Sun and the Earth.
 

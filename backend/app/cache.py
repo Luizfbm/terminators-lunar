@@ -48,8 +48,9 @@ from .constants import (
 )
 
 # Answers are kept as JSON bytes (about 0.8 MB each over the default Window), so two
-# days of the whole catalog fit in a few hundred MB.
-MAX_ENTRIES = 300
+# days of the whole catalog fit in a few hundred MB. The 151 Curated Sites warm to 302
+# answers over two days, so the count has to clear that or the warm-up evicts its own work.
+MAX_ENTRIES = 360
 # The count alone let 300 answers of 1440 h (1.7 MB each) hold about 510 MB, and the
 # compose stack sets no memory limit. The bytes are capped too.
 MAX_BYTES = int(os.environ.get("LUNAR_CACHE_MAX_MB", "320")) * 1_000_000
@@ -404,7 +405,7 @@ def _warm_once(site_ids: list[str], stop: threading.Event | None = None) -> None
         jobs.append((default, _SCATTER))
         jobs += [(default, y) for y in (start.year, start.year + 1) if y <= WINDOW_MAX.year]
     # Tomorrow's default Window last: today's visitors come first, and two days of the
-    # catalog (about 270 answers of 0.8 MB) still fit under MAX_ENTRIES and MAX_BYTES.
+    # catalog (about 300 answers of 0.8 MB) still fit under MAX_ENTRIES and MAX_BYTES.
     tomorrow = start + timedelta(days=1)
     jobs += [(site_id, -1) for site_id in site_ids]
     # The Uncertainty band of every Curated Site over today's default Window, after all of

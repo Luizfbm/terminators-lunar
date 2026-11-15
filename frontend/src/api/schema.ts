@@ -502,7 +502,7 @@ export interface components {
             latitude_deg: number;
             longitude_deg: number;
             /** @enum {string} */
-            source: "wueller2026" | "clps" | "apollo" | "isro" | "barker2021" | "custom";
+            source: "wueller2026" | "clps" | "apollo" | "isro" | "barker2021" | "lroc2016" | "custom";
             /** @description Citation of where the coordinate comes from. */
             source_reference: string;
             region_id: string | null;

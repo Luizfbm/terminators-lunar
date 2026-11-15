@@ -115,4 +115,4 @@ Os valores da API são de `/visibility`, `/visibility/scatter`, `/visibility/ene
 12. **Alcance do horizonte.** 20 m até 5 km, 80 m até 100 km e 240 m até 300 km, 720 raios (`backend/app/horizon.py` e README, "How it works"). As Estatísticas para nerds listam os produtos de DEM usados na resposta.
 13. **Painel "Se o módulo errar o alvo", 200 m.** Mesma Query com `&radius=200` no link (o botão do painel só oferece 100, 250 e 500 m). Nos 19 pontos: Sol visível de 402,23 h (200 m a 30° do norte) a 708,73 h; maior noite de 0 h a 306,50 h; Sol e Terra juntos de 135,23 h a 331,54 h.
 14. **A parte da LROC não confere o relevo.** Prova, id `landing-im2-athena`, campo "Não cobre".
-15. **Sites e mapas.** `/sites` lista 134 Sites (130 `wueller2026`, 2 `clps`, 1 `apollo`, 1 `isro`), com a citação de cada um. Mapas: Estatísticas para nerds e `/meta`.
+15. **Sites e mapas.** `/sites` lista 151 Sites (130 `wueller2026`, 2 `clps`, 6 `apollo`, 1 `isro`, 12 `lroc2016`), com a citação de cada um. Mapas: Estatísticas para nerds e `/meta`.
