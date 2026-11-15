@@ -446,6 +446,10 @@
         <div class="v18-card"><span>Bateria (Sem × Tese)</span><b style="color:#10b981;">${bStats.cur.soc}% × ${tStats.cur.soc}%</b></div>
         <div class="v18-card"><span>Perigos >15° (Sem × Tese)</span><b style="color:#f59e0b;">${bStats.hazCount} × <span style="color:#10b981;">${tStats.hazCount}</span></b></div>
         <div class="v18-card"><span>Vetos Escudo ${simState.shieldLevel}</span><b style="color:#38bdf8;">${tStats.vetoCount} desvios</b></div>
+        <div class="v18-card" style="grid-column:1/-1;font-size:11px;color:#cbd5e1;padding:6px 10px;">
+          📊 <b>Bateria Multirresolução (POP=100, 16 faixas LOLA):</b>
+          Chegada Tese 60→5m vs Grade 60m: <b style="color:#34d399;">+10,8 pp (N0)</b> · <b style="color:#34d399;">+13,2 pp (N1, p=0,046, OR=11,8)</b> · <b style="color:#34d399;">+12,3 pp (N2, tomb. -2,8 pp, p=0,012)</b> · <b style="color:#34d399;">+30% rel. (N3, p=0,043)</b> · LDEC real 5m: <b>7,29%</b>
+        </div>
       `;
     }
   }

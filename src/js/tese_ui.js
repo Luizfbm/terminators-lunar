@@ -933,6 +933,16 @@
         Erro mediano ${pgda.mc60.erro_mediano_grade.toFixed(2)}° → ${pgda.mc60.erro_mediano_tese.toFixed(2)}°
       </div>` : "";
 
+    const benchHtml = `
+      <div class="cmp-mc-box" style="margin-top:6px;background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.38);">
+        <b>📊 Bateria Multirresolução LOLA (16 faixas reais · POP=100 · 1.600 travessias/célula):</b><br/>
+        • <b>N0 (Base):</b> Chegada <b style="color:#5dff9b">78,06%</b> vs. 67,31% (Grade 60m) · <b>+10,75 pp</b> (McNemar p=3,3×10⁻³¹, OR=5,99)<br/>
+        • <b>N1 (Terreno 20,1% &gt;15°):</b> <b style="color:#5dff9b">48,62%</b> vs. 35,44% · <b>+13,19 pp</b> (Wilcoxon p=0,046, OR=11,82, tomb. -2,44 pp)<br/>
+        • <b>N2 (Incerteza + Câmera):</b> <b style="color:#5dff9b">47,75%</b> vs. 35,44% · <b>+12,31 pp</b> (tomb. -2,81 pp, p=0,012)<br/>
+        • <b>N3 (Severo, POP=30):</b> <b style="color:#5dff9b">40,0%</b> vs. 30,8% (+30% rel., p=0,043) · Rover A sem escudo cai para 21,7% / 45,4% tomb.<br/>
+        • <b>Cobertura LDEC 5m:</b> apenas <b>7,29%</b> com disparo real LOLA (87,5°S–90°S) → fundamenta <i>No False Relief</i> + Escudo P90/P99
+      </div>`;
+
     cols.innerHTML = `
       <div class="cmp-col">
         <h3>❌ Sem Tese (Degrau 0 · ${stateTese.coarseMode})</h3>
@@ -949,6 +959,7 @@
         <div class="cmp-stat"><span>Distância / Tempo:</span><b>${cmp.tese.distanceM} m · ${cmp.tese.timeH} h</b></div>
       </div>
       ${mcHtml}
+      ${benchHtml}
     `;
     panel.hidden = false;
   }

@@ -65,7 +65,18 @@ Módulos criados/integrados em `src/js/`:
 
 ---
 
-## 5. Prompt do Plano (Para Replicar em Outro Projeto com Mapa Lunar Mais Detalhado)
+## 5. Estatísticas da Bateria Multirresolução na Interface (Evidência Empírica)
+
+Para dar lastro científico visível na interface (no comparador **`⚖️ Comparar`** `#compare-panel` e no rodapé de **`#v18-sim-modal`**), exibir os resultados consolidados da bateria em `16` faixas reais LOLA (`POP = 100`, `1.600` travessias por célula, `dados_estatisticos_pareados_pop100.csv` e `RESULTADOS-ESCADA-DIFICULDADE.md`):
+- **`N0` (Base):** chegada `78,06%` (Tese `60→5 m`) vs. `67,31%` (Grade `60 m`), **`+10,75 pp`** (`IC 95%: +0,06 a +23,81 pp`; McNemar `p = 3,3×10⁻³¹`, `OR = 5,99`, `r = 0,714`).
+- **`N1` (Terreno perigoso `20,1% >15°`):** `48,62%` vs. `35,44%`, **`+13,19 pp`** (Wilcoxon `p = 0,046`, McNemar `p = 3,3×10⁻⁴⁷`, `OR = 11,82`, `r = 0,905`; tombamento `-2,44 pp`).
+- **`N2` (Incerteza + câmera reduzida):** `47,75%` vs. `35,44%`, **`+12,31 pp`** (tombamento `-2,81 pp`, Wilcoxon `p = 0,012`).
+- **`N3` (Degradação severa, escada `POP = 30`):** `40,0%` vs. `30,8%` (**`+30%` relativos**, Wilcoxon `p = 0,043`), frente a `21,7%` de chegada e `45,4%` de tombamento no Rover A sem escudo.
+- **Cobertura real LOLA (`LDEC`):** apenas `7,29%` das células de `5 m` (`87,5°S–90°S`) possuem disparo real, fundamentando a regra *No False Relief* e o Escudo `P50/P90/P99`.
+
+---
+
+## 6. Prompt do Plano (Para Replicar em Outro Projeto com Mapa Lunar Mais Detalhado)
 
 ```text
 Integre em uma única aplicação web estática de 3 telas um Cockpit de Missão Lunar conectado a dados reais de terreno em alta resolução e ao motor tático de 5 degraus + neuroevolução:
@@ -89,4 +100,5 @@ Integre em uma única aplicação web estática de 3 telas um Cockpit de Missão
      * Anime enxames de 100 rovers por geração (`Gen 1..5`) saindo da origem, morrendo (`X` vermelho) nos perigos `> slopeLimitDeg` nas primeiras gerações e convergindo até a rota ótima na Gen 5.
      * Permita aceitar o plano clicando diretamente no quadrado esquerdo (`Sem Tese`) ou direito (`Com Tese`), sem botão extra.
    - Tanto no modo `🎮 Manual (Teclado)` quanto no `🤖 Autônoma (Rota)`, exiba a rota traçada, rotas auxiliares e pequenos raios amarelos flutuantes (`⚡`) apenas nas áreas iluminadas (fora das sombras) ao longo do trajeto para coleta e recarga de bateria, além do botão/tecla `F` (`☀️ Sol`) para alinhar frente e painel solar ao Sol.
+   - Inclua no comparador (`⚖️ Comparar`) e no rodapé da simulação (`#v18-sim-modal`) os números reais da bateria multirresolução (`POP=100` em `16` faixas LOLA): ganho de chegada `+10,75 pp` (`N0`), `+13,19 pp` (`N1`, `p=0,046`, `OR=11,82`), `+12,31 pp` (`N2`, tomb. `-2,81 pp`, `p=0,012`), `+30%` relativos (`N3`, `p=0,043`) e `7,29%` de cobertura real `LDEC` em `5 m`.
 ```
