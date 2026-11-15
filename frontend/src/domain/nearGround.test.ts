@@ -128,12 +128,25 @@ describe('the grain of regolith', () => {
   })
 
   it('is faint, and as bright on average everywhere', () => {
+    // One plain loop and a single assertion: an expect() per texel is hundreds of thousands of
+    // calls, which is what made this test time out when the machine was busy.
     let sum = 0
-    for (const value of texels) {
-      expect(value).toBeGreaterThanOrEqual(1 - GRAIN_DEPTH)
-      expect(value).toBeLessThanOrEqual(1)
+    let lowest = Infinity
+    let highest = -Infinity
+    let outOfRange = -1
+    for (let index = 0; index < texels.length; index++) {
+      const value = texels[index]
       sum += value
+      if (value < lowest) lowest = value
+      if (value > highest) highest = value
+      if (outOfRange < 0 && (value < 1 - GRAIN_DEPTH || value > 1)) outOfRange = index
     }
+    expect(
+      { lowest, highest, firstOutOfRange: outOfRange < 0 ? 'none' : `texel ${outOfRange} = ${texels[outOfRange]}` },
+      `grain texels must stay within [${1 - GRAIN_DEPTH}, 1]`,
+    ).toMatchObject({ firstOutOfRange: 'none' })
+    expect(lowest).toBeGreaterThanOrEqual(1 - GRAIN_DEPTH)
+    expect(highest).toBeLessThanOrEqual(1)
     expect(sum / texels.length).toBeCloseTo(1 - GRAIN_DEPTH / 2, 2)
   })
 
