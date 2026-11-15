@@ -35,11 +35,16 @@ c:\NASA PROJETO 2026\
 │   ├── engine.py / horizon.py        ← Motor de horizonte + iluminação (VER AVISO DE BUG NA §4!)
 │   └── scan.py / probe_geometry.py   ← Varredura e geometria polar pura
 ├── otimizacao_marcato\               ← Referências Simplex, KKT e métodos não lineares
-├── src\                              ← Interface cockpit HTML/Three.js e math de painel solar
+├── src\                              ← Interface cockpit HTML/Three.js e bundle estático da tese
 │   ├── cockpit_missao_lunar.html
+│   ├── build_map_bundle.py
 │   ├── educational_3d.html
-│   └── solar_panel_math.py
+│   ├── solar_panel_math.py
+│   ├── assets\tese_bundle\           ← sites_master.json + recortes PGDA 78 5 m/px
+│   └── js\                           ← rover_tese_engine.js, route_sim_v18.js, surface_3d_terrain.js, tese_ui.js
 ├── docs\
+│   ├── PLANO_INTEGRACAO_COCKPIT_TESE.md                  ← Especificação completa + instruções p/ cockpit e terminators-lunar
+│   ├── Relatorio_Consolidado_Tese_2026.md                ← Consolidação científica integral (MC, SfS, LROC NAC, POP=100)
 │   ├── Tese_Versao_Simplificada.md/.docx                 ← Síntese enxuta focada na tese
 │   ├── Tese_Apresentacao_Dados_e_Variaveis.md/.docx      ← Documento técnico completo + Apêndice A (130 sítios)
 │   ├── Tese_Apresentacao_Dados_e_Variaveis_atualizada.docx

@@ -69,38 +69,59 @@ Módulos criados/integrados em `src/js/`:
 
 ## 5. Estatísticas e Melhorias Percentuais da Multirresolução na Interface (Evidência Empírica)
 
-Para evidenciar o ganho real da multirresolução na interface (no hover da Tela 2, no Inspetor `10×10 km`, no círculo verde ao redor do rover, no comparador **`⚖️ Comparar`** `#compare-panel` e no rodapé de **`#v18-sim-modal`**), exibem-se os ganhos percentuais reais calculados a partir dos resultados consolidados (`16` faixas reais LOLA, `POP = 100`, `1.600` travessias/célula e `26` sítios `PGDA 78`):
+Para evidenciar o ganho real da multirresolução na interface (no hover da Tela 2, no Inspetor `10×10 km`, no círculo verde ao redor do rover, no comparador **`⚖️ Comparar`** `#compare-panel` e no rodapé de **`#v18-sim-modal`**), exibem-se os ganhos percentuais reais calculados a partir dos resultados consolidados (`docs/Relatorio_Consolidado_Tese_2026.md`, Seção 5 e Tabela 19 — `26` sítios `PGDA 78`, `SfS + 486 LROC NAC` e `16` faixas reais LOLA, `POP = 100`, `1.600` travessias/célula):
 - **Redução média de perigos nos `26` sítios `PGDA 78` (`sites_master.json`, `60 m`):** perigo não vetado médio cai de `31,48%` (**Navegação Normal**) para `6,38%` (**Multirresolução `P90`**) → **`−79,7%`** de melhoria relativa; erro mediano cai de `1,04°` para `0,59°` (**`−42,9%`**).
-- **`N0` (Base):** chegada `78,06%` (Multirresolução `60→5 m`) vs. `67,31%` (Normal `60 m`) → **`+16,0%` relativo** (`+10,75 pp`, McNemar `p = 3,3×10⁻³¹`, `OR = 5,99`, `r = 0,714`).
+- **Controle justo em igualdade de Falso Alarme (`MC 26` sítios):** transição `60→5 m` reduz o perigo não vetado em **`−38,5%`** (`26/26` sítios positivos, $p = 3\times 10^{-8}$); `20→5 m` reduz em **`−12%`** (`24/26` sítios positivos, $p = 7{,}5\times 10^{-7}$). Sob margem `P99` contra `SfS`, o perigo não vetado cai de `12,2–41,0%` para `0,2–0,5%`.
+- **`N0` (Base `POP = 100`):** chegada `78,06%` (Multirresolução `60→5 m`) vs. `67,31%` (Normal `60 m`) → **`+16,0%` relativo** (`+10,75 pp`, McNemar `p = 3,3×10⁻³¹`, `OR = 5,99`, `r = 0,714`).
 - **`N1` (Terreno perigoso `20,1% >15°`):** `48,62%` vs. `35,44%` → **`+37,2%` relativo** (`+13,19 pp`, Wilcoxon `p = 0,046`, McNemar `p = 3,3×10⁻⁴⁷`, `OR = 11,82`, `r = 0,905`; tombamento `-2,44 pp`).
 - **`N2` (Incerteza + câmera reduzida):** `47,75%` vs. `35,44%` → **`+34,7%` relativo** (`+12,31 pp`, tombamento `-2,81 pp`, Wilcoxon `p = 0,012`).
 - **`N3` (Degradação severa, escada `POP = 30`):** `40,0%` vs. `30,8%` → **`+30,0%` relativo** (Wilcoxon `p = 0,043`), frente a `21,7%` de chegada e `45,4%` de tombamento no modo normal sem escudo.
-- **Cobertura real LOLA (`LDEC`):** apenas `7,29%` das células de `5 m` (`87,5°S–90°S`) possuem disparo real, fundamentando a regra *No False Relief* e o Escudo `P50/P90/P99`.
+- **Cobertura real LOLA (`LDEC`):** apenas `7,287%` (~`7,29%`) das células de `5 m` (`87,5°S–90°S`) possuem disparo real (`67,97%` em `20 m`, `99,40%` em `60 m`), com `80,0%` de viés subestimado nos tiros brutos sem margem — fundamentando *No False Relief*, Escudo `P50/P90/P99` e por que a arquitetura usa **Otimização + Escudo físico determinístico** em vez de piloto autônomo puramente neural na interface.
 
 ---
 
-## 6. Prompt do Plano (Para Replicar em Outro Projeto com Mapa Lunar Mais Detalhado)
+## 6. Guia de Adaptação para o Projeto `Luizfbm/terminators-lunar` (`FastAPI + React/TS + OpenAPI`)
+
+Para integrar estes mesmos recursos no repositório `terminators-lunar` respeitando seus ADRs (`ADR 0002`: cálculo no backend; `ADR 0003`: escada de resolução + clones/Barker sem inventar relevo sintético por ML; `contract/openapi.yaml` como fonte única e cobertura E2E/pytest/schemathesis):
+
+1. **Contrato & Backend (`contract/openapi.yaml` + `backend/app/slope.py`, `energy.py`, `visibility.py`):**
+   - Estender o endpoint de escada de resolução (`/visibility/ladder`) e/ou `/sites/{site_id}` para incluir a métrica de densidade real `ldec_fraction` (`7,29%` em `5 m` no polo), a incerteza `Barker`/`slperr` (`P50 / P90 / P99`) e, para sítios `PGDA 78` (`src/assets/tese_bundle/sites_master.json` + `pgda78/*.json`), os valores reais de `grade_perigo_nao_vetado`, `teseP90_perigo_nao_vetado`, redução percentual (`−%`) e erro mediano.
+   - Expor exatamente **2 variações de planejamento/navegação** compatíveis com a comparação Plan A × Plan B já existente (`Navegação Normal` usando grade `60/20 m` sem margem vs. `Multirresolução` usando `5 m + LDEC + Otimização KKT/A* + Escudo P50/P90/P99`), sem menção a `IA` ou nomes proprietários na UI.
+2. **Frontend (`frontend/src/` + `ground3d` + `plan-compare` + `battery`):**
+   - No comparador lado a lado (`plan-compare`) e no painel de incerteza (`uncertainty`), exibir os ganhos percentuais reais por sítio e da bateria `POP = 100` (`+16,0%` N0, `+37,2%` N1, `+34,7%` N2, `+30,0%` N3 e `−79,7%` média nos `26` sítios `PGDA 78`).
+   - Na visualização em solo 3D (`ground3d`), desenhar o círculo verde de segurança ao redor do rover ancorando o selo com a `%` real calculada de perigo não vetado (`Normal` vs. `Multirresolução`, com redução percentual `−%`) e a incidência local `> slopeLimitDeg` em `5 m`.
+   - Incluir testes de regressão (`backend/tests/test_regressions.py` e `frontend/e2e/`) validando a consistência dos dois modos, dos valores percentuais reais do bundle e dos gates do `CLAUDE.md`.
+
+---
+
+## 7. Prompt do Plano (Instruções Reutilizáveis para Qualquer Repositório Lunar)
 
 ```text
-Integre em uma única aplicação web estática de 3 telas um Cockpit de Missão Lunar conectado a dados reais de terreno em alta resolução comparando apenas duas variações — Navegação Normal (Sem Tese) × Multirresolução (Com Tese · Otimização + Escudo P50/P90/P99) — sem utilizar termos como "Marcato" ou referências a "IA" na interface:
+Integre em uma aplicação lunar (Cockpit estático de 3 telas ou stack FastAPI + React/TS com contrato OpenAPI e ADR 0003) o motor multirresolução e os dados reais de terreno de alta resolução comparando estritamente duas variações — Navegação Normal (Sem Tese) × Multirresolução (Com Tese · Otimização + Escudo P50/P90/P99) — seguindo estas regras inegociáveis de interface e engenharia:
 
-1. TELA 1 — ESCOLHER ROVER & MISSÃO (HANGAR 3D):
-   - Exiba um carrossel/lineup 3D (Three.js) com os 8 rovers (LRV Apollo, VIPER, LTV Artemis, MAPP, Sojourner, MER Spirit/Opportunity, Curiosity, Perseverance) e controles de ano (2025–2032), duração da missão e link direto Terra (DTE).
-   - Conecte os parâmetros físicos do rover escolhido (bateria em Wh, geração solar em W, RTG, consumo no escuro, altura do mastro e limite de inclinação `slopeLimitDeg`) diretamente às equações de filtro da Tela 2, ao Escudo P50/P90/P99 e ao consumo/trajeto na Tela 3.
+1. TERMINOLOGIA E VARIAÇÕES DE INTERFACE (OBRIGATÓRIO):
+   - Use "Otimização" em vez de "Marcato" em toda a UI, rótulos e mensagens.
+   - NÃO exiba nenhuma menção a "IA" na interface (sem "Visão IA", "IA+Escudo", "MLP" ou "Neuroevolução").
+   - Mantenha somente DUAS variações de simulação em todos os seletores, botões, comparadores e gráficos:
+     * `⚠️ Navegação Normal (Sem Tese)` — grade LOLA grossa (`60 m / 20 m`), sem multirresolução e sem escudo;
+     * `🛡️ Multirresolução (Com Tese)` — `5 m + LDEC + Otimização contínua + Escudo P50/P90/P99`.
 
-2. PRÉ-PROCESSAMENTO LEVE (PYTHON → JSON/BINÁRIO ESTÁTICO):
-   - Gere um bundle estático leve (`sites_master.json` + recortes locais `10×10 km` em `200×200` células com `surf`, `slp5`, `slp20`, `slp60`, `ldecDen/ldecAny`, `slperr` e resultados reais Monte Carlo `mc60/mc20`) para que o navegador nunca leia GeoTIFFs brutos.
+2. TELA 1 — ESCOLHER ROVER & MISSÃO (HANGAR 3D / PARÂMETROS FÍSICOS):
+   - Exiba os 8 rovers (LRV Apollo, VIPER, LTV Artemis, MAPP, Sojourner, MER Spirit/Opportunity, Curiosity, Perseverance) com ano (`2025–2032`), duração e link direto Terra (DTE).
+   - Conecte `slopeLimitDeg`, `batteryWh`, `powerShadowW`, `solarW`, `rtgW` e `mastHeightM` do rover aos filtros do mapa, ao Escudo `P50/P90/P99` e à travessia na superfície.
 
-3. TELA 2 — MAPA LUNAR DETALHADO + FILTRO P90/P99 + INSPETOR 10×10 km:
-   - Mantenha aparência natural lunar (sem cores artificiais fortes por padrão) com camadas alternáveis: Medição LOLA (`LDEC > 0`), Falsos Positivos do Escudo (`60m → 5m P90/P99`) e cobertura PGDA/LROC NAC.
-   - Exiba no hover dos sítios auditados e no Inspetor `10×10 km` em cortina os percentuais reais de perigo não vetado e a redução percentual obtida pela Multirresolução (além do erro mediano e slider de Falso Alarme `5–30%`).
+3. PRÉ-PROCESSAMENTO LEVE E CONTRATO DE DADOS (`sites_master.json` + `pgda78/*.json`):
+   - Mantenha recortes `10×10 km` quantizados (`surf`, `slp5`, `slp20`, `slp60`, `ldecDen/ldecAny`, `slperr`) e métricas reais Monte Carlo (`grade_perigo_nao_vetado`, `teseP90_perigo_nao_vetado`, `curva_grade_FA5..30`, `curva_tese_FA5..30`, `erro_mediano_grade`, `erro_mediano_tese`) para uso imediato no navegador ou via API FastAPI + OpenAPI.
 
-4. TELA 3 — SUPERFÍCIE 3D REAL + CÍRCULO DE SEGURANÇA COM % DE PERIGO + ZOOM-OUT LOLA:
-   - Renderize o terreno 3D real sob o rover (`surf` + micro-relevo + luz solar SPICE + Escudo Direcional 3D e círculo verde de segurança ao redor do rover) mantendo o rover travado sem girar sozinho e alinhado à origem da trilha/escudo.
-   - No círculo verde no entorno do rover, exiba a medição real calculada de `% de perigo não vetado` retirada dos resultados Monte Carlo do sítio (e o ganho percentual frente à Navegação Normal) junto da incidência local `> slopeLimitDeg` em `5 m`.
-   - Utilize em toda a interface e simulação apenas duas variações: `Navegação Normal (Sem Tese)` e `Multirresolução (Com Tese)`.
-   - Ao definir um destino no mini-mapa ou entrar no modo `🤖 Autônoma (Rota)`:
-     * Abra uma simulação com zoom-out sobre o mapa atual sob o rover e seletor de grade LOLA (`60 m | 20 m | 5 m`), lado a lado (`Navegação Normal` × `Multirresolução`).
-     * Anime enxames de 100 rovers por geração (`Gen 1..5`) convergindo para a rota segura e permita aceitar o plano clicando diretamente em um dos quadros.
-   - Tanto no modo `🎮 Manual (Teclado)` quanto no `🤖 Autônoma (Rota)`, exiba a rota traçada, rotas auxiliares e raios amarelos flutuantes (`⚡`) apenas nas áreas iluminadas, além do botão/tecla `F` (`☀️ Sol`) e das melhorias percentuais consolidadas em todos os painéis comparativos (`+16,0%` N0, `+37,2%` N1, `+34,7%` N2, `+30,0%` N3 e `−79,7%` de perigos nos sítios PGDA 78).
+4. TELA 2 — MAPA LUNAR DETALHADO + HOVER + INSPETOR 10×10 km:
+   - Mantenha visual lunar natural com camadas alternáveis: Medição LOLA (`LDEC > 0`, `7,29%` real em `5 m`), Falsos Positivos (`60m → 5m P50/P90/P99`) e cobertura PGDA/LROC NAC.
+   - No hover dos sítios auditados e no Inspetor `10×10 km` em cortina (slider de Falso Alarme `5–30%`), exiba o `%` real de perigo não vetado (Normal vs. Multirresolução) e a melhoria percentual obtida (`−%` no perigo e no erro mediano).
+
+5. TELA 3 — SUPERFÍCIE 3D REAL + CÍRCULO VERDE COM % REAL DE PERIGO + ZOOM-OUT LOLA:
+   - Renderize o terreno 3D real sob o rover (`surf` + micro-relevo + luz SPICE + Escudo Direcional 3D e círculo verde de segurança no entorno do rover) mantendo o rover estável sobre a origem da trilha/escudo.
+   - No círculo verde no entorno do rover, exiba um selo ancorado com a medição real calculada de `% de perigo não vetado` retirada dos resultados Monte Carlo do sítio (`Normal` vs. `Multirresolução` + melhoria `−%`), ou o cálculo real local em `5 m` no entorno de `250 m` quando fora de sítio PGDA 78, junto com a incidência local `> slopeLimitDeg`.
+   - No modo `🤖 Autônoma (Rota)` ou ao clicar no mini-mapa, abra o zoom-out LOLA (`60 m | 20 m | 5 m`) lado a lado (`Navegação Normal` × `Multirresolução`) com enxame evolutivo de 100 rovers (`Gen 1..5`) e aceite direto ao clicar em um dos dois quadros.
+   - Mantenha rotas principal/auxiliares, raios solares amarelos (`⚡`) fora das sombras e tecla `F` / `☀️ Sol`, exibindo nos painéis comparativos as melhorias percentuais reais da tese:
+     * Média nos `26` sítios PGDA 78 (`60 m`): `31,48% → 6,38%` (`−79,7%` de perigo não vetado; `−38,5%` a igual falso alarme; erro mediano `1,04° → 0,59°`, `−42,9%`; `P99` vs `SfS` de `12,2–41,0% → 0,2–0,5%`).
+     * Bateria `POP=100` em `16` faixas reais LOLA (`1.600` travessias/célula): `+16,0%` rel. em `N0` (`67,31% → 78,06%`), `+37,2%` rel. em `N1` (`35,44% → 48,62%`, tomb. `-2,44 pp`), `+34,7%` rel. em `N2` (`35,44% → 47,75%`, tomb. `-2,81 pp`) e `+30,0%` rel. em `N3` (`30,8% → 40,0%`), além de `7,29%` de cobertura real `LDEC` em `5 m`.
 ```
