@@ -1,7 +1,9 @@
 import type { KeyboardEvent, PointerEvent } from 'react'
 import type { VisibilityResult } from '../api/client'
 import { bands, evenTicks, fractionOf, type Band } from '../domain/timeline'
+import { sampleAt } from '../domain/sky'
 import { useI18n } from '../i18n/I18nContext'
+import { CursorSun } from './cursorSun/CursorSun'
 import { ChargeStrip } from './phase4/battery/Battery'
 import { DsnBand } from './phase4/dsn/DsnBand'
 
@@ -49,6 +51,7 @@ export function TimeStrip({
   const startMs = Date.parse(result.query.start)
   const endMs = Date.parse(result.query.end)
   const rows = bands(result.periods, startMs, endMs)
+  const sunFraction = sampleAt(result.timeline.samples, cursorMs)?.sun.fraction ?? null
   const hasShortShadow = rows.sun.some((band) => band.kind === 'shortShadow')
 
   const fromPointer = (event: PointerEvent<HTMLDivElement>) => {
@@ -72,7 +75,7 @@ export function TimeStrip({
         <span aria-hidden="true">{playing ? '❚❚' : '▶'}</span>
       </button>
       <p className="strip__now">
-        <span>{t('strip.cursor')}</span> {formatDateTime(cursorMs)}
+        <span>{t('strip.cursor')}</span> {formatDateTime(cursorMs)} <CursorSun fraction={sunFraction} />
       </p>
       {/* On a phone the assistant's Ask button is put here, so it never floats over the page
           (the requirement). React leaves it empty; AskButton fills it through a portal. */}

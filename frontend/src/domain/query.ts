@@ -111,6 +111,18 @@ export type View = 'orbit' | 'map' | 'ground'
 /** The answer screen, or the Proof page in its place. */
 export type Page = 'answer' | 'proof'
 
+/**
+ * The second plan of the Plan A x Plan B comparison. A null field means "as in Plan A", so the link
+ * only carries what Plan B changes. Its presence in a link is what keeps the comparison open.
+ */
+export interface PlanBLink {
+  site: SiteRef | null
+  /** First day of Plan B's Window, `YYYY-MM-DD` in UTC. */
+  startDay: string | null
+  hours: number | null
+  heightM: number | null
+}
+
 /** What the link carries besides the Query: enough to reopen the same screen. */
 export interface LinkState extends Choice {
   /** null is the default Site. A custom Site travels as `lat` and `lon` instead of `site`. */
@@ -123,6 +135,8 @@ export interface LinkState extends Choice {
   stats: boolean
   /** Outer radius of the Landing scatter; null is the default. Kept by its panel, not by the App. */
   radiusM?: number | null
+  /** Plan B of the comparison, kept by its panel; undefined when the comparison is closed. */
+  planB?: PlanBLink | null
 }
 
 export function readLink(search: string): LinkState {
@@ -146,6 +160,7 @@ export function readLink(search: string): LinkState {
     Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180
       ? { latitudeDeg: lat, longitudeDeg: lon }
       : null
+  const planB = readPlanB(params, numberParam)
   return {
     startDay: startDay && /^\d{4}-\d{2}-\d{2}$/.test(startDay) && Number.isFinite(Date.parse(startDay)) ? startDay : null,
     hours: Number.isFinite(hours) && hours > 0 ? hours : null,
@@ -158,11 +173,36 @@ export function readLink(search: string): LinkState {
     stats: params.get('stats') === '1',
     // Only when the link has one, so a link without it reads back exactly as before.
     ...(Number.isFinite(radius) && radius >= RADIUS_MIN_M && radius <= RADIUS_MAX_M ? { radiusM: radius } : {}),
+    ...(planB ? { planB } : {}),
+  }
+}
+
+/** Plan B, when the link has `compare=1`: the same checks as Plan A's own parameters. */
+function readPlanB(params: URLSearchParams, numberParam: (name: string) => number): PlanBLink | null {
+  if (params.get('compare') !== '1') return null
+  const day = params.get('bstart')
+  const hours = numberParam('bhours')
+  const height = numberParam('bheight')
+  const lat = numberParam('blat')
+  const lon = numberParam('blon')
+  const coordinate =
+    Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180
+      ? { latitudeDeg: lat, longitudeDeg: lon }
+      : null
+  return {
+    site: params.get('bsite') || coordinate,
+    startDay: day && /^\d{4}-\d{2}-\d{2}$/.test(day) && Number.isFinite(Date.parse(day)) ? day : null,
+    hours: Number.isFinite(hours) && hours > 0 ? hours : null,
+    heightM: Number.isFinite(height) && height >= HEIGHT_MIN_M && height <= HEIGHT_MAX_M ? height : null,
   }
 }
 
 /** The parameters `writeLink` owns. Any other one belongs to a panel and is carried over by `keep`. */
-const LINK_KEYS = new Set(['lat', 'lon', 'site', 't', 'lang', 'view', 'start', 'hours', 'height', 'stats', 'page', 'radius'])
+const LINK_KEYS = new Set([
+  'lat', 'lon', 'site', 't', 'lang', 'view', 'start', 'hours', 'height', 'stats', 'page', 'radius',
+  // Plan B of the comparison, carried by `planB` in the state.
+  'compare', 'bsite', 'blat', 'blon', 'bstart', 'bhours', 'bheight',
+])
 
 /**
  * The query string for a state. Defaults are left out, so the plain address stays the plain screen.
@@ -188,6 +228,19 @@ export function writeLink(state: LinkState, keep = ''): string {
   if (state.stats) params.set('stats', '1')
   if (state.radiusM != null) params.set('radius', String(state.radiusM))
   if (state.page === 'proof') params.set('page', 'proof')
+  if (state.planB) {
+    const b = state.planB
+    params.set('compare', '1')
+    if (isCoordinate(b.site)) {
+      params.set('blat', String(b.site.latitudeDeg))
+      params.set('blon', String(b.site.longitudeDeg))
+    } else if (b.site) {
+      params.set('bsite', b.site)
+    }
+    if (b.startDay) params.set('bstart', b.startDay)
+    if (b.hours !== null) params.set('bhours', String(b.hours))
+    if (b.heightM !== null) params.set('bheight', String(b.heightM))
+  }
   const text = params.toString()
   return text ? `?${text}` : ''
 }

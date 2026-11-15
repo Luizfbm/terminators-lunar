@@ -16,7 +16,7 @@ import { useI18n } from '../i18n/I18nContext'
 import { SitePicker } from './SitePicker'
 
 /** A number typed into the line: kept as a draft while typing, sent on Enter or when focus leaves. */
-function NumberField({
+export function NumberField({
   value,
   min,
   max,

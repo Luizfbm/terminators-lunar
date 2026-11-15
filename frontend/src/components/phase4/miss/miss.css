@@ -330,3 +330,30 @@
 .miss__psr {
   max-width: 44ch;
 }
+
+/* Knife-edge warning: the short note under the answer when a small miss flips it (KnifeEdgeWarning). */
+.knife-edge {
+  max-width: 44ch;
+  margin: 16px 0 24px;
+  padding-left: 12px;
+  border-left: 2px solid var(--sun);
+  color: var(--fg);
+  font-size: var(--small);
+}
+
+.knife-edge__link {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fg);
+  font-size: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* The panel takes focus when the warning points to it, without a ring around the whole panel. */
+.miss:focus {
+  outline: none;
+}
