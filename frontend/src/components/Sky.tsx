@@ -3,6 +3,7 @@ import * as THREE from 'three'
 import type { VisibilityResult } from '../api/client'
 import { DIAL_LETTERS, DIAL_TICKS, facingEighth, onDial } from '../domain/compassDial'
 import { earthAttitude, earthNorthAt, earthRoll, subLunarPoint } from '../domain/earthFace'
+import { belowHorizonMask } from '../domain/bodyGuide'
 import { maskElevationAt, sampleAt } from '../domain/sky'
 import { blendRim, canTakeFinest, eyeOnMap, GRAIN_DEPTH, GRAIN_PX, grainRepeat, grainTexels } from '../domain/nearGround'
 import { ballScale, bodyRadiusDeg, direction, discScale, EARTH_RADIUS_DEG, groundPositions, groundSpacing, horizonFaceShade, stretched, sunOnGround, turnBetween, wrapAzimuth, type GroundSpacing } from '../domain/skyScene'
@@ -72,6 +73,18 @@ const DIAL_TICK_IN_MAJOR = 34
 const DIAL_TICK_IN_MINOR = 38
 /** Below this change of yaw, in degrees, the dial is not redrawn. */
 const DIAL_STEP_DEG = 0.05
+/**
+ * The Sun's and the Earth's arrows, when the body is out of frame or below the horizon: how far
+ * their centres stay from the left and right edges, and from the top and bottom ones, so the
+ * label fits on screen (the dial and the turn buttons sit in the corners); and how far apart the
+ * two sit vertically, so they do not cover each other when both point the same way.
+ */
+const GUIDE_INSET_X_PX = 105
+const GUIDE_INSET_Y_PX = 90
+const GUIDE_STACK_PX = 16
+/** A body is in frame while its centre is inside this share of the half-width and the half-height. */
+const GUIDE_FRAME_X = 0.92
+const GUIDE_FRAME_Y = 0.88
 const PATH_POINTS = 320
 /** The Sun's mean angular radius, in degrees, for an answer that does not carry its own. */
 const SUN_RADIUS_DEG = 0.27
@@ -133,6 +146,14 @@ export function Sky({
   const { t } = useI18n()
   const frame = useRef<HTMLDivElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
+  // The arrows to the Sun and the Earth: their buttons, where each one turns the view to, and the
+  // language the frame loop writes their labels in.
+  const bodyGuides = useRef<Partial<Record<'sun' | 'earth', HTMLButtonElement>>>({})
+  const guideAim = useRef<Partial<Record<'sun' | 'earth', { yaw: number; pitch: number }>>>({})
+  const guideText = useRef(t)
+  useEffect(() => {
+    guideText.current = t
+  })
   const ring = useRef<SVGGElement>(null)
   const letters = useRef<(SVGTextElement | null)[]>([])
   // The eighth the view faces, for the compass's accessible name: set only when it changes.
@@ -685,6 +706,40 @@ export function Sky({
         ;(pin.material as THREE.MeshBasicMaterial).color.set(state.mark.body === 'sun' ? SUN : EARTH)
       }
 
+      // An arrow for each of the Sun and the Earth while it is out of frame or below the horizon:
+      // it points the way and, pressed, turns the view to the body.
+      camera.updateMatrixWorld()
+      for (const body of ['sun', 'earth'] as const) {
+        const guide = bodyGuides.current[body]
+        if (!guide) continue
+        if (!now) {
+          guide.hidden = true
+          continue
+        }
+        const position = body === 'sun' ? sun.position : earth.position
+        const local = position.clone().applyMatrix4(camera.matrixWorldInverse)
+        const projected = position.clone().project(camera)
+        const inFrame = local.z < 0 && Math.abs(projected.x) < GUIDE_FRAME_X && Math.abs(projected.y) < GUIDE_FRAME_Y
+        const below = belowHorizonMask(now[body], state.result.horizon.samples)
+        guide.hidden = inFrame && !below
+        guideAim.current[body] = { yaw: yaw + turnBetween(yaw, now[body].azimuth_deg), pitch: stretched(now[body].elevation_deg, state.stretch) }
+        // The direction in the camera's own axes also works behind the Observer, where projection reverses sign.
+        let dx = local.x
+        const dy = -local.y
+        if (Math.abs(dx) + Math.abs(dy) < 0.001) dx = 1
+        const norm = Math.max(Math.abs(dx), Math.abs(dy))
+        const width = target.clientWidth
+        const height = target.clientHeight
+        guide.style.left = `${width / 2 + (dx / norm) * Math.max(0, width / 2 - GUIDE_INSET_X_PX)}px`
+        guide.style.top = `${height / 2 + (dy / norm) * Math.max(0, height / 2 - GUIDE_INSET_Y_PX) + (body === 'sun' ? -GUIDE_STACK_PX : GUIDE_STACK_PX)}px`
+        const arrow = guide.firstElementChild as HTMLElement
+        arrow.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`
+        const name = guideText.current(`strip.${body}`)
+        const text = below ? guideText.current('sky.guide.below', { body: name }) : name
+        const label = guide.lastElementChild as HTMLElement
+        if (label.textContent !== text) label.textContent = text
+      }
+
       renderer.render(scene, camera)
       target.dataset.ready = 'true'
       target.dataset.yaw = wrapAzimuth(yaw).toFixed(1)
@@ -739,6 +794,29 @@ export function Sky({
 
   return (
     <div className="sky" ref={frame}>
+      {(['sun', 'earth'] as const).map((body) => (
+        <button
+          key={body}
+          type="button"
+          className="sky__body-guide"
+          hidden
+          aria-label={t(`sky.guide.${body}`)}
+          ref={(element) => {
+            if (element) bodyGuides.current[body] = element
+            else delete bodyGuides.current[body]
+          }}
+          onClick={() => {
+            const destination = guideAim.current[body]
+            if (destination && aim.current) {
+              aim.current.yaw = destination.yaw
+              aim.current.pitch = destination.pitch
+            }
+          }}
+        >
+          <span aria-hidden="true">→</span>
+          <b aria-hidden="true">{t(`strip.${body}`)}</b>
+        </button>
+      ))}
       <canvas ref={canvas} role="img" aria-label={t('sky.label', { site: result.query.site.name })} />
       {groundStatus !== null && (
         <p className="sky__ground-status" data-state={groundStatus} aria-live="polite">
