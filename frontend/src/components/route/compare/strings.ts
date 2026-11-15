@@ -60,6 +60,8 @@ export const en = {
   'avoided.none': 'Multiresolution crosses no fewer hazards than Normal navigation: {multi} against {normal}.',
   'avoided.one': 'Multiresolution crosses 1 hazard fewer than Normal navigation: {multi} against {normal}.',
   'avoided.many': 'Multiresolution crosses {count} hazards fewer than Normal navigation: {multi} against {normal}.',
+  estimate:
+    'Our group estimated, from the planner’s assumed costs and speed and the 5 m slope of the ground, that Normal navigation crosses {normal} steep waypoints and Multiresolution {multi}. It may contain errors. Each plan is scored on the same 5 m slope it planned with, so this shows what a planner with the finer map can avoid, not what a real drive would meet, and we have no measured range for it.',
 
   'assumptions.line': 'The planner’s costs, its speed and the battery model are assumptions, not measurements and not values from a paper.',
   'assumptions.summary': 'Show the {count} numbers assumed',
@@ -151,6 +153,8 @@ export const pt: Record<CompareKey, string> = {
   'avoided.none': 'A Multirresolução não atravessa menos perigos que a Navegação Normal: {multi} contra {normal}.',
   'avoided.one': 'A Multirresolução atravessa 1 perigo a menos que a Navegação Normal: {multi} contra {normal}.',
   'avoided.many': 'A Multirresolução atravessa {count} perigos a menos que a Navegação Normal: {multi} contra {normal}.',
+  estimate:
+    'Nosso grupo estimou, a partir dos custos e da velocidade supostos do planejador e da inclinação do chão a 5 m, que a Navegação Normal atravessa {normal} pontos íngremes e a Multirresolução {multi}. Pode conter erros. Cada plano é avaliado na mesma inclinação de 5 m com que foi planejado, então isto mostra o que um planejador com o mapa mais fino consegue evitar, não o que uma condução real encontraria, e não temos uma faixa medida para isso.',
 
   'assumptions.line': 'Os custos do planejador, a velocidade e o modelo de bateria são suposições, não medidas nem valores de um artigo.',
   'assumptions.summary': 'Mostrar os {count} números supostos',

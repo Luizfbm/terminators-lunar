@@ -1,5 +1,6 @@
 import type { VisibilityResult } from '../../../api/client'
 import { useI18n } from '../../../i18n/I18nContext'
+import { sealSentence } from '../estimate/sentences'
 import { formatChange, formatShare, LEVEL, RADIUS_M, type View } from './logic'
 import { fill, stringsFor } from './strings'
 import { useSafety } from './useSafety'
@@ -40,6 +41,7 @@ export function SafetyView({ view }: { view: View }) {
               <span className="safety__change"> · {fill(s.change, { change: formatChange(view.seal.change) })}</span>
             )}
           </p>
+          {view.seal.estimate && <p className="safety__note safety__estimate">{sealSentence(locale, view.seal.estimate)}</p>}
           {view.around && (
             <p className="safety__note">
               {fill(s.around, {

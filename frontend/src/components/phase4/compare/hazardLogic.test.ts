@@ -33,6 +33,17 @@ const view = (coarse: number, level: Level) => {
 }
 
 describe('the AR06 example, as the API returns it', () => {
+  it('carries the estimate of each run: the cells checked and the range at the same false alarm, from the answer', () => {
+    const sixty = view(60, 'P90').estimate
+    expect(sixty?.cellsChecked).toBe(91471)
+    expect(sixty?.coverage).toBe(0.853669)
+    expect(sixty?.sameAlarm?.low).toBeCloseTo(-0.2239, 4)
+    expect(sixty?.sameAlarm?.high).toBeCloseTo(-0.1395, 4)
+    const twenty = view(20, 'P90').estimate
+    expect(twenty?.cellsChecked).toBe(93713)
+    expect(twenty?.sameAlarm?.high).toBeGreaterThan(0)
+  })
+
   it('has a block with the grid and both runs, 60 m then 20 m', () => {
     const site = siteView(AR06, 'P90')
     expect(site.kind).toBe('grid')

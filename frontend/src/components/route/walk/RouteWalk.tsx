@@ -476,6 +476,15 @@ function Walk({
             <p>{text(rays > 0 ? 'walk.rays.note' : 'walk.rays.none')}</p>
             <p>{text('walk.light.note')}</p>
             {chosen && <p>{text('walk.pace.note', { hours: formatNumber(round1(chosen.duration_hours)) })}</p>}
+            {chosen && (
+              <p>
+                {text('walk.estimate', {
+                  distance: formatNumber(Math.round(chosen.distance_m)),
+                  hours: formatNumber(round1(chosen.duration_hours)),
+                  hazards: formatNumber(chosen.hazards_hit),
+                })}
+              </p>
+            )}
           </div>
         </div>
       </div>

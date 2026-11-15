@@ -58,6 +58,44 @@ describe('the seal on the contract example for AR06', () => {
     expect(html).toContain('−79% against Normal navigation')
   })
 
+  it('labels the −79% as our group’s estimate and gives the range at the same false alarm, in English', () => {
+    const html = text(draw(viewOf(false, ready(hazard), ready(around)), 'en'))
+    // −22% and −14% are the lowest and the highest change over the false alarms 5% to 30% of the 60 m trade_off.
+    expect(html).toContain(
+      'Our group’s estimate, from the cells the laser measured. It may contain errors: at the same false alarm the change is from −22% to −14%, not −79%.',
+    )
+    expect(html).toContain('−79% against Normal navigation')
+  })
+
+  it('labels it in Portuguese, and names no person', () => {
+    const html = text(draw(viewOf(false, ready(hazard), ready(around)), 'pt'))
+    expect(html).toContain(
+      'Estimativa do nosso grupo, a partir das células que o laser mediu. Pode conter erros: com o mesmo falso alarme a variação é de −22% a −14%, não −79%.',
+    )
+    expect(html).toContain('−79% em relação à Navegação Normal')
+    expect(html).not.toMatch(/Eduardo|Luiz|Larissa/)
+  })
+
+  it('takes the range from the answer: a different curve gives a different range', () => {
+    const flat: SiteHazard = structuredClone(hazard)
+    const run = flat.runs.find((candidate) => candidate.coarse_m === 60)
+    if (!run) throw new Error('no 60 m run')
+    // Multiresolution 10% below Normal navigation at every false alarm of the curve.
+    run.trade_off.multiresolution = run.trade_off.normal.map((point) => ({ ...point, missed_hazard: point.missed_hazard * 0.9 }))
+    const html = text(draw(viewOf(false, ready(flat), ready(around)), 'en'))
+    expect(html).toContain('the change is about −10%, not −79%')
+  })
+
+  it('says it has no range when the run has no same-false-alarm curve, and keeps the seal', () => {
+    const none: SiteHazard = structuredClone(hazard)
+    const run = none.runs.find((candidate) => candidate.coarse_m === 60)
+    if (!run) throw new Error('no 60 m run')
+    run.trade_off = { normal: [], multiresolution: [] }
+    const html = text(draw(viewOf(false, ready(none), ready(around)), 'en'))
+    expect(html).toContain('no same-false-alarm curve')
+    expect(html).toContain('−79% against Normal navigation')
+  })
+
   it('counts the cells over the limit within 250 m at 5 m against 60 m', () => {
     const pt250 = text(draw(viewOf(false, ready(hazard), ready(around)), 'pt'))
     expect(pt250).toContain('Num raio de 250 m: 0 de 81 células passam de 15° a 5 m; 0 a 60 m.')
@@ -108,6 +146,8 @@ describe('the reduction', () => {
     const html = text(draw(viewOf(false, ready(none), ready(around)), 'en'))
     expect(html).toContain('Normal navigation 0.00%')
     expect(html).not.toContain('against Normal navigation')
+    // The estimate line keeps its range and drops the "not −79%" it has no figure for.
+    expect(html).toContain('the change is from −22% to −14%.')
   })
 })
 

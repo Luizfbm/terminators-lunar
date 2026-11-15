@@ -37,6 +37,12 @@ describe('the picker in Portuguese and English', () => {
     expect(en['rover.window']).not.toMatch(/period|range/i)
   })
 
+  it('says plainly that a day of the trip is 24 hours, not a lunar day', () => {
+    expect(en['rover.days']).toBe('Days on the Moon')
+    expect(en['rover.daysNote']).toBe('These are days of 24 hours, not lunar days.')
+    expect(pt['rover.daysNote']).toBe('São dias de 24 horas, não dias lunares.')
+  })
+
   it('names the direct link to the Earth DTE and the choice about it', () => {
     expect(en['rover.dte']).toContain('DTE')
     expect(pt['rover.dte']).toBe('Precisa ver a Terra (DTE)')

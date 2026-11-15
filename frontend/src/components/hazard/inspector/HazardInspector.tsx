@@ -1,5 +1,8 @@
 import { useId, useState, type ReactNode } from 'react'
 import { useOnDemand } from '../../../hooks/useLadder'
+import { estimateOf } from '../estimate/estimate'
+import { gainsSentence, runSentences, shieldCheckSentence, shieldCoverageSentence } from '../estimate/sentences'
+import { estimateText } from '../estimate/strings'
 import { loadHazard, type HazardData } from './api'
 import { InspectorCanvas } from './InspectorCanvas'
 import {
@@ -123,6 +126,7 @@ export function HazardInspectorView({ data, locale, onClose, initial }: HazardIn
   const shownLevel = levels.includes(level) ? level : (levels[0] ?? level)
   const percent = range ? clampPercent(falseAlarm, range) : falseAlarm
   const reading = readRun(run, shownLevel, percent)
+  const estimate = estimateOf(run, shownLevel)
   const limit = format.number(hazard.slope_limit_deg, 0)
   const coarseSteep = hazard.stats ? (coarse === 20 ? hazard.stats.over_limit_fraction_20m : hazard.stats.over_limit_fraction_60m) : null
 
@@ -292,6 +296,24 @@ export function HazardInspectorView({ data, locale, onClose, initial }: HazardIn
             </li>
           </ul>
           <p className="hazard__help">{t('hazard.nominalNote', { level: shownLevel })}</p>
+        </section>
+      )}
+
+      {estimate && (
+        <section className="hazard__block" aria-labelledby={`${ids}-estimate`}>
+          <h3 id={`${ids}-estimate`} className="hazard__subtitle">
+            {estimateText(locale, 'estimate.label')}
+          </h3>
+          {[
+            ...runSentences(locale, estimate),
+            gainsSentence(locale),
+            shieldCoverageSentence(locale, estimate),
+            shieldCheckSentence(locale, estimate.level),
+          ].map((sentence) => (
+            <p key={sentence} className="hazard__help">
+              {sentence}
+            </p>
+          ))}
         </section>
       )}
 

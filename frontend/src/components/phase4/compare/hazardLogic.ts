@@ -1,3 +1,4 @@
+import { estimateOf, type RunEstimate } from '../../hazard/estimate/estimate'
 import { shareText } from '../../hazard/uncertainty/shareLogic'
 import type { HazardMethod, HazardRun, SiteHazard } from '../../hazard/uncertainty/hazardApi'
 import type { HazardKey } from './hazardStrings'
@@ -22,6 +23,8 @@ export interface RunView {
   /** The fair comparison: both navigations at the same false alarm. Null if the API has no such pair. */
   fair: { falseAlarm: number; normal: number; multiresolution: number } | null
   medianError: { normal: number; multiresolution: number }
+  /** What the estimate sentences say: our group's estimate and the error range it may have. */
+  estimate: RunEstimate | null
 }
 
 /** What a Site's block says: its grid and runs, or that no 5 m grid lies near it. */
@@ -54,6 +57,7 @@ export function runView(run: HazardRun, level: Level): RunView | null {
     multiresolution,
     fair: fairPoint(run, multiresolution),
     medianError: { normal: run.median_error_deg.normal, multiresolution: run.median_error_deg.multiresolution },
+    estimate: estimateOf(run, level),
   }
 }
 

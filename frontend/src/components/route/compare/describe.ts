@@ -62,6 +62,14 @@ export function avoidedSentence(comparison: RouteComparison, text: Text, fmt: Fo
   return text.t(avoided === 1 ? 'avoided.one' : 'avoided.many', params)
 }
 
+/** Says the two hazard counts are our group's estimate, with what they rest on and that no measured range exists for them. */
+export function estimateSentence(comparison: RouteComparison, text: Text, fmt: Pick<Format, 'formatNumber'>): string {
+  return text.t('estimate', {
+    normal: fmt.formatNumber(planOf(comparison, 'normal').hazards_hit),
+    multi: fmt.formatNumber(planOf(comparison, 'multiresolution').hazards_hit),
+  })
+}
+
 export interface AssumptionRow {
   name: string
   label: string

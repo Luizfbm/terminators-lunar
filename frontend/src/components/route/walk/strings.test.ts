@@ -35,6 +35,19 @@ describe('the walk’s text', () => {
     expect(pt['walk.battery.note']).toMatch(/plano/i)
   })
 
+  it('says the plan’s figures are our group’s estimate, may contain errors and have no measured range, naming no one', () => {
+    expect(en['walk.estimate']).toMatch(/^Our group estimated/)
+    expect(en['walk.estimate']).toMatch(/may contain errors/)
+    expect(en['walk.estimate']).toMatch(/no measured range/)
+    expect(pt['walk.estimate']).toMatch(/^Nosso grupo estimou/)
+    expect(pt['walk.estimate']).toMatch(/Pode conter erros/)
+    expect(pt['walk.estimate']).toMatch(/não temos uma faixa medida/)
+    for (const text of [en['walk.estimate'], pt['walk.estimate']]) expect(text).not.toMatch(/Eduardo|Luiz|Larissa/)
+    expect(walkText('en')('walk.estimate', { distance: '2,540', hours: '2.2', hazards: '7' })).toContain(
+      'this plan covers 2,540 m in 2.2 h and enters 7 steep waypoints',
+    )
+  })
+
   it('fills the slots of the language asked for', () => {
     expect(walkText('en')('walk.pace.note', { hours: '1.8' })).toBe('The walk is played far faster than the rover drives. The plan’s own drive takes 1.8 h.')
     expect(walkText('pt')('walk.pace.note', { hours: '1,8' })).toContain('1,8 h')

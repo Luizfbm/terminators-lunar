@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { routeParams } from './api'
-import { assumptionRows, avoidedSentence, distanceText, durationText, footerRows, roverLine } from './describe'
+import { assumptionRows, avoidedSentence, distanceText, durationText, estimateSentence, footerRows, roverLine } from './describe'
 import { routeExample } from './exampleData'
 import { createI18n } from '../../../i18n/i18n'
 import { en, pt, textFor, type CompareKey } from './strings'
@@ -94,6 +94,18 @@ describe('the numbers under the panes, from the example route', () => {
     const one = { ...routeExample, hazards_avoided: 1 }
     expect(avoidedSentence(one, textFor('en'), english)).toMatch(/1 hazard fewer/)
     expect(avoidedSentence(one, textFor('pt'), portuguese)).toMatch(/1 perigo a menos/)
+  })
+
+  it('says the two hazard counts are our group’s estimate, with both counts from the answer and no invented range', () => {
+    expect(estimateSentence(routeExample, textFor('en'), english)).toBe(
+      'Our group estimated, from the planner’s assumed costs and speed and the 5 m slope of the ground, that Normal navigation crosses 11 steep waypoints and Multiresolution 7. It may contain errors. Each plan is scored on the same 5 m slope it planned with, so this shows what a planner with the finer map can avoid, not what a real drive would meet, and we have no measured range for it.',
+    )
+    expect(estimateSentence(routeExample, textFor('pt'), portuguese)).toContain('que a Navegação Normal atravessa 11 pontos íngremes e a Multirresolução 7. Pode conter erros.')
+    expect(estimateSentence(routeExample, textFor('pt'), portuguese)).toContain('não temos uma faixa medida')
+    // The counts are the plans' own: change them and the sentence follows.
+    const other = { ...routeExample, plans: routeExample.plans.map((plan) => ({ ...plan, hazards_hit: plan.navigation === 'normal' ? 30 : 12 })) }
+    expect(estimateSentence(other, textFor('en'), english)).toContain('Normal navigation crosses 30 steep waypoints and Multiresolution 12')
+    for (const sentence of [en.estimate, pt.estimate]) expect(sentence).not.toMatch(/Eduardo|Luiz|Larissa/)
   })
 
   it('lists every assumed number with its value and names the Rover and the limit', () => {

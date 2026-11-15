@@ -1,7 +1,7 @@
 import { useId, useMemo, useState } from 'react'
 import { useI18n } from '../../../i18n/I18nContext'
 import { useHazardGrid, useRoute } from './api'
-import { assumptionRows, avoidedSentence, distanceText, footerRows, planOf, roverLine, type Format } from './describe'
+import { assumptionRows, avoidedSentence, distanceText, estimateSentence, footerRows, planOf, roverLine, type Format } from './describe'
 import { MULTIRESOLUTION_STYLE, NORMAL_STYLE, swarmOf } from './draw'
 import { planFrame } from './frames'
 import { decodeGrid, renderGround, type GroundGrid } from './grid'
@@ -311,6 +311,7 @@ export function RouteStage({ comparison, grid, sunAzimuthDeg, onAccept, onCoarse
       </table>
       <p className="route-compare__avoided">{avoidedSentence(comparison, text, fmt)}</p>
       <p className="route-compare__note">{text.t('hazard.note')}</p>
+      <p className="route-compare__note">{estimateSentence(comparison, text, fmt)}</p>
 
       <p className="route-compare__note">{text.t('assumptions.line')}</p>
       <details className="route-compare__assumptions">

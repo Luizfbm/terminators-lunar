@@ -41,6 +41,8 @@ export const en = {
   'walk.light.note':
     'The light comes from the Sun’s direction at the Cursor and only shades the slopes. It casts no shadows here, so the Sun fraction is not drawn.',
   'walk.pace.note': 'The walk is played far faster than the rover drives. The plan’s own drive takes {hours} h.',
+  'walk.estimate':
+    'Our group estimated, from the planner’s assumed costs and speed and the 5 m slope of the ground, that this plan covers {distance} m in {hours} h and enters {hazards} steep waypoints. It may contain errors. The plan is scored on the same 5 m slope it planned with, and we have no measured range for it.',
   'walk.summary': '{distance} m · {hours} h · {hazards} steep waypoints · {reached}',
   'walk.reached.yes': 'reaches the goal',
   'walk.reached.no': 'does not reach the goal',
@@ -105,6 +107,8 @@ export const pt: Record<keyof typeof en, string> = {
   'walk.light.note':
     'A luz vem da direção do Sol no Cursor e só dá relevo às encostas. Aqui ela não projeta sombras, então a Fração do Sol não é desenhada.',
   'walk.pace.note': 'A caminhada passa bem mais rápido do que o rover anda. A condução do plano leva {hours} h.',
+  'walk.estimate':
+    'Nosso grupo estimou, a partir dos custos e da velocidade supostos do planejador e da inclinação do chão a 5 m, que este plano percorre {distance} m em {hours} h e pisa em {hazards} pontos íngremes. Pode conter erros. O plano é avaliado na mesma inclinação de 5 m com que foi planejado, e não temos uma faixa medida para isso.',
   'walk.summary': '{distance} m · {hours} h · {hazards} waypoints íngremes · {reached}',
   'walk.reached.yes': 'chega ao destino',
   'walk.reached.no': 'não chega ao destino',

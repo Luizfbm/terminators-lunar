@@ -309,6 +309,8 @@ export function RoverPicker({ onChange, initialRoverId, initialMission, lcspHour
           </div>
         </div>
 
+        <p className="rover-detail__note">{text('rover.daysNote')}</p>
+
         <div className="rover-dte">
           <input id={dteId} type="checkbox" checked={requireDte} aria-describedby={dteHintId} onChange={(event) => setRequireDte(event.target.checked)} />
           <label htmlFor={dteId}>{text('rover.dte')}</label>

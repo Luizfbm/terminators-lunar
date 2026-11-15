@@ -4,6 +4,8 @@ import { isCoordinate, siteKey, siteRefOf, type SiteRef } from '../../../domain/
 import { useOnDemand } from '../../../hooks/useLadder'
 import { useSites } from '../../../hooks/useAnswer'
 import { useI18n } from '../../../i18n/I18nContext'
+import { gainsSentence, runSentences, shieldCheckSentence, shieldCoverageSentence } from '../../hazard/estimate/sentences'
+import { estimateText } from '../../hazard/estimate/strings'
 import { getSiteHazard } from '../../hazard/uncertainty/hazardApi'
 import { shareText } from '../../hazard/uncertainty/shareLogic'
 import { PanelStatus } from '../../PanelStatus'
@@ -41,7 +43,7 @@ function Row({ label, normal, multiresolution, change }: { label: string; normal
   )
 }
 
-function RunTable({ view, level, plan, slopeLimitDeg, text }: { view: RunView; level: Level; plan: string; slopeLimitDeg: number; text: Text }) {
+export function RunTable({ view, level, plan, slopeLimitDeg, text }: { view: RunView; level: Level; plan: string; slopeLimitDeg: number; text: Text }) {
   const { formatPercent, formatNumber } = text
   const percent = (fraction: number) => shareText(fraction, formatPercent)
   const change = (from: number, to: number) => changeText(relativeChange(from, to), formatPercent)
@@ -91,6 +93,16 @@ function RunTable({ view, level, plan, slopeLimitDeg, text }: { view: RunView; l
           />
         </tbody>
       </table>
+      {view.estimate && (
+        <div className="hazard-compare__estimate">
+          <h6 className="hazard-compare__estimate-title">{estimateText(text.locale, 'estimate.label')}</h6>
+          {[...runSentences(text.locale, view.estimate), shieldCoverageSentence(text.locale, view.estimate)].map((sentence) => (
+            <p key={sentence} className="panel__note">
+              {sentence}
+            </p>
+          ))}
+        </div>
+      )}
     </section>
   )
 }
@@ -153,6 +165,11 @@ export function HazardCompare({ siteA, siteB }: { siteA: Site; siteB: SiteRef })
         ))}
       </fieldset>
       <p className="panel__note">{text.t('note.fair')}</p>
+      <div className="hazard-compare__estimate">
+        <h4 className="hazard-compare__estimate-title">{estimateText(text.locale, 'estimate.label')}</h4>
+        <p className="panel__note">{gainsSentence(text.locale)}</p>
+        <p className="panel__note">{shieldCheckSentence(text.locale, level)}</p>
+      </div>
       {same ? (
         <SiteBlock heading={text.t('plan.both', { site: nameA })} plan={text.t('plan.a')} site={refA} name={nameA} level={level} text={text} />
       ) : (

@@ -216,7 +216,7 @@ test.describe('where the panels face', () => {
     expect(asked.at(-1)?.searchParams.get('panel_pointing')).toBe('sun')
     expect(asked.at(-1)?.searchParams.has('panel_azimuth_deg')).toBe(false)
     await expect(section(page)).not.toContainText('reaches the panels for only')
-    await expect(section(page)).toContainText('Eduardo’s panel-geometry model')
+    await expect(section(page)).toContainText('our team’s panel-geometry model')
     await expect(section(page)).toContainText('with no tracking error')
     await expect(section(page)).not.toContainText('always face the Sun')
   })
@@ -289,7 +289,7 @@ test.describe('where the panels face, in Portuguese', () => {
     await expect(panels.getByRole('radio', { name: 'Deitados no topo' })).not.toBeChecked()
     await expect(panels).toContainText('0° é o norte e 90° é o leste, no sentido horário.')
     await expect(section(page)).toContainText(/O Sol fica acima do horizonte por 3\sd 1\d\sh nesta Janela, mas bate nos painéis só em 3\sd 1\d\sh disso\./)
-    await expect(section(page)).toContainText('modelo de geometria de painéis do Eduardo')
+    await expect(section(page)).toContainText('modelo de geometria de painéis da nossa equipe')
   })
 
   test('says the Darkness tolerance against the panels in Portuguese', async ({ page }) => {

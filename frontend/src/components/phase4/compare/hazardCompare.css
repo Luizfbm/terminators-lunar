@@ -73,3 +73,15 @@
 .hazard-compare__change {
   color: var(--dim);
 }
+
+/* The estimate wording: our group's estimate and the error it may carry, in the voice of the notes around it. */
+.hazard-compare__estimate {
+  margin: 8px 0 0;
+}
+
+.hazard-compare__estimate-title {
+  margin: 8px 0 2px;
+  font-weight: 400;
+  color: var(--dim);
+  font-size: var(--small);
+}

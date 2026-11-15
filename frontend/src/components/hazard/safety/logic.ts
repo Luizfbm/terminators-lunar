@@ -1,5 +1,6 @@
 import type { PanelState } from '../../../hooks/useLadder'
 import type { Locale } from '../../../i18n/messages'
+import { estimateOf, signedPercent, type RunEstimate } from '../estimate/estimate'
 import type { HazardAround, HazardMethod, SiteHazard } from './types'
 
 /** The radius of the circle: the area the 5 m and 60 m cells are counted over. */
@@ -18,6 +19,8 @@ export interface Seal {
   gridId: string
   distanceKm: number
   slopeLimitDeg: number
+  /** What the estimate line under the seal says (our group's estimate and its error range); null when the run has no such pair. */
+  estimate: RunEstimate | null
 }
 
 function method(hazard: SiteHazard, navigation: HazardMethod['navigation']): HazardMethod | undefined {
@@ -39,7 +42,8 @@ export function changeOf(from: number, to: number): number | null {
 export function sealOf(hazard: SiteHazard): Seal | null {
   const normal = method(hazard, 'normal')
   const multi = method(hazard, 'multiresolution')
-  if (!hazard.grid || !normal || !multi) return null
+  const run = hazard.runs.find((candidate) => candidate.coarse_m === COARSE_M)
+  if (!hazard.grid || !normal || !multi || !run) return null
   return {
     normal: normal.missed_hazard.mean,
     multiresolution: multi.missed_hazard.mean,
@@ -47,6 +51,7 @@ export function sealOf(hazard: SiteHazard): Seal | null {
     gridId: hazard.grid.id,
     distanceKm: hazard.grid.distance_km,
     slopeLimitDeg: hazard.slope_limit_deg,
+    estimate: estimateOf(run, LEVEL),
   }
 }
 
@@ -58,9 +63,7 @@ export function formatShare(fraction: number, locale: Locale): string {
 
 /** "−79%" for a drop, "+12%" for a rise, whole percent, with a true minus sign. */
 export function formatChange(change: number): string {
-  const whole = Math.round(change * 100)
-  if (whole === 0) return '0%'
-  return `${whole < 0 ? '−' : '+'}${Math.abs(whole)}%`
+  return signedPercent(change)
 }
 
 export type View =
