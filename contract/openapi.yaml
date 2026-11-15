@@ -418,7 +418,7 @@ paths:
             type: string
         - name: latitude_deg
           in: query
-          description: Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg`.
+          description: Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg` (-80 on the polar DEMs alone, 90, the whole Moon, when the server has the global DEM).
           schema:
             type: number
             minimum: -90
@@ -485,7 +485,7 @@ paths:
             type: string
         - name: latitude_deg
           in: query
-          description: Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg`.
+          description: Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg` (-80 on the polar DEMs alone, 90, the whole Moon, when the server has the global DEM).
           schema:
             type: number
             minimum: -90
@@ -850,6 +850,52 @@ paths:
         "422":
           $ref: "#/components/responses/Unprocessable"
 
+  /terrain/heights:
+    get:
+      tags: [sites]
+      operationId: getTerrainHeights
+      summary: The DEM's own heights around a Site, for the view from the ground
+      description: |
+        A square window of pixels of the finest DEM the engine reads near the Site, the same
+        choice as `/terrain` makes: the 20 m PGDA DEM at the south pole, a Curated Site's own
+        off-pole window (SLDEM2015, 59 m), LOLA's global LDEM_128 (237 m) between 70°S and
+        70°N, LOLA's polar stereographic 240 m products within 20° of either pole. Nothing is
+        resampled: every value is one pixel of the file, in the file's own projection
+        (`projection`), so the grid is the measured ground and nothing finer.
+        The window has `size_px` pixels on a side, centred on the pixel that holds the Site, at
+        most 511: it reaches at least `half_extent_m` from the Site on the ground when that
+        fits, and less on DEMs finer than about 120 m (5.1 km on the 20 m DEM), or east to west
+        on the simple cylindrical maps near 70° of latitude.
+        A window that runs off every DEM, or over a pixel without data, is a 422: the ground is
+        never filled in or made flat.
+        Pass either `site_id` or both coordinates, never both, as in `/visibility`.
+      parameters:
+        - $ref: "#/components/parameters/QuerySiteId"
+        - $ref: "#/components/parameters/QueryLatitude"
+        - $ref: "#/components/parameters/QueryLongitude"
+        - name: half_extent_m
+          in: query
+          description: How far from the Site, on the ground, the grid should reach in every direction.
+          schema:
+            type: number
+            minimum: 1000
+            maximum: 30000
+            default: 20000
+      responses:
+        "200":
+          description: The grid of heights around the Site.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TerrainHeights"
+              examples:
+                apollo-11-1-km:
+                  $ref: ./examples/terrain-heights-apollo11.example.json
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/Unprocessable"
+
   /visibility/dsn:
     get:
       tags: [visibility]
@@ -969,7 +1015,7 @@ components:
     QueryLatitude:
       name: latitude_deg
       in: query
-      description: Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg`.
+      description: Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg` (-80 on the polar DEMs alone, 90, the whole Moon, when the server has the global DEM).
       schema:
         type: number
         minimum: -90
@@ -1102,7 +1148,13 @@ components:
           type: object
           required: [custom_max_latitude_deg, window_min, window_max, max_duration_hours]
           properties:
-            custom_max_latitude_deg: { type: number }
+            custom_max_latitude_deg:
+              type: number
+              description: >-
+                How far north a custom Site is answered. -80 when the server has only the
+                south polar DEMs; 90 (the whole Moon) when it also has LOLA's global LDEM_128,
+                which walks the Horizon mask of a custom Site north of 80°S (with LOLA's
+                polar stereographic DEMs within 20° of either pole).
             window_min: { type: string, format: date-time }
             window_max: { type: string, format: date-time }
             max_duration_hours: { type: number }
@@ -1958,6 +2010,74 @@ components:
           anyOf:
             - $ref: "#/components/schemas/PermanentShadow"
             - type: "null"
+
+    TerrainHeights:
+      type: object
+      description: |
+        A square of DEM pixels on the DEM's own map. Pixel (column c, row r), counted from the
+        top left, has its centre at x = `x_min_m` + (c + 0.5) `metres_per_pixel` and
+        y = `y_max_m` - (r + 0.5) `metres_per_pixel`, in metres on the sphere of
+        `sphere_radius_m`:
+        - `south_polar_stereographic`: rho = 2R tan(45° + lat/2), x = rho sin(lon),
+          y = rho cos(lon) (0°E up, 90°E right);
+        - `north_polar_stereographic`: rho = 2R tan(45° - lat/2), x = rho sin(lon),
+          y = -rho cos(lon) (0°E down, 90°E right);
+        - `equirectangular`: x = R (lon - `center_longitude_deg`) in radians, y = R lat in
+          radians. Across 0°E the window reads on from the other edge of a whole-Moon map, so x
+          may run past ±pi R: it stays continuous over the grid.
+      required:
+        [site, dem, projection, center_longitude_deg, sphere_radius_m, size_px, metres_per_pixel, x_min_m, y_max_m, half_extent_m, heights]
+      properties:
+        site: { $ref: "#/components/schemas/Site" }
+        dem:
+          $ref: "#/components/schemas/DemProduct"
+          description: The DEM the pixels are read from; `resolution_m` is its cell.
+        projection:
+          type: string
+          enum: [south_polar_stereographic, north_polar_stereographic, equirectangular]
+        center_longitude_deg:
+          type: number
+          description: The map's central meridian (180 on the simple cylindrical maps, 0 on the polar ones).
+        sphere_radius_m: { type: number }
+        size_px:
+          type: integer
+          minimum: 3
+          maximum: 511
+          description: Pixels on each side of the square; odd, the Site in the middle one.
+        metres_per_pixel:
+          type: number
+          exclusiveMinimum: 0
+          description: The pixel's side on the map (its exact cell, e.g. 236.901 for LDEM_128).
+        x_min_m:
+          type: number
+          description: The x of the top left corner of the top left pixel.
+        y_max_m:
+          type: number
+          description: The y of the top left corner of the top left pixel.
+        half_extent_m:
+          type: number
+          description: The reach asked for.
+        heights: { $ref: "#/components/schemas/HeightGrid" }
+
+    HeightGrid:
+      type: object
+      description: |
+        Heights in metres above the sphere, as the ground maps of the frontend's `/moon/` carry
+        them: `values` are integers row by row from the top left, and one stands for
+        `at_0_m` + value / 65535 × (`at_65535_m` - `at_0_m`). `at_0_m` is the lowest pixel and,
+        on uneven ground, `at_65535_m` the highest; flat ground gets a span of 1 m.
+        `quantum_m` is the step between two values, so a height is known to half of it.
+      required: [at_0_m, at_65535_m, quantum_m, values]
+      properties:
+        at_0_m: { type: number }
+        at_65535_m: { type: number }
+        quantum_m: { type: number, exclusiveMinimum: 0 }
+        values:
+          type: array
+          description: size_px × size_px values.
+          minItems: 9
+          maxItems: 261121
+          items: { type: integer, minimum: 0, maximum: 65535 }
 
     AssistantMessage:
       type: object
