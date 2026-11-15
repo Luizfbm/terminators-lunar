@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { earthAttitude, subLunarPoint } from '../domain/earthFace'
+import { chooseLabels, PLANETS, pointLook, type Box, type LabelCandidate } from '../domain/planets'
 import { groundDirection, toVector, type LatLon } from '../domain/sky'
 import {
   BACKDROP_EARTH_DISTANCE,
@@ -22,6 +23,7 @@ import { positionMap, type NameSizes } from './globeMap/position'
 import { readoutText } from './globeMap/readout'
 import './globeMap/globeMap.css'
 import { dressMoon } from './moonSurface'
+import { planetBackdrop, planetWay } from './planetBackdrop'
 import { earthMaterial as makeEarthMaterial, EARTH, glowTexture, loadEarthMap, SUN } from './spaceBodies'
 import { StageLoading } from './StageLoading'
 import { DIVE_MS } from '../domain/stageMove'
@@ -132,7 +134,7 @@ export function Globe(props: GlobeProps) {
   const [supported, setSupported] = useState(canDraw)
 
   // The map: one marker per Region from the pole, the Sites of one Region once flown into it.
-  const { locale } = useI18n()
+  const { locale, t } = useI18n()
   const names = useRegions()
   const places = useMemo(() => mapPlaces(props.sites, names), [props.sites, names])
   const mode = props.mode ?? 'orbit'
@@ -147,6 +149,7 @@ export function Globe(props: GlobeProps) {
   const [elements] = useState<MarkerElements>(() => new Map())
   const layer = useRef<HTMLDivElement>(null)
   const chosenRing = useRef<HTMLSpanElement>(null)
+  const planetNames = useRef<HTMLDivElement>(null)
   const readout = useRef<HTMLSpanElement>(null)
   const mapLive = useRef({ places, region, locale })
   const siteId = props.site.id
@@ -247,6 +250,8 @@ export function Globe(props: GlobeProps) {
       body.visible = false
       sky.add(body)
     }
+    // The planets are points of light in the same sky, for the look of it (ADR 0007).
+    const planetSky = planetBackdrop(sky, renderer.getPixelRatio())
     // Where each is on the stage, for whoever needs to know: pixels from its top left, and its radius.
     // Empty when it is off the stage or the Moon is in front of it.
     const publish = (name: 'sun' | 'earth', body: { x: number; y: number; r: number } | null) => {
@@ -644,8 +649,21 @@ export function Globe(props: GlobeProps) {
         if (x < 0 || x > host.clientWidth || y < 0 || y > host.clientHeight) return null
         return { x, y, r: (Math.abs(edge.x - centre.x) / 2) * host.clientWidth }
       }
-      publish('sun', placed(sunDisc, sunWay, discRadius(BACKDROP_SUN_DISTANCE, SUN_ANGULAR_RADIUS_DEG)))
-      publish('earth', placed(earthBall, earthWay, sphereRadius(BACKDROP_EARTH_DISTANCE, EARTH_ANGULAR_RADIUS_DEG)))
+      const sunSpot = placed(sunDisc, sunWay, discRadius(BACKDROP_SUN_DISTANCE, SUN_ANGULAR_RADIUS_DEG))
+      const earthSpot = placed(earthBall, earthWay, sphereRadius(BACKDROP_EARTH_DISTANCE, EARTH_ANGULAR_RADIUS_DEG))
+      publish('sun', sunSpot)
+      publish('earth', earthSpot)
+      // The planets, where they are at the Cursor in the same frame as the Sun and the Earth, and which of
+      // them are on the stage and not behind the Moon.
+      planetSky.place(state.cursorMs, state.earth, state.sun)
+      const planetSpots: { id: (typeof PLANETS)[number]['id']; x: number; y: number; magnitude: number }[] = []
+      for (const planet of planetSky.planets) {
+        const point = planetSky.points.get(planet.id)
+        const spot = point ? placed(point, planetWay(planet), 0) : null
+        if (spot) planetSpots.push({ id: planet.id, x: spot.x, y: spot.y, magnitude: planet.magnitude })
+      }
+      const onStage = planetSpots.map((spot) => spot.id).join(',')
+      if (host.dataset.planets !== onStage) host.dataset.planets = onStage
       // Where the camera is round the Moon: its distance in Moon radii, and its angles from the north pole and from 0°.
       const away = camera.position.length()
       const facts = {
@@ -665,6 +683,8 @@ export function Globe(props: GlobeProps) {
       target.dataset.ready = 'true'
 
       const label = pin.current
+      // Where the Site's name is on the stage, for the names of the planets to keep clear of it.
+      let pinBox: Box | null = null
       if (label) {
         const spot = onScreen(state.site)
         label.hidden = !spot.facing
@@ -689,6 +709,12 @@ export function Globe(props: GlobeProps) {
         label.style.maxWidth = wraps ? `${room}px` : ''
         label.style.left = `${spot.x}px`
         label.style.top = `${spot.y}px`
+        if (spot.facing) {
+          const width = wraps ? room : pinText.current.width
+          const height = wraps ? Math.max(label.offsetHeight, pinText.current.height) : pinText.current.height
+          const start = left ? spot.x - PIN_GAP - width : spot.x + PIN_GAP
+          pinBox = { left: start, top: spot.y - height / 2, right: start + width, bottom: spot.y + height / 2 }
+        }
       }
       // The chosen Site keeps a ring at every height, on the map and in orbit.
       const chosen = onScreen(state.site)
@@ -698,6 +724,46 @@ export function Globe(props: GlobeProps) {
         ringMark.style.left = `${chosen.x}px`
         ringMark.style.top = `${chosen.y}px`
         ringMark.dataset.lit = String(state.sunUp)
+      }
+      // The names of the planets: only in orbit and at rest, where the stage is the sky and not a chart
+      // or the ground. A name never covers the Site and its name, the Sun, the Earth, the caption's strip
+      // at the top or the view buttons' at the bottom, nor another planet.
+      const planetLabels = planetNames.current
+      if (planetLabels) {
+        const named = new Map<string, 'right' | 'left'>()
+        if (mode === 'orbit' && !flight && !fade && !dive && !shownDive) {
+          const around = (spot: { x: number; y: number }, reach: number): Box => ({ left: spot.x - reach, top: spot.y - reach, right: spot.x + reach, bottom: spot.y + reach })
+          const keepClear: Box[] = []
+          if (pinBox) keepClear.push(pinBox)
+          if (chosen.facing) keepClear.push(around(chosen, 18))
+          if (sunSpot) keepClear.push(around(sunSpot, sunSpot.r + 14))
+          if (earthSpot) keepClear.push(around(earthSpot, earthSpot.r + 10))
+          const candidates: LabelCandidate[] = planetSpots.map((spot) => ({
+            ...spot,
+            gap: pointLook(spot.magnitude).sizePx / 2 + 4,
+            // A name is about six pixels a letter at this size, and one line tall.
+            width: (planetLabels.children[PLANETS.findIndex((planet) => planet.id === spot.id)]?.textContent ?? '').length * 6.4 + 2,
+            height: 14,
+          }))
+          const bounds: Box = { left: PIN_EDGE, top: 48, right: host.clientWidth - PIN_EDGE, bottom: host.clientHeight - 60 }
+          for (const [id, side] of chooseLabels(candidates, bounds, keepClear)) named.set(id, side)
+        }
+        PLANETS.forEach((planet, index) => {
+          const element = planetLabels.children[index] as HTMLElement | undefined
+          if (!element) return
+          const side = named.get(planet.id)
+          const spot = planetSpots.find((entry) => entry.id === planet.id)
+          element.hidden = !side || !spot
+          if (!side || !spot) return
+          const look = pointLook(spot.magnitude)
+          const gap = look.sizePx / 2 + 4
+          element.dataset.side = side
+          element.style.left = `${side === 'right' ? spot.x + gap : spot.x - gap}px`
+          element.style.top = `${spot.y}px`
+          element.style.opacity = String(0.55 + 0.45 * look.brightness)
+        })
+        const shown = [...named.keys()].join(',')
+        if (host.dataset.planetNames !== shown) host.dataset.planetNames = shown
       }
       const markers = layer.current
       // What the grid's labels keep clear of on the map: the chosen Site's name, the markers, the dots.
@@ -778,6 +844,7 @@ export function Globe(props: GlobeProps) {
         ;(body.material as THREE.Material).dispose()
       }
       earthMap?.dispose()
+      planetSky.dispose()
       sunHalo.material.map?.dispose()
       sunHalo.material.dispose()
       for (const line of [toSun, toEarth, toOccluder]) {
@@ -817,6 +884,13 @@ export function Globe(props: GlobeProps) {
           onEvent={onMapEvent}
         />
       )}
+      <div className="globe__planets" ref={planetNames} aria-hidden="true">
+        {PLANETS.map((planet) => (
+          <span key={planet.id} hidden>
+            {t(`planet.${planet.id}`)}
+          </span>
+        ))}
+      </div>
       <span className="globe__readout" ref={readout} aria-hidden="true" hidden />
       <div className="globe__grid" ref={gridLabels} aria-hidden="true" hidden>
         {(props.meridianLabels ?? []).slice(0, 4).map((text) => (
