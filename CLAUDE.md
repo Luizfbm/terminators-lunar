@@ -64,6 +64,17 @@ Large data (full DEMs, SPICE kernels) lives on the VPS only.
 - Science is not tuned. Never change a tolerance, a reference value or a test to make a check pass; report it to Luiz.
 - Commits follow Conventional Commits in English. Code and comments are in English; project communication is in Portuguese.
 
+## Parallel work
+
+The agent Luiz is talking to is the coordinator. It does not implement the issues itself.
+
+- The coordinator splits the work into GitHub issues that are well separated and can run at the same time: each one touches its own files, needs no other open issue's result, and says what done looks like.
+- Each issue goes to its own agent, Claude Sonnet 5.5 at high effort, on its own branch. The agent opens a pull request that closes the issue and reports back what it changed and the commands it ran with their output.
+- An agent never starts the app, never deploys and never touches the VPS.
+- The coordinator checks the report against the diff, runs every gate below on the result and merges the pull request (squash) when all of them are green.
+- With everything green on `main`, the coordinator deploys to the VPS straight away, without asking Luiz first. Anything red stops the deploy.
+- Work that cannot be split (one step needs the previous one's result) stays with the coordinator.
+
 ## CI gates
 
 Every change merges only with every check green.
