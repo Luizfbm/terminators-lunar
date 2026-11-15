@@ -262,6 +262,31 @@ def sun_at(start: str) -> dict[str, float]:
     return sun
 
 
+def same_answer(answer: object, example: object) -> bool:
+    """Equal, with floats compared to one part in 10^9.
+
+    The examples were written by the engine on an ARM Mac and CI runs on x86 Linux, where the
+    same arithmetic rounds differently around the 11th significant digit (unmet_hours
+    89.04525550802708 against 89.04525550799754). Anything a real change would move, even a
+    second over a Window, is thousands of times larger.
+    """
+    if isinstance(answer, dict) and isinstance(example, dict):
+        return answer.keys() == example.keys() and all(
+            same_answer(answer[k], example[k]) for k in answer
+        )
+    if isinstance(answer, list) and isinstance(example, list):
+        return len(answer) == len(example) and all(
+            same_answer(a, e) for a, e in zip(answer, example, strict=True)
+        )
+    if isinstance(answer, float) or isinstance(example, float):
+        if isinstance(answer, bool) or isinstance(example, bool):
+            return answer == example
+        if not isinstance(answer, int | float) or not isinstance(example, int | float):
+            return False
+        return math.isclose(answer, example, rel_tol=1e-9, abs_tol=1e-12)
+    return answer == example
+
+
 def toward(azimuth_deg: float, elevation_deg: float) -> tuple[float, float, float]:
     """The unit vector (east, north, zenith) toward a direction, as Eduardo builds it."""
     a, e = math.radians(azimuth_deg), math.radians(elevation_deg)
@@ -277,7 +302,7 @@ def test_without_the_new_parameters_the_answer_is_the_contract_example() -> None
     # existed before it. The example was written by the engine before the implementation.
     example = json.loads(EXAMPLE.read_text("utf-8"))["value"]
     answer = energy(SHADOW, LANDER)
-    assert answer == example
+    assert same_answer(answer, example)
     assert "panel_lit_hours" not in answer
     assert set(answer["lander"]) == {"panel_power_w", "load_w", "battery_wh"}
 
@@ -409,7 +434,7 @@ def test_the_fixed_panel_example_is_the_engine_answer() -> None:
     path = EXAMPLE.with_name("visibility-energy-001-fixed-east.example.json")
     example = json.loads(path.read_text("utf-8"))["value"]
     pointing = {"panel_pointing": "fixed", "panel_azimuth_deg": 90}
-    assert energy(SHADOW, {**LANDER, **pointing}) == example
+    assert same_answer(energy(SHADOW, {**LANDER, **pointing}), example)
     assert example["panel_lit_hours"] < visibility(SHADOW)["metrics"]["sunlit_hours"]
 
 
