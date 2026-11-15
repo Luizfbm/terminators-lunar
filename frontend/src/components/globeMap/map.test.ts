@@ -7,7 +7,7 @@ import { STRINGS } from './strings'
 
 // the requirement: seen from the pole the map shows one marker per Region, a click flies into it and
 // its Sites can each be asked about, "all regions" and Esc fly back out, and hover shows the name.
-// The catalogue the backend serves is read at run time, so the test sees the real 134 Sites.
+// The catalogue the backend serves is read at run time, so the test sees the real 151 Sites.
 
 function csv(path: string): Record<string, string>[] {
   const [head, ...rows] = readFileSync(new URL(path, import.meta.url), 'utf8').trim().split('\n')
