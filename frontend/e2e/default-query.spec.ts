@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page } from '@playwright/test'
 import { EARTH_ANGULAR_RADIUS_DEG, projectedRadiusPx, SUN_ANGULAR_RADIUS_DEG } from '../src/domain/spaceScale'
 import { findOnStage, readGlobe, settle, tipTo, turn, zoomAllTheWay } from './orbit'
 

@@ -1,4 +1,5 @@
-import { expect, test, type Page, type Route } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page, Route } from '@playwright/test'
 
 // the requirement: on a phone the Site list had no backdrop and no way
 // to close it but Escape, it opened about 4,110 px away from the chosen Site, its citation covered

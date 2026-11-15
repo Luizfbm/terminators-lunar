@@ -17,8 +17,19 @@ export const MENU_ITEMS = [
 export type MenuId = (typeof MENU_ITEMS)[number]['id']
 export type MenuState = Record<MenuId, boolean>
 
-/** The three switches start pressed: all the dots and the planets are shown, as before the menu. */
-export const initialMenu = (): MenuState => ({ initial: false, dark_side: false, north: false, south: false, missions: true, sites: true, planets: true })
+/** The two switches of the dots, the only buttons of the orbit that also make sense on the polar map. */
+export const LAYER_BUTTONS = ['missions', 'sites'] as const
+
+/**
+ * The buttons under the levels for a view: all of them in orbit; on the polar map only the two switches of
+ * the dots, since the map does not turn the Moon and has no sky of planets. The switches are the same in
+ * both, so their state carries over.
+ */
+export const menuItemsFor = (mode: 'orbit' | 'map') =>
+  mode === 'orbit' ? MENU_ITEMS : MENU_ITEMS.filter((item) => (LAYER_BUTTONS as readonly string[]).includes(item.id))
+
+/** Only the Artemis Sites start pressed among the dots (the missions are released); the planets start shown, as before the menu. */
+export const initialMenu = (): MenuState => ({ initial: false, dark_side: false, north: false, south: false, missions: false, sites: true, planets: true })
 
 /** The four buttons that turn the Moon: pressing one releases the other three, as the Moon can only face one way. */
 export const VIEW_BUTTONS = ['initial', 'dark_side', 'north', 'south'] as const

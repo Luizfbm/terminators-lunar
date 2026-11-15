@@ -1,0 +1,96 @@
+/* What the stage says about the answer it waits for, and the way Back from the ground (Land and Back, the requirement). */
+.stage-status {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: 6;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(46ch, calc(100% - 32px));
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: var(--fg);
+  font-size: var(--small);
+  transform: translateX(-50%);
+}
+
+.stage-status p {
+  margin: 0;
+}
+
+.stage-status p + p {
+  margin-top: 6px;
+}
+
+.stage-status__title {
+  font-weight: 600;
+}
+
+.stage-status--error {
+  border-color: color-mix(in srgb, #ff6b6b 70%, var(--edge));
+}
+
+/* A plain loading, with an answer already on screen: one quiet line. */
+.stage-status--quiet {
+  padding: 4px 10px;
+  color: var(--dim);
+  pointer-events: none;
+}
+
+.stage-status__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.stage-status__actions button {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+}
+
+.stage-status__actions button:first-child {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+@media (pointer: coarse) {
+  .stage-status__actions button {
+    min-height: 44px;
+  }
+}
+
+/* Available over every ground scene, independent of the hidden answer column. */
+.stage__back {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 8;
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.stage__back:hover {
+  background: #242424;
+}
+
+.stage__back:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}

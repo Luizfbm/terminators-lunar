@@ -88,11 +88,15 @@ class Look:
                 "azimuth_deg": self.sun.azimuth_deg,
                 "elevation_deg": self.sun.elevation_deg,
                 "fraction": self.sun_fraction(),
+                # The disc's apparent radius at this instant, from the Sun's topocentric distance.
+                "angular_radius_deg": math.degrees(self.sun_radius_rad),
             },
             "earth": {
                 "azimuth_deg": self.earth.azimuth_deg,
                 "elevation_deg": self.earth.elevation_deg,
                 "visible": self.above("earth"),
+                # The same for the Earth: its mean radius over its distance from the Observer.
+                "angular_radius_deg": math.degrees(self.earth_radius_rad),
             },
         }
 

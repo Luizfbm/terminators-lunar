@@ -1,8 +1,8 @@
 """A per-IP cap on the engine routes, so one client cannot keep the queue to itself.
 
-Only /visibility, /visibility/ladder and /sites/{id}/year count: they are the routes
-that can start an engine run, and the only ones whose contract has a 503 `busy` answer,
-which is what a client over the cap gets. The cap is off unless LUNAR_IP_LIMIT_PER_MINUTE
+Only /visibility and its kin, /sites/{id}/year and /terrain/heights count: they are the
+routes that take an engine slot (heights.py reads up to 511 x 511 pixels and builds a JSON
+of about 900 MB at peak), and a client over the cap gets the 503 `busy` answer they share. The cap is off unless LUNAR_IP_LIMIT_PER_MINUTE
 is set. Behind the Cloudflare tunnel every request reaches us from Caddy, so the client
 is the CF-Connecting-IP header that Cloudflare sets.
 """
@@ -20,7 +20,11 @@ WINDOW_SECONDS = 60.0
 
 
 def _limited(path: str) -> bool:
-    return path.startswith("/visibility") or (path.startswith("/sites/") and path.endswith("/year"))
+    return (
+        path.startswith("/visibility")
+        or path == "/terrain/heights"
+        or (path.startswith("/sites/") and path.endswith("/year"))
+    )
 
 
 class PerIpLimit:

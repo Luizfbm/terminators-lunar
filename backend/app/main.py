@@ -22,6 +22,8 @@ from . import (
     dsn,
     energy,
     ground,
+    hazard,
+    heights,
     horizon,
     neighbours,
     route,
@@ -183,10 +185,7 @@ def _query(
             raise missing_site(site_id)
     else:
         assert latitude_deg is not None and longitude_deg is not None
-        if latitude_deg > -80:
-            raise ApiProblem(
-                "outside_coverage", "Outside coverage", "Custom Sites must be at or south of 80°S."
-            )
+        ground.check_custom_latitude(latitude_deg)
         selected = catalog.custom_site(latitude_deg, longitude_deg)
     return selected, instant
 
@@ -483,6 +482,20 @@ def get_terrain(
     return ground.terrain(selected, radius_m, slope_limit_deg)
 
 
+@app.get("/terrain/heights")
+def get_terrain_heights(
+    site_id: str | None = None,
+    latitude_deg: float | None = Query(None, ge=-90, le=90),
+    longitude_deg: float | None = Query(None, ge=-180, le=180),
+    half_extent_m: float = Query(
+        heights.HALF_EXTENT_DEFAULT_M, ge=heights.HALF_EXTENT_MIN_M, le=heights.HALF_EXTENT_MAX_M
+    ),
+) -> Response:
+    """The DEM's own heights around a Site, for the 3D view from the ground (see heights.py)."""
+    selected = ground.site_for(site_id, latitude_deg, longitude_deg)
+    return Response(ground.terrain_heights(selected, half_extent_m), media_type="application/json")
+
+
 @app.post("/assistant")
 async def ask_assistant(request: Request) -> Response:
     """Questions in plain words, answered with this API's own numbers (the requirement)."""
@@ -512,6 +525,30 @@ def get_visibility_dsn(
     return Response(
         answer, media_type="application/json", headers={"Cache-Status": _cache_status(hit)}
     )
+
+
+@app.get("/sites/{site_id}/hazard")
+async def get_site_hazard(site_id: str) -> dict[str, Any]:
+    """Eduardo's Monte Carlo on the 10 x 10 km grid nearest the Site (the requirement)."""
+    return hazard.site_hazard(site_id)
+
+
+@app.get("/sites/{site_id}/hazard/grid")
+async def get_site_hazard_grid(site_id: str) -> dict[str, Any]:
+    """The grid itself, as the bundle stores it (the requirement)."""
+    return hazard.site_hazard_grid(site_id)
+
+
+@app.get("/sites/{site_id}/hazard/around")
+async def get_site_hazard_around(
+    site_id: str,
+    x_m: float | None = Query(None, ge=-5000, le=5000),
+    y_m: float | None = Query(None, ge=-5000, le=5000),
+    radius_m: float = Query(250, ge=50, le=2000),
+    slope_limit_deg: float = Query(hazard.SLOPE_LIMIT_DEG, gt=0, le=45),
+) -> dict[str, Any]:
+    """The steep cells within a radius of a point of the grid (the requirement)."""
+    return hazard.site_hazard_around(site_id, x_m, y_m, radius_m, slope_limit_deg)
 
 
 @app.get("/rovers")

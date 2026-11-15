@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page } from '@playwright/test'
 
 // "Check in JPL Horizons": next to the Sun's and the Earth's position at the Cursor, one link per body that
 // opens Horizons for the same Site, Observer height and instant, so anyone can redo the position.

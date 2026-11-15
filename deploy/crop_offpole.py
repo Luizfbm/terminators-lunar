@@ -13,6 +13,12 @@ metres: the Uncertainty band reads it (ADR 0006). Each has its own digest in off
 
     python crop_offpole.py --digests <out>   prints the digests for offpole.sha256
 
+Sites: the Curated Sites outside the polar DEMs (APOLLO11, BG1, CH3) and the 17 mission
+landings of backend/app/data/sites.csv (source apollo / lroc2016), 20 in all. About 40 MB a
+Site is a fair estimate from fixtures/dem/offpole (151 MB for three), so the 17 add under 1 GB
+to dem/offpole/. The windows of APOLLO15, SURVEYOR6 and SURVEYOR7 that were cut before the
+0°E seam fix are cut again on the next run (see CROP_VERSION).
+
 Runs with rasterio only (the backend image has it). A product that is not in the local
 dir is read over HTTP with /vsicurl/, which fetches only the rows it needs. Already
 written windows are kept. Every window is then checked against `offpole.sha256` next to
@@ -40,6 +46,14 @@ SLDEM = "https://imbrium.mit.edu/DATA/SLDEM2015"
 NEAR_M = 105_000.0  # rays to 100 km, plus a margin for the bilinear read
 FAR_M = 310_000.0  # rays to 300 km
 ERROR_SUFFIX = "_ERR"  # PGDA name of a DEM's per-pixel height error, as in backend/app/horizon.py
+
+# Windows that run past the map's seam (0°E) were cut wrong before 15/11/2026: the pixels past
+# the seam were labelled at the wrong place. Every window is now tagged with the crop version
+# that wrote it, and these Sites' windows are cut again when the tag is missing or older, so a
+# rerun of fetch-data.sh mends the old APOLLO15, SURVEYOR6 and SURVEYOR7 windows by itself.
+CROP_VERSION = "2"
+CROP_TAG = "LUNAR_CROP_VERSION"
+RECUT_SITES = frozenset({"APOLLO15", "SURVEYOR6", "SURVEYOR7"})
 
 # Coordinates as in backend/app/data/sites.csv, which carries their citations.
 SITES = {
@@ -206,7 +220,16 @@ def _write(path: Path, data: np.ndarray, transform, crs) -> None:
     part = path.with_suffix(".part")
     with rasterio.open(part, "w", **profile) as out:
         out.write(data.astype(np.float32), 1)
+        out.update_tags(**{CROP_TAG: CROP_VERSION})
     part.rename(path)
+
+
+def _stale_seam_window(path: Path) -> bool:
+    """Whether a window of a RECUT_SITES Site was cut before the seam fix (no tag, or an older one)."""
+    if path.parent.name not in RECUT_SITES:
+        return False
+    with rasterio.open(path) as dataset:
+        return dataset.tags().get(CROP_TAG) != CROP_VERSION
 
 
 SLDEM_LOCAL: Path | None = None
@@ -316,6 +339,8 @@ def needs_cut(path: Path, name: str, expected: dict[str, str]) -> bool:
     """
     if not path.is_file():
         return True
+    if _stale_seam_window(path):
+        return True
     return name in expected and digest(path) != expected[name]
 
 
@@ -335,6 +360,9 @@ def main() -> None:
     with rasterio.Env(**GDAL_ENV):
         if sys.argv[1] == "--digests":
             out = Path(sys.argv[2]) / "offpole"
+            old = [str(p.relative_to(out)) for p in _windows(out) if _stale_seam_window(p)]
+            if old:
+                raise SystemExit(f"cut before the seam fix, run the crop first: {', '.join(old)}")
             for path in _windows(out):
                 print(f"{digest(path)}  {path.relative_to(out)}")
             return

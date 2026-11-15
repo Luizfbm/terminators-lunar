@@ -218,6 +218,12 @@ def _dem_fingerprint() -> tuple[tuple[str, int, int], ...]:
     if wide.is_file():
         stat = wide.stat()
         marks.append((horizon.WIDE_PRODUCT, stat.st_size, stat.st_mtime_ns))
+    # LOLA's global and north polar maps, which answer typed points north of 80°S.
+    for product in (horizon.GLOBAL_PRODUCT, horizon.NORTH_PRODUCT):
+        path = folder / f"{product}.TIF"
+        if path.is_file():
+            stat = path.stat()
+            marks.append((product, stat.st_size, stat.st_mtime_ns))
     for path in sorted((folder / horizon.OFFPOLE_DIR).glob("*/*.TIF")):
         stat = path.stat()
         marks.append((f"{path.parent.name}/{path.stem}", stat.st_size, stat.st_mtime_ns))

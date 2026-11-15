@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page } from '@playwright/test'
 
 // the requirement: the cover of the first visit and the three-step guide. Every other test runs in a
 // browser that has already seen the cover (playwright.config.ts); these start from an empty one.

@@ -1,7 +1,9 @@
 import type { VisibilityEvent } from '../api/client'
 import type { UncertaintyState } from '../hooks/useUncertainty'
+import { siteRefOf } from '../domain/query'
 import { matchBand, spreadOf, spreadText } from '../domain/uncertainty'
 import { useI18n } from '../i18n/I18nContext'
+import { MeasuredShare } from './hazard/uncertainty/MeasuredShare'
 
 /**
  * Under the time of a Sunset or an Earthset: the window the map's own height error leaves it
@@ -28,6 +30,11 @@ export function UncertaintyLine({
   }
   const band = matchBand(uncertainty.data.events, event, events.indexOf(event))
   const spread = band && spreadOf(band, uncertainty.data.clones)
-  if (!spread) return null
-  return <p className="band-line">{spreadText(i18n, spread, Date.parse(event.t))}</p>
+  // Under the window, how much of the ground inside the Landing ellipse the laser measured.
+  return (
+    <>
+      {spread && <p className="band-line">{spreadText(i18n, spread, Date.parse(event.t))}</p>}
+      <MeasuredShare site={siteRefOf(uncertainty.data.query.site)} />
+    </>
+  )
 }

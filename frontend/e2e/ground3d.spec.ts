@@ -1,5 +1,6 @@
 import { deflateSync } from 'node:zlib'
 import { expect, test, type Page } from '@playwright/test'
+import { classic } from './classic'
 
 // the requirement: the view from the ground in 3D. The camera stands at the Observer and turns in
 // place; the unrolled horizon stays as a strip under it. The canvas says where it is looking in
@@ -67,7 +68,8 @@ test('dragging the sky to the left brings what is on the right into view', async
 })
 
 test('marking what hides the Earth turns the view to it', async ({ page }) => {
-  await page.goto('/')
+  // The reason under a statement is in the answer column, which Larissa's layout does not show.
+  await page.goto(classic('/'))
   await page.locator('.why__show').first().click()
   await expect(page).toHaveURL(/view=ground/)
   await expect(sky(page)).toHaveAttribute('data-ready', 'true')

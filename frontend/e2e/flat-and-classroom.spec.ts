@@ -1,4 +1,5 @@
-import { expect, test, type Page, type Route } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page, Route } from '@playwright/test'
 
 // the requirement. The mock answers /visibility with CR01 (20/11/2026 12:00 UTC for 10 days, first Sunset
 // at 16:21) and /visibility/flat with Site 001 (first Sunset without terrain on 13/02/2027 02:11), so

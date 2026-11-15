@@ -5,7 +5,19 @@ from collections.abc import Iterator
 
 import pytest
 
-from app import cache
+from app import cache, horizon
+
+
+@pytest.fixture
+def without_global_dem(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The condition of every test that says a typed point must be at or south of 80°S.
+
+    That limit holds only while the server has no LOLA global map (LDEM_128): with it, a
+    typed point is answered anywhere on the Moon (horizon.custom_max_latitude_deg). These
+    tests keep their meaning on the DEM fixtures, and on a machine whose DEM folder does
+    have the global map they state the condition instead of depending on the folder.
+    """
+    monkeypatch.setattr(horizon, "has_global", lambda folder=None: False)
 
 
 @pytest.fixture(autouse=True)

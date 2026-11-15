@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page } from '@playwright/test'
 
 // the requirement: a way in to the IM-2 Athena landing, and a note at that Site saying what the map
 // cannot see. The mock always answers for its example Site, so the Site that was asked is put

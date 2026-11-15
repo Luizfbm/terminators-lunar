@@ -748,6 +748,7 @@ ENGINE_PATHS = (
     "/visibility/dsn",
     "/sites/{site_id}/year",
     "/sites/{site_id}/windows",
+    "/terrain/heights",
 )
 
 
@@ -1388,6 +1389,236 @@ def test_every_route_that_answers_422_lets_schemathesis_expect_it() -> None:
     }
     missing = sorted(name for name in documented if "422" not in expected.get(name, []))
     assert missing == []
+
+
+# 15/11/2026: GET /terrain/heights reads up to 511 x 511 pixels and builds a JSON of about
+# 260 000 integers (~900 MB at peak, in a container of 4.5 GB). It first went in with no per-IP
+# cap and no engine slot, so one client could ask for ten grids at once beside a full set of
+# engine runs. Over the cap it answers what every engine route does: 503 busy with Retry-After.
+def test_terrain_heights_is_counted_by_the_per_ip_cap(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LUNAR_IP_LIMIT_PER_MINUTE", "2")
+    one = {"CF-Connecting-IP": "198.51.100.77", "Origin": "https://lunar.luizfbm.win"}
+    params = {"site_id": "001", "half_extent_m": 1000}
+    answers = [client.get("/terrain/heights", params=params, headers=one) for _ in range(3)]
+    # Under the cap the route answers as usual (200 with the DEM windows of fixtures/, 422
+    # without them); only the cap gives 503 here.
+    assert [a.status_code == 503 for a in answers] == [False, False, True]
+    assert answers[2].json()["code"] == "busy"
+    assert 1 <= int(answers[2].headers["Retry-After"]) <= 61
+    assert answers[2].headers["access-control-allow-origin"] == "https://lunar.luizfbm.win"
+    other = {"CF-Connecting-IP": "203.0.113.77"}
+    assert client.get("/terrain/heights", params=params, headers=other).status_code != 503
+    # /terrain, which reads a small window, stays out of the cap.
+    assert client.get("/terrain", params={"site_id": "001"}, headers=one).status_code != 503
+
+
+def test_terrain_heights_waits_for_an_engine_slot(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app import cache
+
+    # Every slot taken: the grid is not built, the visitor gets 503 busy once the wait is up.
+    monkeypatch.setattr(cache, "_gate", cache._Gate(0))
+    monkeypatch.setenv("LUNAR_QUEUE_WAIT_SECONDS", "0.1")
+    answer = client.get("/terrain/heights", params={"site_id": "001", "half_extent_m": 1000})
+    assert answer.status_code == 503
+    assert answer.json()["code"] == "busy"
+    assert answer.headers["Retry-After"]
+
+
+# 15/11/2026: a typed point north of 80°S answered 422 outside-coverage, so the globe could
+# not land anywhere but the curated Sites and the south polar cap. With LOLA's global LDEM_128
+# on the server (237 m, simple cylindrical centred on 180°E), the rays of a typed point between
+# 70°S and 70°N walk it out to 300 km, across 0°E too (horizon.GLOBAL). It runs only where the
+# DEM folder has LDEM_128 (LUNAR_DEM_DIR on the full data); the fixtures and CI do not.
+_GLOBAL_DEM = horizon.dem_dir() / f"{horizon.GLOBAL_PRODUCT}.TIF"
+# On 0°E itself, where the map's first column meets its last, and in the northern hemisphere.
+_GLOBAL_POINTS = ((0.0, 0.05), (45.0, -100.0))
+
+
+def _global_grid(site: tuple[float, float], reach_m: float) -> tuple[Any, Any, int, int]:
+    """The LDEM_128 pixels around a point, columns taken modulo the map width (written here)."""
+    import math
+
+    import numpy as np
+    import rasterio
+
+    with rasterio.open(_GLOBAL_DEM) as dataset:
+        transform, width = dataset.transform, dataset.width
+        pixel = transform.a
+        rows_reach = reach_m / pixel + 4
+        cols_reach = reach_m / (pixel * math.cos(math.radians(abs(site[0]) + 10.0))) + 4
+        col = (_MOON_RADIUS_M * math.radians((site[1] % 360.0) - 180.0) - transform.c) / pixel
+        row = (transform.f - _MOON_RADIUS_M * math.radians(site[0])) / pixel
+        c0, c1 = int(col - cols_reach), int(col + cols_reach)
+        r0, r1 = max(0, int(row - rows_reach)), min(dataset.height, int(row + rows_reach))
+        # Read the band of rows once per side of the seam and pick the columns modulo the width.
+        lo, hi = c0 % width, (c1 - 1) % width
+        if lo <= hi:
+            strip = dataset.read(1, window=((r0, r1), (lo, hi + 1)))
+            grid = strip[:, np.arange(c0, c1) % width - lo]
+        else:
+            right = dataset.read(1, window=((r0, r1), (lo, width)))
+            left = dataset.read(1, window=((r0, r1), (0, hi + 1)))
+            joined = np.concatenate([right, left], axis=1)
+            index = np.arange(c0, c1) % width
+            grid = joined[:, np.where(index >= lo, index - lo, index + (width - lo))]
+    return grid.astype(np.float64), transform, c0, r0
+
+
+@pytest.mark.skipif(
+    not _GLOBAL_DEM.is_file(),
+    reason=f"{horizon.GLOBAL_PRODUCT}.TIF is not in the DEM folder ({horizon.dem_dir()})",
+)
+@pytest.mark.parametrize("site", _GLOBAL_POINTS)
+def test_a_typed_point_north_of_80s_is_answered_by_the_global_dem(
+    site: tuple[float, float],
+) -> None:
+    import math
+
+    import numpy as np
+
+    payload = visibility(
+        {"latitude_deg": site[0], "longitude_deg": site[1], "start": "2026-11-15T00:00:00Z"}
+    )
+    samples = payload["horizon"]["samples"]
+    assert len(samples) == 720
+    assert all(math.isfinite(s["elevation_deg"]) for s in samples)
+    assert [d["product"] for d in payload["provenance"]["dems"]] == [horizon.GLOBAL_PRODUCT]
+    assert client.get("/meta").json()["coverage"]["custom_max_latitude_deg"] == 90.0
+
+    grid, transform, c0, r0 = _global_grid(site, 305_000.0)
+    pixel = transform.a
+
+    def height(x: Any, y: Any) -> Any:
+        col = (x - transform.c) / pixel - 0.5 - c0
+        row = (transform.f - y) / pixel - 0.5 - r0
+        i, j = np.floor(row).astype(int), np.floor(col).astype(int)
+        fr, fc = row - i, col - j
+        return (
+            grid[i, j] * (1 - fc) * (1 - fr)
+            + grid[i, j + 1] * fc * (1 - fr)
+            + grid[i + 1, j] * (1 - fc) * fr
+            + grid[i + 1, j + 1] * fc * fr
+        )
+
+    lat, lon = math.radians(site[0]), math.radians(site[1])
+    site_x = _MOON_RADIUS_M * math.radians((site[1] % 360.0) - 180.0)
+    observer = float(height(np.array(site_x), np.array(_MOON_RADIUS_M * lat)))
+    observer += payload["query"]["observer_height_m"]
+    up = np.array([math.cos(lat) * math.cos(lon), math.cos(lat) * math.sin(lon), math.sin(lat)])
+    east = np.array([-math.sin(lon), math.cos(lon), 0.0])
+    north = np.cross(up, east)
+
+    def walk(azimuth: float) -> float:
+        bearing = math.radians(azimuth)
+        heading = math.cos(bearing) * north + math.sin(bearing) * east
+        # 0.1 m to 500 m as in the seam test: near the Site the elevation changes fast, and
+        # a bilinear DEM's kinks make a 1 m walk miss by a few thousandths of a degree.
+        d = np.concatenate(
+            [
+                np.arange(0.1, 500.0, 0.1),
+                np.arange(500.0, 5_000.0, 1.0),
+                np.arange(5_000.0, 300_000.0, 10.0),
+            ]
+        )
+        theta = d / _MOON_RADIUS_M
+        point = up[None, :] * np.cos(theta)[:, None] + heading[None, :] * np.sin(theta)[:, None]
+        p_lat = np.arcsin(point[:, 2])
+        dlon = (np.arctan2(point[:, 1], point[:, 0]) - lon + math.pi) % (2 * math.pi) - math.pi
+        r = _MOON_RADIUS_M + height(site_x + _MOON_RADIUS_M * dlon, _MOON_RADIUS_M * p_lat)
+        elevation = np.degrees(
+            np.arctan2(r * np.cos(theta) - (_MOON_RADIUS_M + observer), r * np.sin(theta))
+        )
+        return float(np.max(elevation))
+
+    # Never above the engine (its zoom finds the peaks a fixed walk can miss), under it by
+    # little; the same tolerance as the seam test. Rays at 270° from 0.05°E cross 0°E.
+    for azimuth in (0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0):
+        engine = samples[round(azimuth / 0.5)]["elevation_deg"]
+        independent = walk(azimuth)
+        assert independent - 0.0005 <= engine <= independent + 0.003, (azimuth, engine, independent)
+
+
+def test_the_uncertainty_of_a_global_point_names_each_unvaried_dem_once(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # 15/11/2026, found checking /visibility/uncertainty for a typed point over LDEM_128: the
+    # global map is walked as two bands (near and far), and `uncovered` listed the DEM once
+    # per band, ["LDEM_128", "LDEM_128"]. It is one DEM, with no error raster to vary.
+    from tests.test_global_dem import _write_global
+
+    _write_global(tmp_path)
+    monkeypatch.setenv("LUNAR_DEM_DIR", str(tmp_path))
+    response = client.get(
+        "/visibility/uncertainty",
+        params={
+            "latitude_deg": 10.0,
+            "longitude_deg": 20.0,
+            "start": "2026-11-15T00:00:00Z",
+            "duration_hours": 24,
+        },
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["uncovered"] == [horizon.GLOBAL_PRODUCT]
+
+
+def test_the_sampling_step_argument_leaves_the_horizon_mask_as_it_was() -> None:
+    """regression guard, 15/11/2026: the convergence check (validation/test_convergence.py)
+    needed `horizon._compute` to take a step scale. Its default has to be the engine's
+    answer: 720 rays every 0.5°, half a pixel along each. The expected elevations are the
+    Site 001 mask at 2 m, read off the code before the argument existed (every 30th ray).
+    """
+    expected = [
+        0.7246977,
+        -0.0390404,
+        -1.2253873,
+        -1.6225507,
+        -2.0754625,
+        -1.485687,
+        -1.1593553,
+        -2.2465989,
+        -1.6714597,
+        -1.5624739,
+        -2.2112717,
+        -1.250739,
+        -1.2956555,
+        -0.7432153,
+        -0.1958176,
+        -0.9819816,
+        -0.9530123,
+        -1.6000338,
+        -0.8342478,
+        -0.5363619,
+        -0.0686374,
+        0.2632918,
+        0.6462246,
+        0.97551,
+    ]
+    payload = visibility({**MARCH_2025, "observer_height_m": 2})
+    samples = payload["horizon"]["samples"]
+    assert len(samples) == 720
+    assert payload["horizon"]["azimuth_step_deg"] == 0.5
+    assert [samples[i]["elevation_deg"] for i in range(0, 720, 30)] == pytest.approx(
+        expected, abs=1e-6
+    )
+
+
+def test_each_sample_gives_the_true_angular_radius_of_the_sun_and_the_earth() -> None:
+    # 15/11/2026: the view from the ground drew the Sun at the Window's mean radius and the Earth
+    # at a fixed 0.95°, both enlarged with the stretched heights. The engine already had both
+    # radii per instant (asin(radius / topocentric distance), SPICE); now every sample says them.
+    payload = visibility({"site_id": "001", "start": "2026-11-15T00:00:00Z", "duration_hours": 48})
+    samples = payload["timeline"]["samples"]
+    sun = [sample["sun"]["angular_radius_deg"] for sample in samples]
+    earth = [sample["earth"]["angular_radius_deg"] for sample in samples]
+    # Written out here, not taken from the code: the Sun (695,700 km) between perihelion and
+    # aphelion, give or take the Earth-Moon distance; the Earth (6,371 km mean) between perigee
+    # and apogee of the Moon, give or take the Moon's own radius.
+    assert all(0.258 < value < 0.276 for value in sun)
+    assert all(0.88 < value < 1.04 for value in earth)
+    # The Window's mean radius the answer already published is the mean of these.
+    assert sum(sun) / len(sun) == pytest.approx(payload["timeline"]["sun_radius_deg"], rel=1e-9)
+    # Over two days the Moon's distance changes, so the Earth's radius is not a constant.
+    assert max(earth) - min(earth) > 0.0005
 
 
 def test_route_takes_the_coarse_grid_as_a_query_string() -> None:

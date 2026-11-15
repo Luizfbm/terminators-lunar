@@ -396,6 +396,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/terrain/heights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The DEM's own heights around a Site, for the view from the ground
+         * @description A square window of pixels of the finest DEM the engine reads near the Site, the same
+         *     choice as `/terrain` makes: the 20 m PGDA DEM at the south pole, a Curated Site's own
+         *     off-pole window (SLDEM2015, 59 m), LOLA's global LDEM_128 (237 m) between 70°S and
+         *     70°N, LOLA's polar stereographic 240 m products within 20° of either pole. Nothing is
+         *     resampled: every value is one pixel of the file, in the file's own projection
+         *     (`projection`), so the grid is the measured ground and nothing finer.
+         *     The window has `size_px` pixels on a side, centred on the pixel that holds the Site, at
+         *     most 511: it reaches at least `half_extent_m` from the Site on the ground when that
+         *     fits, and less on DEMs finer than about 120 m (5.1 km on the 20 m DEM), or east to west
+         *     on the simple cylindrical maps near 70° of latitude.
+         *     A window that runs off every DEM, or over a pixel without data, is a 422: the ground is
+         *     never filled in or made flat.
+         *     Pass either `site_id` or both coordinates, never both, as in `/visibility`.
+         */
+        get: operations["getTerrainHeights"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/visibility/dsn": {
         parameters: {
             query?: never;
@@ -613,6 +645,7 @@ export interface components {
             kernels: string[];
             dems: components["schemas"]["DemProduct"][];
             coverage: {
+                /** @description How far north a custom Site is answered. -80 when the server has only the south polar DEMs; 90 (the whole Moon) when it also has LOLA's global LDEM_128, which walks the Horizon mask of a custom Site north of 80°S (with LOLA's polar stereographic DEMs within 20° of either pole). */
                 custom_max_latitude_deg: number;
                 /** Format: date-time */
                 window_min: string;
@@ -701,10 +734,22 @@ export interface components {
             sun: components["schemas"]["BodyPosition"] & {
                 /** @description Sun fraction. 0 during a lunar eclipse. */
                 fraction: number;
+                /**
+                 * @description Apparent radius of the Sun's disc seen from the Observer at this instant,
+                 *     asin(solar radius / topocentric distance) from the SPICE ephemeris, in degrees.
+                 *     Optional for older answers; this server always sends it.
+                 */
+                angular_radius_deg?: number;
             };
             earth: components["schemas"]["BodyPosition"] & {
                 /** @description Earth's centre is above the Horizon mask. */
                 visible: boolean;
+                /**
+                 * @description Apparent radius of the Earth seen from the Observer at this instant, from its
+                 *     equatorial radius (6378.1366 km) over its topocentric distance (a sphere, not the ellipsoid's limb),
+                 *     in degrees. Optional for older answers; this server always sends it.
+                 */
+                angular_radius_deg?: number;
             };
         };
         Event: {
@@ -1123,6 +1168,54 @@ export interface components {
             dem: components["schemas"]["DemProduct"];
             /** @description Left out until the map of permanently shadowed regions is on the server; null when the map has no shadowed cell in range of the Site. */
             permanent_shadow?: components["schemas"]["PermanentShadow"] | null;
+        };
+        /**
+         * @description A square of DEM pixels on the DEM's own map. Pixel (column c, row r), counted from the
+         *     top left, has its centre at x = `x_min_m` + (c + 0.5) `metres_per_pixel` and
+         *     y = `y_max_m` - (r + 0.5) `metres_per_pixel`, in metres on the sphere of
+         *     `sphere_radius_m`:
+         *     - `south_polar_stereographic`: rho = 2R tan(45° + lat/2), x = rho sin(lon),
+         *       y = rho cos(lon) (0°E up, 90°E right);
+         *     - `north_polar_stereographic`: rho = 2R tan(45° - lat/2), x = rho sin(lon),
+         *       y = -rho cos(lon) (0°E down, 90°E right);
+         *     - `equirectangular`: x = R (lon - `center_longitude_deg`) in radians, y = R lat in
+         *       radians. Across 0°E the window reads on from the other edge of a whole-Moon map, so x
+         *       may run past ±pi R: it stays continuous over the grid.
+         */
+        TerrainHeights: {
+            site: components["schemas"]["Site"];
+            /** @description The DEM the pixels are read from; `resolution_m` is its cell. */
+            dem: components["schemas"]["DemProduct"];
+            /** @enum {string} */
+            projection: "south_polar_stereographic" | "north_polar_stereographic" | "equirectangular";
+            /** @description The map's central meridian (180 on the simple cylindrical maps, 0 on the polar ones). */
+            center_longitude_deg: number;
+            sphere_radius_m: number;
+            /** @description Pixels on each side of the square; odd, the Site in the middle one. */
+            size_px: number;
+            /** @description The pixel's side on the map (its exact cell, e.g. 236.901 for LDEM_128). */
+            metres_per_pixel: number;
+            /** @description The x of the top left corner of the top left pixel. */
+            x_min_m: number;
+            /** @description The y of the top left corner of the top left pixel. */
+            y_max_m: number;
+            /** @description The reach asked for. */
+            half_extent_m: number;
+            heights: components["schemas"]["HeightGrid"];
+        };
+        /**
+         * @description Heights in metres above the sphere, as the ground maps of the frontend's `/moon/` carry
+         *     them: `values` are integers row by row from the top left, and one stands for
+         *     `at_0_m` + value / 65535 × (`at_65535_m` - `at_0_m`). `at_0_m` is the lowest pixel and,
+         *     on uneven ground, `at_65535_m` the highest; flat ground gets a span of 1 m.
+         *     `quantum_m` is the step between two values, so a height is known to half of it.
+         */
+        HeightGrid: {
+            at_0_m: number;
+            at_65535_m: number;
+            quantum_m: number;
+            /** @description size_px × size_px values. */
+            values: number[];
         };
         AssistantMessage: {
             /** @enum {string} */
@@ -1589,7 +1682,7 @@ export interface components {
         SlopeLimit: number;
         /** @description A Curated Site. Pass this or both custom coordinates, never both. */
         QuerySiteId: string;
-        /** @description Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg`. */
+        /** @description Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg` (-80 on the polar DEMs alone, 90, the whole Moon, when the server has the global DEM). */
         QueryLatitude: number;
         /** @description Custom Site longitude. */
         QueryLongitude: number;
@@ -1964,7 +2057,7 @@ export interface operations {
         parameters: {
             query: {
                 site_id?: string;
-                /** @description Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg`. */
+                /** @description Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg` (-80 on the polar DEMs alone, 90, the whole Moon, when the server has the global DEM). */
                 latitude_deg?: number;
                 longitude_deg?: number;
                 /** @description Window start. */
@@ -1997,7 +2090,7 @@ export interface operations {
         parameters: {
             query: {
                 site_id?: string;
-                /** @description Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg`. */
+                /** @description Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg` (-80 on the polar DEMs alone, 90, the whole Moon, when the server has the global DEM). */
                 latitude_deg?: number;
                 longitude_deg?: number;
                 /** @description Window start. */
@@ -2031,7 +2124,7 @@ export interface operations {
             query: {
                 /** @description A Curated Site. Pass this or both custom coordinates, never both. */
                 site_id?: components["parameters"]["QuerySiteId"];
-                /** @description Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg`. */
+                /** @description Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg` (-80 on the polar DEMs alone, 90, the whole Moon, when the server has the global DEM). */
                 latitude_deg?: components["parameters"]["QueryLatitude"];
                 /** @description Custom Site longitude. */
                 longitude_deg?: components["parameters"]["QueryLongitude"];
@@ -2069,7 +2162,7 @@ export interface operations {
             query: {
                 /** @description A Curated Site. Pass this or both custom coordinates, never both. */
                 site_id?: components["parameters"]["QuerySiteId"];
-                /** @description Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg`. */
+                /** @description Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg` (-80 on the polar DEMs alone, 90, the whole Moon, when the server has the global DEM). */
                 latitude_deg?: components["parameters"]["QueryLatitude"];
                 /** @description Custom Site longitude. */
                 longitude_deg?: components["parameters"]["QueryLongitude"];
@@ -2123,7 +2216,7 @@ export interface operations {
             query: {
                 /** @description A Curated Site. Pass this or both custom coordinates, never both. */
                 site_id?: components["parameters"]["QuerySiteId"];
-                /** @description Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg`. */
+                /** @description Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg` (-80 on the polar DEMs alone, 90, the whole Moon, when the server has the global DEM). */
                 latitude_deg?: components["parameters"]["QueryLatitude"];
                 /** @description Custom Site longitude. */
                 longitude_deg?: components["parameters"]["QueryLongitude"];
@@ -2195,7 +2288,7 @@ export interface operations {
             query: {
                 /** @description A Curated Site. Pass this or both custom coordinates, never both. */
                 site_id?: components["parameters"]["QuerySiteId"];
-                /** @description Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg`. */
+                /** @description Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg` (-80 on the polar DEMs alone, 90, the whole Moon, when the server has the global DEM). */
                 latitude_deg?: components["parameters"]["QueryLatitude"];
                 /** @description Custom Site longitude. */
                 longitude_deg?: components["parameters"]["QueryLongitude"];
@@ -2231,7 +2324,7 @@ export interface operations {
             query?: {
                 /** @description A Curated Site. Pass this or both custom coordinates, never both. */
                 site_id?: components["parameters"]["QuerySiteId"];
-                /** @description Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg`. */
+                /** @description Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg` (-80 on the polar DEMs alone, 90, the whole Moon, when the server has the global DEM). */
                 latitude_deg?: components["parameters"]["QueryLatitude"];
                 /** @description Custom Site longitude. */
                 longitude_deg?: components["parameters"]["QueryLongitude"];
@@ -2259,12 +2352,44 @@ export interface operations {
             422: components["responses"]["Unprocessable"];
         };
     };
+    getTerrainHeights: {
+        parameters: {
+            query?: {
+                /** @description A Curated Site. Pass this or both custom coordinates, never both. */
+                site_id?: components["parameters"]["QuerySiteId"];
+                /** @description Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg` (-80 on the polar DEMs alone, 90, the whole Moon, when the server has the global DEM). */
+                latitude_deg?: components["parameters"]["QueryLatitude"];
+                /** @description Custom Site longitude. */
+                longitude_deg?: components["parameters"]["QueryLongitude"];
+                /** @description How far from the Site, on the ground, the grid should reach in every direction. */
+                half_extent_m?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The grid of heights around the Site. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TerrainHeights"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+            503: components["responses"]["Busy"];
+        };
+    };
     getVisibilityDsn: {
         parameters: {
             query: {
                 /** @description A Curated Site. Pass this or both custom coordinates, never both. */
                 site_id?: components["parameters"]["QuerySiteId"];
-                /** @description Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg`. */
+                /** @description Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg` (-80 on the polar DEMs alone, 90, the whole Moon, when the server has the global DEM). */
                 latitude_deg?: components["parameters"]["QueryLatitude"];
                 /** @description Custom Site longitude. */
                 longitude_deg?: components["parameters"]["QueryLongitude"];

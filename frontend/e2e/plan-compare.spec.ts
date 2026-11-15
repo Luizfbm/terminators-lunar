@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test, type Page, type Request, type Route } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page, Request, Route } from '@playwright/test'
 
 // Plan A x Plan B: the Query on screen against a second one, from the same /visibility. The Prism mock
 // answers every request with the contract's example, so the two plans would always tie. Plan B is the

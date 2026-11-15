@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Route } from '@playwright/test'
+import { classic } from './classic'
 
 // the requirement: the dive to the ground and back, nothing fetched in the middle of the move, and no
 // blank answer on a Site change. The globe's canvas says where its camera is in `data-dive`
@@ -14,9 +15,9 @@ const sky = (page: Page) => page.locator('.sky canvas')
 /** A loading mark someone can see: not one inside the hidden globe. */
 const visibleLoading = (page: Page) => page.locator('.stage__loading:visible')
 
-async function openOnGlobe(page: Page) {
+async function openOnGlobe(page: Page, url = '/') {
   const answered = page.waitForResponse((response) => new URL(response.url()).pathname === '/visibility')
-  await page.goto('/')
+  await page.goto(url)
   await answered
   await expect(globe(page)).toHaveAttribute('data-ready', 'true')
 }
@@ -119,7 +120,7 @@ test('the map dives to the ground and comes back to the map', async ({ page }) =
   await page.getByRole('button', { name: 'Map', exact: true }).click()
   await expect(groundLayer(page)).toHaveCount(0, { timeout: 2_000 })
   await expect(page.locator('.globe')).toHaveAttribute('data-mode', 'map')
-  await expect(page.locator('.stage__caption')).toHaveText(/Click a Region to see its Sites, or double-click any point to ask about it\.$/)
+  await expect(page.locator('.stage__caption')).toHaveText(/Click a Region to see its Sites, click any point to land there, or double-click it to ask about it from the map\.$/)
 })
 
 test('a slow ground holds the globe at the Site, with no loading mark in the middle of the move', async ({ page }) => {
@@ -157,7 +158,8 @@ test('a click on another Site moves the ring at once and keeps the last answer, 
     if (answers > 1) await held
     await route.continue()
   })
-  await openOnGlobe(page)
+  // The Site list is in the answer column, which Larissa's layout does not show: this test opens the classic one.
+  await openOnGlobe(page, classic('/'))
   const heading = await page.getByRole('heading', { level: 1 }).textContent()
   // The ring marks the Site of the answer on screen.
   const trigger = await page.getByRole('button', { name: /^Site: / }).textContent()

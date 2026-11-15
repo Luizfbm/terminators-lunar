@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
-import { expect, test, type Page, type Route } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page, Route } from '@playwright/test'
 
 const scatterExample = JSON.parse(readFileSync(new URL('../../contract/examples/visibility-scatter-001.example.json', import.meta.url), 'utf8'))
 

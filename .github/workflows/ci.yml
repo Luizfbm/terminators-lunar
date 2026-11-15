@@ -1,7 +1,10 @@
 name: CI
 
 on:
+  # Only pull requests into main: the ones into an integration branch get their run on the
+  # integration PR's head, so the two runners don't queue a run per feature branch.
   pull_request:
+    branches: [main]
   push:
     branches: [main]
 

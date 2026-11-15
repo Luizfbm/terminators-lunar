@@ -9,6 +9,7 @@ import { prepareWith } from '../domain/prepare'
 import { loadGround } from './groundData'
 import { StageLoading } from './StageLoading'
 import { canDraw } from './webgl'
+import { SafetyCircle } from './hazard/safety/SafetyCircle'
 
 type SkyModule = typeof import('./Sky')
 
@@ -109,6 +110,7 @@ export function GroundView({
             {about}
           </p>
         </div>
+        <SafetyCircle result={result} />
       </div>
       <div className="ground-view__strip">
         <Ground result={result} cursorMs={cursorMs} mark={mark} compact />
