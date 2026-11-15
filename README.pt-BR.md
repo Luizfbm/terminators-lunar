@@ -8,7 +8,7 @@ No polo, o Sol fica a cerca de ±1,5° do horizonte e dá uma volta nele por mê
 
 ## Experimente
 
-**A tela ainda não existe.** Nada no `main` serve interface, e não há página para abrir. O que está no ar é a API do backend:
+O repositório inclui a interface web em `frontend/` e a API em `backend/`. Um deploy pode expor a API em:
 
 `https://lunar-api.luizfbm.win` (contrato em [contract/openapi.yaml](contract/openapi.yaml), guia em [docs/frontend-api-guide.md](docs/frontend-api-guide.md)).
 
@@ -16,7 +16,7 @@ Os exemplos abaixo usam uma resposta representativa da API. Os trechos de JSON e
 
 - **A Query padrão** (Connecting Ridge, Site 001, Window de 708,73 h a partir do dia UTC atual, Observer height de 2 m):
   ```bash
-  curl "https://lunar-api.luizfbm.win/visibility?site_id=001&start=0date -u +%F)T00:00:00Z"
+  curl "https://lunar-api.luizfbm.win/visibility?site_id=001&start=$(date -u +%F)T00:00:00Z"
   ```
   A Terra se põe em 30/11 às 06h08m29 UTC atrás de Mons Malapert, a 134 km, no azimute 143°. O Sol não se põe nessa Window (708,73 h de Sol), e há 329,06 h com Sol e Terra juntos.
 - **O ano de um Site:**
@@ -26,11 +26,11 @@ Os exemplos abaixo usam uma resposta representativa da API. Os trechos de JSON e
   A melhor Window de 2027 começa em 12/09 às 06h00 UTC e tem 403,2 h de Sol e Terra juntos.
 - **A Resolution ladder:**
   ```bash
-  curl "https://lunar-api.luizfbm.win/visibility/ladder?site_id=CR05&start=0date -u +%F)T00:00:00Z"
+  curl "https://lunar-api.luizfbm.win/visibility/ladder?site_id=CR05&start=$(date -u +%F)T00:00:00Z"
   ```
   No Site CR05, o próximo Sunset cai em 21/11 às 06h39m40 UTC com o DEM de 240 m, às 02h47m20 com o de 80 m e às 00h55m26 com o de 20 m. O DEM grosso atrasa o Sunset em 5,7 h.
 
-## O que já está no ar
+## O que a aplicação oferece
 
 - O Occluder de cada Sunset, Sunrise, Earthset e Earthrise, com o azimute, a distância e o nome da feição da IAU.
 - 134 Sites: os 130 do Artemis de Wueller et al. 2026, mais os pontos de pouso do IM-2 e do Blue Ghost 1, a Apollo 11 e o Chandrayaan-3.

@@ -8,7 +8,7 @@ At the pole the Sun stays within about ±1.5° of the horizon and circles it onc
 
 ## Try it
 
-**The screen is not built yet.** Nothing on `main` serves a user interface, and there is no web page to open. What is live is the backend API:
+The repository includes the web interface under `frontend/` and the backend API under `backend/`. A deployment may expose the API at:
 
 `https://lunar-api.luizfbm.win` (the contract is [contract/openapi.yaml](contract/openapi.yaml), and a guide to it is in [docs/frontend-api-guide.md](docs/frontend-api-guide.md)).
 
@@ -62,7 +62,7 @@ curl "https://lunar-api.luizfbm.win/visibility/ladder?site_id=CR05&start=$(date 
 
 At Site CR05, the 240 m terrain puts the Sunset 5.7 h later than the 20 m terrain does.
 
-## What is live
+## What the application provides
 
 - **The Occluder of every Sunset, Sunrise, Earthset and Earthrise**, with its azimuth, its distance and the name of the IAU feature it sits on.
 - **134 Sites:** the 130 Artemis Sites of Wueller et al. 2026, plus the IM-2 and Blue Ghost 1 landing points, Apollo 11 and Chandrayaan-3 (`/sites`: 130 `wueller2026`, 2 `clps`, 1 `apollo`, 1 `isro`).
