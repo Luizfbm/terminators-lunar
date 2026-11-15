@@ -5,6 +5,9 @@ import { defineConfig, devices } from '@playwright/test'
 const MOCK_PORT = Number(process.env.E2E_MOCK_PORT ?? 4010)
 const APP_PORT = Number(process.env.E2E_APP_PORT ?? 4173)
 const MOCK_URL = `http://127.0.0.1:${MOCK_PORT}`
+// `npm run build` type-checks (tsc --noEmit) and then builds. On CI the frontend group has just
+// type-checked the same tree, so the app is built without doing it a second time.
+const BUILD = process.env.CI ? 'npx vite build' : 'npm run build'
 
 // The app is built against the Prism mock of the contract, so e2e never waits on the backend.
 export default defineConfig({
@@ -37,7 +40,7 @@ export default defineConfig({
     },
     {
       name: 'Built app',
-      command: `npm run build && npx vite preview --host 127.0.0.1 --port ${APP_PORT} --strictPort`,
+      command: `${BUILD} && npx vite preview --host 127.0.0.1 --port ${APP_PORT} --strictPort`,
       env: { VITE_API_BASE_URL: MOCK_URL },
       url: `http://127.0.0.1:${APP_PORT}`,
       reuseExistingServer: false,

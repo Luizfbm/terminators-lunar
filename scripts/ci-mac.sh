@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # The heavy half of CI, run on Luiz's Mac (Apple M4, 10 cores): ruff, mypy, pytest, the validation
-# suite, eslint, tsc, vitest, the generated-types check and the full Playwright e2e suite. The light
+# suite, eslint, tsc, vitest, the generated-types check and the Playwright e2e. The light
 # half (contract lint and schemathesis, plus a nightly e2e as a second opinion) runs on our runners
 # on the VPS: .github/workflows/ci.yml. On a pull request this script runs by itself, through the
 # self-hosted runner on this Mac: .github/workflows/mac.yml. You can also run it by hand.
@@ -12,9 +12,17 @@
 # Two groups run at the same time, each writing its own log in a temp dir:
 #   backend   uv sync, ruff, ruff format, mypy, pytest, validation
 #   frontend  npm ci, eslint, tsc, vitest, generated types
-# Then, alone, the Playwright e2e: every test but the ones tagged @timing with $LUNAR_E2E_WORKERS workers (3 unless
-# set). The @timing tests assert how long something took, so they must not share the machine:
-# they run alone, with one worker, once both groups are done. Nothing is ever re-run until it passes.
+# Then, alone, the Playwright e2e with $LUNAR_E2E_WORKERS workers (3 unless set). Which tests run
+# depends on where we are (decided by Luiz on 15/11/2026: a run took about 30 minutes, there is one
+# runner, and every merge ran it a second time on main):
+#   pull request   only the tests tagged @smoke (not @timing). If no test carries the tag yet, the
+#                  whole suite runs instead and the log says so.
+#   push to main   everything, unless the commit has the very tree of the merged pull request's head
+#                  and that head has `mac-gates` green (see below): then the e2e tests the pull
+#                  request did not run (neither @smoke nor @timing) run here, nothing else.
+# The @timing tests assert how long something took, so they must not share the machine: they run
+# alone, with one worker, once both groups are done, on a pull request and on main alike. Nothing
+# is ever re-run until it passes.
 #
 # Only the groups a change can break run (LUNAR_CI_BASE, set by mac.yml on a pull request, is the
 # commit to compare with; without it everything runs, as on a push to main):
@@ -24,10 +32,19 @@
 #   anything else (docs/, *.md)                                     no group
 # The e2e is never cut by file: one header button broke phone tests in specs nobody touched.
 #
+# Reusing a pull request's run: on a push to main (no LUNAR_CI_BASE), the script asks GitHub for the
+# pull request that was merged into this commit, fetches its head (refs/pull/<n>/head) and compares
+# the two trees. If they are equal and the head's `mac-gates` status is `success`, the DEM
+# fixtures, both groups and the smoke set are not run again (npm ci and the browser still are), and
+# the final status says "reused #<n> head <sha>". No pull request, a different tree, a head that is
+# not green, or any failed lookup: everything runs, as before. A failed lookup never reports success.
+# LUNAR_CI_FULL=1 turns the reuse off, for a run by hand that must check the whole thing.
+#
 #   scripts/ci-mac.sh            # check HEAD and report
 #   scripts/ci-mac.sh --no-report
 #   LUNAR_E2E_WORKERS=4 scripts/ci-mac.sh
-#   LUNAR_CI_BASE=origin/main scripts/ci-mac.sh   # only what changed since main
+#   LUNAR_CI_BASE=origin/main scripts/ci-mac.sh   # only what changed since main, e2e @smoke only
+#   LUNAR_CI_FULL=1 scripts/ci-mac.sh             # never reuse a pull request's run
 set -Eeuo pipefail
 
 ROOT=$(git rev-parse --show-toplevel)
@@ -61,6 +78,57 @@ fi
 SHA=$(git rev-parse HEAD)
 step=start
 started=$(date +%s)
+
+# On a push to main, can the run of the merged pull request's head stand for this one? Sets REUSED_PR
+# and REUSED_HEAD and returns 0 only when the head has this commit's tree and `mac-gates` is
+# `success` on it. Every other outcome, errors included, returns 1 and the caller runs everything.
+REUSED_PR=
+REUSED_HEAD=
+find_reusable_head() {
+  local pr head tree head_tree state
+  pr=$(gh api "repos/$REPO/commits/$SHA/pulls" \
+    --jq "[.[] | select(.merge_commit_sha == \"$SHA\")] | first | .number // empty") || {
+    echo "reuse: could not list the pull requests of ${SHA:0:7}" >&2
+    return 1
+  }
+  if [ -z "$pr" ]; then
+    echo "reuse: no merged pull request has ${SHA:0:7} as its merge commit"
+    return 1
+  fi
+  git fetch --quiet origin "refs/pull/$pr/head" || {
+    echo "reuse: could not fetch the head of #$pr" >&2
+    return 1
+  }
+  head=$(git rev-parse --verify "FETCH_HEAD^{commit}") || return 1
+  tree=$(git rev-parse --verify "$SHA^{tree}") || return 1
+  head_tree=$(git rev-parse --verify "$head^{tree}") || return 1
+  if [ "$tree" != "$head_tree" ]; then
+    echo "reuse: #$pr head ${head:0:7} has tree ${head_tree:0:7}, ${SHA:0:7} has ${tree:0:7}"
+    return 1
+  fi
+  state=$(gh api "repos/$REPO/commits/$head/status" \
+    --jq '[.statuses[] | select(.context == "mac-gates")] | first | .state // empty') || {
+    echo "reuse: could not read the statuses of ${head:0:7}" >&2
+    return 1
+  }
+  if [ "$state" != success ]; then
+    echo "reuse: mac-gates on #$pr head ${head:0:7} is \"${state:-missing}\", not success"
+    return 1
+  fi
+  REUSED_PR=$pr
+  REUSED_HEAD=$head
+}
+
+REUSED=0
+if [ -z "${LUNAR_CI_BASE:-}" ] && [ "${LUNAR_CI_FULL:-0}" != 1 ]; then
+  if find_reusable_head; then
+    REUSED=1
+    echo "reuse: same tree as #$REUSED_PR head ${REUSED_HEAD:0:7}, mac-gates success there: the groups and the smoke set are skipped"
+    RUN_BACKEND=0
+  else
+    echo "reuse: not possible, everything runs"
+  fi
+fi
 
 # Dedicated ports, so the e2e never meets a dev server (4010 and 4173 are the usual ones).
 export E2E_MOCK_PORT=${E2E_MOCK_PORT:-4710}
@@ -132,10 +200,13 @@ backend_group() {
 
 frontend_group() {
   run "npm ci" npm --prefix frontend ci --no-audit --no-fund --silent
-  run "eslint" npm --prefix frontend run --silent lint
-  run "tsc" npm --prefix frontend run --silent typecheck
-  run "vitest" npm --prefix frontend test --silent -- --run
-  run "generated types" bash -c 'npm --prefix frontend run --silent generate:types && git diff --exit-code -- frontend/src/api/schema.ts'
+  if [ "$REUSED" = 0 ]; then
+    # The cache lives in frontend/node_modules, which the runner keeps between runs.
+    run "eslint" npm --prefix frontend run --silent lint -- --cache --cache-location node_modules/.cache/eslint/
+    run "tsc" npm --prefix frontend run --silent typecheck
+    run "vitest" npm --prefix frontend test --silent -- --run
+    run "generated types" bash -c 'npm --prefix frontend run --silent generate:types && git diff --exit-code -- frontend/src/api/schema.ts'
+  fi
   run "playwright browser" bash -c 'cd frontend && npx playwright install chromium'
 }
 
@@ -143,7 +214,26 @@ frontend_group() {
 # the two overlapping, the backend's timed tests (test_http's 2 s, test_catalog's 60 s warm-up) and
 # 32 e2e tests timed out on load alone, even at 3 workers.
 e2e_main() {
-  run "e2e" e2e --grep-invert @timing --workers="$E2E_WORKERS"
+  if [ "$REUSED" = 1 ]; then
+    # The pull request ran the smoke set on this very tree; this is the rest.
+    echo rest >"$LOGS/e2e.mode"
+    run "e2e (all but @smoke and @timing)" e2e --grep-invert "@smoke|@timing" --workers="$E2E_WORKERS"
+  elif [ -n "${LUNAR_CI_BASE:-}" ]; then
+    # A pull request: the smoke set. The tags may not be in the suite yet, then the whole suite runs.
+    local listed
+    listed=$(cd frontend && CI=1 npx playwright test --list --grep @smoke --grep-invert @timing 2>&1) || true
+    if grep -qE "Total: [1-9][0-9]* test" <<<"$listed"; then
+      echo smoke >"$LOGS/e2e.mode"
+      run "e2e @smoke" e2e --grep @smoke --grep-invert @timing --workers="$E2E_WORKERS"
+    else
+      echo "no test is tagged @smoke yet: running the whole suite" >&3
+      echo full >"$LOGS/e2e.mode"
+      run "e2e (whole suite, no @smoke tag found)" e2e --grep-invert @timing --workers="$E2E_WORKERS"
+    fi
+  else
+    echo full >"$LOGS/e2e.mode"
+    run "e2e" e2e --grep-invert @timing --workers="$E2E_WORKERS"
+  fi
 }
 
 group() { # group <name> <function>: runs in a subshell, everything it prints goes to its log
@@ -217,9 +307,15 @@ if [ ${#failed[@]} -gt 0 ]; then
   exit 1
 fi
 
+e2e_mode=$(cat "$LOGS/e2e.mode" 2>/dev/null || true)
 rm -rf "$LOGS"
 took=$(( $(date +%s) - started ))
+if [ "$REUSED" = 1 ]; then
+  status success "reused #$REUSED_PR head ${REUSED_HEAD:0:7}: contract lint, e2e rest and @timing in ${took}s"
+  echo "mac-gates passed for $(git rev-parse --short HEAD) in ${took}s (reused #$REUSED_PR head ${REUSED_HEAD:0:7})"
+  exit 0
+fi
 # `|| true`: a group that did not run leaves the test false, and set -e would take that for a failure.
-ran=$([ "$RUN_BACKEND" = 1 ] && printf 'backend ' || true)$([ "$RUN_FRONTEND" = 1 ] && printf 'frontend+e2e ' || true)
+ran=$([ "$RUN_BACKEND" = 1 ] && printf 'backend ' || true)$([ "$RUN_FRONTEND" = 1 ] && printf 'frontend+e2e%s ' "${e2e_mode:+ ($e2e_mode)}" || true)
 status success "contract lint, ${ran:-no group (docs only) }in ${took}s"
 echo "mac-gates passed for $(git rev-parse --short HEAD) in ${took}s"
