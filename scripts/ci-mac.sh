@@ -49,7 +49,9 @@ run "backend sync" uv sync --locked --project backend --quiet
 run "ruff check" uv run --project backend ruff check backend
 run "ruff format" uv run --project backend ruff format --check backend
 run "mypy" bash -c 'cd backend && uv run mypy .'
-run "pytest" bash -c 'cd backend && uv run pytest -q -n auto --dist loadfile -p no:cacheprovider'
+# 6 workers, not all 10 cores: test_catalog waits at most 60 s for the background warm-up,
+# and with every core busy that warm-up ran past it.
+run "pytest" bash -c 'cd backend && uv run pytest -q -n 6 --dist loadfile -p no:cacheprovider'
 run "validation" uv run --project backend pytest validation -q -n auto --dist loadfile -p no:cacheprovider
 run "npm ci" npm --prefix frontend ci --no-audit --no-fund --silent
 run "eslint" npm --prefix frontend run --silent lint
