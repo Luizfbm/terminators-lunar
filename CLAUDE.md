@@ -88,7 +88,7 @@ A pull request merges with the VPS run and `mac-gates` both green on its head. N
 
 ## Deploy
 
-Docker Compose on the VPS behind a Cloudflare Tunnel and an internal Caddy. `lunar.luizfbm.win` serves the frontend, `lunar-api.luizfbm.win` the backend (one subdomain level, so the free Cloudflare certificate covers it). GitHub Actions deploys on every merge to `main`. VPS details stay out of this repo. The `ai-memory` tunnel on the same machine is not ours to touch.
+Docker Compose on the VPS behind a Cloudflare Tunnel and an internal Caddy. `lunar.luizfbm.win` serves the frontend, `lunar-api.luizfbm.win` the backend (one subdomain level, so the free Cloudflare certificate covers it). Deploys are manual: after both halves of CI are green on `main`, the coordinator deploys by SSH (`deploy/compose.yaml` on the VPS), with the same steps and smoke test as `.github/workflows/deploy.yml`, which only runs by hand. VPS details stay out of this repo. The `ai-memory` tunnel on the same machine is not ours to touch.
 
 ## When to ask Luiz
 
