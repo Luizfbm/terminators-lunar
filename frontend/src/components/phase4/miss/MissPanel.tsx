@@ -1,6 +1,7 @@
 import { Fragment, useId, useState, type ReactNode } from 'react'
 import type { VisibilityResult } from '../../../api/client'
 import { compassIndex } from '../../../domain/sky'
+import { terrainProblem } from '../../../domain/terrainProblem'
 import { useI18n } from '../../../i18n/I18nContext'
 import type { I18n } from '../../../i18n/i18n'
 import type { MessageKey } from '../../../i18n/messages'
@@ -231,7 +232,17 @@ function ScatterBody(props: MissViewProps & { s: MissStrings }) {
   )
 }
 
-function SlopeBody({ terrain, s, onRetry }: { terrain: PanelState<TerrainResult>; s: MissStrings; onRetry: () => void }) {
+function SlopeBody({
+  terrain,
+  radiusM,
+  s,
+  onRetry,
+}: {
+  terrain: PanelState<TerrainResult>
+  radiusM: number
+  s: MissStrings
+  onRetry: () => void
+}) {
   const i18n = useI18n()
   const deg = (value: number) => fill(s.degrees, { value: i18n.formatNumber(Math.round(value * 10) / 10) })
   if (terrain.status === 'loading' || terrain.status === 'idle') {
@@ -241,7 +252,18 @@ function SlopeBody({ terrain, s, onRetry }: { terrain: PanelState<TerrainResult>
       </p>
     )
   }
-  if (terrain.status === 'error' && terrain.code === 'outside_coverage') return <p className="panel__note">{s.notForSiteSlope}</p>
+  if (terrain.status === 'error') {
+    const problem = terrainProblem(terrain.code, terrain.detail)
+    if (problem.kind === 'too_coarse') {
+      const radius = distanceText(i18n, radiusM)
+      const text =
+        problem.resolutionM === null
+          ? fill(s.slopeTooCoarseNoPixel, { radius })
+          : fill(s.slopeTooCoarse, { resolution: distanceText(i18n, Math.round(problem.resolutionM)), radius })
+      return <p className="panel__note">{text}</p>
+    }
+    if (problem.kind === 'no_dem') return <p className="panel__note">{s.notForSiteSlope}</p>
+  }
   if (terrain.status === 'error') return <PanelStatus code={terrain.code} onRetry={onRetry} />
   const { slope, dem, permanent_shadow: shadow } = terrain.data
   const radius = distanceText(i18n, terrain.data.radius_m)
@@ -347,7 +369,7 @@ export function MissView(props: MissViewProps) {
         </p>
       )}
       <h4 className="miss__subtitle">{fill(s.slopeTitle, { radius: distanceText(i18n, slopeRadius) })}</h4>
-      <SlopeBody terrain={props.terrain} s={s} onRetry={props.onRetryTerrain} />
+      <SlopeBody terrain={props.terrain} radiusM={slopeRadius} s={s} onRetry={props.onRetryTerrain} />
     </section>
   )
 }

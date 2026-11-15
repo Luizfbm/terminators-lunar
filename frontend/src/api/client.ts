@@ -16,14 +16,20 @@ export const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL || 'https://lunar-api.luizfbm.win'
 ).replace(/\/$/, '')
 
-/** Carries the problem `code` (or a transport marker) so the UI can translate it. */
+/**
+ * Carries the problem `code` (or a transport marker) so the UI can translate it, and the
+ * problem's `detail` when the server sent one: some codes cover more than one cause, and the
+ * detail is the only field of the problem that tells them apart.
+ */
 export class ApiError extends Error {
   readonly code: string
+  readonly detail: string | undefined
 
-  constructor(code: string) {
+  constructor(code: string, detail?: string) {
     super(code)
     this.name = 'ApiError'
     this.code = code
+    this.detail = detail
   }
 }
 
@@ -37,18 +43,23 @@ export async function getJson<T>(path: string, params: URLSearchParams, signal: 
     if (signal.aborted) throw cause
     throw new ApiError('network')
   }
-  if (!response.ok) throw new ApiError(await problemCode(response))
+  if (!response.ok) {
+    const { code, detail } = await problemOf(response)
+    throw new ApiError(code, detail)
+  }
   return (await response.json()) as T
 }
 
-async function problemCode(response: Response): Promise<string> {
+async function problemOf(response: Response): Promise<{ code: string; detail: string | undefined }> {
   try {
-    const problem = (await response.json()) as { code?: unknown }
-    if (typeof problem.code === 'string') return problem.code
+    const problem = (await response.json()) as { code?: unknown; detail?: unknown }
+    if (typeof problem.code === 'string') {
+      return { code: problem.code, detail: typeof problem.detail === 'string' ? problem.detail : undefined }
+    }
   } catch {
     // Not a problem document; fall through to the generic code.
   }
-  return 'unknown'
+  return { code: 'unknown', detail: undefined }
 }
 
 /** The contract's Window instants carry whole seconds, so drop the milliseconds. */

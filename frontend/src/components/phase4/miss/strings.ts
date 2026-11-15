@@ -64,6 +64,10 @@ export const en = {
   'miss.athenaHere':
     'At the IM-2 landing point no cell within {radius} is steeper than {max} on this map. Athena still tipped over, in a crater too small for the map to see.',
   'miss.notForSiteSlope': 'No 20\u00a0m map covers this Site, so its slope can’t be measured here.',
+  'miss.slopeTooCoarse':
+    'The map that covers this Site has pixels of about {resolution}, coarser than the {radius} asked for, so its slope can’t be measured here.',
+  'miss.slopeTooCoarseNoPixel':
+    'The map that covers this Site is coarser than the {radius} asked for, so its slope can’t be measured here.',
 
   'miss.psr': 'The nearest permanently shadowed region is {distance} to the {direction} ({product}).',
 
@@ -137,6 +141,10 @@ export const pt: Record<keyof typeof en, string> = {
   'miss.athenaHere':
     'No ponto de pouso do IM-2, nenhuma célula num raio de {radius} passa de {max} neste mapa. Mesmo assim o Athena tombou, numa cratera pequena demais para o mapa enxergar.',
   'miss.notForSiteSlope': 'Nenhum mapa de 20\u00a0m cobre este Local, então não dá para medir a inclinação aqui.',
+  'miss.slopeTooCoarse':
+    'O mapa que cobre este Local tem pixels de cerca de {resolution}, mais grossos que os {radius} pedidos, então não dá para medir a inclinação aqui.',
+  'miss.slopeTooCoarseNoPixel':
+    'O mapa que cobre este Local é mais grosso que os {radius} pedidos, então não dá para medir a inclinação aqui.',
 
   'miss.psr': 'A região em sombra permanente mais próxima fica a {distance} a {direction} ({product}).',
 

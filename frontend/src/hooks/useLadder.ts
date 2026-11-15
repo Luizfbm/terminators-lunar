@@ -6,7 +6,7 @@ import { siteKey, type Query } from '../domain/query'
 export type PanelState<T> =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'error'; code: string }
+  | { status: 'error'; code: string; detail?: string }
   | { status: 'ready'; data: T }
 
 type Settled<T> = { key: string; state: PanelState<T> }
@@ -34,7 +34,8 @@ export function useOnDemand<T>(
       (error: unknown) => {
         if (controller.signal.aborted) return
         const code = error instanceof ApiError ? error.code : 'unknown'
-        setSettled({ key: full, state: { status: 'error', code } })
+        const detail = error instanceof ApiError ? error.detail : undefined
+        setSettled({ key: full, state: { status: 'error', code, ...(detail === undefined ? {} : { detail }) } })
       },
     )
     return () => controller.abort()
