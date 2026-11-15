@@ -248,7 +248,7 @@ def test_no_dem_under_the_site_is_outside_coverage(dem_dir: Path) -> None:
     assert problem(custom(NEAR_POLE)) == (422, "outside_coverage")
 
 
-def test_a_dem_with_no_cell_centre_in_the_radius_is_outside_coverage(dem_dir: Path) -> None:
+def test_a_dem_with_no_cell_centre_in_the_radius_is_too_coarse(dem_dir: Path) -> None:
     # An even grid centred on the Site puts it on a cell corner: the nearest centres are
     # 170 m away on a 240 m grid, so nothing is within 40 m.
     write_dem(
@@ -260,7 +260,7 @@ def test_a_dem_with_no_cell_centre_in_the_radius_is_outside_coverage(dem_dir: Pa
     )
     response = client.get("/terrain", params=custom(NEAR_POLE, radius_m=40))
     assert response.status_code == 422
-    assert response.json()["code"] == "outside_coverage"
+    assert response.json()["code"] == "dem_too_coarse"
     assert "LDEM_60S_240MPP_ADJ" in response.json()["detail"]
 
 

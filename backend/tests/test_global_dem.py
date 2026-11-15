@@ -353,5 +353,5 @@ def test_the_slope_of_a_global_point_is_422_where_the_cell_is_too_coarse_for_the
 ) -> None:
     # Never a made-up slope: with no cell centre inside the radius there is no Slope.
     response = client.get("/terrain", params={"latitude_deg": 10.0, "longitude_deg": 20.0})
-    assert (response.status_code, response.json()["code"]) == (422, "outside_coverage")
+    assert (response.status_code, response.json()["code"]) == (422, "dem_too_coarse")
     assert GLOBAL in response.json()["detail"]

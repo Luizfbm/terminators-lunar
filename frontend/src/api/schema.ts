@@ -383,6 +383,10 @@ export interface paths {
          *     Artemis III landing requirement, slope under 10° over 100 m (Artemis Human Landing System
          *     Overview for Space Apps 2025, NTRS 20250009323).
          *     A DEM this coarse cannot see boulders or craters a few metres across.
+         *     Where the finest DEM that covers the point is coarser than the radius (LOLA's 237 m global
+         *     map with the default 100 m), no cell centre lies within `radius_m` and the answer is a 422
+         *     `dem_too_coarse`, never a made-up Slope; where no DEM covers the point it is a 422
+         *     `outside_coverage`.
          *     `permanent_shadow` is left out until the map of permanently shadowed regions is on the
          *     server.
          *     Pass either `site_id` or both coordinates, never both, as in `/visibility`.
@@ -631,10 +635,12 @@ export interface components {
             status: number;
             detail?: string;
             /**
-             * @description Stable machine code the frontend translates.
+             * @description Stable machine code the frontend translates. `outside_coverage`: no DEM or period
+             *     covers the asked point. `dem_too_coarse`: a DEM covers the point but is too coarse for
+             *     the asked radius (`/terrain` only: no cell centre within `radius_m`).
              * @enum {string}
              */
-            code?: "outside_coverage" | "window_out_of_range" | "ambiguous_site" | "missing_site" | "invalid_parameter" | "busy" | "no_hazard_grid";
+            code?: "outside_coverage" | "dem_too_coarse" | "window_out_of_range" | "ambiguous_site" | "missing_site" | "invalid_parameter" | "busy" | "no_hazard_grid";
         };
         LocalizedText: {
             en: string;
@@ -2349,7 +2355,15 @@ export interface operations {
                 };
             };
             404: components["responses"]["NotFound"];
-            422: components["responses"]["Unprocessable"];
+            /** @description The Query is outside what the engine covers: `dem_too_coarse` when the finest DEM that covers the point has no cell centre within `radius_m`, `outside_coverage` when no DEM covers the point, and the Site problems of `/visibility`. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     getTerrainHeights: {

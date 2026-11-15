@@ -816,6 +816,10 @@ paths:
         Artemis III landing requirement, slope under 10° over 100 m (Artemis Human Landing System
         Overview for Space Apps 2025, NTRS 20250009323).
         A DEM this coarse cannot see boulders or craters a few metres across.
+        Where the finest DEM that covers the point is coarser than the radius (LOLA's 237 m global
+        map with the default 100 m), no cell centre lies within `radius_m` and the answer is a 422
+        `dem_too_coarse`, never a made-up Slope; where no DEM covers the point it is a 422
+        `outside_coverage`.
         `permanent_shadow` is left out until the map of permanently shadowed regions is on the
         server.
         Pass either `site_id` or both coordinates, never both, as in `/visibility`.
@@ -852,7 +856,29 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
         "422":
-          $ref: "#/components/responses/Unprocessable"
+          description: >-
+            The Query is outside what the engine covers: `dem_too_coarse` when the finest DEM that
+            covers the point has no cell centre within `radius_m`, `outside_coverage` when no DEM
+            covers the point, and the Site problems of `/visibility`.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+              examples:
+                no-dem-covers-the-point:
+                  value:
+                    type: https://lunar-api.luizfbm.win/problems/outside-coverage
+                    title: Outside coverage
+                    status: 422
+                    detail: "No DEM covers 100 m around this Site (LDEM_128: LDEM_128 not found)."
+                    code: outside_coverage
+                dem-too-coarse-for-the-radius:
+                  value:
+                    type: https://lunar-api.luizfbm.win/problems/dem-too-coarse
+                    title: DEM too coarse
+                    status: 422
+                    detail: "The DEM is too coarse for this radius: no cell centre of LDEM_128 (236.9 m) lies within 100 m."
+                    code: dem_too_coarse
 
   /terrain/heights:
     get:
@@ -1367,8 +1393,11 @@ components:
         detail: { type: string }
         code:
           type: string
-          description: Stable machine code the frontend translates.
-          enum: [outside_coverage, window_out_of_range, ambiguous_site, missing_site, invalid_parameter, busy, no_hazard_grid]
+          description: |
+            Stable machine code the frontend translates. `outside_coverage`: no DEM or period
+            covers the asked point. `dem_too_coarse`: a DEM covers the point but is too coarse for
+            the asked radius (`/terrain` only: no cell centre within `radius_m`).
+          enum: [outside_coverage, dem_too_coarse, window_out_of_range, ambiguous_site, missing_site, invalid_parameter, busy, no_hazard_grid]
 
     LocalizedText:
       type: object
