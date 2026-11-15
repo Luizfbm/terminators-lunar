@@ -9,7 +9,7 @@ const header = (page: Page) => page.locator('header.bar')
 const column = (page: Page) => page.locator('main.answer')
 const stage = (page: Page) => page.locator('section.stage')
 
-test('without the parameter the header and the answer column are not shown and the globe takes the screen', async ({ page }) => {
+test('without the parameter the header and the answer column are not shown and the globe takes the screen', { tag: '@smoke' }, async ({ page }) => {
   await page.goto('/')
   await expect(page.locator('.globe canvas')).toHaveAttribute('data-ready', 'true')
   await expect(page.locator('.screen')).not.toHaveAttribute('data-layout', 'classic')

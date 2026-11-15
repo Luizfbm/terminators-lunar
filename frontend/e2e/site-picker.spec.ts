@@ -72,7 +72,7 @@ test.describe('on a phone, 390×844', () => {
     test.describe(locale, () => {
       test.use({ locale })
 
-      test(`the list is a full-screen, opaque sheet that closes with its “${close}” button`, async ({ page }) => {
+      test(`the list is a full-screen, opaque sheet that closes with its “${close}” button`, { tag: locale === 'en-GB' ? '@smoke' : [] }, async ({ page }) => {
         await serve(page)
         await page.goto('/?site=CR02')
         await trigger(page).click()
