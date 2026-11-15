@@ -1,0 +1,4 @@
+/* The measured share sits right under the uncertainty line, so the two read as one block. */
+.band-line:has(+ .band-line--measured) {
+  margin-bottom: 2px;
+}
