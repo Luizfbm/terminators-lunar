@@ -34,6 +34,7 @@ import { dressMoon } from './moonSurface'
 import { planetBackdrop, planetWay } from './planetBackdrop'
 import { earthMaterial as makeEarthMaterial, EARTH, glowTexture, loadEarthMap, SUN } from './spaceBodies'
 import { StageLoading } from './StageLoading'
+import { needsMenuBoxes } from '../domain/menuBoxes'
 import { DIVE_MS } from '../domain/stageMove'
 import { canDraw } from './webgl'
 
@@ -739,11 +740,19 @@ export function Globe(props: GlobeProps) {
       }
       // What the menu takes of the stage (its panel, or the button it folds into on a phone): the names, the
       // letters and the planets' names keep out of it.
-      const hostBox = host.getBoundingClientRect()
-      const menuBoxes: Box[] = []
-      for (const element of host.querySelectorAll<HTMLElement>('.globe-menu, .globe-menu__toggle')) {
-        const rect = element.getBoundingClientRect()
-        if (rect.width > 0 && rect.height > 0) menuBoxes.push({ left: rect.left - hostBox.left, top: rect.top - hostBox.top, right: rect.right - hostBox.left, bottom: rect.bottom - hostBox.top })
+      // Measured at most once a frame, and only when something uses it (`needsMenuBoxes`): reading the layout
+      // at every frame of the dive slowed it down on a loaded machine.
+      let measuredMenu: Box[] | null = null
+      const menuBoxes = (): Box[] => {
+        if (measuredMenu) return measuredMenu
+        const hostBox = host.getBoundingClientRect()
+        const boxes: Box[] = []
+        for (const element of host.querySelectorAll<HTMLElement>('.globe-menu, .globe-menu__toggle')) {
+          const rect = element.getBoundingClientRect()
+          if (rect.width > 0 && rect.height > 0) boxes.push({ left: rect.left - hostBox.left, top: rect.top - hostBox.top, right: rect.right - hostBox.left, bottom: rect.bottom - hostBox.top })
+        }
+        measuredMenu = boxes
+        return boxes
       }
       // The sky behind the Moon: the Sun and the Earth where the answer says they are at the Cursor.
       skyCamera.quaternion.copy(camera.quaternion)
@@ -849,7 +858,9 @@ export function Globe(props: GlobeProps) {
         }
         const toRight = host.clientWidth - spot.x - PIN_GAP - PIN_EDGE
         // On the left of the dot the name stops at the menu, when the menu is level with it.
-        const menuRight = Math.max(0, ...menuBoxes.filter((box) => spot.y + 12 > box.top && spot.y - 12 < box.bottom && box.right <= spot.x).map((box) => box.right))
+        // Only a name that does not fit on the right looks at the menu, which is on its left.
+        const looksAtMenu = needsMenuBoxes({ mode, dive: dive !== null, shownDive, pinFacing: spot.facing, pinWidth: pinText.current.width, roomOnRight: toRight })
+        const menuRight = !looksAtMenu ? 0 : Math.max(0, ...menuBoxes().filter((box) => spot.y + 12 > box.top && spot.y - 12 < box.bottom && box.right <= spot.x).map((box) => box.right))
         const toLeft = spot.x - PIN_GAP - Math.max(PIN_EDGE, menuRight)
         const left = pinText.current.width > toRight && toLeft > toRight
         const room = Math.max(left ? toLeft : toRight, 0)
@@ -901,7 +912,7 @@ export function Globe(props: GlobeProps) {
             const at = vector(pole.latitude, 0)
             const found = poleMark(toScreen(at), toScreen(at.clone().multiplyScalar(POLE_LETTER_RADII)), near(at), at.dot(eyeAt), moonCentre, moonDiscPx)
             const fontSize = POLE_LETTER_SIZE * moonDiscPx
-            const clear = found !== null && letterClear(found.letter, fontSize * 0.5, bodies, menuBoxes)
+            const clear = found !== null && letterClear(found.letter, fontSize * 0.5, bodies, menuBoxes())
             group.style.display = found && clear ? '' : 'none'
             if (!found || !clear) return
             poleBoxes.push({ left: found.letter.x - fontSize / 2, top: found.letter.y - fontSize / 2, right: found.letter.x + fontSize / 2, bottom: found.letter.y + fontSize / 2 })
@@ -933,7 +944,7 @@ export function Globe(props: GlobeProps) {
           const around = (spot: { x: number; y: number }, reach: number): Box => ({ left: spot.x - reach, top: spot.y - reach, right: spot.x + reach, bottom: spot.y + reach })
           const keepClear: Box[] = []
           if (pinBox) keepClear.push(pinBox)
-          keepClear.push(...menuBoxes, ...poleBoxes)
+          keepClear.push(...menuBoxes(), ...poleBoxes)
           if (chosen.facing) keepClear.push(around(chosen, 18))
           if (sunSpot) keepClear.push(around(sunSpot, sunSpot.r + 14))
           if (earthSpot) keepClear.push(around(earthSpot, earthSpot.r + 10))
