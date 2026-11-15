@@ -54,3 +54,39 @@ export function ladderVerdict(rungs: readonly Rung[]): LadderVerdict {
 export function isPoint(range: { min: number; max: number }, precision: number): boolean {
   return Math.abs(range.max - range.min) < precision
 }
+
+export interface RungDem {
+  product: string
+  resolution_m: number
+}
+
+/** What the rung's Horizon mask was built from, as the answer names it. */
+export interface DemRung {
+  dems: readonly RungDem[]
+}
+
+/** The one DEM every rung of a ladder was computed on. */
+export interface SharedDem {
+  product: string
+  resolution_m: number
+}
+
+const demKey = (rung: DemRung) =>
+  [...rung.dems]
+    .map((dem) => `${dem.product}@${dem.resolution_m}`)
+    .sort()
+    .join('|')
+
+/**
+ * The DEM the rungs share when all of them use exactly the same one, or null when they differ. At
+ * a global point the rungs are asked for 20, 80 and 240 m, but the engine has only LDEM_128 there
+ * (236.9 m), so all three answer from the same pixels and the labels would claim a detail the
+ * data does not have. With several DEMs behind every rung, the finest one names them.
+ */
+export function sharedDem(rungs: readonly DemRung[]): SharedDem | null {
+  if (rungs.length < 2) return null
+  const first = demKey(rungs[0])
+  if (first === '' || rungs.some((rung) => demKey(rung) !== first)) return null
+  const finest = rungs[0].dems.reduce((a, b) => (b.resolution_m < a.resolution_m ? b : a))
+  return { product: finest.product, resolution_m: finest.resolution_m }
+}

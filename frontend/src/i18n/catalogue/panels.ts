@@ -12,6 +12,8 @@ export const en = {
   'ladder.sunset.only': 'Only the map at {resolution} m has a Sunset in this Window.',
   'ladder.earthset.only': 'Only the map at {resolution} m has an Earthset in this Window.',
   'ladder.none': 'No resolution has a Sunset or an Earthset in this Window.',
+  'ladder.oneMap':
+    'Every resolution here uses the same map, {product}, with pixels of about {resolution}\u00a0m, so they all give the same answer. This Site has no finer terrain to compare with.',
   'ladder.caption': 'This Query on maps of three resolutions',
   'ladder.resolution': 'Map',
   'ladder.sunset': 'Next Sunset',
@@ -48,6 +50,8 @@ export const pt: Record<keyof typeof en, string> = {
   'ladder.sunset.only': 'Só o mapa de {resolution} m tem pôr do Sol nesta Janela.',
   'ladder.earthset.only': 'Só o mapa de {resolution} m tem a Terra sumindo nesta Janela.',
   'ladder.none': 'Nenhuma resolução tem pôr do Sol nem a Terra sumindo nesta Janela.',
+  'ladder.oneMap':
+    'Todas as resoluções aqui usam o mesmo mapa, o {product}, com pixels de cerca de {resolution}\u00a0m, então todas dão a mesma resposta. Este Local não tem relevo mais fino para comparar.',
   'ladder.caption': 'Esta Consulta em mapas de três resoluções',
   'ladder.resolution': 'Mapa',
   'ladder.sunset': 'Próximo pôr do Sol',

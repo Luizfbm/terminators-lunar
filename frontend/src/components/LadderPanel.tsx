@@ -1,6 +1,6 @@
 import { useId, useState } from 'react'
 import type { LadderResult, VisibilityResult } from '../api/client'
-import { isPoint, ladderVerdict, type LadderVerdict } from '../domain/ladder'
+import { isPoint, ladderVerdict, sharedDem, type LadderVerdict } from '../domain/ladder'
 import { siteRefOf, type Query } from '../domain/query'
 import { useLadder } from '../hooks/useLadder'
 import { useI18n } from '../i18n/I18nContext'
@@ -41,6 +41,16 @@ function LadderTable({ data }: { data: LadderResult }) {
     return t('ladder.from', { min: hours(band.min), max: hours(band.max) })
   }
   const rungs = [...data.rungs].sort((a, b) => b.resolution_m - a.resolution_m)
+  // One DEM behind every rung (a global point): the table would show the same numbers under three
+  // resolutions the data does not have, so the panel says the one map it used instead.
+  const shared = sharedDem(data.rungs)
+  if (shared) {
+    return (
+      <p className="panel__say">
+        {t('ladder.oneMap', { product: shared.product, resolution: formatNumber(Math.round(shared.resolution_m)) })}
+      </p>
+    )
+  }
   return (
     <>
       <p className="panel__say">{verdictText(i18n, ladderVerdict(rungs))}</p>
