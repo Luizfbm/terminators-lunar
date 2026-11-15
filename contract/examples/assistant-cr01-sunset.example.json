@@ -1,0 +1,18 @@
+{
+  "summary": "Offline mode (no model configured), asked \"When does the Sun set?\" in English about Connecting Ridge CR01, 240 h from 2026-11-20 12:00 UTC, Observer height 2 m: real answer from the backend on the DEM fixtures and kernels",
+  "value": {
+    "answer": "The Sun first sets on 20 November 2026 at 16:21 UTC, 4.4 hours into the Window, behind the rim of Shackleton, 4.6 km to the south.",
+    "mode": "offline",
+    "numbers": {
+      "total": 4,
+      "traced": 4,
+      "untraced": []
+    },
+    "sources": [
+      {
+        "operation": "getVisibility",
+        "request": "/visibility?site_id=CR01&start=2026-11-20T12:00:00Z&duration_hours=240&observer_height_m=2"
+      }
+    ]
+  }
+}

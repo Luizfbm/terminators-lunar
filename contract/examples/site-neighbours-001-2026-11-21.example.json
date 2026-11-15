@@ -1,0 +1,209 @@
+{
+  "summary": "Connecting Ridge 001, the synodic-month Window of 14 November 2026 slipped by 7 days, Observer height 2 m, with the other Sites of its Region",
+  "value": {
+    "query": {
+      "site": {
+        "id": "001",
+        "name": "Connecting Ridge (NASA site 001)",
+        "latitude_deg": -89.4661,
+        "longitude_deg": -136.949,
+        "source": "wueller2026",
+        "source_reference": "Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",
+        "region_id": "CR",
+        "curated": true,
+        "has_5m_dem": true
+      },
+      "start": "2026-11-21T00:00:00Z",
+      "end": "2026-12-20T12:43:48Z",
+      "duration_hours": 708.73,
+      "observer_height_m": 2.0,
+      "step_minutes": 15
+    },
+    "metrics": {
+      "sun_and_earth_hours": 386.78055555555557,
+      "sunlit_hours": 708.73,
+      "earth_visible_hours": 386.78055555555557,
+      "lcip_hours": 708.73,
+      "lcsp_hours": 0.0,
+      "mean_sun_fraction": 1.0
+    },
+    "neighbours": [
+      {
+        "site": {
+          "id": "CR06",
+          "name": "Connecting Ridge CR06",
+          "latitude_deg": -89.4441,
+          "longitude_deg": -137.291,
+          "source": "wueller2026",
+          "source_reference": "Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",
+          "region_id": "CR",
+          "curated": true,
+          "has_5m_dem": true
+        },
+        "distance_km": 0.6743617529975467,
+        "metrics": {
+          "sun_and_earth_hours": 387.12388888888887,
+          "sunlit_hours": 708.73,
+          "earth_visible_hours": 387.12388888888887,
+          "lcip_hours": 708.73,
+          "lcsp_hours": 0.0,
+          "mean_sun_fraction": 1.0
+        }
+      },
+      {
+        "site": {
+          "id": "CR07",
+          "name": "Connecting Ridge CR07",
+          "latitude_deg": -89.4913,
+          "longitude_deg": -138.352,
+          "source": "wueller2026",
+          "source_reference": "Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",
+          "region_id": "CR",
+          "curated": true,
+          "has_5m_dem": true
+        },
+        "distance_km": 0.8565360862074374,
+        "metrics": {
+          "sun_and_earth_hours": 385.89972222222224,
+          "sunlit_hours": 708.73,
+          "earth_visible_hours": 385.89972222222224,
+          "lcip_hours": 708.73,
+          "lcsp_hours": 0.0,
+          "mean_sun_fraction": 0.9980727395658789
+        }
+      },
+      {
+        "site": {
+          "id": "CR03",
+          "name": "Connecting Ridge CR03",
+          "latitude_deg": -89.4142,
+          "longitude_deg": -114.095,
+          "source": "wueller2026",
+          "source_reference": "Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",
+          "region_id": "CR",
+          "curated": true,
+          "has_5m_dem": true
+        },
+        "distance_km": 6.9012620082311456,
+        "metrics": {
+          "sun_and_earth_hours": 359.24083333333334,
+          "sunlit_hours": 546.6766666666667,
+          "earth_visible_hours": 380.4336111111111,
+          "lcip_hours": 273.22083333333336,
+          "lcsp_hours": 95.33305555555556,
+          "mean_sun_fraction": 0.710557805870889
+        }
+      },
+      {
+        "site": {
+          "id": "CR02",
+          "name": "Connecting Ridge CR02",
+          "latitude_deg": -89.5361,
+          "longitude_deg": -149.937,
+          "source": "wueller2026",
+          "source_reference": "Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",
+          "region_id": "CR",
+          "curated": true,
+          "has_5m_dem": true
+        },
+        "distance_km": 4.019669616564995,
+        "metrics": {
+          "sun_and_earth_hours": 299.62305555555554,
+          "sunlit_hours": 573.8283333333334,
+          "earth_visible_hours": 347.37055555555554,
+          "lcip_hours": 401.49305555555554,
+          "lcsp_hours": 134.90166666666667,
+          "mean_sun_fraction": 0.7671572608103115
+        }
+      },
+      {
+        "site": {
+          "id": "CR08",
+          "name": "Connecting Ridge CR08",
+          "latitude_deg": -89.6319,
+          "longitude_deg": -125.14,
+          "source": "wueller2026",
+          "source_reference": "Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",
+          "region_id": "CR",
+          "curated": true,
+          "has_5m_dem": true
+        },
+        "distance_km": 5.738122696433235,
+        "metrics": {
+          "sun_and_earth_hours": 229.28972222222222,
+          "sunlit_hours": 265.8805555555556,
+          "earth_visible_hours": 372.145,
+          "lcip_hours": 251.6952777777778,
+          "lcsp_hours": 442.84944444444443,
+          "mean_sun_fraction": 0.3692250973066135
+        }
+      },
+      {
+        "site": {
+          "id": "CR04",
+          "name": "Connecting Ridge CR04",
+          "latitude_deg": -89.3323,
+          "longitude_deg": -118.506,
+          "source": "wueller2026",
+          "source_reference": "Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",
+          "region_id": "CR",
+          "curated": true,
+          "has_5m_dem": true
+        },
+        "distance_km": 7.080363300596333,
+        "metrics": {
+          "sun_and_earth_hours": 207.75805555555556,
+          "sunlit_hours": 474.1691666666667,
+          "earth_visible_hours": 340.0730555555556,
+          "lcip_hours": 266.4111111111111,
+          "lcsp_hours": 146.62666666666667,
+          "mean_sun_fraction": 0.6446212006926724
+        }
+      },
+      {
+        "site": {
+          "id": "CR01",
+          "name": "Connecting Ridge CR01",
+          "latitude_deg": -89.5273,
+          "longitude_deg": -154.592,
+          "source": "wueller2026",
+          "source_reference": "Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",
+          "region_id": "CR",
+          "curated": true,
+          "has_5m_dem": true
+        },
+        "distance_km": 5.0273233050099195,
+        "metrics": {
+          "sun_and_earth_hours": 205.02666666666667,
+          "sunlit_hours": 483.82,
+          "earth_visible_hours": 350.64694444444444,
+          "lcip_hours": 400.5516666666667,
+          "lcsp_hours": 193.34527777777777,
+          "mean_sun_fraction": 0.6410811005753598
+        }
+      },
+      {
+        "site": {
+          "id": "CR05",
+          "name": "Connecting Ridge CR05",
+          "latitude_deg": -89.4207,
+          "longitude_deg": -149.472,
+          "source": "wueller2026",
+          "source_reference": "Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",
+          "region_id": "CR",
+          "curated": true,
+          "has_5m_dem": true
+        },
+        "distance_km": 3.927691068794991,
+        "metrics": {
+          "sun_and_earth_hours": 34.3275,
+          "sunlit_hours": 432.9997222222222,
+          "earth_visible_hours": 164.54972222222221,
+          "lcip_hours": 432.0758333333333,
+          "lcsp_hours": 272.63444444444445,
+          "mean_sun_fraction": 0.5971795904548971
+        }
+      }
+    ]
+  }
+}

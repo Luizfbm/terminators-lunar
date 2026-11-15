@@ -1,0 +1,142 @@
+{
+  "summary": "Connecting Ridge 001, one synodic month from 2026-11-14 00:00 UTC, Observer height 2 m, on the Flat horizon: computed by the backend on the repo's kernels on 2026-11-14. No Sunset in the Window; the first one without terrain is at 2027-02-13T02:11:14Z.",
+  "value": {
+    "query": {
+      "site": {
+        "id": "001",
+        "name": "Connecting Ridge (NASA site 001)",
+        "latitude_deg": -89.4661,
+        "longitude_deg": -136.949,
+        "source": "wueller2026",
+        "source_reference": "Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",
+        "region_id": "CR",
+        "curated": true,
+        "has_5m_dem": true
+      },
+      "start": "2026-11-14T00:00:00Z",
+      "end": "2026-12-13T12:43:48Z",
+      "duration_hours": 708.73,
+      "observer_height_m": 2.0,
+      "step_minutes": 15
+    },
+    "horizon_elevation_deg": -0.08693657193373108,
+    "search_end": "2027-06-11T12:43:48Z",
+    "events": [
+      {
+        "type": "earthrise",
+        "t": "2026-11-17T21:04:34Z",
+        "azimuth_deg": 130.8262242044974
+      },
+      {
+        "type": "earthset",
+        "t": "2026-11-29T18:29:11Z",
+        "azimuth_deg": 142.85882034993222
+      },
+      {
+        "type": "earthrise",
+        "t": "2026-12-14T23:06:07Z",
+        "azimuth_deg": 131.30702233341074
+      },
+      {
+        "type": "earthset",
+        "t": "2026-12-26T23:45:44Z",
+        "azimuth_deg": 142.07640889008186
+      },
+      {
+        "type": "earthrise",
+        "t": "2027-01-11T01:57:43Z",
+        "azimuth_deg": 132.39392485833486
+      },
+      {
+        "type": "earthset",
+        "t": "2027-01-23T09:33:16Z",
+        "azimuth_deg": 140.08739705234413
+      },
+      {
+        "type": "earthrise",
+        "t": "2027-02-07T07:02:26Z",
+        "azimuth_deg": 133.36583289993993
+      },
+      {
+        "type": "sunset",
+        "t": "2027-02-13T02:11:14Z",
+        "azimuth_deg": 235.76291401744788
+      },
+      {
+        "type": "earthset",
+        "t": "2027-02-19T20:25:11Z",
+        "azimuth_deg": 138.16605013847413
+      },
+      {
+        "type": "sunrise",
+        "t": "2027-02-26T12:11:50Z",
+        "azimuth_deg": 72.7779267009696
+      },
+      {
+        "type": "earthrise",
+        "t": "2027-03-06T13:22:47Z",
+        "azimuth_deg": 133.80317555596272
+      },
+      {
+        "type": "sunset",
+        "t": "2027-03-08T11:22:40Z",
+        "azimuth_deg": 311.3127002562778
+      },
+      {
+        "type": "earthset",
+        "t": "2027-03-19T04:15:22Z",
+        "azimuth_deg": 137.4047440788589
+      },
+      {
+        "type": "earthrise",
+        "t": "2027-04-02T19:00:46Z",
+        "azimuth_deg": 133.7658796772624
+      },
+      {
+        "type": "earthset",
+        "t": "2027-04-15T07:29:12Z",
+        "azimuth_deg": 138.0324661844108
+      },
+      {
+        "type": "earthrise",
+        "t": "2027-04-29T22:48:11Z",
+        "azimuth_deg": 133.65738730936775
+      },
+      {
+        "type": "earthset",
+        "t": "2027-05-12T08:29:31Z",
+        "azimuth_deg": 139.16126932345068
+      },
+      {
+        "type": "earthrise",
+        "t": "2027-05-27T01:27:21Z",
+        "azimuth_deg": 133.87070988291458
+      },
+      {
+        "type": "earthset",
+        "t": "2027-06-08T11:32:06Z",
+        "azimuth_deg": 139.51466961288895
+      }
+    ],
+    "metrics": {
+      "sun_and_earth_hours": 285.41027777777776,
+      "sunlit_hours": 708.73,
+      "earth_visible_hours": 285.41027777777776,
+      "lcip_hours": 708.73,
+      "lcsp_hours": 0.0,
+      "mean_sun_fraction": 1.0
+    },
+    "provenance": {
+      "engine_version": "0.1.0",
+      "synthetic": false,
+      "kernels": [
+        "naif0012.tls",
+        "pck00011.tpc",
+        "de440_2023_2032.bsp",
+        "moon_pa_de440_200625.bpc",
+        "moon_de440_250416.tf"
+      ],
+      "dems": []
+    }
+  }
+}

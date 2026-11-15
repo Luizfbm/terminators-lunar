@@ -1,0 +1,330 @@
+{
+ "summary": "Connecting Ridge 001, default Window from 2026-11-14, Observer height 2 m, radius 250 m: produced by the engine on the DEM fixtures on 2026-11-14",
+ "value": {
+  "query": {
+   "site": {
+    "id": "001",
+    "name": "Connecting Ridge (NASA site 001)",
+    "latitude_deg": -89.4661,
+    "longitude_deg": -136.949,
+    "source": "wueller2026",
+    "source_reference": "Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",
+    "region_id": "CR",
+    "curated": true,
+    "has_5m_dem": true
+   },
+   "start": "2026-11-14T00:00:00Z",
+   "end": "2026-12-13T12:43:48Z",
+   "duration_hours": 708.73,
+   "observer_height_m": 2.0,
+   "step_minutes": 15
+  },
+  "radius_m": 250.0,
+  "points": [
+   {
+    "distance_m": 0.0,
+    "azimuth_deg": 0.0,
+    "latitude_deg": -89.4661,
+    "longitude_deg": -136.949,
+    "metrics": {
+     "sun_and_earth_hours": 329.06444444444446,
+     "sunlit_hours": 708.73,
+     "earth_visible_hours": 329.06444444444446,
+     "lcip_hours": 708.73,
+     "lcsp_hours": 0.0,
+     "mean_sun_fraction": 1.0
+    }
+   },
+   {
+    "distance_m": 125.0,
+    "azimuth_deg": 0.0,
+    "latitude_deg": -89.46197776422245,
+    "longitude_deg": -136.949,
+    "metrics": {
+     "sun_and_earth_hours": 329.16583333333335,
+     "sunlit_hours": 708.73,
+     "earth_visible_hours": 329.16583333333335,
+     "lcip_hours": 708.73,
+     "lcsp_hours": 0.0,
+     "mean_sun_fraction": 1.0
+    }
+   },
+   {
+    "distance_m": 125.0,
+    "azimuth_deg": 60.0,
+    "latitude_deg": -89.46402699308572,
+    "longitude_deg": -136.5673610262362,
+    "metrics": {
+     "sun_and_earth_hours": 329.0988888888889,
+     "sunlit_hours": 671.5969444444445,
+     "earth_visible_hours": 329.0988888888889,
+     "lcip_hours": 642.5675,
+     "lcsp_hours": 37.13305555555556,
+     "mean_sun_fraction": 0.9068773149603744
+    }
+   },
+   {
+    "distance_m": 125.0,
+    "azimuth_deg": 120.0,
+    "latitude_deg": -89.46814913671425,
+    "longitude_deg": -136.56440315101588,
+    "metrics": {
+     "sun_and_earth_hours": 328.99666666666667,
+     "sunlit_hours": 708.73,
+     "earth_visible_hours": 328.99666666666667,
+     "lcip_hours": 708.73,
+     "lcsp_hours": 0.0,
+     "mean_sun_fraction": 0.9824317167878664
+    }
+   },
+   {
+    "distance_m": 125.0,
+    "azimuth_deg": 180.0,
+    "latitude_deg": -89.4702222357769,
+    "longitude_deg": -136.949,
+    "metrics": {
+     "sun_and_earth_hours": 308.78305555555556,
+     "sunlit_hours": 688.3475000000001,
+     "earth_visible_hours": 320.45444444444445,
+     "lcip_hours": 627.4277777777778,
+     "lcsp_hours": 20.3825,
+     "mean_sun_fraction": 0.9352787669285708
+    }
+   },
+   {
+    "distance_m": 125.0,
+    "azimuth_deg": 240.0,
+    "latitude_deg": -89.46814913671425,
+    "longitude_deg": -137.33359684898417,
+    "metrics": {
+     "sun_and_earth_hours": 217.5375,
+     "sunlit_hours": 561.7816666666668,
+     "earth_visible_hours": 278.1311111111111,
+     "lcip_hours": 212.53805555555556,
+     "lcsp_hours": 86.35472222222222,
+     "mean_sun_fraction": 0.7290633949559652
+    }
+   },
+   {
+    "distance_m": 125.0,
+    "azimuth_deg": 300.0,
+    "latitude_deg": -89.46402699308572,
+    "longitude_deg": -137.33063897376385,
+    "metrics": {
+     "sun_and_earth_hours": 309.9269444444444,
+     "sunlit_hours": 708.73,
+     "earth_visible_hours": 309.9269444444444,
+     "lcip_hours": 708.73,
+     "lcsp_hours": 0.0,
+     "mean_sun_fraction": 1.0
+    }
+   },
+   {
+    "distance_m": 250.0,
+    "azimuth_deg": 0.0,
+    "latitude_deg": -89.45785552844595,
+    "longitude_deg": -136.949,
+    "metrics": {
+     "sun_and_earth_hours": 329.2347222222222,
+     "sunlit_hours": 708.73,
+     "earth_visible_hours": 329.2347222222222,
+     "lcip_hours": 708.73,
+     "lcsp_hours": 0.0,
+     "mean_sun_fraction": 1.0
+    }
+   },
+   {
+    "distance_m": 250.0,
+    "azimuth_deg": 30.0,
+    "latitude_deg": -89.45894437501819,
+    "longitude_deg": -136.51245984414504,
+    "metrics": {
+     "sun_and_earth_hours": 306.5541666666667,
+     "sunlit_hours": 502.8283333333333,
+     "earth_visible_hours": 329.2372222222222,
+     "lcip_hours": 502.8283333333333,
+     "lcsp_hours": 122.23444444444445,
+     "mean_sun_fraction": 0.6729533581343233
+    }
+   },
+   {
+    "distance_m": 250.0,
+    "azimuth_deg": 60.0,
+    "latitude_deg": -89.46193039186508,
+    "longitude_deg": -136.1886794058858,
+    "metrics": {
+     "sun_and_earth_hours": 211.98555555555555,
+     "sunlit_hours": 361.8927777777778,
+     "earth_visible_hours": 329.1333333333333,
+     "lcip_hours": 361.8927777777778,
+     "lcsp_hours": 178.12583333333333,
+     "mean_sun_fraction": 0.49485191459265826
+    }
+   },
+   {
+    "distance_m": 250.0,
+    "azimuth_deg": 90.0,
+    "latitude_deg": -89.46603635016606,
+    "longitude_deg": -136.06429739464394,
+    "metrics": {
+     "sun_and_earth_hours": 266.5208333333333,
+     "sunlit_hours": 391.1355555555556,
+     "earth_visible_hours": 329.00388888888887,
+     "lcip_hours": 391.1355555555556,
+     "lcsp_hours": 194.0275,
+     "mean_sun_fraction": 0.5400560110795278
+    }
+   },
+   {
+    "distance_m": 250.0,
+    "azimuth_deg": 120.0,
+    "latitude_deg": -89.47017412627056,
+    "longitude_deg": -136.17684896297055,
+    "metrics": {
+     "sun_and_earth_hours": 323.5875,
+     "sunlit_hours": 479.09444444444443,
+     "earth_visible_hours": 328.88388888888886,
+     "lcip_hours": 479.09444444444443,
+     "lcsp_hours": 163.2275,
+     "mean_sun_fraction": 0.6609450035941826
+    }
+   },
+   {
+    "distance_m": 250.0,
+    "azimuth_deg": 150.0,
+    "latitude_deg": -89.47322379294948,
+    "longitude_deg": -136.5006265799101,
+    "metrics": {
+     "sun_and_earth_hours": 328.87083333333334,
+     "sunlit_hours": 463.92027777777776,
+     "earth_visible_hours": 328.87083333333334,
+     "lcip_hours": 463.92027777777776,
+     "lcsp_hours": 197.70416666666668,
+     "mean_sun_fraction": 0.6339850441771343
+    }
+   },
+   {
+    "distance_m": 250.0,
+    "azimuth_deg": 180.0,
+    "latitude_deg": -89.47434447155383,
+    "longitude_deg": -136.949,
+    "metrics": {
+     "sun_and_earth_hours": 250.13333333333333,
+     "sunlit_hours": 250.13333333333333,
+     "earth_visible_hours": 328.74916666666667,
+     "lcip_hours": 250.13333333333333,
+     "lcsp_hours": 321.1988888888889,
+     "mean_sun_fraction": 0.3405344859066535
+    }
+   },
+   {
+    "distance_m": 250.0,
+    "azimuth_deg": 210.0,
+    "latitude_deg": -89.47322379294948,
+    "longitude_deg": -137.39737342008996,
+    "metrics": {
+     "sun_and_earth_hours": 328.8225,
+     "sunlit_hours": 708.73,
+     "earth_visible_hours": 328.8225,
+     "lcip_hours": 708.73,
+     "lcsp_hours": 0.0,
+     "mean_sun_fraction": 1.0
+    }
+   },
+   {
+    "distance_m": 250.0,
+    "azimuth_deg": 240.0,
+    "latitude_deg": -89.47017412627056,
+    "longitude_deg": -137.7211510370295,
+    "metrics": {
+     "sun_and_earth_hours": 265.1436111111111,
+     "sunlit_hours": 708.73,
+     "earth_visible_hours": 265.1436111111111,
+     "lcip_hours": 708.73,
+     "lcsp_hours": 0.0,
+     "mean_sun_fraction": 1.0
+    }
+   },
+   {
+    "distance_m": 250.0,
+    "azimuth_deg": 270.0,
+    "latitude_deg": -89.46603635016606,
+    "longitude_deg": -137.8337026053561,
+    "metrics": {
+     "sun_and_earth_hours": 0.0,
+     "sunlit_hours": 372.6802777777778,
+     "earth_visible_hours": 204.88722222222222,
+     "lcip_hours": 238.69611111111112,
+     "lcsp_hours": 335.69388888888886,
+     "mean_sun_fraction": 0.4881705948328695
+    }
+   },
+   {
+    "distance_m": 250.0,
+    "azimuth_deg": 300.0,
+    "latitude_deg": -89.46193039186508,
+    "longitude_deg": -137.70932059411422,
+    "metrics": {
+     "sun_and_earth_hours": 0.0,
+     "sunlit_hours": 310.2575,
+     "earth_visible_hours": 121.85,
+     "lcip_hours": 166.45055555555555,
+     "lcsp_hours": 398.4725,
+     "mean_sun_fraction": 0.41260345548808797
+    }
+   },
+   {
+    "distance_m": 250.0,
+    "azimuth_deg": 330.0,
+    "latitude_deg": -89.45894437501819,
+    "longitude_deg": -137.38554015585498,
+    "metrics": {
+     "sun_and_earth_hours": 278.77472222222224,
+     "sunlit_hours": 708.73,
+     "earth_visible_hours": 278.77472222222224,
+     "lcip_hours": 708.73,
+     "lcsp_hours": 0.0,
+     "mean_sun_fraction": 0.9999543248180527
+    }
+   }
+  ],
+  "band": {
+   "sun_and_earth_hours": {
+    "min": 0.0,
+    "max": 329.2347222222222,
+    "min_point": 16,
+    "max_point": 7
+   },
+   "sunlit_hours": {
+    "min": 250.13333333333333,
+    "max": 708.73,
+    "min_point": 13,
+    "max_point": 0
+   },
+   "earth_visible_hours": {
+    "min": 121.85,
+    "max": 329.2372222222222,
+    "min_point": 17,
+    "max_point": 8
+   },
+   "lcip_hours": {
+    "min": 166.45055555555555,
+    "max": 708.73,
+    "min_point": 17,
+    "max_point": 0
+   },
+   "lcsp_hours": {
+    "min": 0.0,
+    "max": 398.4725,
+    "min_point": 0,
+    "max_point": 17
+   },
+   "mean_sun_fraction": {
+    "min": 0.3405344859066535,
+    "max": 1.0,
+    "min_point": 13,
+    "max_point": 0
+   }
+  }
+ }
+}

@@ -1,0 +1,1968 @@
+openapi: 3.1.0
+info:
+  title: Lunar Landing Site Navigator API
+  version: 0.1.0
+  summary: Sun and Earth visibility over the real lunar horizon, for one Site and one Window.
+  description: |
+    The single source of truth between backend and frontend. Only the coordinator edits it.
+    Terms (Site, Window, Cursor, Sunset, Occluder...) follow GLOSSARY.md at the repo root.
+
+    Conventions:
+    - Instants are UTC, ISO 8601 with a `Z` suffix.
+    - Angles are degrees. Azimuth is measured clockwise from local north, 0 to 360.
+      Elevation is above the local horizontal plane (not above the terrain).
+    - Distances and heights are metres; durations are hours.
+    - Longitude is east-positive, -180 to 180.
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: https://lunar-api.luizfbm.win
+    description: Production
+security: []
+tags:
+  - name: service
+    description: Health and metadata.
+  - name: sites
+    description: Curated Sites and Regions.
+  - name: visibility
+    description: The answer to a Query.
+  - name: proof
+    description: Validation results for the Proof page.
+  - name: assistant
+    description: Questions in plain words, answered with the engine's numbers.
+
+paths:
+  /health:
+    get:
+      tags: [service]
+      operationId: getHealth
+      summary: Liveness check
+      responses:
+        "200":
+          description: The service is up.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    const: ok
+              example:
+                status: ok
+
+  /meta:
+    get:
+      tags: [service]
+      operationId: getMeta
+      summary: Engine version, data products, coverage and defaults
+      description: Everything the frontend needs to build the default Query and the footer.
+      responses:
+        "200":
+          description: Metadata.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meta"
+              example:
+                {
+                  "engine_version": "0.1.0",
+                  "kernels": [
+                    "naif0012.tls",
+                    "pck00011.tpc",
+                    "de440.bsp",
+                    "moon_pa_de440_200625.bpc",
+                    "moon_de440_250416.tf"
+                  ],
+                  "dems": [
+                    {
+                      "product": "LDEM_80S_20MPP_ADJ",
+                      "resolution_m": 20.0
+                    },
+                    {
+                      "product": "LDEM_80S_80MPP_ADJ",
+                      "resolution_m": 80.0
+                    },
+                    {
+                      "product": "LDEM_60S_240MPP_ADJ",
+                      "resolution_m": 240.0
+                    },
+                    {
+                      "product": "SLDEM2015_512",
+                      "resolution_m": 59.2
+                    },
+                    {
+                      "product": "SLDEM2015_128",
+                      "resolution_m": 236.9
+                    },
+                    {
+                      "product": "LDEM_60S_60MPP_ADJ",
+                      "resolution_m": 60.0
+                    },
+                    {
+                      "product": "LDEM_60S_240MPP_ADJ",
+                      "resolution_m": 240.0
+                    }
+                  ],
+                  "coverage": {
+                    "custom_max_latitude_deg": -80.0,
+                    "window_min": "2023-08-01T00:00:00Z",
+                    "window_max": "2032-12-31T23:59:59Z",
+                    "max_duration_hours": 1440.0
+                  },
+                  "defaults": {
+                    "site_id": "001",
+                    "duration_hours": 708.73,
+                    "observer_height_m": 2.0
+                  },
+                  "short_shadow_max_hours": 12.0
+                }
+
+  /regions:
+    get:
+      tags: [sites]
+      operationId: listRegions
+      summary: Named areas that group Curated Sites
+      responses:
+        "200":
+          description: All Regions.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Region"
+              example:
+                [
+                  {
+                    "id": "PCB",
+                    "name": "Peak near Cabeus B",
+                    "site_count": 5,
+                    "artemis_iii_current": true,
+                    "source_reference": "Wueller et al. 2026, Table 1"
+                  },
+                  {
+                    "id": "HW",
+                    "name": "Haworth",
+                    "site_count": 11,
+                    "artemis_iii_current": true,
+                    "source_reference": "Wueller et al. 2026, Table 1"
+                  },
+                  {
+                    "id": "MMA",
+                    "name": "Mons Malapert",
+                    "site_count": 5,
+                    "artemis_iii_current": true,
+                    "source_reference": "Wueller et al. 2026, Table 1"
+                  }
+                ]
+
+  /sites:
+    get:
+      tags: [sites]
+      operationId: listSites
+      summary: Curated Sites
+      parameters:
+        - name: region_id
+          in: query
+          description: Only Sites in this Region.
+          schema:
+            type: string
+        - name: q
+          in: query
+          description: Case-insensitive match on Site id or name.
+          schema:
+            type: string
+            maxLength: 100
+      responses:
+        "200":
+          description: Curated Sites, sorted by Region then id.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Site"
+              example:
+                [
+                  {
+                    "id": "001",
+                    "name": "Connecting Ridge (NASA site 001)",
+                    "latitude_deg": -89.4661,
+                    "longitude_deg": -136.949,
+                    "source": "wueller2026",
+                    "source_reference": "Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",
+                    "region_id": "CR",
+                    "curated": true,
+                    "has_5m_dem": true
+                  },
+                  {
+                    "id": "MMO01",
+                    "name": "Mons Mouton MMO01",
+                    "latitude_deg": -85.416,
+                    "longitude_deg": 31.8506,
+                    "source": "wueller2026",
+                    "source_reference": "Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",
+                    "region_id": "MMO",
+                    "curated": true,
+                    "has_5m_dem": false
+                  },
+                  {
+                    "id": "APOLLO11",
+                    "name": "Apollo 11 (Tranquility Base)",
+                    "latitude_deg": 0.67416,
+                    "longitude_deg": 23.47314,
+                    "source": "apollo",
+                    "source_reference": "NSSDC Lunar Landing Sites, Apollo 11 Lunar Module, ME/DE421; Wagner et al. 2017, Icarus 283, 92-103",
+                    "region_id": null,
+                    "curated": true,
+                    "has_5m_dem": false
+                  },
+                  {
+                    "id": "CH3",
+                    "name": "Chandrayaan-3 (Statio Shiv Shakti)",
+                    "latitude_deg": -69.373,
+                    "longitude_deg": 32.319,
+                    "source": "isro",
+                    "source_reference": "Statio Shiv Shakti (IAU-approved name); coordinate from Wikipedia, Chandrayaan-3, another source gives -69.3676, 32.3481 (~0.4 km)",
+                    "region_id": null,
+                    "curated": true,
+                    "has_5m_dem": false
+                  }
+                ]
+        "422":
+          $ref: "#/components/responses/InvalidParameter"
+
+  /sites/{site_id}:
+    get:
+      tags: [sites]
+      operationId: getSite
+      summary: One Curated Site
+      parameters:
+        - $ref: "#/components/parameters/SiteIdPath"
+      responses:
+        "200":
+          description: The Site.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Site"
+              example:
+                {
+                  "id": "001",
+                  "name": "Connecting Ridge (NASA site 001)",
+                  "latitude_deg": -89.4661,
+                  "longitude_deg": -136.949,
+                  "source": "wueller2026",
+                  "source_reference": "Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",
+                  "region_id": "CR",
+                  "curated": true,
+                  "has_5m_dem": true
+                }
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /sites/{site_id}/year:
+    get:
+      tags: [sites]
+      operationId: getSiteYear
+      summary: The year at one Curated Site
+      description: |
+        Sun and Earth month by month over one calendar year, the year's totals, and the three
+        best Windows of one synodic month by Sun-and-Earth time. Curated Sites only.
+        Computed with the same engine and definitions as `/visibility`, asked month by month;
+        periods that cross a month boundary are joined, never cut or counted twice.
+        Periods are clipped to the year: one that began in December of the year before counts
+        from 1 January. A year outside 2024-2032 (the whole years covered) is a 422 `window_out_of_range`.
+      parameters:
+        - $ref: "#/components/parameters/SiteIdPath"
+        - name: year
+          in: query
+          required: true
+          description: "Calendar year, UTC. Coverage is 2024 to 2032: the Window starts on 1 August 2023, so 2023 is not a whole year."
+          schema:
+            type: integer
+        - name: observer_height_m
+          in: query
+          schema:
+            type: number
+            minimum: 0
+            maximum: 50
+            default: 2
+      responses:
+        "200":
+          description: The year at the Site.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteYear"
+              examples:
+                connecting-ridge-2027:
+                  $ref: ./examples/site-year-001-2027.example.json
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/Unprocessable"
+        "503":
+          $ref: "#/components/responses/Busy"
+
+  /sites/{site_id}/windows:
+    get:
+      tags: [sites]
+      operationId: getSiteWindows
+      summary: The same Window started on other days
+      description: |
+        One Window per day, each `duration_hours` long, started `first_shift_days` to
+        `last_shift_days` days from `start` at the same time of day. Each comes with its
+        Sun-and-Earth time, its sunlit and Earth-visible hours and its longest stretch with no Sun.
+        `best`, `typical` and `worst` rank them by Sun-and-Earth time: ties go to the earlier
+        Window, and typical is the lower median, so it is one of the Windows in the list.
+        Two screens read it. A launch that slips: `start` is the planned Window, -30 to +150 days.
+        The best, typical and worst day of a year to land: `start` is 1 January, 0 to 365 days.
+        Curated Sites only. Same engine and definitions as `/visibility`; periods are joined across
+        months as in `/sites/{site_id}/year`. A Window that would leave engine coverage is left
+        out of the list; if none is left, the answer is a 422 `window_out_of_range`.
+      parameters:
+        - $ref: "#/components/parameters/SiteIdPath"
+        - $ref: "#/components/parameters/QueryStart"
+        - $ref: "#/components/parameters/QueryDuration"
+        - $ref: "#/components/parameters/QueryObserverHeight"
+        - name: first_shift_days
+          in: query
+          description: Days from `start` to the first Window; negative is earlier.
+          schema:
+            type: integer
+            minimum: -30
+            maximum: 0
+            default: -30
+        - name: last_shift_days
+          in: query
+          description: Days from `start` to the last Window.
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 366
+            default: 150
+      responses:
+        "200":
+          description: The Windows, earliest first, and the best, typical and worst of them.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteWindows"
+              examples:
+                connecting-ridge-slip-2026:
+                  $ref: ./examples/site-windows-001-2026-11-14.example.json
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/Unprocessable"
+        "503":
+          $ref: "#/components/responses/Busy"
+
+  /sites/{site_id}/neighbours:
+    get:
+      tags: [sites]
+      operationId: getSiteNeighbours
+      summary: The nearby Sites over the same Window, ranked
+      description: |
+        For a launch that slips: the Window has moved to a new date, and the question is which
+        nearby Site still works on it. The nearby Sites are the other Curated Sites of the same
+        Region; for a Site with no Region, the nearest Curated Sites within 50 km, at most 10.
+        Each one is answered over the Window exactly as `/visibility` answers it, from the same
+        cache, so its metrics are the `/visibility` metrics for that Site and Window. They are
+        ranked by Sun-and-Earth time, most first; a tie goes to the nearer Site, then the lower id.
+        `metrics` is the asked Site's own `/visibility` metrics over the same Window.
+        Curated Sites only. A Site with no nearby Site gets an empty list. If no DEM covers the
+        asked Site or one of its nearby Sites, the answer is a 422 `outside_coverage`.
+        `Cache-Status` is `lunar-api; hit` only when every one of the answers came from the cache.
+      parameters:
+        - $ref: "#/components/parameters/SiteIdPath"
+        - $ref: "#/components/parameters/QueryStart"
+        - $ref: "#/components/parameters/QueryDuration"
+        - $ref: "#/components/parameters/QueryObserverHeight"
+      responses:
+        "200":
+          description: The asked Site's metrics and its nearby Sites, most Sun-and-Earth time first.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteNeighbours"
+              examples:
+                connecting-ridge-slipped-a-week:
+                  $ref: ./examples/site-neighbours-001-2026-11-21.example.json
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/Unprocessable"
+        "503":
+          $ref: "#/components/responses/Busy"
+
+  /visibility:
+    get:
+      tags: [visibility]
+      operationId: getVisibility
+      summary: Answer one Query
+      description: |
+        Horizon mask, Sun and Earth timeline, events, periods and metrics for one Site over one Window.
+        Pass either `site_id` (a Curated Site) or both `latitude_deg` and `longitude_deg` (a custom Site), never both.
+        Curated Sites are served from cache; a custom Site is computed on request.
+        The response carries an RFC 9211 `Cache-Status` header: `lunar-api; hit` from the cache,
+        `lunar-api; fwd=miss` when computed for this request.
+      parameters:
+        - name: site_id
+          in: query
+          schema:
+            type: string
+        - name: latitude_deg
+          in: query
+          description: Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg`.
+          schema:
+            type: number
+            minimum: -90
+            maximum: 90
+        - name: longitude_deg
+          in: query
+          schema:
+            type: number
+            minimum: -180
+            maximum: 180
+        - name: start
+          in: query
+          required: true
+          description: Window start.
+          schema:
+            type: string
+            format: date-time
+        - name: duration_hours
+          in: query
+          description: Window duration. Defaults to one synodic month.
+          schema:
+            type: number
+            exclusiveMinimum: 0
+            maximum: 1440
+            default: 708.73
+        - name: observer_height_m
+          in: query
+          schema:
+            type: number
+            minimum: 0
+            maximum: 50
+            default: 2
+      responses:
+        "200":
+          description: The answer to the Query.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VisibilityResult"
+              examples:
+                connecting-ridge-cr01-10-days:
+                  $ref: ./examples/visibility-cr01.example.json
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/Unprocessable"
+        "503":
+          $ref: "#/components/responses/Busy"
+
+  /visibility/ladder:
+    get:
+      tags: [visibility]
+      operationId: getVisibilityLadder
+      summary: The same Query on the Resolution ladder
+      description: |
+        Answers the Query three times, with the Horizon mask built from coarser DEMs only (ADR 0003):
+        240 m everywhere; 80 m out to 100 km and 240 m beyond; and the normal 20, 80 and 240 m stack.
+        The last rung is exactly the `/visibility` answer. The band is the minimum and maximum of each
+        metric across the rungs; it is measured, not a confidence level.
+      parameters:
+        - name: site_id
+          in: query
+          schema:
+            type: string
+        - name: latitude_deg
+          in: query
+          description: Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg`.
+          schema:
+            type: number
+            minimum: -90
+            maximum: 90
+        - name: longitude_deg
+          in: query
+          schema:
+            type: number
+            minimum: -180
+            maximum: 180
+        - name: start
+          in: query
+          required: true
+          description: Window start.
+          schema:
+            type: string
+            format: date-time
+        - name: duration_hours
+          in: query
+          description: Window duration. Defaults to one synodic month.
+          schema:
+            type: number
+            exclusiveMinimum: 0
+            maximum: 1440
+            default: 708.73
+        - name: observer_height_m
+          in: query
+          schema:
+            type: number
+            minimum: 0
+            maximum: 50
+            default: 2
+      responses:
+        "200":
+          description: One entry per rung, coarsest first, and the band across them.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LadderResult"
+              examples:
+                connecting-ridge-cr05:
+                  $ref: ./examples/visibility-ladder-cr05.example.json
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/Unprocessable"
+        "503":
+          $ref: "#/components/responses/Busy"
+
+  /visibility/scatter:
+    get:
+      tags: [visibility]
+      operationId: getVisibilityScatter
+      summary: The same Query where the lander might touch down
+      description: |
+        Landing scatter: the Query answered at 19 points. The Site itself, 6 points at half of
+        `radius_m` (every 60° from north) and 12 points at `radius_m` (every 30° from north).
+        Each point has its own Horizon mask and is the `/visibility` answer for that coordinate;
+        only the metrics are returned. `band` is the minimum and maximum of each metric across
+        the points, with the point that gives each.
+        This is landing error, not map error: the Resolution ladder is about the DEM, the Landing
+        scatter is about where the lander ends up. The default radius, 250 m, is the miss
+        Intuitive Machines reported for IM-2 Athena in March 2025.
+        A point that no DEM covers makes the whole request a 422 `outside_coverage`.
+        Pass either `site_id` or both coordinates, never both, as in `/visibility`.
+      parameters:
+        - $ref: "#/components/parameters/QuerySiteId"
+        - $ref: "#/components/parameters/QueryLatitude"
+        - $ref: "#/components/parameters/QueryLongitude"
+        - $ref: "#/components/parameters/QueryStart"
+        - $ref: "#/components/parameters/QueryDuration"
+        - $ref: "#/components/parameters/QueryObserverHeight"
+        - name: radius_m
+          in: query
+          description: Distance of the outer ring from the Site. The inner ring is at half of it.
+          schema:
+            type: number
+            minimum: 40
+            maximum: 1000
+            default: 250
+      responses:
+        "200":
+          description: The metrics at each point and their range.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScatterResult"
+              examples:
+                connecting-ridge-001:
+                  $ref: ./examples/visibility-scatter-001.example.json
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/Unprocessable"
+        "503":
+          $ref: "#/components/responses/Busy"
+
+  /visibility/energy:
+    get:
+      tags: [visibility]
+      operationId: getVisibilityEnergy
+      summary: A lander's battery over the Window
+      description: |
+        The Charge of a battery over the Window, from three numbers: the power the panels give in
+        full Sun at 1 au, the power the lander draws, and the battery's capacity. At each timeline
+        step the panels give `panel_power_w` × Sun fraction × (1 au / Sun distance)² × incidence
+        factor, the load is taken out, and the charge stays between empty and full. The battery
+        starts full. The incidence factor follows Eduardo's panel-geometry model, with A and E the
+        Sun's azimuth and elevation at the step (its centre): `sun` (the default) keeps the panels
+        facing the Sun, factor 1; `fixed` stands them upright facing `panel_azimuth_deg`, factor
+        max(0, cos E · cos(A − P)), so they only get the Sun while it is on their side, about half
+        the month at the pole; `flat` lays them on top facing the zenith, factor max(0, sin E).
+        There is no cut at E = 0: whether the Sun is above the terrain is the Sun fraction's job.
+        No thermal model, no ageing, no tracking error, and a constant load. The three numbers
+        have no defaults: the API does not invent a lander. Without `panel_pointing` the answer
+        is the one from before panel pointing existed: the Lander echoes no pointing, and
+        `panel_lit_hours` and `panel_longest_dark_hours` are absent.
+        Pass either `site_id` or both coordinates, never both, as in `/visibility`.
+      parameters:
+        - $ref: "#/components/parameters/QuerySiteId"
+        - $ref: "#/components/parameters/QueryLatitude"
+        - $ref: "#/components/parameters/QueryLongitude"
+        - $ref: "#/components/parameters/QueryStart"
+        - $ref: "#/components/parameters/QueryDuration"
+        - $ref: "#/components/parameters/QueryObserverHeight"
+        - name: panel_power_w
+          in: query
+          required: true
+          description: Power the panels give in full Sun at 1 au, in watts.
+          schema:
+            type: number
+            minimum: 0
+            maximum: 1000000
+        - name: load_w
+          in: query
+          required: true
+          description: Power the lander draws, in watts, the whole Window.
+          schema:
+            type: number
+            minimum: 0.1
+            maximum: 1000000
+        - name: battery_wh
+          in: query
+          required: true
+          description: Battery capacity, in watt-hours.
+          schema:
+            type: number
+            minimum: 1
+            maximum: 100000000
+        - name: panel_pointing
+          in: query
+          required: false
+          description: >-
+            Where the panels face: `sun` always toward the Sun (the default), `fixed` upright
+            toward `panel_azimuth_deg`, `flat` lying on top toward the zenith.
+          schema:
+            type: string
+            enum: [sun, fixed, flat]
+        - name: panel_azimuth_deg
+          in: query
+          required: false
+          description: >-
+            Where upright fixed panels face, in degrees from north, clockwise (90 = east).
+            Required with `panel_pointing=fixed` and refused with anything else (422).
+          schema:
+            type: number
+            minimum: 0
+            exclusiveMaximum: 360
+      responses:
+        "200":
+          description: The Charge over the Window.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnergyResult"
+              examples:
+                connecting-ridge-001-10-days:
+                  $ref: ./examples/visibility-energy-001.example.json
+                connecting-ridge-001-10-days-panels-fixed-east:
+                  $ref: ./examples/visibility-energy-001-fixed-east.example.json
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/Unprocessable"
+        "503":
+          $ref: "#/components/responses/Busy"
+
+  /assistant:
+    post:
+      tags: [assistant]
+      operationId: askAssistant
+      summary: Ask about a Query in plain words
+      description: |
+        A language model picks which of this API's answers to read and writes the sentences; it
+        computes nothing. Every number in `answer` is then checked against the numbers those
+        answers returned, the Query and the question: `numbers.traced` of `numbers.total` were
+        found, and the rest are listed in `numbers.untraced`. `sources` are the requests behind
+        the answer, so the screen can open the view that shows each number.
+        When the model is out of reach or the day's budget is spent, a keyword router answers from
+        the same operations with fixed sentences, and `mode` is `offline`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssistantRequest"
+      responses:
+        "200":
+          description: The answer and how much of it was traced.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssistantReply"
+              examples:
+                when-does-the-sun-set-offline:
+                  $ref: ./examples/assistant-cr01-sunset.example.json
+        "422":
+          $ref: "#/components/responses/InvalidParameter"
+        "503":
+          $ref: "#/components/responses/Busy"
+
+  /visibility/flat:
+    get:
+      tags: [visibility]
+      operationId: getVisibilityFlat
+      summary: The same Query without terrain
+      description: |
+        The Query answered on the Flat horizon: the bare reference sphere of 1737.4 km, with no
+        DEM and only the dip of the horizon at the Observer height. Same ephemeris, same step and
+        same definitions of Sunrise, Sunset, Earthrise and Earthset as `/visibility`, so the two
+        answers differ by the terrain alone.
+        Metrics cover the Window. Events are looked for from the Window start to `search_end`,
+        180 days past the Window end or the end of coverage, whichever comes first, so the screen
+        can say how much later or earlier the Sun would set without terrain.
+        Pass either `site_id` or both coordinates, never both, as in `/visibility`.
+      parameters:
+        - $ref: "#/components/parameters/QuerySiteId"
+        - $ref: "#/components/parameters/QueryLatitude"
+        - $ref: "#/components/parameters/QueryLongitude"
+        - $ref: "#/components/parameters/QueryStart"
+        - $ref: "#/components/parameters/QueryDuration"
+        - $ref: "#/components/parameters/QueryObserverHeight"
+      responses:
+        "200":
+          description: The answer on the Flat horizon.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FlatResult"
+              examples:
+                connecting-ridge-001-flat:
+                  $ref: ./examples/visibility-flat-001.example.json
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/Unprocessable"
+        "503":
+          $ref: "#/components/responses/Busy"
+
+  /terrain:
+    get:
+      tags: [sites]
+      operationId: getTerrain
+      summary: The ground around a Site
+      description: |
+        Slope of the DEM cells whose centres lie within `radius_m` of the Site, by central
+        differences on the finest DEM that covers it (20 m at the pole). The defaults are NASA's
+        Artemis III landing requirement, slope under 10° over 100 m (Artemis Human Landing System
+        Overview for Space Apps 2025, NTRS 20250009323).
+        A DEM this coarse cannot see boulders or craters a few metres across.
+        `permanent_shadow` is left out until the map of permanently shadowed regions is on the
+        server.
+        Pass either `site_id` or both coordinates, never both, as in `/visibility`.
+      parameters:
+        - $ref: "#/components/parameters/QuerySiteId"
+        - $ref: "#/components/parameters/QueryLatitude"
+        - $ref: "#/components/parameters/QueryLongitude"
+        - name: radius_m
+          in: query
+          description: Cells with their centre within this distance of the Site are measured.
+          schema:
+            type: number
+            minimum: 40
+            maximum: 2000
+            default: 100
+        - name: slope_limit_deg
+          in: query
+          description: The slope the cells are counted against.
+          schema:
+            type: number
+            exclusiveMinimum: 0
+            maximum: 45
+            default: 10
+      responses:
+        "200":
+          description: The Slope around the Site.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TerrainResult"
+              examples:
+                connecting-ridge-001:
+                  $ref: ./examples/terrain-001.example.json
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/Unprocessable"
+
+  /visibility/dsn:
+    get:
+      tags: [visibility]
+      operationId: getVisibilityDsn
+      summary: When a Deep Space Network dish can hear the Site
+      description: |
+        DSN link: the Earth is visible from the Site and at least one of the three 70 m Deep Space
+        Network antennas (DSS-14 at Goldstone, DSS-43 at Canberra, DSS-63 at Madrid) has the Moon
+        above `min_elevation_deg`. A station's passes use the Moon's centre, seen from the antenna
+        with the Earth's orientation from a SPICE kernel; from Earth the Site is never more than
+        the Moon's angular radius, about a quarter of a degree, away from it.
+        Geometry only: no antenna schedule, no link budget and no terrain around the stations.
+        Pass either `site_id` or both coordinates, never both, as in `/visibility`.
+      parameters:
+        - $ref: "#/components/parameters/QuerySiteId"
+        - $ref: "#/components/parameters/QueryLatitude"
+        - $ref: "#/components/parameters/QueryLongitude"
+        - $ref: "#/components/parameters/QueryStart"
+        - $ref: "#/components/parameters/QueryDuration"
+        - $ref: "#/components/parameters/QueryObserverHeight"
+      responses:
+        "200":
+          description: Each station's passes, the link periods and the hours.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DsnResult"
+              examples:
+                connecting-ridge-001-48-hours:
+                  $ref: ./examples/visibility-dsn-001.example.json
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/Unprocessable"
+        "503":
+          $ref: "#/components/responses/Busy"
+
+  /validations:
+    get:
+      tags: [proof]
+      operationId: listValidations
+      summary: Validation results for the Proof page
+      description: Produced by the validation suite in `validation/`; the backend serves the latest run.
+      responses:
+        "200":
+          description: Every validation, passed or not.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Validation"
+              example:
+                [
+                  {
+                    "id": "horizons-sun-azel",
+                    "title": {
+                      "en": "Sun azimuth and elevation vs JPL Horizons",
+                      "pt": "Azimute e elevação do Sol contra o JPL Horizons"
+                    },
+                    "reference": "JPL Horizons, surface observer (coord@301, 2 m, airless) at 6 Sites south of 80°S, 300 instants 2025-2032",
+                    "tolerance": {
+                      "en": "≤ 0.02°",
+                      "pt": "≤ 0,02°"
+                    },
+                    "result": {
+                      "en": "max error 0.000001° over 300 instants (angular separation 0.000001°)",
+                      "pt": "erro máximo de 0,000001° em 300 instantes (separação angular 0,000001°)"
+                    },
+                    "status": "passed",
+                    "not_covered": {
+                      "en": "Sky position only, run without terrain: relief, DEM error and the Sun's disc are not part of this check.",
+                      "pt": "Só posição no céu, rodada sem terreno: relevo, erro do DEM e o disco do Sol não entram nesta checagem."
+                    },
+                    "script_path": "validation/test_horizons.py",
+                    "run_at": "2026-11-15T13:02:11Z"
+                  },
+                  {
+                    "id": "wueller2026-sunlit-days",
+                    "title": {
+                      "en": "Consecutive sunlit days at the Artemis Sites vs Wueller et al. 2026",
+                      "pt": "Dias seguidos de Sol nos Sites do Artemis contra Wueller et al. 2026"
+                    },
+                    "reference": "Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, data Zenodo 17084058: longest run of sunlit days in the 2026 southern mid-summer (06/11-27/11), 2 m | live: https://lunar-api.luizfbm.win, engine 0.1.0",
+                    "tolerance": {
+                      "en": "≤ 1 day per Site",
+                      "pt": "≤ 1 dia por Site"
+                    },
+                    "result": {
+                      "en": "75 of 130 Sites within 1 day; largest gap +19.23 d at MMO09. Of the 97 with a published value above 0, 75 within 1 day. 33 Sites are published as 0 days.",
+                      "pt": "75 de 130 Sites dentro de 1 dia; maior diferença +19,23 d em MMO09. Dos 97 com valor publicado acima de 0, 75 dentro de 1 dia. 33 Sites aparecem publicados com 0 dia."
+                    },
+                    "status": "failed",
+                    "not_covered": {
+                      "en": "Only 2026. Wueller used LROC QuickMap TerrainShadows on a 60 m map, 12 h steps and shadows to 150 km; we use 20/80/240 m DEMs to 300 km and 15 min steps, and count any part of the Sun's disc as sunlit. Not the same quantity: they publish a 60 m pixel, we answer for a point, and their own map changes by many days within ±180 m (CR01: 1.5 to 15 days around a 3.5 day pixel). Ours falls within ±1 day of that ±180 m range at 90 of 130 Sites. Their values are truncated to whole days. MMO07 to MMO10 are blank in the source for 2025-2028 and published as 0 (the paper's rasters give MMO09 19.5 days in 2026); they still count against us here. Our engine agrees with an independent DEM walk at CR01 and NR204; see docs/validation/wueller-2026.md. Checked live against the public API, not in CI.",
+                      "pt": "Só 2026. O Wueller usou o TerrainShadows do LROC QuickMap num mapa de 60 m, passos de 12 h e sombras até 150 km; nós usamos DEMs de 20/80/240 m até 300 km e passos de 15 min, e contamos qualquer parte do disco do Sol como Sol. Não é a mesma grandeza: eles publicam um pixel de 60 m, nós respondemos por um ponto, e o próprio mapa deles muda muitos dias em ±180 m (CR01: de 1,5 a 15 dias em volta de um pixel de 3,5). O nosso cai a ±1 dia dessa faixa de ±180 m em 90 de 130 Sites. Os valores deles são truncados em dias inteiros. MMO07 a MMO10 estão em branco na fonte em 2025-2028 e publicados como 0 (os rasters do artigo dão 19,5 dias para MMO09 em 2026); mesmo assim contam contra nós aqui. O nosso motor bate com uma caminhada independente do DEM em CR01 e NR204; veja docs/validation/wueller-2026.md. Conferido ao vivo na API pública, fora do CI."
+                    },
+                    "script_path": "validation/live_checks.py",
+                    "run_at": "2026-11-15T13:02:11Z"
+                  }
+                ]
+
+components:
+  parameters:
+    SiteIdPath:
+      name: site_id
+      in: path
+      required: true
+      schema:
+        type: string
+    QuerySiteId:
+      name: site_id
+      in: query
+      description: A Curated Site. Pass this or both custom coordinates, never both.
+      schema:
+        type: string
+    QueryLatitude:
+      name: latitude_deg
+      in: query
+      description: Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg`.
+      schema:
+        type: number
+        minimum: -90
+        maximum: 90
+    QueryLongitude:
+      name: longitude_deg
+      in: query
+      description: Custom Site longitude.
+      schema:
+        type: number
+        minimum: -180
+        maximum: 180
+    QueryStart:
+      name: start
+      in: query
+      required: true
+      description: Window start.
+      schema:
+        type: string
+        format: date-time
+    QueryDuration:
+      name: duration_hours
+      in: query
+      description: Window duration. Defaults to one synodic month.
+      schema:
+        type: number
+        exclusiveMinimum: 0
+        maximum: 1440
+        default: 708.73
+    QueryObserverHeight:
+      name: observer_height_m
+      in: query
+      description: Observer height above the ground.
+      schema:
+        type: number
+        minimum: 0
+        maximum: 50
+        default: 2
+  responses:
+    NotFound:
+      description: No Curated Site with that id.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: https://lunar-api.luizfbm.win/problems/site-not-found
+            title: Site not found
+            status: 404
+            detail: "No Curated Site with id 'XYZ'."
+    InvalidParameter:
+      description: A query parameter breaks its schema, such as a search longer than 100 characters.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: https://lunar-api.luizfbm.win/problems/invalid-parameter
+            title: Invalid parameter
+            status: 422
+            detail: "q must be at most 100 characters."
+            code: invalid_parameter
+    Busy:
+      description: |
+        Every engine slot stayed taken for longer than the queue's wait limit (25 s), so
+        the answer was not computed. Nothing is wrong with the Query: ask again after
+        `Retry-After` seconds. Answers already in the cache never get this.
+      headers:
+        Retry-After:
+          description: Seconds to wait before asking again.
+          schema: { type: integer, minimum: 1 }
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: https://lunar-api.luizfbm.win/problems/busy
+            title: Busy
+            status: 503
+            detail: "Every engine slot is taken; ask again in 10 s."
+            code: busy
+    Unprocessable:
+      description: The Query is outside what the engine covers.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: https://lunar-api.luizfbm.win/problems/outside-coverage
+            title: Outside coverage
+            status: 422
+            detail: Custom Sites must be at or south of 80°S.
+            code: outside_coverage
+
+  schemas:
+    Problem:
+      type: object
+      description: RFC 9457 problem details.
+      required: [type, title, status]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        code:
+          type: string
+          description: Stable machine code the frontend translates.
+          enum: [outside_coverage, window_out_of_range, ambiguous_site, missing_site, invalid_parameter, busy]
+
+    LocalizedText:
+      type: object
+      required: [en, pt]
+      properties:
+        en: { type: string }
+        pt: { type: string }
+
+    Meta:
+      type: object
+      required: [engine_version, kernels, dems, coverage, defaults, short_shadow_max_hours]
+      properties:
+        engine_version: { type: string }
+        kernels:
+          type: array
+          items: { type: string }
+        dems:
+          type: array
+          items:
+            $ref: "#/components/schemas/DemProduct"
+        coverage:
+          type: object
+          required: [custom_max_latitude_deg, window_min, window_max, max_duration_hours]
+          properties:
+            custom_max_latitude_deg: { type: number }
+            window_min: { type: string, format: date-time }
+            window_max: { type: string, format: date-time }
+            max_duration_hours: { type: number }
+        defaults:
+          type: object
+          required: [site_id, duration_hours, observer_height_m]
+          properties:
+            site_id: { type: string }
+            duration_hours: { type: number }
+            observer_height_m: { type: number }
+        short_shadow_max_hours:
+          type: number
+          description: A Sun-hidden period shorter than this is a Short shadow.
+
+    DemProduct:
+      type: object
+      required: [product, resolution_m]
+      properties:
+        product: { type: string }
+        resolution_m: { type: number }
+
+    Region:
+      type: object
+      required: [id, name, site_count, artemis_iii_current, source_reference]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        site_count: { type: integer, minimum: 0 }
+        artemis_iii_current:
+          type: boolean
+          description: In NASA's October 2024 list of nine Artemis III candidate regions.
+        source_reference: { type: string }
+
+    Site:
+      type: object
+      required: [id, name, latitude_deg, longitude_deg, source, source_reference, region_id, curated, has_5m_dem]
+      properties:
+        id:
+          type: string
+          description: Stable id for Curated Sites; "custom" for a typed coordinate.
+        name: { type: string }
+        latitude_deg: { type: number, minimum: -90, maximum: 90 }
+        longitude_deg: { type: number, minimum: -180, maximum: 180 }
+        source:
+          type: string
+          enum: [wueller2026, clps, apollo, isro, barker2021, custom]
+        source_reference:
+          type: string
+          description: Citation of where the coordinate comes from.
+        region_id:
+          type: [string, "null"]
+        curated: { type: boolean }
+        has_5m_dem:
+          type: boolean
+          description: A 5 m DEM covers this Site (PGDA 78 / 90).
+
+    Occluder:
+      type: object
+      description: The terrain that sets the Horizon mask in one direction.
+      required: [azimuth_deg, distance_m, latitude_deg, longitude_deg, terrain_height_m]
+      properties:
+        azimuth_deg: { type: number, minimum: 0, exclusiveMaximum: 360 }
+        distance_m:
+          type: number
+          minimum: 0
+          description: Surface distance from the Site to the Occluder.
+        latitude_deg: { type: number }
+        longitude_deg: { type: number }
+        terrain_height_m:
+          type: number
+          description: Height of the Occluder relative to the reference sphere of 1737.4 km.
+        feature:
+          description: >-
+            The named terrain feature the Occluder sits on, from the IAU Gazetteer of
+            Planetary Nomenclature, or null when no named feature fits. Optional: older
+            answers omit it.
+          anyOf:
+            - $ref: "#/components/schemas/OccluderFeature"
+            - type: "null"
+
+    OccluderFeature:
+      type: object
+      description: >-
+        A feature of the IAU Gazetteer, treated as a circle (centre and diameter). The
+        smallest feature whose rim or inside holds the Occluder wins; near is used only
+        when none does.
+      required: [name, type, relation]
+      properties:
+        name:
+          type: string
+          description: The name as the IAU writes it.
+          example: Shackleton
+        type:
+          type: string
+          enum: [crater, mons, mare, lacus, sinus, palus, planitia, oceanus, promontorium]
+          description: IAU feature type. Lettered satellite features are craters.
+        relation:
+          type: string
+          enum: [rim, inside, near]
+          description: >-
+            rim: on the crater's rim; inside: within the feature; near: just outside it
+            (craters and montes only).
+
+    HorizonSample:
+      type: object
+      required: [azimuth_deg, elevation_deg, occluder]
+      properties:
+        azimuth_deg: { type: number, minimum: 0, exclusiveMaximum: 360 }
+        elevation_deg:
+          type: number
+          description: Elevation of the Horizon mask at this azimuth, seen from the Observer height.
+        occluder:
+          $ref: "#/components/schemas/Occluder"
+
+    BodyPosition:
+      type: object
+      required: [azimuth_deg, elevation_deg]
+      properties:
+        azimuth_deg: { type: number, minimum: 0, exclusiveMaximum: 360 }
+        elevation_deg: { type: number, minimum: -90, maximum: 90 }
+
+    TimelineSample:
+      type: object
+      required: [t, sun, earth]
+      properties:
+        t: { type: string, format: date-time }
+        sun:
+          allOf:
+            - $ref: "#/components/schemas/BodyPosition"
+            - type: object
+              required: [fraction]
+              properties:
+                fraction:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+                  description: Sun fraction. 0 during a lunar eclipse.
+        earth:
+          allOf:
+            - $ref: "#/components/schemas/BodyPosition"
+            - type: object
+              required: [visible]
+              properties:
+                visible:
+                  type: boolean
+                  description: Earth's centre is above the Horizon mask.
+
+    Event:
+      type: object
+      required: [type, t, azimuth_deg, occluder]
+      properties:
+        type:
+          type: string
+          enum: [sunrise, sunset, earthrise, earthset]
+        t:
+          type: string
+          format: date-time
+          description: Refined to about 1 second.
+        azimuth_deg:
+          type: number
+          description: Azimuth of the body at the event.
+        occluder:
+          $ref: "#/components/schemas/Occluder"
+          description: The terrain the body goes behind (set events) or clears (rise events), at its azimuth.
+
+    Period:
+      type: object
+      required: [body, state, start, end, duration_hours]
+      properties:
+        body:
+          type: string
+          enum: [sun, earth]
+        state:
+          type: string
+          enum: [visible, hidden]
+        start:
+          type: string
+          format: date-time
+          description: Window start when the period was already running.
+        end:
+          type: string
+          format: date-time
+          description: Window end when the period is still running.
+        duration_hours: { type: number, minimum: 0 }
+        short_shadow:
+          type: boolean
+          description: Present only for Sun hidden periods.
+
+    Metrics:
+      type: object
+      required: [sun_and_earth_hours, sunlit_hours, earth_visible_hours, lcip_hours, lcsp_hours, mean_sun_fraction]
+      properties:
+        sun_and_earth_hours: { type: number, minimum: 0 }
+        sunlit_hours:
+          type: number
+          minimum: 0
+          description: Hours with any part of the Sun's disc visible.
+        earth_visible_hours: { type: number, minimum: 0 }
+        lcip_hours: { type: number, minimum: 0 }
+        lcsp_hours: { type: number, minimum: 0 }
+        mean_sun_fraction: { type: number, minimum: 0, maximum: 1 }
+
+    Provenance:
+      type: object
+      required: [engine_version, kernels, dems]
+      properties:
+        engine_version: { type: string }
+        synthetic:
+          type: boolean
+          description: True only for mock data; real answers send false.
+        kernels:
+          type: array
+          items: { type: string }
+        dems:
+          type: array
+          items:
+            $ref: "#/components/schemas/DemProduct"
+
+    Query:
+      type: object
+      description: The Query as the engine resolved it.
+      required: [site, start, end, duration_hours, observer_height_m, step_minutes]
+      properties:
+        site:
+          $ref: "#/components/schemas/Site"
+        start: { type: string, format: date-time }
+        end: { type: string, format: date-time }
+        duration_hours: { type: number }
+        observer_height_m: { type: number }
+        step_minutes: { type: number }
+
+    SubPoint:
+      type: object
+      required: [latitude_deg, longitude_deg]
+      properties:
+        latitude_deg: { type: number, minimum: -90, maximum: 90 }
+        longitude_deg: { type: number, minimum: -180, maximum: 180 }
+
+    SubPoints:
+      type: object
+      description: >-
+        Where the Sun and the Earth are overhead on the Moon, seen from the Moon's centre, in
+        the MOON_ME frame (planetocentric, longitude east-positive), with light time and
+        stellar aberration corrected. For lighting a globe and placing the Earth on it.
+        Hourly from the Window start, plus the Window end; interpolate linearly (unwrap the
+        longitude at ±180°), which stays within 0.0002°. Optional: older answers omit it.
+      required: [step_hours, frame, samples]
+      properties:
+        step_hours: { type: number, const: 1 }
+        frame: { type: string, const: MOON_ME }
+        samples:
+          type: array
+          items:
+            type: object
+            required: [t, sun, earth]
+            properties:
+              t: { type: string, format: date-time }
+              sun: { $ref: "#/components/schemas/SubPoint" }
+              earth: { $ref: "#/components/schemas/SubPoint" }
+
+    VisibilityResult:
+      type: object
+      required: [query, horizon, timeline, events, periods, metrics, provenance]
+      properties:
+        query:
+          $ref: "#/components/schemas/Query"
+        horizon:
+          type: object
+          required: [azimuth_step_deg, samples]
+          properties:
+            azimuth_step_deg: { type: number, const: 0.5 }
+            samples:
+              type: array
+              minItems: 720
+              maxItems: 720
+              items:
+                $ref: "#/components/schemas/HorizonSample"
+        timeline:
+          type: object
+          required: [step_minutes, samples]
+          properties:
+            step_minutes: { type: number }
+            samples:
+              type: array
+              items:
+                $ref: "#/components/schemas/TimelineSample"
+            sun_radius_deg:
+              type: number
+              description: >-
+                The Sun's angular radius, mean over the Window, for drawing the disc. It moves by
+                at most 0.005° in 60 days (0.261° to 0.272° over 2025-2032). Optional: older
+                answers omit it.
+        sub_points:
+          $ref: "#/components/schemas/SubPoints"
+        events:
+          type: array
+          description: Sorted by time.
+          items:
+            $ref: "#/components/schemas/Event"
+        periods:
+          type: array
+          items:
+            $ref: "#/components/schemas/Period"
+        metrics:
+          $ref: "#/components/schemas/Metrics"
+        provenance:
+          $ref: "#/components/schemas/Provenance"
+
+    SiteYear:
+      type: object
+      required: [site, year, observer_height_m, start, end, months, totals, best_windows]
+      properties:
+        site: { $ref: "#/components/schemas/Site" }
+        year: { type: integer }
+        observer_height_m: { type: number }
+        start: { type: string, format: date-time }
+        end:
+          type: string
+          format: date-time
+          description: 1 January of the next year, or the end of coverage for 2032.
+        months:
+          type: array
+          minItems: 12
+          maxItems: 12
+          items: { $ref: "#/components/schemas/YearMonth" }
+        totals: { $ref: "#/components/schemas/YearTotals" }
+        best_windows:
+          type: array
+          maxItems: 3
+          description: Non-overlapping synodic-month Windows inside the year, most Sun-and-Earth hours first. Starts are on a 6 h grid.
+          items: { $ref: "#/components/schemas/BestWindow" }
+
+    YearMonth:
+      type: object
+      required: [month, start, end, sunlit_hours, earth_visible_hours, sun_and_earth_hours, longest_sunlit_period_hours, longest_shadow_hours]
+      properties:
+        month: { type: integer, minimum: 1, maximum: 12 }
+        start: { type: string, format: date-time }
+        end: { type: string, format: date-time }
+        sunlit_hours: { type: number, minimum: 0, description: Hours inside the month. }
+        earth_visible_hours: { type: number, minimum: 0 }
+        sun_and_earth_hours: { type: number, minimum: 0 }
+        longest_sunlit_period_hours:
+          type: number
+          minimum: 0
+          description: Full length of the longest sunlit period that starts in this month (it may run into later months); 0 if none starts here.
+        longest_shadow_hours:
+          type: number
+          minimum: 0
+          description: Full length of the longest shadow that starts in this month; 0 if none starts here.
+
+    YearTotals:
+      type: object
+      required: [sunlit_hours, sunlit_days, earth_visible_hours, sun_and_earth_hours, lcip_hours, lcsp_hours]
+      properties:
+        sunlit_hours: { type: number, minimum: 0 }
+        sunlit_days: { type: number, minimum: 0, description: sunlit_hours / 24. }
+        earth_visible_hours: { type: number, minimum: 0 }
+        sun_and_earth_hours: { type: number, minimum: 0 }
+        lcip_hours: { type: number, minimum: 0 }
+        lcsp_hours: { type: number, minimum: 0 }
+
+    BestWindow:
+      type: object
+      required: [start, end, duration_hours, sun_and_earth_hours]
+      properties:
+        start: { type: string, format: date-time }
+        end: { type: string, format: date-time }
+        duration_hours: { type: number }
+        sun_and_earth_hours: { type: number, minimum: 0 }
+
+    Validation:
+      type: object
+      required: [id, title, reference, tolerance, result, status, not_covered, script_path, run_at]
+      properties:
+        id: { type: string }
+        title: { $ref: "#/components/schemas/LocalizedText" }
+        reference: { type: string }
+        tolerance: { $ref: "#/components/schemas/LocalizedText" }
+        result: { $ref: "#/components/schemas/LocalizedText" }
+        status:
+          type: string
+          enum: [passed, failed, pending]
+        not_covered: { $ref: "#/components/schemas/LocalizedText" }
+        script_path:
+          type: string
+          description: Path in the app repo of the script that produces this result.
+        run_at: { type: string, format: date-time }
+
+    LadderRung:
+      type: object
+      required: [resolution_m, dems, metrics, next_sunset, next_earthset]
+      properties:
+        resolution_m:
+          type: number
+          description: Finest DEM in this rung's Horizon mask.
+        dems:
+          type: array
+          items:
+            $ref: "#/components/schemas/DemProduct"
+        metrics:
+          $ref: "#/components/schemas/Metrics"
+        next_sunset:
+          description: First Sunset in the Window on this rung, or null.
+          oneOf:
+            - $ref: "#/components/schemas/Event"
+            - type: "null"
+        next_earthset:
+          description: First Earthset in the Window on this rung, or null.
+          oneOf:
+            - $ref: "#/components/schemas/Event"
+            - type: "null"
+
+    MetricRange:
+      type: object
+      required: [min, max]
+      properties:
+        min: { type: number }
+        max: { type: number }
+
+    LadderResult:
+      type: object
+      required: [query, rungs, band]
+      properties:
+        query:
+          $ref: "#/components/schemas/Query"
+        rungs:
+          type: array
+          items:
+            $ref: "#/components/schemas/LadderRung"
+        band:
+          type: object
+          description: Minimum and maximum of each metric across the rungs.
+          required: [sun_and_earth_hours, sunlit_hours, earth_visible_hours, lcip_hours, lcsp_hours, mean_sun_fraction]
+          properties:
+            sun_and_earth_hours: { $ref: "#/components/schemas/MetricRange" }
+            sunlit_hours: { $ref: "#/components/schemas/MetricRange" }
+            earth_visible_hours: { $ref: "#/components/schemas/MetricRange" }
+            lcip_hours: { $ref: "#/components/schemas/MetricRange" }
+            lcsp_hours: { $ref: "#/components/schemas/MetricRange" }
+            mean_sun_fraction: { $ref: "#/components/schemas/MetricRange" }
+
+    ShiftedWindow:
+      type: object
+      required: [shift_days, start, end, sun_and_earth_hours, sunlit_hours, earth_visible_hours, lcsp_hours]
+      properties:
+        shift_days:
+          type: integer
+          description: Days from the planned start; negative is earlier.
+        start: { type: string, format: date-time }
+        end: { type: string, format: date-time }
+        sun_and_earth_hours: { type: number, minimum: 0 }
+        sunlit_hours: { type: number, minimum: 0 }
+        earth_visible_hours: { type: number, minimum: 0 }
+        lcsp_hours:
+          type: number
+          minimum: 0
+          description: Longest stretch with no Sun inside this Window.
+
+    SiteWindows:
+      type: object
+      required: [site, planned_start, duration_hours, observer_height_m, step_days, windows, best, typical, worst]
+      properties:
+        site: { $ref: "#/components/schemas/Site" }
+        planned_start: { type: string, format: date-time }
+        duration_hours: { type: number }
+        observer_height_m: { type: number }
+        step_days: { type: integer, const: 1 }
+        windows:
+          type: array
+          minItems: 1
+          maxItems: 397
+          description: Earliest first. Windows that would leave engine coverage are left out.
+          items: { $ref: "#/components/schemas/ShiftedWindow" }
+        best:
+          $ref: "#/components/schemas/ShiftedWindow"
+          description: Most Sun-and-Earth time; the earlier Window on a tie.
+        typical:
+          $ref: "#/components/schemas/ShiftedWindow"
+          description: The lower median by Sun-and-Earth time, so it is one of `windows`.
+        worst:
+          $ref: "#/components/schemas/ShiftedWindow"
+          description: Least Sun-and-Earth time; the earlier Window on a tie.
+
+    NeighbourSite:
+      type: object
+      required: [site, distance_km, metrics]
+      properties:
+        site: { $ref: "#/components/schemas/Site" }
+        distance_km:
+          type: number
+          minimum: 0
+          description: Great-circle distance from the asked Site on the 1737.4 km sphere.
+        metrics:
+          $ref: "#/components/schemas/Metrics"
+
+    SiteNeighbours:
+      type: object
+      required: [query, metrics, neighbours]
+      properties:
+        query:
+          $ref: "#/components/schemas/Query"
+        metrics:
+          $ref: "#/components/schemas/Metrics"
+          description: The asked Site's own metrics over the Window.
+        neighbours:
+          type: array
+          maxItems: 10
+          description: Most Sun-and-Earth time first; a tie goes to the nearer Site, then the lower id.
+          items: { $ref: "#/components/schemas/NeighbourSite" }
+
+    ScatterPoint:
+      type: object
+      required: [distance_m, azimuth_deg, latitude_deg, longitude_deg, metrics]
+      properties:
+        distance_m:
+          type: number
+          minimum: 0
+          description: Surface distance from the Site; 0 for the Site itself.
+        azimuth_deg:
+          type: number
+          minimum: 0
+          exclusiveMaximum: 360
+          description: Direction from the Site, clockwise from local north; 0 for the Site itself.
+        latitude_deg: { type: number, minimum: -90, maximum: 90 }
+        longitude_deg: { type: number, minimum: -180, maximum: 180 }
+        metrics:
+          $ref: "#/components/schemas/Metrics"
+
+    ScatterRange:
+      type: object
+      required: [min, max, min_point, max_point]
+      properties:
+        min: { type: number }
+        max: { type: number }
+        min_point:
+          type: integer
+          minimum: 0
+          maximum: 18
+          description: Index in `points` of the point with the minimum; the first one on a tie.
+        max_point:
+          type: integer
+          minimum: 0
+          maximum: 18
+          description: Index in `points` of the point with the maximum; the first one on a tie.
+
+    ScatterResult:
+      type: object
+      required: [query, radius_m, points, band]
+      properties:
+        query:
+          $ref: "#/components/schemas/Query"
+        radius_m: { type: number }
+        points:
+          type: array
+          minItems: 19
+          maxItems: 19
+          description: The Site first, then the inner ring and the outer ring, each by azimuth from north.
+          items:
+            $ref: "#/components/schemas/ScatterPoint"
+        band:
+          type: object
+          description: Minimum and maximum of each metric across the points, and the point that gives each.
+          required: [sun_and_earth_hours, sunlit_hours, earth_visible_hours, lcip_hours, lcsp_hours, mean_sun_fraction]
+          properties:
+            sun_and_earth_hours: { $ref: "#/components/schemas/ScatterRange" }
+            sunlit_hours: { $ref: "#/components/schemas/ScatterRange" }
+            earth_visible_hours: { $ref: "#/components/schemas/ScatterRange" }
+            lcip_hours: { $ref: "#/components/schemas/ScatterRange" }
+            lcsp_hours: { $ref: "#/components/schemas/ScatterRange" }
+            mean_sun_fraction: { $ref: "#/components/schemas/ScatterRange" }
+
+    Lander:
+      type: object
+      description: >-
+        The numbers the Charge is followed from, as they were sent. The pointing and the azimuth
+        are there only when they were sent.
+      required: [panel_power_w, load_w, battery_wh]
+      properties:
+        panel_power_w:
+          type: number
+          minimum: 0
+          description: Power the panels give facing the Sun in full Sun at 1 au, in watts.
+        load_w:
+          type: number
+          description: Power the lander draws, in watts.
+        battery_wh:
+          type: number
+          description: Battery capacity, in watt-hours.
+        panel_pointing:
+          type: string
+          enum: [sun, fixed, flat]
+          description: Where the panels face, when `panel_pointing` was sent.
+        panel_azimuth_deg:
+          type: number
+          minimum: 0
+          exclusiveMaximum: 360
+          description: Where upright fixed panels face, degrees from north, clockwise.
+
+    EnergyResult:
+      type: object
+      required:
+        - query
+        - lander
+        - darkness_tolerance_hours
+        - lcsp_hours
+        - step_minutes
+        - charge_fraction
+        - min_charge_fraction
+        - min_charge_t
+        - unmet_hours
+        - final_charge_fraction
+        - load_always_met
+      properties:
+        query:
+          $ref: "#/components/schemas/Query"
+        lander:
+          $ref: "#/components/schemas/Lander"
+        darkness_tolerance_hours:
+          type: number
+          minimum: 0
+          description: >-
+            Battery capacity divided by the load: the hours of continuous shadow the lander
+            survives from a full battery.
+        lcsp_hours:
+          type: number
+          minimum: 0
+          description: The Window's longest stretch with no Sun, to read next to the Darkness tolerance.
+        step_minutes: { type: number }
+        charge_fraction:
+          type: array
+          description: >-
+            Charge as a share of capacity, one value per timeline sample of `/visibility` for the
+            same Query, in the same order. The first value is 1.
+          items: { type: number, minimum: 0, maximum: 1 }
+        min_charge_fraction: { type: number, minimum: 0, maximum: 1 }
+        min_charge_t:
+          type: string
+          format: date-time
+          description: First instant of the lowest charge.
+        unmet_hours:
+          type: number
+          minimum: 0
+          description: Hours with the battery empty and the panels giving less than the load.
+        final_charge_fraction: { type: number, minimum: 0, maximum: 1 }
+        load_always_met:
+          type: boolean
+          description: True when `unmet_hours` is 0.
+        panel_lit_hours:
+          type: number
+          minimum: 0
+          description: >-
+            Hours with the Sun up (the Sun's visible periods, whose sum is the sunlit hours of
+            `/visibility`) and on the panels' face (incidence factor above 0 at the step). Never
+            more than the sunlit hours, and equal to them facing the Sun. Present only when
+            `panel_pointing` was sent.
+        panel_longest_dark_hours:
+          type: number
+          minimum: 0
+          description: >-
+            The Window's longest continuous stretch with no light on the panels: timeline steps
+            where Sun fraction × incidence factor is 0 at the sample that opens them, the rule
+            the Charge follows. With a pointing other than `sun`, this is what the Darkness
+            tolerance is read against, in place of the LCSP; it can be far longer than the LCSP,
+            up to the whole Window for panels facing away from the Sun. Present only when
+            `panel_pointing` was sent.
+
+    FlatEvent:
+      type: object
+      description: An event on the Flat horizon. There is no terrain, so there is no Occluder.
+      required: [type, t, azimuth_deg]
+      properties:
+        type:
+          type: string
+          enum: [sunrise, sunset, earthrise, earthset]
+        t:
+          type: string
+          format: date-time
+          description: Refined to about 1 second.
+        azimuth_deg:
+          type: number
+          description: Azimuth of the body at the event.
+
+    FlatResult:
+      type: object
+      required: [query, horizon_elevation_deg, search_end, events, metrics, provenance]
+      properties:
+        query:
+          $ref: "#/components/schemas/Query"
+        horizon_elevation_deg:
+          type: number
+          maximum: 0
+          description: >-
+            Elevation of the Flat horizon, the same at every azimuth: minus the dip of the bare
+            sphere at the Observer height. 0 at ground level.
+        search_end:
+          type: string
+          format: date-time
+          description: Events were looked for up to here.
+        events:
+          type: array
+          description: Sorted by time, from the Window start to `search_end`.
+          items:
+            $ref: "#/components/schemas/FlatEvent"
+        metrics:
+          $ref: "#/components/schemas/Metrics"
+          description: Over the Window, on the Flat horizon.
+        provenance:
+          $ref: "#/components/schemas/Provenance"
+
+    SlopeStats:
+      type: object
+      required: [cells, median_deg, p95_deg, max_deg, limit_deg, share_below_limit]
+      properties:
+        cells:
+          type: integer
+          minimum: 1
+          description: DEM cells whose centres lie within the radius.
+        median_deg: { type: number, minimum: 0, maximum: 90 }
+        p95_deg:
+          type: number
+          minimum: 0
+          maximum: 90
+          description: 95 % of the cells are flatter than this.
+        max_deg: { type: number, minimum: 0, maximum: 90 }
+        limit_deg: { type: number }
+        share_below_limit:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Share of the cells with a slope under `limit_deg`.
+
+    PermanentShadow:
+      type: object
+      description: The nearest permanently shadowed region to the Site.
+      required: [distance_m, azimuth_deg, latitude_deg, longitude_deg, product]
+      properties:
+        distance_m: { type: number, minimum: 0 }
+        azimuth_deg: { type: number, minimum: 0, exclusiveMaximum: 360 }
+        latitude_deg: { type: number }
+        longitude_deg: { type: number }
+        product:
+          type: string
+          description: The map it was read from.
+
+    TerrainResult:
+      type: object
+      required: [site, radius_m, slope, dem]
+      properties:
+        site: { $ref: "#/components/schemas/Site" }
+        radius_m: { type: number }
+        slope:
+          $ref: "#/components/schemas/SlopeStats"
+        dem:
+          $ref: "#/components/schemas/DemProduct"
+          description: The DEM the slope was measured on.
+        permanent_shadow:
+          description: >-
+            Left out until the map of permanently shadowed regions is on the server; null when
+            the map has no shadowed cell in range of the Site.
+          anyOf:
+            - $ref: "#/components/schemas/PermanentShadow"
+            - type: "null"
+
+    AssistantMessage:
+      type: object
+      required: [role, content]
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+          minLength: 1
+          maxLength: 2000
+
+    AssistantQuery:
+      type: object
+      description: >-
+        The Query on screen, so that "here" and "this Window" mean something. Same rules as
+        `/visibility`: `site_id` or both coordinates, never both.
+      required: [start]
+      properties:
+        site_id: { type: string }
+        latitude_deg: { type: number, minimum: -90, maximum: 90 }
+        longitude_deg: { type: number, minimum: -180, maximum: 180 }
+        start: { type: string, format: date-time }
+        duration_hours: { type: number, exclusiveMinimum: 0, maximum: 1440, default: 708.73 }
+        observer_height_m: { type: number, minimum: 0, maximum: 50, default: 2 }
+
+    AssistantRequest:
+      type: object
+      required: [messages, lang]
+      properties:
+        messages:
+          type: array
+          minItems: 1
+          maxItems: 20
+          description: The conversation so far, oldest first. The last message is the user's question.
+          items:
+            $ref: "#/components/schemas/AssistantMessage"
+        lang:
+          type: string
+          enum: [en, pt]
+          description: The language of the answer.
+        query:
+          $ref: "#/components/schemas/AssistantQuery"
+
+    AssistantSource:
+      type: object
+      required: [operation, request]
+      properties:
+        operation:
+          type: string
+          description: The `operationId` of the route that was read, such as `getVisibility`.
+        request:
+          type: string
+          description: Path and query string of that request to this API.
+
+    AssistantReply:
+      type: object
+      required: [answer, mode, numbers, sources]
+      properties:
+        answer:
+          type: string
+          description: A few sentences in the language asked for.
+        mode:
+          type: string
+          enum: [model, offline]
+          description: >-
+            model when a language model wrote the answer; offline when the keyword router did,
+            with fixed sentences.
+        numbers:
+          type: object
+          description: The check of every number in `answer` against what the operations returned.
+          required: [total, traced, untraced]
+          properties:
+            total: { type: integer, minimum: 0 }
+            traced: { type: integer, minimum: 0 }
+            untraced:
+              type: array
+              description: The numbers in `answer` that were not found, as written there.
+              items: { type: string }
+        sources:
+          type: array
+          description: The requests behind the answer.
+          items:
+            $ref: "#/components/schemas/AssistantSource"
+
+    Interval:
+      type: object
+      required: [start, end, duration_hours]
+      properties:
+        start:
+          type: string
+          format: date-time
+          description: Window start when it was already running.
+        end:
+          type: string
+          format: date-time
+          description: Window end when it is still running.
+        duration_hours: { type: number, minimum: 0 }
+
+    DsnStation:
+      type: object
+      required: [id, complex, latitude_deg, longitude_deg, passes]
+      properties:
+        id:
+          type: string
+          enum: [DSS-14, DSS-43, DSS-63]
+        complex:
+          type: string
+          enum: [goldstone, canberra, madrid]
+        latitude_deg: { type: number, minimum: -90, maximum: 90 }
+        longitude_deg: { type: number, minimum: -180, maximum: 180 }
+        passes:
+          type: array
+          description: Stretches of the Window with the Moon above the minimum elevation at this antenna.
+          items:
+            $ref: "#/components/schemas/Interval"
+
+    DsnResult:
+      type: object
+      required:
+        - query
+        - min_elevation_deg
+        - stations
+        - link_periods
+        - earth_visible_hours
+        - link_hours
+        - earth_without_station_hours
+        - provenance
+      properties:
+        query:
+          $ref: "#/components/schemas/Query"
+        min_elevation_deg:
+          type: number
+          description: Lowest elevation at which a 70 m antenna is taken to see the Moon.
+        stations:
+          type: array
+          minItems: 3
+          maxItems: 3
+          items:
+            $ref: "#/components/schemas/DsnStation"
+        link_periods:
+          type: array
+          description: >-
+            Stretches with the Earth visible from the Site and at least one antenna with the Moon
+            above the minimum elevation. Sorted by time.
+          items:
+            $ref: "#/components/schemas/Interval"
+        earth_visible_hours: { type: number, minimum: 0 }
+        link_hours: { type: number, minimum: 0 }
+        earth_without_station_hours:
+          type: number
+          minimum: 0
+          description: Hours with the Earth visible from the Site and no antenna with the Moon in view.
+        provenance:
+          $ref: "#/components/schemas/Provenance"

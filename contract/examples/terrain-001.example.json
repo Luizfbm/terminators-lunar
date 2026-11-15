@@ -1,0 +1,29 @@
+{
+ "summary": "Connecting Ridge 001, NASA's defaults (100 m, 10°): real answer of the engine on the repo's DEM fixtures on 2026-11-14",
+ "value": {
+  "site": {
+   "id": "001",
+   "name": "Connecting Ridge (NASA site 001)",
+   "latitude_deg": -89.4661,
+   "longitude_deg": -136.949,
+   "source": "wueller2026",
+   "source_reference": "Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",
+   "region_id": "CR",
+   "curated": true,
+   "has_5m_dem": true
+  },
+  "radius_m": 100.0,
+  "slope": {
+   "cells": 76,
+   "median_deg": 2.6182451257669404,
+   "p95_deg": 4.990835117921973,
+   "max_deg": 5.388999259620726,
+   "limit_deg": 10.0,
+   "share_below_limit": 1.0
+  },
+  "dem": {
+   "product": "LDEM_80S_20MPP_ADJ",
+   "resolution_m": 20.0
+  }
+ }
+}

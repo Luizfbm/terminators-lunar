@@ -1,0 +1,192 @@
+{
+ "summary": "Connecting Ridge CR05, default Window from 2026-11-14, Observer height 2 m: real answer from lunar-api.luizfbm.win",
+ "value": {
+  "query": {
+   "site": {
+    "id": "CR05",
+    "name": "Connecting Ridge CR05",
+    "latitude_deg": -89.4207,
+    "longitude_deg": -149.472,
+    "source": "wueller2026",
+    "source_reference": "Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",
+    "region_id": "CR",
+    "curated": true,
+    "has_5m_dem": true
+   },
+   "start": "2026-11-14T00:00:00Z",
+   "end": "2026-12-13T12:43:48Z",
+   "duration_hours": 708.73,
+   "observer_height_m": 2.0,
+   "step_minutes": 15
+  },
+  "rungs": [
+   {
+    "resolution_m": 240.0,
+    "dems": [
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ],
+    "metrics": {
+     "sun_and_earth_hours": 0.0,
+     "sunlit_hours": 442.19555555555553,
+     "earth_visible_hours": 141.70444444444445,
+     "lcip_hours": 267.53444444444443,
+     "lcsp_hours": 266.53444444444443,
+     "mean_sun_fraction": 0.6102587797343906
+    },
+    "next_sunset": {
+     "type": "sunset",
+     "t": "2026-11-21T06:39:40Z",
+     "azimuth_deg": 187.55040067416954,
+     "occluder": {
+      "azimuth_deg": 187.5,
+      "distance_m": 471.507568359375,
+      "latitude_deg": -89.43611264389048,
+      "longitude_deg": -149.67822787711032,
+      "terrain_height_m": 1571.8706549603783,
+      "feature": null
+     }
+    },
+    "next_earthset": {
+     "type": "earthset",
+     "t": "2026-11-27T11:26:00Z",
+     "azimuth_deg": 152.45433117495716,
+     "occluder": {
+      "azimuth_deg": 152.5,
+      "distance_m": 612.2607421875,
+      "latitude_deg": -89.43853228472646,
+      "longitude_deg": -148.52054210471724,
+      "terrain_height_m": 1597.146122889766,
+      "feature": null
+     }
+    }
+   },
+   {
+    "resolution_m": 80.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ],
+    "metrics": {
+     "sun_and_earth_hours": 0.0,
+     "sunlit_hours": 438.2269444444444,
+     "earth_visible_hours": 130.75027777777777,
+     "lcip_hours": 267.43805555555554,
+     "lcsp_hours": 270.50305555555553,
+     "mean_sun_fraction": 0.6049233272935641
+    },
+    "next_sunset": {
+     "type": "sunset",
+     "t": "2026-11-21T02:47:20Z",
+     "azimuth_deg": 189.50905456368164,
+     "occluder": {
+      "azimuth_deg": 189.5,
+      "distance_m": 502.2735595703125,
+      "latitude_deg": -89.43703011839817,
+      "longitude_deg": -149.7502393315928,
+      "terrain_height_m": 1573.779432276429,
+      "feature": null
+     }
+    },
+    "next_earthset": {
+     "type": "earthset",
+     "t": "2026-11-27T02:14:09Z",
+     "azimuth_deg": 151.79341072256267,
+     "occluder": {
+      "azimuth_deg": 152.0,
+      "distance_m": 612.0013427734375,
+      "latitude_deg": -89.43844016013246,
+      "longitude_deg": -148.50519558309372,
+      "terrain_height_m": 1603.5483217242681,
+      "feature": null
+     }
+    }
+   },
+   {
+    "resolution_m": 20.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ],
+    "metrics": {
+     "sun_and_earth_hours": 0.0,
+     "sunlit_hours": 436.09555555555556,
+     "earth_visible_hours": 127.12638888888888,
+     "lcip_hours": 267.1716666666667,
+     "lcsp_hours": 272.63444444444445,
+     "mean_sun_fraction": 0.6016195776090512
+    },
+    "next_sunset": {
+     "type": "sunset",
+     "t": "2026-11-21T00:55:26Z",
+     "azimuth_deg": 190.45246602617775,
+     "occluder": {
+      "azimuth_deg": 190.5,
+      "distance_m": 487.25982666015625,
+      "latitude_deg": -89.43649211723468,
+      "longitude_deg": -149.76974745106952,
+      "terrain_height_m": 1573.198475116535,
+      "feature": null
+     }
+    },
+    "next_earthset": {
+     "type": "earthset",
+     "t": "2026-11-26T23:12:22Z",
+     "azimuth_deg": 151.5674414535028,
+     "occluder": {
+      "azimuth_deg": 151.5,
+      "distance_m": 561.759033203125,
+      "latitude_deg": -89.43691124992203,
+      "longitude_deg": -148.5724891896692,
+      "terrain_height_m": 1601.5880041726164,
+      "feature": null
+     }
+    }
+   }
+  ],
+  "band": {
+   "sun_and_earth_hours": {
+    "min": 0.0,
+    "max": 0.0
+   },
+   "sunlit_hours": {
+    "min": 436.09555555555556,
+    "max": 442.19555555555553
+   },
+   "earth_visible_hours": {
+    "min": 127.12638888888888,
+    "max": 141.70444444444445
+   },
+   "lcip_hours": {
+    "min": 267.1716666666667,
+    "max": 267.53444444444443
+   },
+   "lcsp_hours": {
+    "min": 266.53444444444443,
+    "max": 272.63444444444445
+   },
+   "mean_sun_fraction": {
+    "min": 0.6016195776090512,
+    "max": 0.6102587797343906
+   }
+  }
+ }
+}
