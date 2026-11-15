@@ -1,4 +1,6 @@
-import { expect, test, type Locator, type Page } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
+import { discRadius, EARTH_DISTANCE, EARTH_RADIUS, projectedRadiusPx, SUN_ANGULAR_RADIUS_DEG, SUN_DISPLAY_DISTANCE } from '../src/domain/spaceScale'
+import { findOnStage, readGlobe, settle, tipTo, turn, zoomOutTo } from './orbit'
 
 // The Prism mock answers every Query with the contract's example: Connecting Ridge CR01, a Window from
 // 20/11/2026 12:00 UTC to 30/11/2026 12:00 UTC, with Sunsets behind the rim of Shackleton, two Short
@@ -176,70 +178,83 @@ test('a shared link has a preview image and the tab has an icon, both served by 
   expect(drawn.headers()['content-type']).toContain('image/svg+xml')
 })
 
-test('from orbit and on the map the Sun and the Earth are bodies in the scene, on screen and apart', async ({ page }) => {
-  // Luiz, regression: "I don't see the Sun and the Earth when I am in 'From orbit'". They are far
-  // outside the picture, so each is drawn in the scene on the side of the Moon where it lies. The
-  // globe says where it drew them, in pixels from its top left, in data-sun-x/y/r and
-  // data-earth-x/y/r: empty when a body is not drawn.
+test.describe('from orbit the Sun and the Earth are out there, at their real scale', () => {
+  // Each test turns the camera with the mouse, and waits for its glide to end after every move.
+  test.describe.configure({ timeout: 240_000 })
+  // Luiz, regression: "I don't see the Sun and the Earth when I am in 'From orbit'", and then: they
+  // must not be icons pinned to the Moon's rim but bodies in space. The Earth is 221 Moon radii away
+  // and the Sun is drawn as wide as it is in the Moon's sky, so from near the Moon neither is in the
+  // picture until the camera goes round and looks past it. The globe says where each is on the stage
+  // in data-sun-x/y/r/distance and data-earth-x/y/r/distance, empty while it is off the stage or
+  // behind the Moon.
   for (const size of [{ width: 1280, height: 800 }, { width: 375, height: 812 }]) {
-    await page.setViewportSize(size)
-    for (const path of ['/', '/?view=map']) {
-      await page.goto(path)
-      const globe = page.locator('.globe')
-      await expect(globe).toHaveAttribute('data-dressed', 'true', { timeout: 20_000 })
+    test(`the Earth and the Sun come into view when the camera goes round the Moon, at ${size.width} px`, async ({ page }) => {
+      await page.setViewportSize(size)
+      await page.goto('/')
+      await expect(page.locator('.globe')).toHaveAttribute('data-dressed', 'true', { timeout: 20_000 })
+      await settle(page)
+      const opening = await readGlobe(page)
+      // The opening framing is the Moon filling the picture, a few radii away.
+      expect(opening.distance).toBeGreaterThan(2.5)
+      expect(opening.distance).toBeLessThan(5)
       // The Earth has its Blue Marble, not just its plain blue.
       await expect(page.locator('.globe canvas')).toHaveAttribute('data-earth', 'mapped', { timeout: 20_000 })
-      const read = async () =>
-        globe.evaluate((element) => {
-          const at = (name: string) => ({
-            x: Number(element.getAttribute(`data-${name}-x`) || NaN),
-            y: Number(element.getAttribute(`data-${name}-y`) || NaN),
-            r: Number(element.getAttribute(`data-${name}-r`) || NaN),
-          })
-          return { sun: at('sun'), earth: at('earth') }
-        })
-      // The Moon is dressed while the camera is still on its opening move, about 2 s, and the
-      // bodies are not drawn until it lands: on 15/11/2026 a busy machine read the markers mid-move,
-      // 20 to 50 px apart. Wait for them to be drawn and to stay where they are, then measure.
-      let last = ''
-      await expect
-        .poll(async () => {
-          const now = JSON.stringify(await read())
-          const still = now === last && !now.includes('null')
-          last = now
-          return still
-        }, { intervals: [300], timeout: 20_000 })
-        .toBe(true)
-      const { sun, earth } = await read()
-      const box = (await globe.boundingBox())!
-      const stage = (await page.locator('.stage').boundingBox())!
-      // The whole disc inside the picture, which is itself inside the stage.
-      for (const body of [sun, earth]) {
-        expect(body.r).toBeGreaterThan(4)
-        expect(body.x - body.r).toBeGreaterThanOrEqual(0)
-        expect(body.x + body.r).toBeLessThanOrEqual(box.width)
-        expect(body.y - body.r).toBeGreaterThanOrEqual(0)
-        expect(body.y + body.r).toBeLessThanOrEqual(box.height)
-      }
-      expect(box.x).toBeGreaterThanOrEqual(stage.x)
-      expect(box.x + box.width).toBeLessThanOrEqual(stage.x + stage.width)
-      expect(box.y + box.height).toBeLessThanOrEqual(stage.y + stage.height)
-      // The mock's sub-solar and sub-Earth points are far apart on the Moon: so are the two bodies.
-      expect(Math.hypot(sun.x - earth.x, sun.y - earth.y)).toBeGreaterThan(sun.r + earth.r + 24)
-      // And they cover neither the chosen Site's name nor the view buttons.
-      const clear = async (target: Locator) => {
-        if (!(await target.isVisible())) return
-        const other = (await target.boundingBox())!
-        for (const body of [sun, earth]) {
-          const x = box.x + body.x
-          const y = box.y + body.y
-          const nearest = { x: Math.min(other.x + other.width, Math.max(other.x, x)), y: Math.min(other.y + other.height, Math.max(other.y, y)) }
-          expect(Math.hypot(x - nearest.x, y - nearest.y)).toBeGreaterThanOrEqual(body.r)
-        }
-      }
-      await clear(page.locator('.globe__pin'))
-      await clear(page.locator('.globe__chosen'))
-      await clear(page.locator('.stage__foot'))
-    }
+
+      // Out where the Earth and the Moon can be framed together: the Moon is always at the middle.
+      await zoomOutTo(page, 300)
+      const height = (await page.locator('.globe').evaluate((element) => element.clientHeight))
+      const width = (await page.locator('.globe').evaluate((element) => element.clientWidth))
+
+      const earth = await findOnStage(page, 'earth')
+      // Seen from the Moon the Earth is 221 radii away; from the camera, as far as the camera is from the Moon more or less.
+      expect(earth.found.distance).toBeGreaterThan(0)
+      expect(earth.found.distance).toBeLessThan(EARTH_DISTANCE + earth.distance + 1)
+      const earthExpected = projectedRadiusPx(EARTH_RADIUS, earth.found.distance, 32, height)
+      // The radius is measured on the screen from the camera's own projection; the formula is for a body straight ahead.
+      expect(earth.found.r).toBeGreaterThan(earthExpected * 0.9)
+      expect(earth.found.r).toBeLessThan(earthExpected * 1.1)
+      expect(earth.found.x).toBeGreaterThanOrEqual(0)
+      expect(earth.found.x).toBeLessThanOrEqual(width)
+      expect(earth.found.y).toBeGreaterThanOrEqual(0)
+      expect(earth.found.y).toBeLessThanOrEqual(height)
+
+      const sun = await findOnStage(page, 'sun')
+      // The Sun is drawn 12,000 radii away, as wide as the 0.53° it spans in the Moon's sky.
+      expect(sun.found.distance).toBeGreaterThan(SUN_DISPLAY_DISTANCE - sun.distance - 1)
+      expect(sun.found.distance).toBeLessThan(SUN_DISPLAY_DISTANCE + sun.distance + 1)
+      const sunExpected = projectedRadiusPx(discRadius(SUN_DISPLAY_DISTANCE, SUN_ANGULAR_RADIUS_DEG), sun.found.distance, 32, height)
+      expect(sun.found.r).toBeGreaterThan(sunExpected * 0.9)
+      expect(sun.found.r).toBeLessThan(sunExpected * 1.1)
+      // And the Earth is the bigger of the two, as it is in the sky of the Moon.
+      expect(earth.found.r).toBeGreaterThan(sun.found.r)
+    })
   }
+
+  test('the camera goes all the way round the Moon, from pole to pole, and out as far as the Earth', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.locator('.globe')).toHaveAttribute('data-dressed', 'true', { timeout: 20_000 })
+    await settle(page)
+    // Turned a step at a time, it keeps going the same way, over the azimuth where a limit would stop it.
+    let previous = (await readGlobe(page)).azimuth
+    const wrap = (degrees: number) => ((((degrees + 180) % 360) + 360) % 360) - 180
+    const steps: number[] = []
+    for (let step = 0; step < 10; step++) {
+      await turn(page, 45)
+      const now = (await readGlobe(page)).azimuth
+      steps.push(wrap(now - previous))
+      previous = now
+    }
+    expect(steps.every((step) => Math.abs(step) > 10)).toBe(true)
+    expect(new Set(steps.map(Math.sign)).size).toBe(1)
+    // From the north pole to the south pole.
+    await tipTo(page, 12)
+    expect((await readGlobe(page)).polar).toBeLessThan(16)
+    await tipTo(page, 168)
+    expect((await readGlobe(page)).polar).toBeGreaterThan(164)
+    // Out far enough to frame the Earth and the Moon together, and no further than that.
+    await zoomOutTo(page, 690)
+    const far = await readGlobe(page)
+    expect(far.distance).toBeGreaterThan(600)
+    expect(far.distance).toBeLessThanOrEqual(700.01)
+  })
 })
