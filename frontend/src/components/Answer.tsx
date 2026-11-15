@@ -14,6 +14,7 @@ import type { WindowChoice } from './YearPanel'
 import { Nerds } from './Nerds'
 import { FlatLine, FlatMetrics } from './phase4/flat-line/FlatLine'
 import { KnifeEdgeWarning } from './phase4/miss/KnifeEdgeWarning'
+import { FragileLine } from './phase4/fragile/FragileLine'
 import { MissPanel } from './phase4/miss/MissPanel'
 import { useRadius, useScatter } from './phase4/miss/useMiss'
 import { WhenToLand } from './phase4/site-windows/WhenToLand'
@@ -157,6 +158,7 @@ export function Answer({
       {/* The engine sees this point sunlit, and the mission still ended: say why, here. */}
       {atLanding && <p className="landing-note">{t('landing.im2.note')}</p>}
       <KnifeEdgeWarning scatter={scatter.state} />
+      <FragileLine result={result} onOpenStats={() => onStats?.(true)} />
       <p className="sum">
         {t(summaryKey(metrics), {
           both: formatSpan(metrics.sun_and_earth_hours * HOUR_MS),

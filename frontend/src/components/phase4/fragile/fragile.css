@@ -1,0 +1,21 @@
+/* Fragile result: the note under the answer when the Sun or the Earth grazes the terrain (FragileLine). */
+.fragile {
+  max-width: 44ch;
+  margin: 16px 0 24px;
+  padding-left: 12px;
+  border-left: 2px solid var(--sun);
+  color: var(--fg);
+  font-size: var(--small);
+}
+
+.fragile__link {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fg);
+  font-size: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
