@@ -1799,3 +1799,30 @@ button.site {
   color: var(--fg);
   font-weight: 500;
 }
+
+/* ---- DEM Uncertainty band (src/components/UncertaintyLine.tsx, Numbers.tsx) ---- */
+/* The window an Event can fall in sits right under its time, so the reason and the window read as one. */
+.band-line {
+  max-width: 36ch;
+  margin: 0 0 clamp(16px, 3.5vh, 32px);
+  color: var(--dim);
+  font-size: var(--small);
+}
+
+.why:has(+ .band-line) {
+  margin-bottom: 2px;
+}
+
+.band-line--working {
+  font-style: italic;
+}
+
+/* In the Numbers table the range takes a line of its own under the value, so a narrow screen never overflows. */
+.metrics__band {
+  display: block;
+  margin-top: 2px;
+  color: var(--dim);
+  font-family: inherit;
+  font-size: 0.92em;
+  white-space: normal;
+}

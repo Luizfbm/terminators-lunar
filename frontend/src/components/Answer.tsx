@@ -8,6 +8,8 @@ import { useI18n } from '../i18n/I18nContext'
 import type { I18n } from '../i18n/i18n'
 import type { MessageKey } from '../i18n/messages'
 import { Extras } from './Extras'
+import { UncertaintyLine } from './UncertaintyLine'
+import { useUncertainty, type UncertaintyState } from '../hooks/useUncertainty'
 import type { WindowChoice } from './YearPanel'
 import { Nerds } from './Nerds'
 import { FlatLine, FlatMetrics } from './phase4/flat-line/FlatLine'
@@ -62,6 +64,7 @@ function BodyStatement({
   heading,
   marked,
   onMark,
+  uncertainty,
 }: {
   body: Body
   result: VisibilityResult
@@ -69,6 +72,7 @@ function BodyStatement({
   heading: 'h1' | 'h2'
   marked: boolean
   onMark?: (body: Body) => void
+  uncertainty: UncertaintyState
 }) {
   const i18n = useI18n()
   const { t, formatDay, formatTime, formatSpan } = i18n
@@ -96,6 +100,7 @@ function BodyStatement({
           t('why', { date: formatDay(at), time: formatTime(at), where })
         )}
       </p>
+      <UncertaintyLine uncertainty={uncertainty} event={said.event} events={result.events} />
     </>
   )
 }
@@ -141,12 +146,14 @@ export function Answer({
   // The Landing scatter is asked here so the knife-edge warning and the miss panel read the same answer.
   const radius = useRadius()
   const scatter = useScatter(result, radius[0])
+  // The DEM Uncertainty band, asked once the answer is here; the answer never waits on it.
+  const uncertainty = useUncertainty(result)
   return (
     <>
       {where}
-      <BodyStatement body="sun" result={result} cursorMs={cursorMs} heading="h1" marked={marked === 'sun'} onMark={onMark} />
+      <BodyStatement body="sun" result={result} cursorMs={cursorMs} heading="h1" marked={marked === 'sun'} onMark={onMark} uncertainty={uncertainty} />
       <FlatLine result={result} cursorMs={cursorMs} />
-      <BodyStatement body="earth" result={result} cursorMs={cursorMs} heading="h2" marked={marked === 'earth'} onMark={onMark} />
+      <BodyStatement body="earth" result={result} cursorMs={cursorMs} heading="h2" marked={marked === 'earth'} onMark={onMark} uncertainty={uncertainty} />
       {/* The engine sees this point sunlit, and the mission still ended: say why, here. */}
       {atLanding && <p className="landing-note">{t('landing.im2.note')}</p>}
       <KnifeEdgeWarning scatter={scatter.state} />
@@ -162,7 +169,7 @@ export function Answer({
       <WhenToLand result={result} onWindow={onWindow} />
       <Battery result={result} />
       <PlanCompare result={result} />
-      <Nerds result={result} cursorMs={cursorMs} open={stats} onOpen={(open) => onStats?.(open)} onWindow={onWindow} />
+      <Nerds result={result} cursorMs={cursorMs} open={stats} onOpen={(open) => onStats?.(open)} onWindow={onWindow} uncertainty={uncertainty} />
       {landing && !atLanding && (
         <p className="landing-open">
           <a

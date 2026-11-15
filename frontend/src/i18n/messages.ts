@@ -5,6 +5,7 @@ import { en as proofEn, pt as proofPt } from './catalogue/proof'
 import { en as landingEn, pt as landingPt } from './catalogue/landing'
 import { en as introEn, pt as introPt } from './catalogue/intro'
 import { en as nerdsEn, pt as nerdsPt } from './catalogue/nerds'
+import { en as uncertaintyEn, pt as uncertaintyPt } from './catalogue/uncertainty'
 import * as flatLine from '../components/phase4/flat-line/strings'
 import * as classroom from '../components/phase4/classroom/strings'
 import { en as missEn, pt as missPt } from '../components/phase4/miss/strings'
@@ -22,6 +23,7 @@ export const en = {
   ...landingEn,
   ...introEn,
   ...nerdsEn,
+  ...uncertaintyEn,
   ...flatLine.en,
   ...classroom.en,
   ...missEn,
@@ -150,6 +152,7 @@ export const pt: Record<MessageKey, string> = {
   ...landingPt,
   ...introPt,
   ...nerdsPt,
+  ...uncertaintyPt,
   ...flatLine.pt,
   ...classroom.pt,
   ...missPt,
