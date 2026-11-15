@@ -119,3 +119,22 @@ checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422", "503"]
 include-name = "GET /terrain/heights"
 generation.max-examples = 8
 checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422", "503"]
+
+# Eduardo's multi-resolution hazard work: a Site with no PGDA 78 grid answers 422 no_hazard_grid,
+# a parameter out of its range 422 invalid_parameter, an unknown Site 404.
+[[operations]]
+include-name = "GET /sites/{site_id}/hazard"
+checks.positive_data_acceptance.expected-statuses = ["2xx", "404"]
+
+[[operations]]
+include-name = "GET /sites/{site_id}/hazard/grid"
+checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422"]
+
+[[operations]]
+include-name = "GET /sites/{site_id}/hazard/around"
+checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422"]
+
+[[operations]]
+include-name = "GET /sites/{site_id}/route"
+generation.max-examples = 8
+checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422"]
