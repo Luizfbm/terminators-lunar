@@ -130,6 +130,8 @@ export function sunlitShare(normal: readonly [number, number, number], light: { 
 export interface GroundSpacing {
   measuredM: number
   drawnM: number
+  /** The DEM, named only when the ground comes from the engine's grid (`/terrain/heights`) rather than a published polar map. */
+  product?: string
 }
 
 export const groundSpacing = (metresPerPixel: number, stride: number): GroundSpacing => ({ measuredM: metresPerPixel, drawnM: metresPerPixel * stride })
@@ -139,10 +141,14 @@ export const groundSpacing = (metresPerPixel: number, stride: number): GroundSpa
  * when the mesh is coarser than that, how finely this device draws it. Nothing at all for the
  * silhouette.
  */
-export function groundCaption(spacing: GroundSpacing | null, i18n: { t: (key: 'sky.caption.ground' | 'sky.caption.drawn', params?: Record<string, string>) => string; formatNumber: (value: number) => string }): string[] {
+export function groundCaption(
+  spacing: GroundSpacing | null,
+  i18n: { t: (key: 'sky.caption.ground' | 'sky.caption.drawn' | 'sky.caption.product', params?: Record<string, string>) => string; formatNumber: (value: number) => string },
+): string[] {
   if (!spacing) return []
   const metres = (value: number) => i18n.formatNumber(Math.round(value))
   const parts = [i18n.t('sky.caption.ground', { metres: metres(spacing.measuredM) })]
+  if (spacing.product) parts.push(i18n.t('sky.caption.product', { product: spacing.product }))
   if (Math.round(spacing.drawnM) > Math.round(spacing.measuredM)) parts.push(i18n.t('sky.caption.drawn', { metres: metres(spacing.drawnM) }))
   return parts
 }

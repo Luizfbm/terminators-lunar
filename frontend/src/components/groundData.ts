@@ -1,6 +1,8 @@
+import { ApiError, getTerrainHeights, type Site } from '../api/client'
 import { siteTilesOf, tileCovering, type SiteTile } from '../domain/nearGround'
 import { decodeGrey16 } from '../domain/png16'
 import { heightMapOf, type HeightMap } from '../domain/terrain'
+import { heightGridOf } from '../domain/terrainHeights'
 import { versioned } from './moonSurface'
 
 /** One level of the measured ground: its heights, and the images of its finer relief for the light. */
@@ -93,4 +95,37 @@ export function loadSiteGround(latitudeDeg: number, longitudeDeg: number): Promi
     }
     return level
   })
+}
+
+/** The ground of the engine's DEM around a Site, or why there is none: the problem `code` of the answer. */
+export type PatchGround = { ok: true; ground: GroundData; product: string; resolutionM: number } | { ok: false; code: string }
+
+/** Grids kept for the visit: a few, each up to half a megabyte of heights. */
+const PATCHES_KEPT = 4
+const patches = new Map<string, Promise<PatchGround>>()
+
+/**
+ * The grid of `/terrain/heights` around a Site, for the view from the ground where no published
+ * polar map holds it. Asked once per Site and kept; a failure is not kept, so the next view asks again.
+ */
+export function loadPatchGround(site: Pick<Site, 'id' | 'curated' | 'latitude_deg' | 'longitude_deg'>): Promise<PatchGround> {
+  const key = site.curated ? `site:${site.id}` : `at:${site.latitude_deg},${site.longitude_deg}`
+  let asked = patches.get(key)
+  if (!asked) {
+    asked = (async (): Promise<PatchGround> => {
+      try {
+        const grid = heightGridOf(await getTerrainHeights(site, new AbortController().signal))
+        if (!grid) return { ok: false, code: 'unknown' }
+        return { ok: true, ground: { heights: grid.heights, relief: null, reliefSmall: null }, product: grid.product, resolutionM: grid.resolutionM }
+      } catch (cause) {
+        return { ok: false, code: cause instanceof ApiError ? cause.code : 'network' }
+      }
+    })()
+    patches.set(key, asked)
+    while (patches.size > PATCHES_KEPT) patches.delete(patches.keys().next().value as string)
+    void asked.then((answer) => {
+      if (!answer.ok && patches.get(key) === asked) patches.delete(key)
+    })
+  }
+  return asked
 }
