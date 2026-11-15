@@ -69,4 +69,5 @@ jobs:
           node-version: 22
       - run: npm ci --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
-      - run: npx playwright test --shard=${{ matrix.shard }}/2 --workers=2
+      # One browser per runner: two each, on software WebGL in 5 shared cores, timed out.
+      - run: npx playwright test --shard=${{ matrix.shard }}/2 --workers=1
