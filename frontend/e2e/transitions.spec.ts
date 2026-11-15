@@ -81,7 +81,7 @@ test('the ground view is fetched right after the first answer, before any click 
   await expect(page.getByRole('button', { name: 'From the ground' })).toHaveAttribute('aria-pressed', 'false')
 })
 
-test('from orbit to the ground and back: the dive, the fade and the lift, in at most 1.2 s, no blank stage', async ({ page }) => {
+test('from orbit to the ground and back: the dive, the fade and the lift, in at most 1.2 s, no blank stage', { tag: '@timing' }, async ({ page }) => {
   await openOnGlobe(page)
   // The ground view's code and data have had time to arrive.
   await page.waitForLoadState('networkidle')
@@ -185,7 +185,7 @@ test('a click on another Site moves the ring at once and keeps the last answer, 
 test.describe('with reduced motion', () => {
   test.use({ reducedMotion: 'reduce' })
 
-  test('the ground comes and goes with a short fade, no dive and no lift', async ({ page }) => {
+  test('the ground comes and goes with a short fade, no dive and no lift', { tag: '@timing' }, async ({ page }) => {
     await openOnGlobe(page)
     await page.waitForLoadState('networkidle')
     const record = await recordStage(page)

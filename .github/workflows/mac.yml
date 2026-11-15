@@ -1,0 +1,39 @@
+name: Mac
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: mac-${{ github.ref }}
+  cancel-in-progress: true
+
+# The heavy half of CI: scripts/ci-mac.sh (ruff, mypy, pytest, the validation suite, eslint, tsc,
+# vitest, the generated-types check and the full Playwright e2e). The light half is ci.yml.
+# This job runs on a self-hosted runner that is Luiz's Mac (Apple M4, 10 cores), labelled
+# lunar-mac. The script posts the commit status `mac-gates` itself, so the job needs
+# `statuses: write`. The job is red when the script fails, and so is `mac-gates`. The job is not
+# named mac-gates on purpose: the required check on main is the commit status of that name.
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  ci-mac:
+    runs-on: [self-hosted, macOS, lunar-mac]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Untracked files stay (node_modules, the backend venv, the DEM fixtures), so a run does
+          # not fetch them again. Tracked files are reset to this commit, and the script refuses a
+          # checkout with uncommitted changes to tracked files.
+          clean: false
+          # The pull request's base must be here to compare with.
+          fetch-depth: 0
+      - run: scripts/ci-mac.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # On a pull request only the groups its changes can break run; a push to main runs all.
+          LUNAR_CI_BASE: ${{ github.event.pull_request.base.sha }}
