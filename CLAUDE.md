@@ -69,15 +69,22 @@ Large data (full DEMs, SPICE kernels) lives on the VPS only.
 The agent Luiz is talking to is the coordinator. It does not implement the issues itself.
 
 - The coordinator splits the work into GitHub issues that are well separated and can run at the same time: each one touches its own files, needs no other open issue's result, and says what done looks like.
-- Each issue goes to its own agent, Claude Sonnet 5.5 at high effort, on its own branch. The agent opens a pull request that closes the issue and reports back what it changed and the commands it ran with their output.
+- Each issue goes to its own agent, Claude Sonnet 5.5 at high effort, on its own branch. The agent runs only the Mac checks listed under "CI gates", opens a pull request that closes the issue, and reports back what it changed, the commands it ran with their output, and the CI run of its pull request.
 - An agent never starts the app, never deploys and never touches the VPS.
-- The coordinator checks the report against the diff, runs every gate below on the result and merges the pull request (squash) when all of them are green.
+- The coordinator checks the report against the diff, waits for the CI run on the runner to be green and merges the pull request (squash).
 - With everything green on `main`, the coordinator deploys to the VPS straight away, without asking Luiz first. Anything red stops the deploy.
 - Work that cannot be split (one step needs the previous one's result) stays with the coordinator.
 
 ## CI gates
 
 Every change merges only with every check green. The checks run on our own runner on the VPS (`deploy/runner/`, label `lunar-vps`, capped at 3 cores and 3 GB, one job at a time), not on GitHub's machines and not on a laptop.
+
+On Luiz's Mac only the essential checks run, before a push, and only on what the change touched:
+
+- frontend: `npm run lint`, `npm run typecheck`, and `npx vitest run <the test files of the touched modules>`;
+- backend: `uv run ruff check`, `uv run ruff format --check` and `uv run mypy` on the touched files, and `uv run pytest <one test file>` only when it is the new or changed test.
+
+Everything else runs only in CI on the runner: the whole vitest and pytest suites, the validation suite, schemathesis, the generated-types check and every Playwright spec. Never run Playwright, schemathesis, the validation suite or a whole suite on the Mac. The evidence for those is the CI run on the pull request.
 
 - Backend: ruff, mypy, pytest (unit, integration and regression tests together), the validation suite, schemathesis against the contract.
 - Frontend: eslint, tsc, vitest, Playwright end to end against the mock.
