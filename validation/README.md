@@ -173,22 +173,21 @@ Not covered: an antenna schedule, a link budget, the terrain around the stations
 
 ---
 
-## 10. Checks from Larissa's independent work (the requirement)
+## 10. Independent reference checks
 
-Larissa's prototype (the independent work, not merged) computed some things on her own. Three checks come
-from it; the rules and tolerances are in `athena.py`, written before judging, and the story
-is in `docs/validation/larissa-checks.md`.
+Three checks use independently produced reference data; the rules and tolerances are in `athena.py`,
+written before judging, and the explanation is in `docs/validation/independent-reference-checks.md`.
 
 | id | Reference | Tolerance | Runs |
 |---|---|---|---|
-| `larissa-athena-horizon` | Her terrain-only silhouette at the IM-2 Athena point (-84.7906°, 29.1957°, 2 m), `data/larissa_athena_horizon.csv`, byte for byte from commit 5766403 of her branch | per azimuth ≤ atan(1 m / d) + 0.01°, d her blocking distance; ≥ 99% of 720 azimuths within and RMS ≤ 0.03°. Set after a first look at the numbers | server output |
-| `negative-control-larissa-horizon-rotated` | The same with her silhouette turned by 1° | must break both conditions | server output |
+| `larissa-athena-horizon` | Independent terrain-only silhouette at the IM-2 Athena point (-84.7906°, 29.1957°, 2 m), `data/larissa_athena_horizon.csv`, with a recorded source commit and SHA-256 | per azimuth ≤ atan(1 m / d) + 0.01°, d her blocking distance; ≥ 99% of 720 azimuths within and RMS ≤ 0.03°. Set after a first look at the numbers | server output |
+| `negative-control-larissa-horizon-rotated` | The same silhouette turned by 1° | must break both conditions | server output |
 | `landing-im2-athena` | LROC NAC M1495922531LE and M1496181900LE: incidence and image centre from the PDS index of volume LROLRC_0062C (`INDEX.TAB`, MD5 checked against `INDEX.LBL`), mid-exposure from the image labels | ≤ 0.015° at both images. The Earth over the transmission (17:30 06/03 to 06:15 07/03/2025 UTC) is reported, not judged | CI (LROC) + server output (transmission) |
 | `negative-control-lroc-article-times` | The same at the times printed in LROC articles 1408 and 1409 | must exceed 0.015° at both | CI |
 | `eclipse-2025-local-contacts` | SPICE `gfoclt` (pck00011 ellipsoids, LT) at -89.4°, 90°, 2 m; NASA's contacts (Espenak, `data/espenak_2025mar14.json`) as intervals | each contact ≤ 30 s from gfoclt; into the umbra in [U1, U2], out in [U3, U4], all in [P1, P4] | CI; Athena on the server, for information |
 | `negative-control-eclipse-earth-radius` | The same with our Earth 1% larger | must exceed 30 s | CI |
 
-Refresh the reference data (needs the network and `git fetch origin 227-moon-prototype`):
+Refresh the reference data from its recorded source (needs the network):
 
 ```bash
 uv run --project backend python validation/fetch_athena_refs.py
