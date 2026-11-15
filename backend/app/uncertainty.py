@@ -248,7 +248,9 @@ def request(
         # No error raster beside any DEM of this Site: nothing to vary, so the band is
         # the nominal answer itself and says which DEMs it could not vary.
         run: Run = (_events_of(nominal), nominal["metrics"])
-        body = _json(assemble(nominal, [run], [], [band.product for band in found.bands]))
+        # One entry per product: a DEM walked as two bands (the global map's) is one DEM.
+        products = list(dict.fromkeys(band.product for band in found.bands))
+        body = _json(assemble(nominal, [run], [], products))
         _store(key, body)
         return Done(body, False)
 

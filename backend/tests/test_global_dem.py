@@ -336,7 +336,7 @@ def test_the_uncertainty_of_a_global_point_is_its_nominal_answer_as_a_band_of_on
     nominal = client.get("/visibility", params=POINT).json()
     assert band["clones"] == 1
     assert band["error_products"] == []
-    assert set(band["uncovered"]) == {GLOBAL}
+    assert band["uncovered"] == [GLOBAL]
     for name, value in nominal["metrics"].items():
         if name in band["metrics"]:
             assert band["metrics"][name] == {"low": value, "high": value}

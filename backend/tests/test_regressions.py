@@ -1502,3 +1502,26 @@ def test_a_typed_point_north_of_80s_is_answered_by_the_global_dem(
         engine = samples[round(azimuth / 0.5)]["elevation_deg"]
         independent = walk(azimuth)
         assert independent - 0.0005 <= engine <= independent + 0.003, (azimuth, engine, independent)
+
+
+def test_the_uncertainty_of_a_global_point_names_each_unvaried_dem_once(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # 15/11/2026, found checking /visibility/uncertainty for a typed point over LDEM_128: the
+    # global map is walked as two bands (near and far), and `uncovered` listed the DEM once
+    # per band, ["LDEM_128", "LDEM_128"]. It is one DEM, with no error raster to vary.
+    from tests.test_global_dem import _write_global
+
+    _write_global(tmp_path)
+    monkeypatch.setenv("LUNAR_DEM_DIR", str(tmp_path))
+    response = client.get(
+        "/visibility/uncertainty",
+        params={
+            "latitude_deg": 10.0,
+            "longitude_deg": 20.0,
+            "start": "2026-11-15T00:00:00Z",
+            "duration_hours": 24,
+        },
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["uncovered"] == [horizon.GLOBAL_PRODUCT]
