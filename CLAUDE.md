@@ -75,6 +75,16 @@ The agent Luiz is talking to is the coordinator. It does not implement the issue
 - With everything green on `main`, the coordinator deploys to the VPS straight away, without asking Luiz first. Anything red stops the deploy.
 - Work that cannot be split (one step needs the previous one's result) stays with the coordinator.
 
+### Batching related pull requests
+
+The Mac runner takes one run at a time, and any change under `frontend/` runs the full e2e (about 15 min). So when several finished pieces would run the same groups, the coordinator merges them as one pull request instead of one each:
+
+- Batch only pieces that run the same CI groups (all frontend, or all backend) and touch different files, where none needs another's result.
+- At most 3 or 4 pieces, one commit per issue, each commit closing its issue, so a failure points at one commit and that commit can be dropped while the rest merge.
+- Never batch a contract change, a CI change or a deploy change with anything else.
+- Backend-only and docs-only pieces don't need batching: they skip the e2e and finish in minutes.
+- If a batch goes red, drop the failing commit, open its own pull request, and merge the rest. Never retry the run until it passes.
+
 ## CI gates
 
 Every change merges only with every check green. The checks are split in two halves (decided by Luiz on 15/11/2026: the VPS runners were too slow for the heavy checks, 45 minutes from a push to green, so everything heavy moved to the Mac and the push-to-green time is about 15 minutes):
