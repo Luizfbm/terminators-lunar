@@ -9,6 +9,7 @@ import * as flatLine from '../components/phase4/flat-line/strings'
 import * as classroom from '../components/phase4/classroom/strings'
 import { en as missEn, pt as missPt } from '../components/phase4/miss/strings'
 import * as battery from '../components/phase4/battery/strings'
+import * as cursorSun from '../components/cursorSun/strings'
 
 export type Locale = 'en' | 'pt'
 
@@ -23,6 +24,7 @@ export const en = {
   ...classroom.en,
   ...missEn,
   ...battery.en,
+  ...cursorSun.en,
   'app.name': 'Lunar Landing Site Navigator',
   'app.place': 'south pole of the Moon',
   'lang.en': 'English',
@@ -148,6 +150,7 @@ export const pt: Record<MessageKey, string> = {
   ...classroom.pt,
   ...missPt,
   ...battery.pt,
+  ...cursorSun.pt,
   'app.name': 'Lunar Landing Site Navigator',
   'app.place': 'polo sul da Lua',
   'lang.en': 'English',
