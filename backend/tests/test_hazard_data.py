@@ -21,7 +21,8 @@ EDUARDO_DM1 = [
 
 @pytest.mark.parametrize("case", EDUARDO_DM1)
 def test_dm1_cells_match_eduardos_decoder(case: tuple[float, ...]) -> None:
-    x, y, row, col, surf, s5, s20, s60, serr, den, anyshot = case
+    x, y, row_f, col_f, surf, s5, s20, s60, serr, den, anyshot = case
+    row, col = int(row_f), int(col_f)
     g = hazard_data.grid("DM1")
     assert g.index(x, y) == (row, col)
     assert g.elevation_m[row, col] == pytest.approx(surf, abs=1e-3)
