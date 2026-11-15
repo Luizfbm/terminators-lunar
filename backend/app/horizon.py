@@ -345,7 +345,7 @@ def _compute(
 
     def look(distances: Array, band: Band) -> tuple[Array, Array, Array, Array]:
         lat, lon = _destination(latitude_deg, longitude_deg, azimuths, distances)
-        x, y = _project(band, lat, lon)
+        x, y = _project(band, lat, lon, longitude_deg)
         terrain = _heights(Path(folder), band, x, y, reads)
         theta = distances / MOON_RADIUS_M
         radius = MOON_RADIUS_M + terrain
@@ -517,14 +517,29 @@ def _project(
     need it, to keep x continuous across its seam at 0°E; the polar projection ignores it.
     """
     if band.projection == "eqc":
-        return _equirectangular(latitude_deg, longitude_deg)
+        return _equirectangular(latitude_deg, longitude_deg, site_longitude_deg)
     return _stereographic(latitude_deg, longitude_deg)
 
 
-def _equirectangular(latitude_deg: Array, longitude_deg: Array) -> tuple[Array, Array]:
-    """SLDEM2015's simple cylindrical on the 1737.4 km sphere, centred on 180°E."""
+def _equirectangular(
+    latitude_deg: Array, longitude_deg: Array, site_longitude_deg: float | None = None
+) -> tuple[Array, Array]:
+    """SLDEM2015's simple cylindrical on the 1737.4 km sphere, centred on 180°E.
+
+    The map's seam is at 0°E, where x jumps from +pi*R to -pi*R. With `site_longitude_deg`,
+    a point on the other side of the seam from the Site is moved by one map width, so x runs
+    on past +-pi*R instead of jumping and a ray that crosses 0°E reads the DEM window's
+    continuous pixels (deploy/crop_offpole.py cuts them that way). Points on the Site's own
+    side of the seam are returned untouched, to the bit.
+    """
     shifted = (np.asarray(longitude_deg) - 180.0 + 180.0) % 360.0 - 180.0
-    return MOON_RADIUS_M * np.radians(shifted), MOON_RADIUS_M * np.radians(latitude_deg)
+    x = MOON_RADIUS_M * np.radians(shifted)
+    if site_longitude_deg is not None:
+        width = 2.0 * math.pi * MOON_RADIUS_M
+        site_x = MOON_RADIUS_M * math.radians((site_longitude_deg - 180.0 + 180.0) % 360.0 - 180.0)
+        x = np.where(x - site_x > width / 2.0, x - width, x)
+        x = np.where(x - site_x < -width / 2.0, x + width, x)
+    return x, MOON_RADIUS_M * np.radians(latitude_deg)
 
 
 def _stereographic(latitude_deg: Array, longitude_deg: Array) -> tuple[Array, Array]:

@@ -215,7 +215,7 @@ def band_run(
     ]
     events.sort(key=lambda event: event[1])
     samples = [{"sun": {"fraction": item.sun_fraction()}} for item in looks]
-    return events, metrics(period_list, samples)
+    return events, metrics(period_list, samples, earth_any_part_hours(start, end, looks, look))
 
 
 def query_echo(

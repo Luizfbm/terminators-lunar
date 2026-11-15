@@ -31,7 +31,8 @@ import numpy as np
 import rasterio
 from rasterio.enums import Resampling
 from rasterio.merge import merge
-from rasterio.windows import from_bounds
+from rasterio.transform import Affine
+from rasterio.windows import Window, from_bounds
 
 R = 1_737_400.0
 PGDA = "https://pgda.gsfc.nasa.gov/data/LOLA_20mpp"
@@ -58,7 +59,11 @@ def _tile_names(lat: float, lon: float, half_m: float) -> list[str]:
             continue
         for lon0 in range(0, 360, 45):
             east = lon % 360.0
-            if east - dlon >= lon0 + 45 or east + dlon <= lon0:
+            # The window's longitudes, and the same ones a turn east and west of them.
+            if all(
+                east + turn - dlon >= lon0 + 45 or east + turn + dlon <= lon0
+                for turn in (-360.0, 0.0, 360.0)
+            ):
                 continue
             band = {-60: "60S_30S", -30: "30S_00S", 0: "00N_30N", 30: "30N_60N"}[lat0]
             names.append(
@@ -85,6 +90,67 @@ def _snap(bounds: tuple[float, float, float, float], grid) -> tuple[float, float
         x0 + math.ceil((right - x0) / dx) * dx,
         y0 + math.floor((top - y0) / dy) * dy,
     )
+
+
+PI_R = math.pi * R
+
+
+def _crosses_seam(bounds: tuple[float, float, float, float]) -> bool:
+    """Whether a window runs past the map's seam (0°E, x = -+pi*R), by more than a metre."""
+    return bounds[0] < -PI_R - 1.0 or bounds[2] > PI_R + 1.0
+
+
+def _stitch(sources: list, bounds: tuple[float, float, float, float]) -> tuple[np.ndarray, Affine]:
+    """The window as one continuous grid, the map's far side taken a turn round.
+
+    A window past +-pi*R has no pixels there on the map: the Moon goes on at the opposite
+    edge. Each tile is also tried a whole map width (2*pi*R, an exact number of pixels) east
+    and west, so x keeps running past the seam, which is how the engine projects the rays
+    (horizon._equirectangular). Pixels are copied, never resampled; the first tile wins.
+    """
+    grid = sources[0].transform
+    dx, dy = grid.a, -grid.e
+    left, bottom, right, top = bounds
+    width, height = round((right - left) / dx), round((top - bottom) / dy)
+    data = np.full((height, width), np.nan, dtype=np.float32)
+    turn = round(2.0 * PI_R / dx) * dx
+    for source in sources:
+        for shift in (0.0, -turn, turn):
+            s_left = source.bounds.left + shift
+            s_right = source.bounds.right + shift
+            o_left, o_right = max(left, s_left), min(right, s_right)
+            o_bottom, o_top = max(bottom, source.bounds.bottom), min(top, source.bounds.top)
+            if o_right <= o_left or o_top <= o_bottom:
+                continue
+            col = round((o_left - s_left) / dx)
+            row = round((source.bounds.top - o_top) / dy)
+            cols, rows = round((o_right - o_left) / dx), round((o_top - o_bottom) / dy)
+            out_col, out_row = round((o_left - left) / dx), round((top - o_top) / dy)
+            part = source.read(1, window=Window(col, row, cols, rows)).astype(np.float32)
+            part[~np.isfinite(part) | (part < -1e30)] = np.nan
+            target = data[out_row : out_row + rows, out_col : out_col + cols]
+            target[np.isnan(target)] = part[np.isnan(target)]
+    return data[np.newaxis], Affine(dx, 0.0, left, 0.0, grid.e, top)
+
+
+def _read_wrapped(source, window: Window) -> np.ndarray:
+    """A window of the 360° global SLDEM2015 raster, columns past an edge taken from the other.
+
+    rasterio reads a window that starts left of column 0 as if it started at column 0, and
+    window_transform() still says it starts out there: every height of Apollo 15's far window was labelled 275 km from
+    where it was (15/11/2026). Here the missing columns come round the globe.
+    """
+    col0, row0 = int(window.col_off), int(window.row_off)
+    cols, rows = int(window.width), int(window.height)
+    if row0 < 0 or row0 + rows > source.height:
+        raise SystemExit("the window runs past the poles of the SLDEM2015 global raster")
+    km = np.full((rows, cols), np.nan)
+    first = (col0 // source.width) * source.width
+    for start in range(first, col0 + cols, source.width):
+        low, high = max(col0, start), min(col0 + cols, start + source.width)
+        part = source.read(1, window=Window(low - start, row0, high - low, rows))
+        km[:, low - col0 : high - col0] = part
+    return km
 
 
 def _polar_bounds(lat: float, lon: float, half_m: float) -> tuple[float, float, float, float]:
@@ -143,7 +209,10 @@ def _sldem_near(lat: float, lon: float, path: Path) -> None:
         # the bounds it is given and fills it by nearest neighbour, so unsnapped bounds moved
         # the terrain by up to half a pixel (30 m) and the Site's height by metres.
         bounds = _snap(_eqc_bounds(lat, lon, NEAR_M), sources[0].transform)
-        data, transform = merge(sources, bounds=bounds, nodata=np.nan, dtype="float32")
+        if _crosses_seam(bounds):
+            data, transform = _stitch(sources, bounds)
+        else:
+            data, transform = merge(sources, bounds=bounds, nodata=np.nan, dtype="float32")
         crs = sources[0].crs
     finally:
         for source in sources:
@@ -158,7 +227,7 @@ def _sldem_far(lat: float, lon: float, path: Path) -> None:
     with rasterio.open(url) as source:
         window = from_bounds(*_eqc_bounds(lat, lon, FAR_M), source.transform).round_offsets()
         window = window.round_lengths()
-        km = source.read(1, window=window).astype(np.float64)
+        km = _read_wrapped(source, window)
         transform = source.window_transform(window)
         crs = source.crs
     km[km < -1e30] = np.nan
