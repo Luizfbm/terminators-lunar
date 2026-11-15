@@ -11,20 +11,21 @@ export const MENU_ITEMS = [
   { id: 'south', label: 'Southern Hemisphere' },
   { id: 'missions', label: 'Lunar Missions' },
   { id: 'sites', label: 'Sites' },
+  { id: 'planets', label: 'Planets' },
 ] as const
 
 export type MenuId = (typeof MENU_ITEMS)[number]['id']
 export type MenuState = Record<MenuId, boolean>
 
-/** "Lunar Missions" and "Sites" start pressed: all the dots are shown, as before the menu. */
-export const initialMenu = (): MenuState => ({ initial: false, dark_side: false, north: false, south: false, missions: true, sites: true })
+/** The three switches start pressed: all the dots and the planets are shown, as before the menu. */
+export const initialMenu = (): MenuState => ({ initial: false, dark_side: false, north: false, south: false, missions: true, sites: true, planets: true })
 
 /** The four buttons that turn the Moon: pressing one releases the other three, as the Moon can only face one way. */
 export const VIEW_BUTTONS = ['initial', 'dark_side', 'north', 'south'] as const
 
 /**
  * A click presses a released button and releases a pressed one. Pressing one of the four that turn the
- * Moon releases the other three; Missions and Sites are their own switches and never touch another.
+ * Moon releases the other three; Missions, Sites and Planets are their own switches and never touch another.
  */
 export function toggled(state: MenuState, id: MenuId): MenuState {
   const next = { ...state, [id]: !state[id] }
@@ -40,7 +41,7 @@ export function releasedTurns(state: MenuState): MenuState {
 }
 
 /**
- * What the two switches say about the dots of the globe. The four buttons that turn the Moon act through
+ * What the three switches say about what the globe draws. The four buttons that turn the Moon act through
  * the camera (`GlobeMenu`'s `onView`) and have nothing to add here.
  */
-export const layersOf = (state: MenuState): Layers => ({ sites: state.sites, missions: state.missions })
+export const layersOf = (state: MenuState): Layers => ({ sites: state.sites, missions: state.missions, planets: state.planets })

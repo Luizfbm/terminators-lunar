@@ -25,11 +25,14 @@ export interface GlobeMenuProps {
 /**
  * The menu on the left of the globe. At the top the two levels, exclusive like radio buttons and kept in
  * step with the app's view, then a rule, then the buttons of the orbit: four that turn the Moon (exclusive
- * among themselves) and two switches for the dots. Pressed stays pressed until it is clicked again. On the
- * map only the levels are shown. The state is not kept between visits.
+ * among themselves) and three switches (the dots of the Artemis Sites, the dots of the missions, the planets of
+ * the sky). Pressed stays pressed until it is clicked again. On the map only the levels are shown. The state is
+ * not kept between visits. On a phone the panel does not fit beside the Moon: it folds into a button in the
+ * corner that opens it (the stylesheet decides where; on a wide screen the button is not there).
  */
 export function GlobeMenu({ mode, level, onLevel, onView, onLayers }: GlobeMenuProps) {
   const [pressed, setPressed] = useState<MenuState>(initialMenu)
+  const [open, setOpen] = useState(false)
   // The camera goes its own way when the view changes, so no turn of the Moon is left pressed.
   const [shownMode, setShownMode] = useState(mode)
   if (shownMode !== mode) {
@@ -42,37 +45,48 @@ export function GlobeMenu({ mode, level, onLevel, onView, onLayers }: GlobeMenuP
     // Pressing turns the Moon; releasing leaves it where it is.
     const view = TURNS[id]
     if (view) {
-      if (next[id]) onView(view)
+      if (next[id]) {
+        onView(view)
+        setOpen(false)
+      }
     } else onLayers(layersOf(next))
   }
   return (
-    <div className="globe-menu" role="group" aria-label="Globe menu">
-      <div role="group" aria-label="Level">
-        {LEVEL_ITEMS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            className="globe-menu__button"
-            aria-pressed={level === item.id}
-            onClick={() => {
-              const view = levelPressed(level, item.id)
-              if (view) onLevel?.(view)
-            }}
-          >
-            <span>{item.label}</span>
-          </button>
-        ))}
-      </div>
-      {mode === 'orbit' && (
-        <>
-          <hr className="globe-menu__rule" />
-          {MENU_ITEMS.map((item) => (
-            <button key={item.id} type="button" className="globe-menu__button" aria-pressed={pressed[item.id]} onClick={() => press(item.id)}>
+    <>
+      <button type="button" className="globe-menu__toggle" aria-label="Menu" aria-expanded={open} aria-controls="globe-menu-panel" onClick={() => setOpen(!open)}>
+        <span aria-hidden="true" />
+      </button>
+      <div className="globe-menu" id="globe-menu-panel" data-open={open} role="group" aria-label="Globe menu">
+        <div role="group" aria-label="Level">
+          {LEVEL_ITEMS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className="globe-menu__button"
+              aria-pressed={level === item.id}
+              onClick={() => {
+                const view = levelPressed(level, item.id)
+                if (view) {
+                  onLevel?.(view)
+                  setOpen(false)
+                }
+              }}
+            >
               <span>{item.label}</span>
             </button>
           ))}
-        </>
-      )}
-    </div>
+        </div>
+        {mode === 'orbit' && (
+          <>
+            <hr className="globe-menu__rule" />
+            {MENU_ITEMS.map((item) => (
+              <button key={item.id} type="button" className="globe-menu__button" aria-pressed={pressed[item.id]} onClick={() => press(item.id)}>
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </>
+        )}
+      </div>
+    </>
   )
 }

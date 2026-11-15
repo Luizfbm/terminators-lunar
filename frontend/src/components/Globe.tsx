@@ -6,10 +6,10 @@ import { chooseLabels, PLANETS, pointLook, type Box, type LabelCandidate } from 
 import { levelOfView, type LevelId } from '../domain/globeLevels'
 import { latitudeCircle, POLAR_CIRCLE_LATITUDE, polarCircleShown } from '../domain/latitudeCircle'
 import { moonRadiusPx } from '../domain/moonDisc'
-import { POLE_LETTER_RADII, poleMark, visibleRuns } from '../domain/poleMark'
+import { letterClear, POLE_LETTER_RADII, poleMark, type Disc } from '../domain/poleMark'
 import type { View } from '../domain/query'
 import { initialLayers, siteShown, type Layers } from '../domain/siteLayers'
-import { VIEW_DISTANCE, viewTarget, type MoonView } from '../domain/viewTarget'
+import { VIEW_DISTANCE, viewTarget, type MoonPlace, type MoonView } from '../domain/viewTarget'
 import { groundDirection, toVector, type LatLon } from '../domain/sky'
 import {
   BACKDROP_EARTH_DISTANCE,
@@ -97,10 +97,9 @@ const POLES = [
   { letter: 'N', latitude: 90 },
   { letter: 'S', latitude: -90 },
 ] as const
-/** The Equator is sampled every 1.5° of longitude. */
-const EQUATOR_STEPS = 240
+/** The Equator is a ring of this many dots on the Moon: one every 2.6° of longitude. */
+const EQUATOR_DOTS = 140
 /** Sizes of the marks as shares of the Moon's radius on screen. */
-const EQUATOR_GAP = 1 / (0.36 * 62)
 const EQUATOR_BASE_WIDTH = 1 / (0.36 * 110)
 const EQUATOR_WIDTH = 1 / (0.36 * 170)
 const POLE_LETTER_SIZE = 0.062 / 0.36
@@ -131,6 +130,21 @@ const TOUCH_READOUT_MS = 2500
 /** In orbit the camera's up is the Moon's axis; on the map it is the 0° meridian, so the map never turns. */
 const ORBIT_UP = new THREE.Vector3(0, 1, 0)
 const MAP_UP = new THREE.Vector3(1, 0, 0)
+
+/** A hard-edged round dot, drawn once into a small canvas: the marks on the Moon are made of it. */
+function roundDotTexture(): THREE.Texture {
+  const size = 32
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = size
+  const context = canvas.getContext('2d')
+  if (context) {
+    context.fillStyle = '#fff'
+    context.beginPath()
+    context.arc(size / 2, size / 2, size / 2 - 1, 0, Math.PI * 2)
+    context.fill()
+  }
+  return new THREE.CanvasTexture(canvas)
+}
 
 const vector = (lat: number, lon: number, radius = 1) => new THREE.Vector3(...toVector(lat, lon)).multiplyScalar(radius)
 
@@ -166,7 +180,7 @@ export function Globe(props: GlobeProps) {
   /** A turn of the Moon asked for by the menu; the draw loop takes it up on its next frame. */
   const turnAsked = useRef<MoonView | null>(null)
   const live = useRef(props)
-  // The switches of the menu that show and hide the dots of the Sites and of the missions.
+  // The switches of the menu: the dots of the Sites, the dots of the missions, and the planets of the sky.
   const [layers, setLayers] = useState<Layers>(initialLayers)
   const layersLive = useRef(layers)
   const [supported, setSupported] = useState(canDraw)
@@ -355,8 +369,34 @@ export function Globe(props: GlobeProps) {
     grid.visible = false
     scene.add(grid)
 
+    // The Equator, the circle at 84° S and a dot on each pole are drawn on the Moon itself, in this scene, as
+    // dots lying on its surface: the Moon hides the far half of them, and the sky behind it (the Sun, the
+    // Earth, the planets) is never in front of them. Their sizes follow the Moon's disc on screen.
+    const pixelRatio = renderer.getPixelRatio()
+    const markTexture = roundDotTexture()
+    const markGroup = new THREE.Group()
+    markGroup.visible = false
+    scene.add(markGroup)
+    const markShapes: THREE.BufferGeometry[] = []
+    const markDots = (points: THREE.Vector3[], colour: number, opacity: number, order: number) => {
+      const shape = new THREE.BufferGeometry().setFromPoints(points)
+      markShapes.push(shape)
+      const material = new THREE.PointsMaterial({ color: colour, map: markTexture, size: 1, sizeAttenuation: false, transparent: true, opacity, depthWrite: false })
+      const cloud = new THREE.Points(shape, material)
+      cloud.renderOrder = order
+      cloud.frustumCulled = false
+      markGroup.add(cloud)
+      return cloud
+    }
+    const equatorRing = Array.from({ length: EQUATOR_DOTS }, (_, step) => vector(0, (step * 360) / EQUATOR_DOTS, 1.002))
     // The circle of latitude round the south pole, every degree of longitude, on the same sphere as the Equator.
-    const polarCircle = latitudeCircle(POLAR_CIRCLE_LATITUDE).map((point) => vector(point.latitude_deg, point.longitude_deg, 1.002))
+    const polarRing = latitudeCircle(POLAR_CIRCLE_LATITUDE).map((point) => vector(point.latitude_deg, point.longitude_deg, 1.002))
+    const poleSpots = POLES.map((pole) => vector(pole.latitude, 0, 1.002))
+    const equatorBase = markDots(equatorRing, 0x000000, 0.55, 1)
+    const equatorDots = markDots(equatorRing, 0xffd400, 1, 2)
+    const circleBase = markDots(polarRing, 0x000000, 0.55, 1)
+    const circleDots = markDots(polarRing, 0xffffff, 1, 2)
+    const poleDots = markDots(poleSpots, 0xffffff, 1, 2)
 
     // The marked Occluder: a ring on it and a line from the Site.
     const toOccluder = stroke(SUN)
@@ -545,7 +585,8 @@ export function Globe(props: GlobeProps) {
       const asked = turnAsked.current
       if (asked) {
         turnAsked.current = null
-        const place = viewTarget(asked, state.sun)
+        // Initial position is the opening framing, on the side of the chosen Site; the others are places on the Moon.
+        const place = asked === 'initial' ? viewpoint(state.site).setLength(VIEW_DISTANCE).toArray() : viewTarget(asked as MoonPlace, state.sun)
         if (place && mode === 'orbit' && !state.dive) {
           const to = new THREE.Vector3(...place)
           fade = null
@@ -678,6 +719,32 @@ export function Globe(props: GlobeProps) {
       // How many dots are drawn (those on the far side count too: the Moon hides them), for the tests.
       const dotCount = String(dots.visible ? dotsShown : 0)
       if (target.dataset.dots !== dotCount) target.dataset.dots = dotCount
+
+      // The Moon's disc on screen: its centre and its radius, from the camera's distance and field of view.
+      const moonAt = new THREE.Vector3(0, 0, 0).project(camera)
+      const moonCentre = { x: ((moonAt.x + 1) / 2) * host.clientWidth, y: ((1 - moonAt.y) / 2) * host.clientHeight }
+      const moonDiscPx = moonRadiusPx(camera.position.length(), FIELD_OF_VIEW_DEG, host.clientHeight)
+      // The marks of the Moon: only for the whole Moon from orbit, not the map or the dive, and once it is dressed.
+      markGroup.visible = mode === 'orbit' && !state.dive && host.dataset.dressed === 'true' && Number.isFinite(moonDiscPx)
+      const marksState = markGroup.visible ? 'on' : 'off'
+      if (host.dataset.marks !== marksState) host.dataset.marks = marksState
+      if (markGroup.visible) {
+        const sizeOf = (share: number) => share * moonDiscPx * pixelRatio
+        equatorBase.material.size = sizeOf(EQUATOR_BASE_WIDTH)
+        equatorDots.material.size = sizeOf(EQUATOR_WIDTH)
+        circleBase.material.size = CIRCLE_BASE_WIDTH_PX * pixelRatio
+        circleDots.material.size = CIRCLE_WIDTH_PX * pixelRatio
+        circleBase.visible = circleDots.visible = polarCircleShown(camera.position.length())
+        poleDots.material.size = sizeOf(2 * POLE_DOT)
+      }
+      // What the menu takes of the stage (its panel, or the button it folds into on a phone): the names, the
+      // letters and the planets' names keep out of it.
+      const hostBox = host.getBoundingClientRect()
+      const menuBoxes: Box[] = []
+      for (const element of host.querySelectorAll<HTMLElement>('.globe-menu, .globe-menu__toggle')) {
+        const rect = element.getBoundingClientRect()
+        if (rect.width > 0 && rect.height > 0) menuBoxes.push({ left: rect.left - hostBox.left, top: rect.top - hostBox.top, right: rect.right - hostBox.left, bottom: rect.bottom - hostBox.top })
+      }
       // The sky behind the Moon: the Sun and the Earth where the answer says they are at the Cursor.
       skyCamera.quaternion.copy(camera.quaternion)
       skyCamera.aspect = camera.aspect
@@ -736,8 +803,11 @@ export function Globe(props: GlobeProps) {
       // The planets, where they are at the Cursor in the same frame as the Sun and the Earth, and which of
       // them are on the stage and not behind the Moon.
       planetSky.place(state.cursorMs, state.earth, state.sun)
+      // The "Planets" switch of the menu: released, the points and their names are not drawn.
+      const planetsOn = layersLive.current.planets
+      for (const [id, point] of planetSky.points) point.visible = planetsOn && planetSky.planets.some((planet) => planet.id === id)
       const planetSpots: { id: (typeof PLANETS)[number]['id']; x: number; y: number; magnitude: number }[] = []
-      for (const planet of planetSky.planets) {
+      for (const planet of planetsOn ? planetSky.planets : []) {
         const point = planetSky.points.get(planet.id)
         const spot = point ? placed(point, planetWay(planet), 0) : null
         if (spot) planetSpots.push({ id: planet.id, x: spot.x, y: spot.y, magnitude: planet.magnitude })
@@ -778,7 +848,9 @@ export function Globe(props: GlobeProps) {
           pinText.current = { text, width: label.offsetWidth, height: label.offsetHeight }
         }
         const toRight = host.clientWidth - spot.x - PIN_GAP - PIN_EDGE
-        const toLeft = spot.x - PIN_GAP - PIN_EDGE
+        // On the left of the dot the name stops at the menu, when the menu is level with it.
+        const menuRight = Math.max(0, ...menuBoxes.filter((box) => spot.y + 12 > box.top && spot.y - 12 < box.bottom && box.right <= spot.x).map((box) => box.right))
+        const toLeft = spot.x - PIN_GAP - Math.max(PIN_EDGE, menuRight)
         const left = pinText.current.width > toRight && toLeft > toRight
         const room = Math.max(left ? toLeft : toRight, 0)
         const wraps = pinText.current.width > room
@@ -805,9 +877,55 @@ export function Globe(props: GlobeProps) {
         ringMark.style.top = `${chosen.y}px`
         ringMark.dataset.lit = String(state.sunUp)
       }
+      // The letters N and S of the poles, over the stage: they stand outside the Moon, on its poles' own lines,
+      // and turn with it. The dot on each pole, the Equator and the circle are in the scene above. A letter
+      // never covers the Sun or the Earth, nor the menu: where it would, it is not drawn.
+      const marks = poleMarks.current
+      const poleBoxes: Box[] = []
+      if (marks) {
+        const toScreen = (point: THREE.Vector3) => {
+          const projected = point.clone().project(camera)
+          return { x: ((projected.x + 1) / 2) * host.clientWidth, y: ((1 - projected.y) / 2) * host.clientHeight }
+        }
+        const eye = camera.position
+        const eyeAt = eye.clone().normalize()
+        // A point of the unit sphere is on the near side when the camera is above its tangent plane.
+        const near = (point: THREE.Vector3) => point.dot(eye) > 1
+        const shown = markGroup.visible
+        marks.style.display = shown ? '' : 'none'
+        if (shown) {
+          const bodies: Disc[] = [sunSpot, earthSpot].filter((spot): spot is { x: number; y: number; r: number } => spot !== null)
+          POLES.forEach((pole, index) => {
+            const group = marks.children[index] as SVGGElement | undefined
+            if (!group) return
+            const at = vector(pole.latitude, 0)
+            const found = poleMark(toScreen(at), toScreen(at.clone().multiplyScalar(POLE_LETTER_RADII)), near(at), at.dot(eyeAt), moonCentre, moonDiscPx)
+            const fontSize = POLE_LETTER_SIZE * moonDiscPx
+            const clear = found !== null && letterClear(found.letter, fontSize * 0.5, bodies, menuBoxes)
+            group.style.display = found && clear ? '' : 'none'
+            if (!found || !clear) return
+            poleBoxes.push({ left: found.letter.x - fontSize / 2, top: found.letter.y - fontSize / 2, right: found.letter.x + fontSize / 2, bottom: found.letter.y + fontSize / 2 })
+            const [stroke, text] = [group.children[0], group.children[1]]
+            group.setAttribute('opacity', String(found.opacity))
+            // The stroke joins the letter to the pole's dot, which is on the Moon; only for a pole that faces the eye.
+            stroke.setAttribute('display', found.dot ? '' : 'none')
+            if (found.dot) {
+              stroke.setAttribute('x1', String(found.dot.x))
+              stroke.setAttribute('y1', String(found.dot.y))
+              stroke.setAttribute('x2', String(found.letter.x))
+              stroke.setAttribute('y2', String(found.letter.y))
+              stroke.setAttribute('stroke-width', String(POLE_STROKE_WIDTH * moonDiscPx))
+            }
+            text.setAttribute('x', String(found.letter.x))
+            text.setAttribute('y', String(found.letter.y))
+            text.setAttribute('font-size', String(fontSize))
+            text.setAttribute('stroke-width', String(POLE_LETTER_OUTLINE * moonDiscPx))
+          })
+        }
+      }
       // The names of the planets: only in orbit and at rest, where the stage is the sky and not a chart
-      // or the ground. A name never covers the Site and its name, the Sun, the Earth, the caption's strip
-      // at the top or the view buttons' at the bottom, nor another planet.
+      // or the ground. A name never covers the Site and its name, the Sun, the Earth, the menu, the letters
+      // of the poles, the caption's strip at the top or the view buttons' at the bottom, nor another planet.
       const planetLabels = planetNames.current
       if (planetLabels) {
         const named = new Map<string, 'right' | 'left'>()
@@ -815,6 +933,7 @@ export function Globe(props: GlobeProps) {
           const around = (spot: { x: number; y: number }, reach: number): Box => ({ left: spot.x - reach, top: spot.y - reach, right: spot.x + reach, bottom: spot.y + reach })
           const keepClear: Box[] = []
           if (pinBox) keepClear.push(pinBox)
+          keepClear.push(...menuBoxes, ...poleBoxes)
           if (chosen.facing) keepClear.push(around(chosen, 18))
           if (sunSpot) keepClear.push(around(sunSpot, sunSpot.r + 14))
           if (earthSpot) keepClear.push(around(earthSpot, earthSpot.r + 10))
@@ -867,78 +986,6 @@ export function Globe(props: GlobeProps) {
           )
         }
       }
-      // The Equator and the poles, drawn over the Moon each frame. The
-      // Equator is dotted, only the half turned to the eye; the letters N and S belong to the poles of
-      // the Moon, in its own frame, and turn with it. Only for the whole Moon, not the map or the dive.
-      const marks = poleMarks.current
-      if (marks) {
-        // The Moon's disc on screen: its centre and its radius, from the camera's distance and field of view.
-        const moonAt = new THREE.Vector3(0, 0, 0).project(camera)
-        const moonCentre = { x: ((moonAt.x + 1) / 2) * host.clientWidth, y: ((1 - moonAt.y) / 2) * host.clientHeight }
-        const moonDiscPx = moonRadiusPx(camera.position.length(), FIELD_OF_VIEW_DEG, host.clientHeight)
-        const toScreen = (point: THREE.Vector3) => {
-          const projected = point.clone().project(camera)
-          return { x: ((projected.x + 1) / 2) * host.clientWidth, y: ((1 - projected.y) / 2) * host.clientHeight }
-        }
-        const eye = camera.position
-        const eyeAt = eye.clone().normalize()
-        // A point of the unit sphere is on the near side when the camera is above its tangent plane.
-        const near = (point: THREE.Vector3) => point.dot(eye) > 1
-        const shown = mode === 'orbit' && !state.dive && Number.isFinite(moonDiscPx)
-        marks.style.display = shown ? '' : 'none'
-        if (shown) {
-          const [base, yellow] = [marks.children[0], marks.children[1]]
-          const circle = Array.from({ length: EQUATOR_STEPS + 1 }, (_, step) => vector(0, (step * 360) / EQUATOR_STEPS, 1.002))
-          const runs = visibleRuns(circle.map(toScreen), circle.map(near))
-          const path = runs.map((run) => run.map((spot, at) => `${at ? 'L' : 'M'}${spot.x.toFixed(1)} ${spot.y.toFixed(1)}`).join('')).join('')
-          for (const [line, width] of [[base, EQUATOR_BASE_WIDTH], [yellow, EQUATOR_WIDTH]] as const) {
-            line.setAttribute('d', path)
-            line.setAttribute('stroke-width', String(width * moonDiscPx))
-            line.setAttribute('stroke-dasharray', `0.1 ${EQUATOR_GAP * moonDiscPx}`)
-          }
-          // The circle at 84° S: only the half turned to the eye, and only from orbit, not close to the ground.
-          const circleRuns = polarCircleShown(eye.length()) ? visibleRuns(polarCircle.map(toScreen), polarCircle.map(near)) : []
-          const circlePath = circleRuns.map((run) => run.map((spot, at) => `${at ? 'L' : 'M'}${spot.x.toFixed(1)} ${spot.y.toFixed(1)}`).join('')).join('')
-          for (const [line, width] of [[marks.children[2], CIRCLE_BASE_WIDTH_PX], [marks.children[3], CIRCLE_WIDTH_PX]] as const) {
-            line.setAttribute('d', circlePath)
-            line.setAttribute('stroke-width', String(width))
-          }
-          POLES.forEach((pole, index) => {
-            const group = marks.children[4 + index] as SVGGElement | undefined
-            if (!group) return
-            const at = vector(pole.latitude, 0)
-            const found = poleMark(
-              toScreen(at),
-              toScreen(at.clone().multiplyScalar(POLE_LETTER_RADII)),
-              near(at),
-              at.dot(eyeAt),
-              moonCentre,
-              moonDiscPx,
-            )
-            group.style.display = found ? '' : 'none'
-            if (!found) return
-            const [stroke, dot, text] = [group.children[0], group.children[1], group.children[2]]
-            group.setAttribute('opacity', String(found.opacity))
-            stroke.setAttribute('display', found.dot ? '' : 'none')
-            dot.setAttribute('display', found.dot ? '' : 'none')
-            if (found.dot) {
-              stroke.setAttribute('x1', String(found.dot.x))
-              stroke.setAttribute('y1', String(found.dot.y))
-              stroke.setAttribute('x2', String(found.letter.x))
-              stroke.setAttribute('y2', String(found.letter.y))
-              stroke.setAttribute('stroke-width', String(POLE_STROKE_WIDTH * moonDiscPx))
-              dot.setAttribute('cx', String(found.dot.x))
-              dot.setAttribute('cy', String(found.dot.y))
-              dot.setAttribute('r', String(POLE_DOT * moonDiscPx))
-            }
-            text.setAttribute('x', String(found.letter.x))
-            text.setAttribute('y', String(found.letter.y))
-            text.setAttribute('font-size', String(POLE_LETTER_SIZE * moonDiscPx))
-            text.setAttribute('stroke-width', String(POLE_LETTER_OUTLINE * moonDiscPx))
-          })
-        }
-      }
-
       const labels = gridLabels.current
       if (labels) {
         // Down in a Region the grid's labels are far off the picture, so they wait for the pole.
@@ -986,6 +1033,9 @@ export function Globe(props: GlobeProps) {
       undress()
       material.dispose()
       for (const shape of gridShapes) shape.dispose()
+      for (const shape of markShapes) shape.dispose()
+      for (const cloud of markGroup.children as THREE.Points[]) (cloud.material as THREE.Material).dispose()
+      markTexture.dispose()
       gridLine.dispose()
       ringShape.dispose()
       ;(ring.material as THREE.Material).dispose()
@@ -1045,14 +1095,9 @@ export function Globe(props: GlobeProps) {
       </div>
       <span className="globe__readout" ref={readout} aria-hidden="true" hidden />
       <svg className="globe__poles" ref={poleMarks} aria-hidden="true" style={{ display: 'none' }}>
-        <path className="globe__equator globe__equator--base" fill="none" />
-        <path className="globe__equator" fill="none" />
-        <path className="globe__circle globe__circle--base" fill="none" />
-        <path className="globe__circle" fill="none" />
         {POLES.map((pole) => (
           <g key={pole.letter} style={{ display: 'none' }}>
             <line />
-            <circle />
             <text>{pole.letter}</text>
           </g>
         ))}

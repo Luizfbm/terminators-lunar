@@ -8,7 +8,7 @@ const clps = { id: 'BG1', source: 'clps' }
 const lroc = { id: 'SURVEYOR7', source: 'lroc2016' }
 const typed = { id: 'custom:-85,10', source: 'custom' }
 
-const only = (layers: Partial<Layers>): Layers => ({ sites: false, missions: false, ...layers })
+const only = (layers: Partial<Layers>): Layers => ({ sites: false, missions: false, planets: true, ...layers })
 
 describe('which switch governs a Site', () => {
   it('puts the Artemis Sites on Sites and every other curated source on Lunar Missions', () => {
@@ -25,7 +25,7 @@ describe('which switch governs a Site', () => {
 
 describe('which Sites are shown', () => {
   it('starts with the Artemis Sites and the missions both shown, so the four landing points of today stay on the globe', () => {
-    expect(initialLayers()).toEqual({ sites: true, missions: true })
+    expect(initialLayers()).toEqual({ sites: true, missions: true, planets: true })
     expect(siteShown(artemis, initialLayers(), null)).toBe(true)
     for (const mission of [apollo, isro, clps, lroc]) expect(siteShown(mission, initialLayers(), null)).toBe(true)
   })
@@ -33,7 +33,7 @@ describe('which Sites are shown', () => {
   it('shows the missions when Lunar Missions is pressed, with or without Sites', () => {
     for (const mission of [apollo, isro, clps, lroc]) {
       expect(siteShown(mission, only({ missions: true }), null)).toBe(true)
-      expect(siteShown(mission, { sites: true, missions: true }, null)).toBe(true)
+      expect(siteShown(mission, { sites: true, missions: true, planets: true }, null)).toBe(true)
     }
     expect(siteShown(artemis, only({ missions: true }), null)).toBe(false)
   })
@@ -51,6 +51,12 @@ describe('which Sites are shown', () => {
     expect(siteShown(artemis, only({ missions: true }), 'CR01')).toBe(true)
   })
 
+  it('does not let the planets switch hide or show a Site', () => {
+    for (const site of [artemis, apollo, typed]) {
+      expect(siteShown(site, { ...initialLayers(), planets: false }, null)).toBe(true)
+    }
+  })
+
   it('never hides a typed coordinate', () => {
     expect(siteShown(typed, only({}), null)).toBe(true)
   })
@@ -62,7 +68,7 @@ describe('which Sites are shown', () => {
     expect(count(only({ sites: true }), 'CR01')).toBe(3)
     expect(count(only({}), 'CR01')).toBe(1)
     expect(count(only({ missions: true }), 'CR01')).toBe(4)
-    expect(count({ sites: true, missions: true }, 'CR01')).toBe(6)
+    expect(count({ sites: true, missions: true, planets: true }, 'CR01')).toBe(6)
     expect(count(only({}), 'APOLLO11')).toBe(1)
   })
 })

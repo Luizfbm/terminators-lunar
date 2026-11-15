@@ -28,10 +28,13 @@ describe('where the menu turns the Moon', () => {
     expect(viewTarget('north', null)![0]).not.toBe(0)
   })
 
-  it('has the day side in the middle for the initial position: straight over the point under the Sun', () => {
-    const initial = viewTarget('initial', sun)!
-    expect(apart(initial, toVector(sun.latitude_deg, sun.longitude_deg))).toBeLessThan(1e-6)
-    expect(length(initial)).toBeCloseTo(VIEW_DISTANCE, 12)
+  it('never puts the camera over the point under the Sun, where the Sun would be behind it', () => {
+    for (const view of ['dark', 'north', 'south'] as const) {
+      const camera = viewTarget(view, sun)!
+      // The Sun's direction as seen from the camera must not be the direction the camera looks in.
+      const towardsSun = dot(camera, toVector(sun.latitude_deg, sun.longitude_deg)) / length(camera)
+      expect(towardsSun).toBeLessThan(0.99)
+    }
   })
 
   it('has the night side in the middle for the dark side: straight over the point opposite the Sun', () => {
@@ -40,11 +43,10 @@ describe('where the menu turns the Moon', () => {
   })
 
   it('puts the camera as far as it is asked to', () => {
-    for (const view of ['initial', 'dark', 'north', 'south'] as const) expect(length(viewTarget(view, sun, 5.5)!)).toBeCloseTo(5.5, 12)
+    for (const view of ['dark', 'north', 'south'] as const) expect(length(viewTarget(view, sun, 5.5)!)).toBeCloseTo(5.5, 12)
   })
 
-  it('has nowhere to turn to for the day or the night side while it does not know where the Sun is', () => {
-    expect(viewTarget('initial', null)).toBeNull()
+  it('has nowhere to turn to for the night side while it does not know where the Sun is', () => {
     expect(viewTarget('dark', null)).toBeNull()
   })
 })

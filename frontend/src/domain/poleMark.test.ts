@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { poleMark, visibleRuns } from './poleMark'
+import { letterClear, poleMark } from './poleMark'
 
 const centre = { x: 400, y: 300 }
 
@@ -37,20 +37,27 @@ describe('the mark of a pole on the stage', () => {
   })
 })
 
-describe('the visible half of the Equator', () => {
-  const at = (n: number) => ({ x: n, y: 0 })
+describe('a letter that keeps clear of what is behind the Moon', () => {
+  const sun = { x: 300, y: 200, r: 40 }
 
-  it('splits where the circle goes behind the Moon', () => {
-    const runs = visibleRuns([0, 1, 2, 3, 4, 5].map(at), [false, true, true, false, true, false])
-    expect(runs.map((run) => run.map((p) => p.x))).toEqual([[1, 2], [4]])
+  it('is clear when nothing is near', () => {
+    expect(letterClear({ x: 600, y: 100 }, 20, [sun], [{ left: 0, top: 0, right: 200, bottom: 300 }])).toBe(true)
   })
 
-  it('joins the run that wraps past the end of the circle to the one at its start', () => {
-    const runs = visibleRuns([0, 1, 2, 3, 4, 5].map(at), [true, true, false, false, true, true])
-    expect(runs.map((run) => run.map((p) => p.x))).toEqual([[4, 5, 0, 1]])
+  it('is not clear when its square touches the disc of the Sun or of the Earth', () => {
+    expect(letterClear({ x: 300, y: 150 }, 20, [sun], [])).toBe(false)
+    expect(letterClear({ x: 300, y: 150 }, 20, [{ x: 900, y: 0, r: 5 }, sun], [])).toBe(false)
   })
 
-  it('is empty with the whole Equator behind', () => {
-    expect(visibleRuns([0, 1].map(at), [false, false])).toEqual([])
+  it('is clear of a disc it only comes near at the corner of its square', () => {
+    // The nearest corner of the square is (342, 138): 62 px from the disc's centre, more than its 40 px radius.
+    expect(letterClear({ x: 362, y: 118 }, 20, [sun], [])).toBe(true)
+  })
+
+  it('is not clear inside the menu, and is clear once it is just outside', () => {
+    const menu = { left: 0, top: 0, right: 212, bottom: 380 }
+    expect(letterClear({ x: 150, y: 100 }, 20, [], [menu])).toBe(false)
+    expect(letterClear({ x: 240, y: 100 }, 20, [], [menu])).toBe(true)
+    expect(letterClear({ x: 230, y: 100 }, 20, [], [menu])).toBe(false)
   })
 })

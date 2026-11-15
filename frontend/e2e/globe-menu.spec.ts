@@ -1,19 +1,19 @@
 import { expect, test, type Page } from '@playwright/test'
 
 // The menu on the left of the globe: two level buttons on top (exclusive, in step with the view buttons under
-// the stage), a rule, and six push buttons. What the Moon-turning buttons and the two switches do is in
-// globe-layers; here it is which button is pressed.
+// the stage), a rule, and seven push buttons. What the Moon-turning buttons and the switches do is in
+// globe-layers and globe-planets; here it is which button is pressed.
 test.use({ locale: 'en-US' })
 
 const LEVELS = ['Explore the Moon', 'South Pole in detail']
-const BUTTONS = ['Initial position', 'Dark side', 'Northern Hemisphere', 'Southern Hemisphere', 'Lunar Missions', 'Sites']
+const BUTTONS = ['Initial position', 'Dark side', 'Northern Hemisphere', 'Southern Hemisphere', 'Lunar Missions', 'Sites', 'Planets']
 const LABELS = [...LEVELS, ...BUTTONS]
-/** The buttons pressed when the page opens: the level of the orbit view and the two switches of the dots. */
-const OPENS_PRESSED = ['Explore the Moon', 'Lunar Missions', 'Sites']
+/** The buttons pressed when the page opens: the level of the orbit view and the three switches. */
+const OPENS_PRESSED = ['Explore the Moon', 'Lunar Missions', 'Sites', 'Planets']
 const button = (page: Page, name: string) => page.getByRole('button', { name, exact: true })
 const pressed = async (page: Page, name: string) => (await button(page, name).getAttribute('aria-pressed')) === 'true'
 
-test('has the eight buttons, in English and in this order, with Explore the Moon, Lunar Missions and Sites pressed', async ({ page }) => {
+test('has the nine buttons, in English and in this order, with Explore the Moon and the three switches pressed', async ({ page }) => {
   await page.goto('/')
   const menu = page.getByRole('group', { name: 'Globe menu' })
   await expect(menu).toBeVisible()
@@ -69,7 +69,7 @@ test('sits in the very top left corner of the globe, at 85% of a fifth of the wi
     const one = button(page, label)
     const own = (await one.boundingBox())!
     expect(own.height).toBeGreaterThanOrEqual(40)
-    // All eight fit inside the stage: the menu is not cut off at the bottom.
+    // All nine fit inside the stage: the menu is not cut off at the bottom.
     expect(own.y + own.height).toBeLessThanOrEqual(globe.y + globe.height)
     await expect(one).toHaveCSS('font-weight', '600')
     await expect(one).toHaveCSS('white-space', 'nowrap')
@@ -78,7 +78,7 @@ test('sits in the very top left corner of the globe, at 85% of a fifth of the wi
   await expect(button(page, 'Sites')).toHaveCSS('font-family', /Orbitron/)
 })
 
-test('the three buttons that turn the Moon release one another, and Sites and Missions stay their own', async ({ page }) => {
+test('the buttons that turn the Moon release one another, and the three switches stay their own', async ({ page }) => {
   await page.goto('/')
   await button(page, 'Southern Hemisphere').click()
   expect(await pressed(page, 'Southern Hemisphere')).toBe(true)
@@ -88,16 +88,73 @@ test('the three buttons that turn the Moon release one another, and Sites and Mi
   await button(page, 'Dark side').click()
   expect(await pressed(page, 'Dark side')).toBe(true)
   expect(await pressed(page, 'Northern Hemisphere')).toBe(false)
-  // Missions and Sites were not touched by any of it.
+  // The three switches were not touched by any of it.
   expect(await pressed(page, 'Lunar Missions')).toBe(true)
   expect(await pressed(page, 'Sites')).toBe(true)
+  expect(await pressed(page, 'Planets')).toBe(true)
+})
+
+test('Initial position turns the camera back to the opening framing, never over the point under the Sun', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('.globe')).toHaveAttribute('data-dressed', 'true', { timeout: 20_000 })
+  const camera = (state: string) => page.locator('.globe').evaluate((element, name) => Number(element.getAttribute(`data-${name}`)), state)
+  await expect.poll(() => camera('camera-distance'), { timeout: 30_000 }).toBeGreaterThan(0)
+  await button(page, 'Northern Hemisphere').click()
+  await expect.poll(() => camera('camera-polar'), { timeout: 15_000 }).toBeLessThan(5)
+  await button(page, 'Initial position').click()
+  // The opening framing is on the side of the Site, at 5 Moon radii, and well off the north pole.
+  await expect.poll(() => camera('camera-polar'), { timeout: 15_000 }).toBeGreaterThan(40)
+  await expect.poll(() => camera('camera-distance'), { timeout: 15_000 }).toBeGreaterThan(4.9)
+  expect(await camera('camera-distance')).toBeLessThanOrEqual(6)
+})
+
+test('on a 375 px phone the menu folds into a button in the corner, and opens clear of the view buttons', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.goto('/')
+  const panel = page.getByRole('group', { name: 'Globe menu' })
+  const toggle = page.getByRole('button', { name: 'Menu', exact: true })
+  await expect(toggle).toBeVisible()
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  await expect(panel).toBeHidden()
+  const globe = (await page.locator('.globe').first().boundingBox())!
+  const folded = (await toggle.boundingBox())!
+  expect(folded.x).toBeGreaterThanOrEqual(globe.x)
+  expect(folded.width).toBeLessThanOrEqual(48)
+  await toggle.click()
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+  await expect(panel).toBeVisible()
+  const open = (await panel.boundingBox())!
+  const views = (await page.locator('.views').boundingBox())!
+  // Inside the picture, and not over the buttons for the three views, which are below it on a phone.
+  expect(open.x + open.width).toBeLessThanOrEqual(globe.x + globe.width)
+  expect(open.y + open.height).toBeLessThanOrEqual(globe.y + globe.height + 1)
+  expect(open.y + open.height).toBeLessThanOrEqual(views.y)
+  // A button that turns the Moon folds it again.
+  await button(page, 'Dark side').click()
+  await expect(panel).toBeHidden()
+})
+
+test('on a wide screen the menu stops above the view buttons and the map caption starts beside it', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 640 })
+  await page.goto('/')
+  await expect(page.getByRole('button', { name: 'Menu', exact: true })).toBeHidden()
+  const panel = page.getByRole('group', { name: 'Globe menu' })
+  const views = (await page.locator('.views').boundingBox())!
+  const open = (await panel.boundingBox())!
+  expect(open.y + open.height).toBeLessThanOrEqual(views.y)
+  await button(page, 'South Pole in detail').click()
+  const caption = page.locator('.stage__caption')
+  await expect(caption).toBeVisible({ timeout: 15_000 })
+  const side = (await caption.boundingBox())!
+  const levels = (await panel.boundingBox())!
+  expect(side.x).toBeGreaterThanOrEqual(levels.x + levels.width)
 })
 
 // The levels: the context of the stage, in step with the view buttons under it.
 const view = (page: Page, name: 'From orbit' | 'Map' | 'From the ground') => page.locator('.views').getByRole('button', { name, exact: true })
 const levelPressed = (page: Page) => page.locator('[aria-label="Level"] button[aria-pressed="true"]')
 
-test('a rule separates the two levels from the six buttons below', async ({ page }) => {
+test('a rule separates the two levels from the seven buttons below', async ({ page }) => {
   await page.goto('/')
   const rule = page.getByRole('group', { name: 'Globe menu' }).getByRole('separator')
   await expect(rule).toBeVisible()
@@ -149,7 +206,7 @@ test('on the map the menu has only the two levels, and the buttons of the orbit 
   await expect(button(page, 'Explore the Moon')).toHaveAttribute('aria-pressed', 'false')
   await button(page, 'Explore the Moon').click()
   await expect(menu.getByRole('button')).toHaveText(LABELS)
-  // What was pressed before is as it was: both switches pressed, the level of the orbit pressed.
+  // What was pressed before is as it was: the three switches pressed, the level of the orbit pressed.
   for (const label of LABELS) await expect(button(page, label)).toHaveAttribute('aria-pressed', OPENS_PRESSED.includes(label) ? 'true' : 'false')
 })
 

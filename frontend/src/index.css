@@ -289,6 +289,8 @@ footer[data-guide='true'] {
   position: relative;
   min-height: 0;
   overflow: hidden;
+  /* The width the globe's menu takes in the corner of the stage: what the caption keeps clear of. */
+  --menu-w: calc(clamp(250px, 20vw, 420px) * 0.85);
 }
 
 .globe,
@@ -455,7 +457,7 @@ footer[data-guide='true'] {
   white-space: normal;
 }
 
-/* The Equator and the poles of the Moon, drawn over it each frame. */
+/* The letters N and S of the poles of the Moon, over the stage; the Equator, the circle and the dots are drawn in the scene. */
 .globe__poles {
   position: absolute;
   inset: 0;
@@ -465,32 +467,8 @@ footer[data-guide='true'] {
   pointer-events: none;
 }
 
-.globe__equator {
-  stroke: #ffd400;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.globe__equator--base {
-  stroke: rgba(0, 0, 0, 0.55);
-}
-
-.globe__circle {
-  stroke: #fff;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.globe__circle--base {
-  stroke: rgba(0, 0, 0, 0.55);
-}
-
 .globe__poles line {
   stroke: rgba(255, 255, 255, 0.75);
-}
-
-.globe__poles circle {
-  fill: #fff;
 }
 
 .globe__poles text {
@@ -766,6 +744,11 @@ footer[data-guide='true'] {
   color: var(--dim);
   font-size: 13px;
   pointer-events: none;
+}
+
+/* On the map the menu of the globe is in the top left corner: the caption starts beside it. */
+.stage__caption {
+  left: calc(var(--menu-w) + 16px);
 }
 
 .ground-view__caption p {
@@ -1695,7 +1678,7 @@ button.site {
 }
 
 /*
- * The menu on the left of the globe: eight push buttons on a dark glass panel, in the top left corner of
+ * The menu on the left of the globe: nine push buttons on a dark glass panel, in the top left corner of
  * the globe's own box. Sizes scale with the window; `--s` scales them all by one number.
  */
 .globe-menu {
@@ -1714,9 +1697,76 @@ button.site {
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
-  /* Eight buttons and a rule are tall: if the stage is lower than that, the menu scrolls rather than being cut. */
-  max-height: 100%;
+  /* Nine buttons and a rule are tall: if the stage is lower than that, the menu scrolls rather than being cut.
+     On a wide screen the view buttons sit over the bottom of the stage, and the menu stops above them. */
+  max-height: calc(100% - 64px);
   overflow-y: auto;
+}
+
+/* Under 900 px the view buttons are below the picture, so the menu may use all of its height. */
+@media (max-width: 899px) {
+  .globe-menu {
+    max-height: 100%;
+  }
+}
+
+/* On a phone the panel does not fit beside the Moon: it folds into a button in the corner. */
+.globe-menu__toggle {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .stage {
+    --menu-w: 44px;
+  }
+
+  .globe-menu__toggle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 6;
+    display: block;
+    box-sizing: border-box;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 8px;
+    background: rgba(60, 60, 60, 0.72);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    cursor: pointer;
+  }
+
+  /* Three bars. */
+  .globe-menu__toggle span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 18px;
+    height: 2px;
+    background: #fff;
+    box-shadow:
+      0 -6px 0 #fff,
+      0 6px 0 #fff;
+    transform: translate(-50%, -50%);
+  }
+
+  .globe-menu__toggle:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+
+  /* The panel opens under the button, and is not there while it is folded. */
+  .globe-menu {
+    top: 48px;
+    max-height: calc(100% - 48px);
+  }
+
+  .globe-menu[data-open='false'] {
+    display: none;
+  }
 }
 
 /* The rule between the two levels at the top and the buttons of the orbit. */
@@ -1731,7 +1781,7 @@ button.site {
   box-sizing: border-box;
   display: block;
   width: 100%;
-  /* The 6vh keeps the eight of them inside a low stage. */
+  /* The 6vh keeps them all inside a low stage. */
   height: calc(min(clamp(40px, 3.2vw, 64px), 6vh) * var(--s));
   margin: 0 0 calc(clamp(6px, 0.55vw, 12px) * var(--s));
   padding: 0 8px;

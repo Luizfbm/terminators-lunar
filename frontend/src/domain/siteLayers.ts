@@ -1,13 +1,15 @@
-/** The two switches of the globe's menu that show and hide the dots of the Sites. */
+/** The switches of the globe's menu that show and hide what is drawn: the dots of the Sites and the planets of the sky. */
 export interface Layers {
   /** The Artemis Sites of Wueller et al. 2026. */
   sites: boolean
   /** The landing sites of missions that flew (Apollo, CLPS, ISRO, LROC 2016). */
   missions: boolean
+  /** The seven planets as points of light behind the Moon, and their names. */
+  planets: boolean
 }
 
-/** Both start shown: the landing points of the missions that flew (IM-2, Blue Ghost 1, Apollo 11, Chandrayaan-3) are on the globe from the start. */
-export const initialLayers = (): Layers => ({ sites: true, missions: true })
+/** All three start shown: the landing points of the missions that flew (IM-2, Blue Ghost 1, Apollo 11, Chandrayaan-3) are on the globe from the start. */
+export const initialLayers = (): Layers => ({ sites: true, missions: true, planets: true })
 
 /** The `source` the 130 Artemis Sites come from; every other curated source is a mission's landing. */
 export const ARTEMIS_SOURCE = 'wueller2026'
@@ -21,7 +23,7 @@ export interface LayerSite {
 }
 
 /** Which switch a source belongs to, or null for a source no switch governs (a typed coordinate). */
-export function layerOf(source: string | null | undefined): keyof Layers | null {
+export function layerOf(source: string | null | undefined): 'sites' | 'missions' | null {
   if (source === CUSTOM_SOURCE) return null
   return source === undefined || source === null || source === ARTEMIS_SOURCE ? 'sites' : 'missions'
 }
