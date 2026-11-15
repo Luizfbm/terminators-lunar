@@ -5,6 +5,10 @@ sphere, NaN where there is no data. Each window is a square around the Site, a l
 wider than the rays the engine walks in that product (100 km near, 300 km far), so the
 global mosaics never have to sit on the VPS whole.
 
+Where PGDA publishes the per-pixel height error of a DEM (the 60°S products, so Chandrayaan-3),
+<product>_ERR.TIF is cut beside the DEM window, from the same bounds on the same grid, in
+metres: the Uncertainty band reads it (ADR 0006). Each has its own digest in offpole.sha256.
+
     python crop_offpole.py <out> [<local PGDA dem dir> [<local SLDEM2015 tile dir>]]
 
     python crop_offpole.py --digests <out>   prints the digests for offpole.sha256
@@ -34,6 +38,7 @@ PGDA = "https://pgda.gsfc.nasa.gov/data/LOLA_20mpp"
 SLDEM = "https://imbrium.mit.edu/DATA/SLDEM2015"
 NEAR_M = 105_000.0  # rays to 100 km, plus a margin for the bilinear read
 FAR_M = 310_000.0  # rays to 300 km
+ERROR_SUFFIX = "_ERR"  # PGDA name of a DEM's per-pixel height error, as in backend/app/horizon.py
 
 # Coordinates as in backend/app/data/sites.csv, which carries their citations.
 SITES = {
@@ -172,6 +177,13 @@ def _ldem(
         _write(path, data, source.window_transform(window), source.crs)
 
 
+def _same_grid(dem: Path, error: Path) -> None:
+    """The error window must sit on the DEM window's pixels, or the clones refuse it."""
+    with rasterio.open(dem) as a, rasterio.open(error) as b:
+        if a.shape != b.shape or not a.transform.almost_equals(b.transform):
+            raise SystemExit(f"{error} is not on the grid of {dem}")
+
+
 # SLDEM2015 is raw, one row after the other, so a window is a run of whole rows: read
 # it in big HTTP chunks instead of one request per row.
 GDAL_ENV = {
@@ -255,20 +267,18 @@ def _main() -> None:
                 ("SLDEM2015_128.TIF", lambda p, lat=lat, lon=lon: _sldem_far(lat, lon, p)),
             ]
         else:
-            jobs = [
-                (
-                    "LDEM_60S_60MPP_ADJ.TIF",
-                    lambda p, lat=lat, lon=lon: _ldem(
-                        "LDEM_60S_60MPP_ADJ", local, lat, lon, NEAR_M, p
-                    ),
-                ),
-                (
-                    "LDEM_60S_240MPP_ADJ.TIF",
-                    lambda p, lat=lat, lon=lon: _ldem(
-                        "LDEM_60S_240MPP_ADJ", local, lat, lon, FAR_M, p
-                    ),
-                ),
-            ]
+            jobs = []
+            for product, half in (("LDEM_60S_60MPP_ADJ", NEAR_M), ("LDEM_60S_240MPP_ADJ", FAR_M)):
+                # The DEM window first, then its error window on the same grid.
+                for suffix in ("", ERROR_SUFFIX):
+                    jobs.append(
+                        (
+                            f"{product}{suffix}.TIF",
+                            lambda p, lat=lat, lon=lon, name=f"{product}{suffix}", half=half: _ldem(
+                                name, local, lat, lon, half, p
+                            ),
+                        )
+                    )
         for name, job in jobs:
             path = folder / name
             if not needs_cut(path, f"{site_id}/{name}", expected):
@@ -276,6 +286,8 @@ def _main() -> None:
             path.unlink(missing_ok=True)
             print(f"cutting {site_id}/{name}", flush=True)
             job(path)
+            if name.endswith(f"{ERROR_SUFFIX}.TIF"):
+                _same_grid(folder / name.replace(f"{ERROR_SUFFIX}.TIF", ".TIF"), path)
 
 
 if __name__ == "__main__":

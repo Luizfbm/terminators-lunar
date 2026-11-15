@@ -27,6 +27,9 @@ client = TestClient(app)
 CR05 = {"site_id": "CR05", "start": "2026-11-14T00:00:00Z", "duration_hours": 400}
 SIGMA_M = 2.0
 CLONES = 3
+# Chandrayaan-3 has its own 60 m and 240 m windows of the 60°S DEMs (deploy/crop_offpole.py),
+# and now their error windows beside them (issue 51).
+CH3 = {"site_id": "CH3", "start": "2026-11-14T00:00:00Z", "duration_hours": 400}
 START = datetime(2026, 11, 14, tzinfo=UTC)
 
 
@@ -63,6 +66,36 @@ def error_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
             with rasterio.open(horizon.error_path(folder, band), "w", **profile) as err:
                 err.write(np.full((dem.height, dem.width), SIGMA_M, dtype=np.float32), 1)
     return folder
+
+
+def error_dir_for_ch3(folder: Path, sigma: float) -> Path:
+    """Chandrayaan-3's DEM windows, linked, with an error window of `sigma` on each one's grid."""
+    own = folder / horizon.OFFPOLE_DIR / "CH3"
+    own.mkdir(parents=True)
+    for band in horizon.OFFPOLE_LADDERS[1]:
+        source = horizon.dem_dir() / horizon.OFFPOLE_DIR / "CH3" / f"{band.product}.TIF"
+        (own / source.name).symlink_to(source)
+        with rasterio.open(source) as dem:
+            profile = {
+                **dem.profile,
+                "dtype": "float32",
+                "nodata": float("nan"),
+                "compress": "deflate",
+                "predictor": 3,
+            }
+            with rasterio.open(horizon.error_path(own, band), "w", **profile) as err:
+                err.write(np.full((dem.height, dem.width), sigma, dtype=np.float32), 1)
+    return folder
+
+
+@pytest.fixture(scope="module")
+def ch3_error_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    return error_dir_for_ch3(tmp_path_factory.mktemp("ch3-with-errors"), SIGMA_M)
+
+
+@pytest.fixture(scope="module")
+def ch3_zero_error_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    return error_dir_for_ch3(tmp_path_factory.mktemp("ch3-zero-errors"), 0.0)
 
 
 @pytest.fixture
@@ -216,6 +249,93 @@ def test_a_clone_without_error_gives_the_visibility_answer_to_the_second() -> No
     assert len(events) >= 2
     for name in uncertainty.METRICS:
         assert metrics[name] == answer["metrics"][name]
+
+
+# --- off-pole Sites with a per-pixel error (Chandrayaan-3) ---------------------------------------
+
+
+def test_chandrayaan_3_gets_a_band_of_clones_from_its_own_error_windows(
+    ch3_error_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("LUNAR_DEM_DIR", str(ch3_error_dir))
+    client.get("/visibility/uncertainty", params=CH3)
+    band = wait_for_band(CH3)
+    assert band["clones"] == CLONES
+    assert band["error_products"] == [
+        {"dem": "LDEM_60S_60MPP_ADJ", "error": "LDEM_60S_60MPP_ADJ_ERR"},
+        {"dem": "LDEM_60S_240MPP_ADJ", "error": "LDEM_60S_240MPP_ADJ_ERR"},
+    ]
+    assert band["uncovered"] == []
+    plain = client.get("/visibility", params=CH3).json()
+    assert [(e["type"], e["t"]) for e in band["events"]] == [
+        (e["type"], e["t"]) for e in plain["events"]
+    ]
+    assert len(band["events"]) >= 1
+    # SIGMA_M is large on purpose: the clones are not the nominal terrain, so the band has width.
+    assert any(m["low"] != m["high"] for m in band["metrics"].values()) or any(
+        e.get("earliest") != e.get("latest") for e in band["events"]
+    )
+
+
+def test_a_chandrayaan_3_clone_is_not_the_nominal_terrain(
+    ch3_error_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("LUNAR_DEM_DIR", str(ch3_error_dir))
+    site = catalog.find_site("CH3")
+    assert site is not None
+    source = clones.CloneSource(site, 2.0)
+    assert source.covered_products == ["LDEM_60S_60MPP_ADJ", "LDEM_60S_240MPP_ADJ"]
+    nominal = horizon.mask(site["latitude_deg"], site["longitude_deg"], 2.0, site_id="CH3")
+    assert not np.array_equal(source.mask(0).elevations_deg, nominal.elevations_deg)
+    assert not np.array_equal(source.mask(0).elevations_deg, source.mask(1).elevations_deg)
+
+
+def test_chandrayaan_3_with_zero_error_gives_the_visibility_answer_to_the_second(
+    ch3_zero_error_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("LUNAR_DEM_DIR", str(ch3_zero_error_dir))
+    client.get("/visibility/uncertainty", params=CH3)
+    band = wait_for_band(CH3)
+    plain = client.get("/visibility", params=CH3).json()
+    assert band["clones"] == CLONES
+    assert len(band["events"]) >= 1
+    for event, nominal in zip(band["events"], plain["events"], strict=True):
+        assert event["t"] == event["earliest"] == event["latest"] == nominal["t"]
+        assert event["clones_with_event"] == CLONES
+    for name in uncertainty.METRICS:
+        assert band["metrics"][name] == {
+            "low": plain["metrics"][name],
+            "high": plain["metrics"][name],
+        }
+
+
+def test_chandrayaan_3_without_its_error_windows_stays_a_band_of_one(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The fixtures have the DEM windows only, as a VPS does until crop_offpole.py cuts them.
+    band = client.get("/visibility/uncertainty", params=CH3).json()
+    assert band["clones"] == 1
+    assert band["error_products"] == []
+    assert band["uncovered"] == ["LDEM_60S_60MPP_ADJ", "LDEM_60S_240MPP_ADJ"]
+
+
+@pytest.mark.parametrize("site_id", ["APOLLO11", "BG1"])
+def test_the_sldem2015_sites_say_they_have_no_error_to_vary_instead_of_inventing_one(
+    site_id: str,
+) -> None:
+    # SLDEM2015 has no per-pixel error and Barker et al. 2016 give no 1 sigma (ADR 0006): the
+    # band is the nominal answer, and `uncovered` names the DEMs it could not vary.
+    params = {"site_id": site_id, "start": "2026-11-14T00:00:00Z", "duration_hours": 400}
+    band = client.get("/visibility/uncertainty", params=params).json()
+    plain = client.get("/visibility", params=params).json()
+    assert band["clones"] == 1
+    assert band["error_products"] == []
+    assert band["uncovered"] == ["SLDEM2015_512", "SLDEM2015_128"]
+    for name in uncertainty.METRICS:
+        assert band["metrics"][name] == {
+            "low": plain["metrics"][name],
+            "high": plain["metrics"][name],
+        }
 
 
 # --- the route: 202, then 200 ----------------------------------------------------------------
