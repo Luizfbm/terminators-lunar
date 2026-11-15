@@ -644,6 +644,52 @@
     "run_at": "2026-11-15T13:02:11Z"
   },
   {
+    "id": "uncertainty-band-contains-nominal",
+    "title": {
+      "en": "Uncertainty band contains the nominal answer at Site 001",
+      "pt": "A faixa de incerteza contém a resposta nominal no Site 001"
+    },
+    "reference": "The engine against itself: Site 001, default Window from 2026-11-14 (708.73 h), Observer 2 m, 32 clones of the fixture DEMs raised and lowered by a uniform 0.5 m error (the upper end of the 0.3-0.5 m RMS height uncertainty, Barker et al. 2021); the nominal /visibility answer is the reference",
+    "tolerance": {
+      "en": "every Event: nominal time within [earliest − 15 min, latest + 15 min], with the band present (at least half the clones have the Event); every metric (Sun-and-Earth time, sunlit hours, Earth-visible hours, LCSP): nominal within [low − 0.25 h, high + 0.25 h], mean Sun fraction within 0.25 h / 708.73 h. 15 min is the timeline step. Expected before running: passes. Fixed before evaluating",
+      "pt": "cada Event: horário nominal dentro de [earliest − 15 min, latest + 15 min], com a faixa presente (pelo menos metade dos clones tem o Event); cada métrica (tempo com Sol e Terra, horas de Sol, horas de Terra visível, LCSP): nominal dentro de [low − 0,25 h, high + 0,25 h], fração média do Sol dentro de 0,25 h / 708,73 h. 15 min é o passo da linha do tempo. Esperado antes de rodar: passa. Fixada antes de avaliar"
+    },
+    "result": {
+      "en": "did not run",
+      "pt": "não rodou"
+    },
+    "status": "pending",
+    "not_covered": {
+      "en": "The method, not NASA's error maps: CI has no per-pixel error rasters, so the clones use a uniform 0.5 m. Only pixel-scale height error is varied: no landing error, no resolution drop, nothing under a pixel (the IM-2 crater is below the finest DEM). A nominal answer inside its own band says the band agrees with it, not that the band is the true error.",
+      "pt": "O método, não os mapas de erro da NASA: o CI não tem os rasters de erro por pixel, então os clones usam 0,5 m uniforme. Só o erro de altura na escala do pixel varia: sem erro de pouso, sem queda de resolução, nada abaixo de um pixel (a cratera do IM-2 é menor que o DEM mais fino). Uma resposta nominal dentro da própria faixa diz que a faixa concorda com ela, não que a faixa é o erro verdadeiro."
+    },
+    "script_path": "validation/test_uncertainty.py",
+    "run_at": "2026-11-15T17:09:41Z"
+  },
+  {
+    "id": "negative-control-uncertainty-band-shifted",
+    "title": {
+      "en": "Negative control: the nominal Events moved 24 h",
+      "pt": "Controle negativo: os Events nominais deslocados 24 h"
+    },
+    "reference": "The same band against the nominal Event times moved 24 h later",
+    "tolerance": {
+      "en": "at least one Event must fall outside [earliest − 15 min, latest + 15 min]. Expected before running: outside",
+      "pt": "pelo menos um Event tem que cair fora de [earliest − 15 min, latest + 15 min]. Esperado antes de rodar: fora"
+    },
+    "result": {
+      "en": "did not run",
+      "pt": "não rodou"
+    },
+    "status": "pending",
+    "not_covered": {
+      "en": "Only shows the band is narrow enough for the check to tell a day's shift apart.",
+      "pt": "Só mostra que a faixa é estreita o bastante para a checagem distinguir um deslocamento de um dia."
+    },
+    "script_path": "validation/test_uncertainty.py",
+    "run_at": "2026-11-15T17:09:41Z"
+  },
+  {
     "id": "wueller2026-sunlit-days",
     "title": {
       "en": "Consecutive sunlit days at the Artemis Sites vs Wueller et al. 2026",
