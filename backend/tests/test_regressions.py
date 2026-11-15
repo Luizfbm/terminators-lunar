@@ -1388,3 +1388,36 @@ def test_every_route_that_answers_422_lets_schemathesis_expect_it() -> None:
     }
     missing = sorted(name for name in documented if "422" not in expected.get(name, []))
     assert missing == []
+
+
+# 15/11/2026: GET /terrain/heights reads up to 511 x 511 pixels and builds a JSON of about
+# 260 000 integers (~900 MB at peak, in a container of 4.5 GB). It first went in with no per-IP
+# cap and no engine slot, so one client could ask for ten grids at once beside a full set of
+# engine runs. Over the cap it answers what every engine route does: 503 busy with Retry-After.
+def test_terrain_heights_is_counted_by_the_per_ip_cap(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LUNAR_IP_LIMIT_PER_MINUTE", "2")
+    one = {"CF-Connecting-IP": "198.51.100.77", "Origin": "https://lunar.luizfbm.win"}
+    params = {"site_id": "001", "half_extent_m": 1000}
+    answers = [client.get("/terrain/heights", params=params, headers=one) for _ in range(3)]
+    # Under the cap the route answers as usual (200 with the DEM windows of fixtures/, 422
+    # without them); only the cap gives 503 here.
+    assert [a.status_code == 503 for a in answers] == [False, False, True]
+    assert answers[2].json()["code"] == "busy"
+    assert 1 <= int(answers[2].headers["Retry-After"]) <= 61
+    assert answers[2].headers["access-control-allow-origin"] == "https://lunar.luizfbm.win"
+    other = {"CF-Connecting-IP": "203.0.113.77"}
+    assert client.get("/terrain/heights", params=params, headers=other).status_code != 503
+    # /terrain, which reads a small window, stays out of the cap.
+    assert client.get("/terrain", params={"site_id": "001"}, headers=one).status_code != 503
+
+
+def test_terrain_heights_waits_for_an_engine_slot(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app import cache
+
+    # Every slot taken: the grid is not built, the visitor gets 503 busy once the wait is up.
+    monkeypatch.setattr(cache, "_gate", cache._Gate(0))
+    monkeypatch.setenv("LUNAR_QUEUE_WAIT_SECONDS", "0.1")
+    answer = client.get("/terrain/heights", params={"site_id": "001", "half_extent_m": 1000})
+    assert answer.status_code == 503
+    assert answer.json()["code"] == "busy"
+    assert answer.headers["Retry-After"]

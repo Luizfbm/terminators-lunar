@@ -1,14 +1,15 @@
 """`GET /terrain`: the ground around a Site, a property of the Site with no Window.
 
 The Slope (slope.py) and, when the server has the map, the nearest permanently shadowed
-region (psr.py).
+region (psr.py). `GET /terrain/heights`: the DEM's own heights around it (heights.py).
 """
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
-from . import catalog, horizon, psr, slope
+from . import cache, catalog, heights, horizon, psr, slope
 from .constants import CUSTOM_MAX_LATITUDE_DEG
 from .problems import ApiProblem, missing_site
 
@@ -72,3 +73,30 @@ def terrain(site: catalog.Site, radius_m: float, slope_limit_deg: float) -> dict
     if shadow is not psr.ABSENT:
         answer["permanent_shadow"] = shadow
     return answer
+
+
+def terrain_heights(site: catalog.Site, half_extent_m: float) -> bytes:
+    """The contract's `TerrainHeights` as JSON, or the 422 that says why there is none.
+
+    It reads up to 511 x 511 pixels and builds a JSON of about 260 000 integers (about 900 MB
+    at peak, against the container's 4.5 GB), so it waits for an engine slot like any other
+    heavy run: a burst queues or gets 503 busy, never a second grid in memory beside a full
+    set of engine runs.
+    """
+    with cache.engine_slot():
+        try:
+            found = heights.grid(
+                site["latitude_deg"],
+                site["longitude_deg"],
+                half_extent_m,
+                site["id"] if site["curated"] else None,
+            )
+        except horizon.DemUnavailable as missing:
+            # Never a flat or made-up ground: without a DEM there is no grid.
+            raise ApiProblem(
+                "outside_coverage",
+                "Outside coverage",
+                f"No DEM holds the ground {half_extent_m:g} m around this Site ({missing}).",
+            ) from missing
+        body = {"site": site, **heights.as_json(found, half_extent_m)}
+        return json.dumps(body, separators=(",", ":"), allow_nan=False).encode()

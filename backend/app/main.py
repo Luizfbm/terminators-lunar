@@ -22,6 +22,7 @@ from . import (
     dsn,
     energy,
     ground,
+    heights,
     horizon,
     neighbours,
     scatter,
@@ -479,6 +480,20 @@ def get_terrain(
     """The Slope around a Site; defaults are NASA's Artemis III requirement (see slope.py)."""
     selected = ground.site_for(site_id, latitude_deg, longitude_deg)
     return ground.terrain(selected, radius_m, slope_limit_deg)
+
+
+@app.get("/terrain/heights")
+def get_terrain_heights(
+    site_id: str | None = None,
+    latitude_deg: float | None = Query(None, ge=-90, le=90),
+    longitude_deg: float | None = Query(None, ge=-180, le=180),
+    half_extent_m: float = Query(
+        heights.HALF_EXTENT_DEFAULT_M, ge=heights.HALF_EXTENT_MIN_M, le=heights.HALF_EXTENT_MAX_M
+    ),
+) -> Response:
+    """The DEM's own heights around a Site, for the 3D view from the ground (see heights.py)."""
+    selected = ground.site_for(site_id, latitude_deg, longitude_deg)
+    return Response(ground.terrain_heights(selected, half_extent_m), media_type="application/json")
 
 
 @app.post("/assistant")
