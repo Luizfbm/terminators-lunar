@@ -13,6 +13,8 @@ export interface MapSite extends LatLon {
   name: string
   /** The Region the Site belongs to; a typed coordinate and a few landers have none. */
   region_id?: string | null
+  /** Where the coordinate comes from: a mission's landing keeps its name in view on the map. */
+  source?: string
 }
 
 export interface MapRegion {

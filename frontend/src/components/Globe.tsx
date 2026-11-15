@@ -4,11 +4,14 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { earthAttitude, subLunarPoint } from '../domain/earthFace'
 import { chooseLabels, PLANETS, pointLook, type Box, type LabelCandidate } from '../domain/planets'
 import { levelOfView, type LevelId } from '../domain/globeLevels'
+import { MAP_CLICK_DELAY_MS } from '../domain/land'
 import { latitudeCircle, POLAR_CIRCLE_LATITUDE, polarCircleShown } from '../domain/latitudeCircle'
+import { hitRadius, MARKERS, missionLabel, nearestMarker, nearSide } from '../domain/markers'
 import { moonRadiusPx } from '../domain/moonDisc'
+import { bubbleOnLeft, landPlace, latLonOfVector, type LandPlace } from '../domain/pick'
 import { letterClear, POLE_LETTER_RADII, poleMark, type Disc } from '../domain/poleMark'
 import type { View } from '../domain/query'
-import { initialLayers, siteShown, type Layers } from '../domain/siteLayers'
+import { initialLayers, layerOf, siteShown, type Layers } from '../domain/siteLayers'
 import { VIEW_DISTANCE, viewTarget, type MoonPlace, type MoonView } from '../domain/viewTarget'
 import { groundDirection, toVector, type LatLon } from '../domain/sky'
 import {
@@ -24,12 +27,26 @@ import {
 } from '../domain/spaceScale'
 import { useRegions } from '../hooks/useRegions'
 import { useI18n } from '../i18n/I18nContext'
-import { MAP_EDGE_LATITUDE, mapPlaces, mapStep, pointOnMap, regionHeight, type MapEvent, type MapRegion, type MapView } from './globeMap/map'
+import {
+  MAP_EDGE_LATITUDE,
+  mapPlaces,
+  mapStep,
+  placeLabels,
+  pointOnMap,
+  regionHeight,
+  type MapEvent,
+  type MapRegion,
+  type MapSite,
+  type MapView,
+} from './globeMap/map'
 import { GlobeMenu } from './GlobeMenu'
 import { MapLayer, type MarkerElements } from './globeMap/MapLayer'
 import { positionMap, type NameSizes } from './globeMap/position'
 import { readoutText } from './globeMap/readout'
+import { fill } from './globeMap/strings'
+import { STRINGS as LAND_STRINGS } from './stageStatus/strings'
 import './globeMap/globeMap.css'
+import './globeLand.css'
 import { dressMoon } from './moonSurface'
 import { planetBackdrop, planetWay } from './planetBackdrop'
 import { earthMaterial as makeEarthMaterial, EARTH, glowTexture, loadEarthMap, SUN } from './spaceBodies'
@@ -85,14 +102,19 @@ export interface GlobeProps {
   level?: LevelId | null
   /** A level of the menu was clicked: the view to go to. */
   onLevel?: (view: View) => void
+  /**
+   * "Land": one click on the Moon (not a drag) gives one place, the Site whose dot it snapped to or the
+   * point of the ground under it. The app asks the Query about it and goes down to the ground there.
+   */
+  onLand?: (place: GlobeLanding) => void
 }
+
+/** Where "Land" was clicked, and the name of the Site it snapped to, if any. */
+export type GlobeLanding = LandPlace & { name: string | null }
 
 const GRID_LATITUDES = [-88, -86, -84, -82, -80]
 const LABELLED_LATITUDES = [-85, -80]
 
-const DOT = 0xe9e7e2
-const DOT_OTHER = 0x77787f
-const DOT_ON_MAP = 0xcfd3dc
 /** The poles of the Moon, in its own frame (MOON_ME): the letters belong to them and to nothing else. */
 const POLES = [
   { letter: 'N', latitude: 90 },
@@ -110,7 +132,10 @@ const POLE_DOT = 1 / (0.36 * 190)
 /** The circle of latitude round the south pole: a white line of 2 px over a darker one of 4 px, whatever the zoom. */
 const CIRCLE_WIDTH_PX = 2
 const CIRCLE_BASE_WIDTH_PX = 4
-const PICK_RADIUS_PX = 16
+/** The dots of the Sites and the missions sit this far out, in Moon radii, just over the ground. */
+const MARK_RADIUS = 1.002
+/** The ring of the chosen Site, as the map's CSS draws it (`.globe__chosen`), for the mission names to keep clear of. */
+const CHOSEN_RING_PX = 12
 const FIELD_OF_VIEW_DEG = 32
 /** The Sun's halo reaches this many times the radius of its disc. */
 const HALO_REACH = 7
@@ -119,7 +144,7 @@ const DRESS_WAIT_MS = 6000
 /** The Site name starts this far from its dot and keeps this far from the edge of the stage. */
 const PIN_GAP = 12
 const PIN_EDGE = 8
-/** Height above the surface, in Moon radii, from which the Site dots are drawn at full size. */
+/** Height above the surface, in Moon radii, from which the ring on the marked Occluder is drawn at full size. */
 const DOT_FULL_SIZE_HEIGHT = 2.3
 /** The flight into a Region and back out, and the fade that stands in for it with reduced motion. */
 const REGION_FLIGHT_MS = 800
@@ -146,6 +171,37 @@ function roundDotTexture(): THREE.Texture {
   }
   return new THREE.CanvasTexture(canvas)
 }
+
+/**
+ * A round dot with a dark edge, white inside so the material's colour shows through: the shape of every
+ * Site and mission dot. Without a 2D canvas (a test browser, say) the dots stay square.
+ */
+function dotTexture(): THREE.Texture | null {
+  const paper = document.createElement('canvas')
+  paper.width = paper.height = 64
+  const pen = paper.getContext('2d')
+  if (!pen) return null
+  pen.beginPath()
+  pen.arc(32, 32, 30, 0, Math.PI * 2)
+  pen.fillStyle = '#000'
+  pen.fill()
+  pen.beginPath()
+  pen.arc(32, 32, 21, 0, Math.PI * 2)
+  pen.fillStyle = '#fff'
+  pen.fill()
+  return new THREE.CanvasTexture(paper)
+}
+
+/** What the app is told by "Land": the place only, without where it was on screen. */
+const toLanding = (place: GlobeLanding): GlobeLanding => ({
+  lat: place.lat,
+  lon: place.lon,
+  ...(place.siteId ? { siteId: place.siteId } : {}),
+  name: place.name,
+})
+
+/** A typed coordinate's key is no code of the catalogue: landing there sends the point, not the key. */
+const catalogueId = (id: string) => (id.startsWith('custom:') ? undefined : id)
 
 const vector = (lat: number, lon: number, radius = 1) => new THREE.Vector3(...toVector(lat, lon)).multiplyScalar(radius)
 
@@ -181,13 +237,26 @@ export function Globe(props: GlobeProps) {
   /** A turn of the Moon asked for by the menu; the draw loop takes it up on its next frame. */
   const turnAsked = useRef<MoonView | null>(null)
   const live = useRef(props)
+  const { locale, t } = useI18n()
+  const words = LAND_STRINGS[locale]
+  // "Land": the point under the cursor and its bubble. A click gives one place to the app, which asks
+  // about it and goes down to the ground there.
+  const landLayer = useRef<HTMLDivElement>(null)
+  const landTarget = useRef<(GlobeLanding & { x: number; y: number }) | null>(null)
+  const landHere = useCallback(() => {
+    const place = landTarget.current
+    if (place) live.current.onLand?.(toLanding(place))
+  }, [])
+  // The names of the missions in orbit: a button each, moved by the drawing loop.
+  const marksLayer = useRef<HTMLDivElement>(null)
+  const [markElements] = useState(() => new Map<string, HTMLButtonElement>())
+  const missions = useMemo(() => props.sites.filter((site) => layerOf(site.source) === 'missions'), [props.sites])
   // The switches of the menu: the dots of the Sites, the dots of the missions, and the planets of the sky.
   const [layers, setLayers] = useState<Layers>(initialLayers)
   const layersLive = useRef(layers)
   const [supported, setSupported] = useState(canDraw)
 
   // The map: one marker per Region from the pole, the Sites of one Region once flown into it.
-  const { locale, t } = useI18n()
   const names = useRegions()
   const places = useMemo(() => mapPlaces(props.sites, names), [props.sites, names])
   const mode = props.mode ?? 'orbit'
@@ -316,23 +385,35 @@ export function Globe(props: GlobeProps) {
       }
     }
 
-    const dotShape = new THREE.SphereGeometry(0.004, 12, 12)
-    const dots = new THREE.Group()
-    scene.add(dots)
-    let dotsFor: readonly GlobeSite[] | null = null
-    const rebuildDots = (sites: readonly GlobeSite[]) => {
-      for (const dot of [...dots.children] as THREE.Mesh[]) {
-        dots.remove(dot)
-        ;(dot.material as THREE.Material).dispose()
+    // The dots of the two layers: a fixed size on screen whatever the zoom, and hidden behind the Moon by
+    // its depth, so the far side's dots never show through it. Each layer has a colour of its own
+    // (`MARKERS`). The chosen Site's dot is drawn with its layer's, or with the layer released: its ring
+    // is the mark that says it is the chosen one.
+    const dotLook = dotTexture()
+    const markLayer = (look: (typeof MARKERS)[keyof typeof MARKERS]) => {
+      const points = new THREE.Points(
+        new THREE.BufferGeometry(),
+        new THREE.PointsMaterial({ color: look.color, size: look.sizePx, sizeAttenuation: false, map: dotLook, alphaTest: 0.5 }),
+      )
+      points.frustumCulled = false
+      scene.add(points)
+      return points
+    }
+    const siteDots = markLayer(MARKERS.sites)
+    const missionDots = markLayer(MARKERS.missions)
+    let dotsFor: { sites: readonly GlobeSite[]; sitesOn: boolean; missionsOn: boolean; chosen: string } | null = null
+    let dotsDrawn = 0
+    const rebuildDots = (sites: readonly GlobeSite[], layers: Layers, chosen: string) => {
+      dotsDrawn = 0
+      for (const [points, layer] of [[siteDots, 'sites'], [missionDots, 'missions']] as const) {
+        const shown = sites.filter((site) => layerOf(site.source) === layer && siteShown(site, layers, chosen))
+        const at = new Float32Array(shown.length * 3)
+        shown.forEach((site, index) => at.set(toVector(site.latitude_deg, site.longitude_deg).map((value) => value * MARK_RADIUS), index * 3))
+        points.geometry.dispose()
+        points.geometry = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(at, 3))
+        dotsDrawn += shown.length
       }
-      for (const site of sites) {
-        const dot = new THREE.Mesh(dotShape, new THREE.MeshBasicMaterial({ color: DOT_OTHER }))
-        dot.position.copy(vector(site.latitude_deg, site.longitude_deg, 1.002))
-        dot.userData.id = site.id
-        dot.userData.source = site.source
-        dots.add(dot)
-      }
-      dotsFor = sites
+      dotsFor = { sites, sitesOn: layers.sites, missionsOn: layers.missions, chosen }
     }
 
     // Two short strokes on the ground at the Site: the way to the Sun and the way to the Earth.
@@ -438,6 +519,7 @@ export function Globe(props: GlobeProps) {
     let shownMode: 'orbit' | 'map' | null = null
     let shownRegion: string | null = null
     const sizes: NameSizes = new Map()
+    const markSizes = new Map<string, { width: number; height: number }>()
     camera.position.set(5.2, 0.6, 4.4)
     camera.lookAt(0, 0, 0)
 
@@ -452,29 +534,39 @@ export function Globe(props: GlobeProps) {
     observer.observe(host)
     resize()
 
+    // A point faces the camera when the camera is above its tangent plane (`nearSide`): what is behind
+    // the limb is neither drawn, named nor landed on.
+    const eye = () => [camera.position.x, camera.position.y, camera.position.z] as const
     const onScreen = (site: LatLon) => {
-      const point = vector(site.latitude_deg, site.longitude_deg, 1.002)
-      const facing = point.clone().normalize().dot(camera.position.clone().normalize()) > 0.15
+      const point = vector(site.latitude_deg, site.longitude_deg, MARK_RADIUS)
+      const facing = nearSide(toVector(site.latitude_deg, site.longitude_deg), eye())
       const projected = point.project(camera)
       return { facing, x: ((projected.x + 1) / 2) * host.clientWidth, y: ((1 - projected.y) / 2) * host.clientHeight }
     }
 
-    // A click that is not a drag picks the nearest Site under the pointer. On the map the Regions
-    // and Sites are buttons of their own, so the canvas leaves the click to them.
-    let pressed: { x: number; y: number } | null = null
-    const onUp = (event: PointerEvent) => {
-      if ((live.current.mode ?? 'orbit') === 'map') return
-      if (!pressed || Math.hypot(event.clientX - pressed.x, event.clientY - pressed.y) > 5) return
-      const box = host.getBoundingClientRect()
-      let best: { id: string; distance: number } | null = null
-      for (const site of live.current.sites) {
-        // A Site whose dot is hidden cannot be picked.
-        if (!siteShown(site, layersLive.current, live.current.site.id)) continue
+    // The dots a click can snap to, where they are on screen: those drawn and facing the camera. In orbit
+    // the dots of the pressed layers; on the map the Site buttons on screen (of the Region flown into and
+    // those with no Region). The chosen Curated Site's ring counts too.
+    const snapTargets = () => {
+      const state = live.current
+      const mode = state.mode ?? 'orbit'
+      const map = mapLive.current
+      let list: readonly MapSite[]
+      if (mode === 'map') {
+        const open = map.places.regions.find((entry) => entry.id === map.region)
+        list = [...(open?.sites ?? []), ...map.places.loose]
+      } else list = state.sites.filter((site) => siteShown(site, layersLive.current, state.site.id))
+      const targets: { id: string; x: number; y: number; site: MapSite }[] = []
+      for (const site of list) {
         const spot = onScreen(site)
-        const distance = Math.hypot(spot.x - (event.clientX - box.left), spot.y - (event.clientY - box.top))
-        if (spot.facing && distance <= PICK_RADIUS_PX && (!best || distance < best.distance)) best = { id: site.id, distance }
+        if (spot.facing) targets.push({ id: site.id, x: spot.x, y: spot.y, site })
       }
-      if (best && best.id !== live.current.site.id) live.current.onSelect(best.id)
+      const chosen = state.site
+      if (catalogueId(chosen.id) && !targets.some((target) => target.id === chosen.id)) {
+        const spot = onScreen(chosen)
+        if (spot.facing) targets.push({ id: chosen.id, x: spot.x, y: spot.y, site: chosen })
+      }
+      return targets
     }
     // In the map, a double click on the ground south of 80° S asks about that point.
     const pointer = new THREE.Vector2()
@@ -487,7 +579,18 @@ export function Globe(props: GlobeProps) {
       const hit = caster.ray.intersectSphere(unit, new THREE.Vector3())
       return pointOnMap(hit ? [hit.x, hit.y, hit.z] : null)
     }
+    // A click on the map lands after a short wait; the second click of a double click cancels it, so a
+    // double click is one request (the ask, staying on the map) and a click is one (the landing).
+    let mapClick = 0
+    let lastLanding = -Infinity
+    const cancelMapClick = () => {
+      const pending = mapClick !== 0
+      window.clearTimeout(mapClick)
+      mapClick = 0
+      return pending
+    }
     const onDouble = (event: MouseEvent) => {
+      cancelMapClick()
       if ((live.current.mode ?? 'orbit') !== 'map' || !live.current.onPoint) return
       const place = groundAt(event)
       if (!place) return
@@ -521,8 +624,89 @@ export function Globe(props: GlobeProps) {
       window.clearTimeout(readoutTimer)
       if (touch) readoutTimer = window.setTimeout(hideReadout, TOUCH_READOUT_MS)
     }
+    // "Land" follows the mouse over the Moon. It hides while the Moon is dragged and for a point in space;
+    // on the map it only shows over the polar cap, the map's ground.
+    const land = {
+      at: null as { x: number; y: number } | null,
+      pointerType: 'mouse',
+      dirty: false,
+      down: null as { x: number; y: number; dragged: boolean } | null,
+    }
+    // The place under a point of the stage: the dot it snaps to, or the ground. Null over space, and on
+    // the map north of its edge.
+    const targetAt = (x: number, y: number, pointerType: string): (GlobeLanding & { x: number; y: number }) | null => {
+      if (host.clientWidth === 0 || host.clientHeight === 0) return null
+      pointer.set((x / host.clientWidth) * 2 - 1, 1 - (y / host.clientHeight) * 2)
+      caster.setFromCamera(pointer, camera)
+      const hit = caster.intersectObject(moon, false)[0]
+      if (!hit) return null
+      const ground = latLonOfVector(hit.point.x, hit.point.y, hit.point.z)
+      if ((live.current.mode ?? 'orbit') === 'map' && ground.latitude_deg > MAP_EDGE_LATITUDE) return null
+      const snapped = nearestMarker(snapTargets(), { x, y }, hitRadius(pointerType))
+      if (snapped) return { ...landPlace(snapped.site, catalogueId(snapped.site.id)), x: snapped.x, y: snapped.y, name: snapped.site.name }
+      return { ...landPlace(ground), x, y, name: null }
+    }
+    const landAt = (place: GlobeLanding) => live.current.onLand?.(toLanding(place))
+    const onLandDown = (event: PointerEvent) => {
+      land.down = { x: event.clientX, y: event.clientY, dragged: false }
+    }
+    const onLandMove = (event: PointerEvent) => {
+      const box = host.getBoundingClientRect()
+      if (land.down && Math.hypot(event.clientX - land.down.x, event.clientY - land.down.y) > 5) land.down.dragged = true
+      if (event.pointerType === 'touch') return
+      land.at = { x: event.clientX - box.left, y: event.clientY - box.top }
+      land.pointerType = event.pointerType
+      land.dirty = true
+    }
+    // One click that is not a drag gives one place: the place itself says which Site, when it snapped to one.
+    const onLandUp = (event: PointerEvent) => {
+      const down = land.down
+      land.down = null
+      const clicked = down !== null && !down.dragged && Math.hypot(event.clientX - down.x, event.clientY - down.y) <= 5
+      const state = live.current
+      if (!clicked || state.dive) {
+        land.dirty = true
+        return
+      }
+      const box = host.getBoundingClientRect()
+      const x = event.clientX - box.left
+      const y = event.clientY - box.top
+      if (event.pointerType === 'touch') {
+        // A finger has no hover: the first tap shows the dot and the bubble, and the bubble is tapped to land.
+        land.at = { x, y }
+        land.pointerType = 'touch'
+        land.dirty = true
+        return
+      }
+      if ((state.mode ?? 'orbit') === 'map') {
+        // The second click of a double click: the double click asks, the landing is off.
+        if (cancelMapClick()) return
+        const place = targetAt(x, y, event.pointerType)
+        if (!place) return
+        mapClick = window.setTimeout(() => {
+          mapClick = 0
+          landAt(place)
+        }, MAP_CLICK_DELAY_MS)
+        return
+      }
+      // In orbit a click lands at once; the second click of a double click is not a second landing.
+      if (event.timeStamp - lastLanding < MAP_CLICK_DELAY_MS) return
+      const place = targetAt(x, y, event.pointerType)
+      if (!place) return
+      lastLanding = event.timeStamp
+      landAt(place)
+    }
+    const onLandLeave = (event: PointerEvent) => {
+      // Onto the bubble itself it stays, so it can be clicked.
+      if (event.relatedTarget instanceof Node && landLayer.current?.contains(event.relatedTarget)) return
+      land.at = null
+      land.down = null
+    }
+    target.addEventListener('pointerdown', onLandDown)
+    target.addEventListener('pointermove', onLandMove)
+    target.addEventListener('pointerup', onLandUp)
+    target.addEventListener('pointerleave', onLandLeave)
     const onDown = (event: PointerEvent) => {
-      pressed = { x: event.clientX, y: event.clientY }
       if (event.pointerType === 'touch') showReadout(event)
     }
     const onMove = (event: PointerEvent) => {
@@ -533,7 +717,6 @@ export function Globe(props: GlobeProps) {
     }
     target.addEventListener('dblclick', onDouble)
     target.addEventListener('pointerdown', onDown)
-    target.addEventListener('pointerup', onUp)
     target.addEventListener('pointermove', onMove)
     target.addEventListener('pointerleave', onLeave)
 
@@ -545,7 +728,11 @@ export function Globe(props: GlobeProps) {
         handle = requestAnimationFrame(draw)
         return
       }
-      if (dotsFor !== state.sites) rebuildDots(state.sites)
+      const layersNow = layersLive.current
+      const drawn = dotsFor
+      if (!drawn || drawn.sites !== state.sites || drawn.sitesOn !== layersNow.sites || drawn.missionsOn !== layersNow.missions || drawn.chosen !== state.site.id) {
+        rebuildDots(state.sites, layersNow, state.site.id)
+      }
 
       const mode = state.mode ?? 'orbit'
       const map = mapLive.current
@@ -639,7 +826,8 @@ export function Globe(props: GlobeProps) {
       // No free zoom on the map: it is flown by its Regions, not by the wheel.
       controls.enabled = mode === 'orbit' && flight === null && fade === null && dive === null && !wantDive
       grid.visible = mode === 'map'
-      dots.visible = mode !== 'map'
+      // On the map the Sites are buttons of their own (`MapLayer`), so the dots are for the orbit.
+      siteDots.visible = missionDots.visible = mode !== 'map'
       if (dive) {
         const progress = Math.min(1, (now - dive.start) / DIVE_MS)
         // Down it speeds up into the ground; back up it slows into place.
@@ -702,23 +890,13 @@ export function Globe(props: GlobeProps) {
         ring.position.copy(there)
         ring.lookAt(there.clone().multiplyScalar(2))
       }
-      // The dots keep their size on screen: up close they shrink, so they never cover the craters.
-      // On the map the Sites are what you came for, so they stay larger and lighter than in orbit.
+      // The ring on the marked Occluder keeps its size on screen: up close it shrinks, so it never covers the craters.
       const onMap = mode === 'map'
       const dotSize = Math.min(1, Math.max(onMap ? 0.22 : 0.06, ((camera.position.length() - 1) / DOT_FULL_SIZE_HEIGHT) * (onMap ? 1.7 : 1)))
       ring.scale.setScalar(Math.max(0.12, dotSize))
-      // The switches of the menu show and hide the dots; the chosen Site's dot stays with its ring.
-      let dotsShown = 0
-      for (const dot of dots.children as THREE.Mesh[]) {
-        const chosen = dot.userData.id === state.site.id
-        dot.visible = siteShown({ id: dot.userData.id, source: dot.userData.source }, layersLive.current, state.site.id)
-        if (dot.visible) dotsShown += 1
-        ;(dot.material as THREE.MeshBasicMaterial).color.set(chosen ? (state.sunUp ? SUN : DOT) : onMap ? DOT_ON_MAP : DOT_OTHER)
-        dot.scale.setScalar((chosen ? 1.8 : 1) * dotSize)
-      }
 
       // How many dots are drawn (those on the far side count too: the Moon hides them), for the tests.
-      const dotCount = String(dots.visible ? dotsShown : 0)
+      const dotCount = String(siteDots.visible ? dotsDrawn : 0)
       if (target.dataset.dots !== dotCount) target.dataset.dots = dotCount
 
       // The Moon's disc on screen: its centre and its radius, from the camera's distance and field of view.
@@ -888,6 +1066,75 @@ export function Globe(props: GlobeProps) {
         ringMark.style.top = `${chosen.y}px`
         ringMark.dataset.lit = String(state.sunUp)
       }
+      // "Land": the point of the Moon under the cursor, snapped to a dot close to it, and the bubble. On
+      // the map too, over the polar cap, once the camera has settled.
+      const landed = landLayer.current
+      if (landed) {
+        const settling = mode === 'map' && (flight !== null || fade !== null)
+        const showing = !state.dive && !settling && land.at !== null && !land.down?.dragged
+        if (showing && (land.dirty || flight || fade)) {
+          land.dirty = false
+          landTarget.current = targetAt(land.at!.x, land.at!.y, land.pointerType)
+        }
+        const spot = showing ? landTarget.current : null
+        landed.hidden = !spot
+        if (spot) {
+          const [dot, bubble] = [landed.children[0] as HTMLElement, landed.children[1] as HTMLElement]
+          const site = bubble.children[1] as HTMLElement
+          if (site.textContent !== (spot.name ?? '')) site.textContent = spot.name ?? ''
+          site.hidden = !spot.name
+          dot.style.transform = `translate(${spot.x}px, ${spot.y}px) translate(-50%, -50%)`
+          const gap = Math.max(12, host.clientWidth * 0.012)
+          const left = bubbleOnLeft(spot.x, gap, bubble.offsetWidth, host.clientWidth)
+          bubble.dataset.side = left ? 'left' : 'right'
+          bubble.style.left = `${left ? spot.x - gap - bubble.offsetWidth : spot.x + gap}px`
+          bubble.style.top = `${Math.max(8, Math.min(host.clientHeight - bubble.offsetHeight - 8, spot.y - bubble.offsetHeight * 1.05))}px`
+        }
+      }
+
+      // The names of the missions in orbit, beside their dots. A name goes where it covers no other name,
+      // dot, the chosen Site's ring or its name; one with no room waits, and shows on the dot's hover (in
+      // the bubble of "Land") and on the keyboard's focus. Every mission keeps its button either way.
+      const marksHost = marksLayer.current
+      if (marksHost) {
+        const showMarks = mode === 'orbit' && !state.dive
+        marksHost.hidden = !showMarks
+        const named: { button: HTMLButtonElement; name: HTMLElement; x: number; y: number; width: number; height: number }[] = []
+        for (const site of state.sites) {
+          const button = markElements.get(site.id)
+          if (!button) continue
+          const spot = showMarks && siteShown(site, layersNow, state.site.id) ? onScreen(site) : null
+          const inside = spot !== null && spot.facing && spot.x >= 0 && spot.x <= host.clientWidth && spot.y >= 0 && spot.y <= host.clientHeight
+          button.hidden = !inside
+          if (!inside) continue
+          button.style.left = `${spot.x}px`
+          button.style.top = `${spot.y}px`
+          const name = button.firstElementChild as HTMLElement | null
+          if (!name) continue
+          const key = `${document.fonts.status}:${name.textContent ?? ''}`
+          let size = markSizes.get(key)
+          if (!size) {
+            size = { width: name.offsetWidth, height: name.offsetHeight }
+            if (size.width > 0) markSizes.set(key, size)
+          }
+          named.push({ button, name, x: spot.x, y: spot.y, width: size.width, height: size.height })
+        }
+        if (named.length > 0) {
+          const keepClear: Box[] = []
+          if (chosen.facing) keepClear.push({ left: chosen.x - CHOSEN_RING_PX, top: chosen.y - CHOSEN_RING_PX, right: chosen.x + CHOSEN_RING_PX, bottom: chosen.y + CHOSEN_RING_PX })
+          if (pinBox) keepClear.push(pinBox)
+          // The menu's boxes are left out on purpose: measuring them every frame slowed the dive down.
+          const radius = MARKERS.missions.sizePx / 2 + 1
+          const places = placeLabels(named, radius, { left: 4, top: 4, right: host.clientWidth - 4, bottom: host.clientHeight - 4 }, keepClear)
+          named.forEach(({ button, name, height }, index) => {
+            const place = places[index] ?? null
+            button.dataset.quiet = String(place === null)
+            // A waiting name shows on the right of its dot when it has the focus.
+            name.style.left = `${place ? place.x : radius + 4}px`
+            name.style.top = `${place ? place.y : -height / 2}px`
+          })
+        }
+      }
       // The letters N and S of the poles, over the stage: they stand outside the Moon, on its poles' own lines,
       // and turn with it. The dot on each pole, the Equator and the circle are in the scene above. A letter
       // never covers the Sun or the Earth, nor the menu: where it would, it is not drawn.
@@ -1033,13 +1280,20 @@ export function Globe(props: GlobeProps) {
       observer.disconnect()
       target.removeEventListener('dblclick', onDouble)
       target.removeEventListener('pointerdown', onDown)
-      target.removeEventListener('pointerup', onUp)
       target.removeEventListener('pointermove', onMove)
       target.removeEventListener('pointerleave', onLeave)
+      target.removeEventListener('pointerdown', onLandDown)
+      target.removeEventListener('pointermove', onLandMove)
+      target.removeEventListener('pointerup', onLandUp)
+      target.removeEventListener('pointerleave', onLandLeave)
+      cancelMapClick()
       window.clearTimeout(readoutTimer)
       controls.dispose()
-      for (const dot of dots.children as THREE.Mesh[]) (dot.material as THREE.Material).dispose()
-      dotShape.dispose()
+      for (const points of [siteDots, missionDots]) {
+        points.geometry.dispose()
+        points.material.dispose()
+      }
+      dotLook?.dispose()
       moon.geometry.dispose()
       undress()
       material.dispose()
@@ -1066,8 +1320,8 @@ export function Globe(props: GlobeProps) {
       }
       renderer.dispose()
     }
-    // `elements` is made once and never replaced, so the scene is still set up once.
-  }, [elements])
+    // `elements` and `markElements` are made once and never replaced, so the scene is still set up once.
+  }, [elements, markElements])
 
   // The wait that ends the loading is on its own, so nothing that goes wrong while the scene is
   // set up can leave the stage loading for ever.
@@ -1120,6 +1374,33 @@ export function Globe(props: GlobeProps) {
         {LABELLED_LATITUDES.map((latitude) => (
           <span key={latitude}>{`${-latitude}°\u00a0S`}</span>
         ))}
+      </div>
+      {/* The missions' names in orbit: a button each, which lands there; the drawing loop moves them. */}
+      <div className="globe-marks" ref={marksLayer} role="group" aria-label={words.missions} hidden>
+        {missions.map((site) => (
+          <button
+            key={site.id}
+            ref={(element) => {
+              if (element) markElements.set(site.id, element)
+              else markElements.delete(site.id)
+            }}
+            type="button"
+            className="globe-mark"
+            aria-label={fill(words.landAt, { place: site.name })}
+            title={site.name}
+            onClick={() => live.current.onLand?.({ ...landPlace(site, site.id), name: site.name })}
+            hidden
+          >
+            <span className="globe-mark__name">{missionLabel(site.name)}</span>
+          </button>
+        ))}
+      </div>
+      <div className="globe-land" ref={landLayer} hidden>
+        <span className="globe-land__dot" aria-hidden="true" />
+        <button type="button" className="globe-land__bubble" aria-label={words.landHere} onClick={landHere}>
+          <span>{words.land}</span>
+          <span className="globe-land__site" hidden />
+        </button>
       </div>
       <GlobeMenu
         mode={mode}
