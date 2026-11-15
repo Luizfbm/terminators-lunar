@@ -209,6 +209,10 @@ test('the Moon shows with its 4096 px colour while the 8192 px one is still on i
   const pixel = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC', 'base64')
   await page.route('**/moon/moon_*_4k.webp**', (route) => route.fulfill({ contentType: 'image/png', body: pixel }))
   const held: (() => Promise<void>)[] = []
+  const asked8k: string[] = []
+  page.on('request', (request) => {
+    if (/\/moon\/moon_\w+_8k\.webp$/.test(new URL(request.url()).pathname)) asked8k.push(request.url())
+  })
   await page.route('**/moon/moon_*_8k.webp**', (route) => {
     held.push(() => route.fulfill({ contentType: 'image/png', body: pixel }))
   })
@@ -219,15 +223,68 @@ test('the Moon shows with its 4096 px colour while the 8192 px one is still on i
   await expect(globe).toHaveAttribute('data-dressed', 'true', { timeout: 3000 })
   await expect(canvas).toHaveAttribute('data-moon', '4k', { timeout: 3000 })
   await expect(page.locator('.stage__loading')).toHaveCount(0)
-  // A device that takes 8192 px images asks for the finer pair only after, and swaps it in.
-  const large = await page.evaluate(() => {
-    const gl = document.createElement('canvas').getContext('webgl2') ?? document.createElement('canvas').getContext('webgl')
-    return !!gl && gl.getParameter(gl.MAX_TEXTURE_SIZE) >= 8192 && !matchMedia('(pointer: coarse)').matches
+  // Only a strong device takes the 8192 px images: a fine pointer, a texture limit of 8192 and hardware
+  // rendering. The test asks the browser itself, apart from the app, so it holds on both kinds of machine.
+  const strong = await page.evaluate(() => {
+    const options: WebGLContextAttributes = { failIfMajorPerformanceCaveat: true }
+    const probe = document.createElement('canvas')
+    const gl = (probe.getContext('webgl2', options) ?? probe.getContext('webgl', options)) as WebGL2RenderingContext | null
+    if (!gl) return false
+    const info = gl.getExtension('WEBGL_debug_renderer_info')
+    const renderer = info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : ''
+    return gl.getParameter(gl.MAX_TEXTURE_SIZE) >= 8192 && !/swiftshader|llvmpipe|software/i.test(renderer) && !matchMedia('(pointer: coarse)').matches
   })
-  if (!large) return
+  if (!strong) {
+    // A software renderer (CI draws the globe in SwiftShader), a phone or a small GPU stays on the 4096 px
+    // pair: the 8192 px images are never asked for, and decoding them is not what the test waits on.
+    await page.waitForLoadState('networkidle')
+    expect(asked8k).toEqual([])
+    expect(held).toHaveLength(0)
+    await expect(canvas).toHaveAttribute('data-moon', '4k')
+    return
+  }
+  // A strong device asks for the finer pair only after, and swaps it in.
   await expect.poll(() => held.length).toBe(2)
   for (const release of held) await release()
   await expect(canvas).toHaveAttribute('data-moon', '8k')
+})
+
+test('the finest pole images are asked for only when the view reaches the polar level', async ({ page }) => {
+  // Live site, on a laptop: the 8192² normal of the pole and its albedo (about 425 MiB of video memory)
+  // were loaded when the page opened, for everyone, though the orbit view never shows them, and a weak
+  // GPU ran out of memory. They belong to the polar level ("South Pole in detail", the Map): opening the
+  // page must not ask for any south_pole_fine image, and the Map must. The projection file and the images
+  // are served here, so the globe has something to ask for.
+  const pixel = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC', 'base64')
+  await page.route('**/moon/south_pole_fine.json**', (route) =>
+    route.fulfill({
+      json: {
+        sphere_radius_m: 1737400,
+        size_px: 8192,
+        x_min_m: -92160,
+        y_max_m: 92160,
+        metres_per_pixel: 22.5,
+        files: { normal: 'south_pole_fine_normal.webp', normal_small: 'south_pole_fine_normal_4k.webp', albedo: 'south_pole_fine_albedo.webp' },
+      },
+    }),
+  )
+  await page.route('**/moon/south_pole_fine_*.webp**', (route) => route.fulfill({ contentType: 'image/png', body: pixel }))
+  const images: string[] = []
+  page.on('request', (request) => {
+    const { pathname } = new URL(request.url())
+    if (/\/moon\/south_pole_fine_[^/]*\.(webp|png)$/.test(pathname)) images.push(pathname)
+  })
+  await open(page)
+  await expect(page.locator('.globe')).toHaveAttribute('data-dressed', 'true')
+  // Everything the page asks for on its own has been asked for by now.
+  await page.waitForLoadState('networkidle')
+  expect(images).toEqual([])
+
+  await page.getByRole('button', { name: 'Map', exact: true }).click()
+  await expect(page.locator('.globe')).toHaveAttribute('data-mode', 'map')
+  // The normal (8192 px on a strong device, 4096 px on any other) and the albedo.
+  await expect.poll(() => images.some((path) => /south_pole_fine_normal(_4k)?\.webp$/.test(path))).toBe(true)
+  await expect.poll(() => images.some((path) => path.endsWith('/south_pole_fine_albedo.webp'))).toBe(true)
 })
 
 test.describe('a browser that says it can draw 3D and then cannot', () => {

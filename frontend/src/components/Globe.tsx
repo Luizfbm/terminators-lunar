@@ -47,6 +47,7 @@ import { fill } from './globeMap/strings'
 import { STRINGS as LAND_STRINGS } from './stageStatus/strings'
 import './globeMap/globeMap.css'
 import './globeLand.css'
+import { moonIsLarge } from './moonDevice'
 import { dressMoon, MOON_SUN_STRENGTH, moonMaterial } from './moonSurface'
 import { planetBackdrop, planetWay } from './planetBackdrop'
 import { earthMaterial as makeEarthMaterial, EARTH, glowTexture, loadEarthMap, SUN } from './spaceBodies'
@@ -333,11 +334,13 @@ export function Globe(props: GlobeProps) {
     const material = moonMaterial()
     const moon = new THREE.Mesh(new THREE.SphereGeometry(1, 192, 96), material)
     scene.add(moon)
-    const large = renderer.capabilities.maxTextureSize >= 8192 && !window.matchMedia('(pointer: coarse)').matches
+    // The 8192 px images only on a strong device: a fine pointer, a big enough texture limit and hardware
+    // rendering (`moonDevice.ts`). Everyone else, a software renderer in the tests included, takes the 4096 px ones.
+    const large = moonIsLarge(renderer.getContext())
     // The Moon is shown once it has its colour and relief, never as a plain grey ball. A slow
     // network does not hold it back for ever: after DRESS_WAIT_MS it shows as it is.
     const show = () => setDressed(true)
-    const undress = dressMoon(scene, material, renderer.capabilities.getMaxAnisotropy(), large, show, (size) => {
+    const dress = dressMoon(scene, material, renderer.capabilities.getMaxAnisotropy(), large, show, (size) => {
       target.dataset.moon = size
     })
     // Earthshine and a little more: the night side stays dark, and its relief can still be read.
@@ -735,6 +738,8 @@ export function Globe(props: GlobeProps) {
       }
 
       const mode = state.mode ?? 'orbit'
+      // The fine patch of the pole belongs to the polar level (the map): loaded when the view reaches it, freed when it leaves.
+      dress.setPolar(mode === 'map')
       const map = mapLive.current
       const region = mode === 'map' ? (map.places.regions.find((entry) => entry.id === map.region) ?? null) : null
       const regionChanged = mode === 'map' && shownMode === 'map' && (region?.id ?? null) !== shownRegion
@@ -1295,7 +1300,7 @@ export function Globe(props: GlobeProps) {
       }
       dotLook?.dispose()
       moon.geometry.dispose()
-      undress()
+      dress.dispose()
       material.dispose()
       for (const shape of gridShapes) shape.dispose()
       for (const shape of markShapes) shape.dispose()
