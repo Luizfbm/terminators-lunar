@@ -849,5 +849,143 @@
     },
     "script_path": "validation/live_landings.py",
     "run_at": "2026-11-15T13:02:11Z"
+  },
+  {
+    "id": "eduardo-photos-sfs-table",
+    "title": {
+      "en": "Eduardo's shadow engine against 486 LROC NAC photos: his accuracy, false light and false shadow table",
+      "pt": "Motor de sombras do Eduardo contra 486 fotos LROC NAC: a tabela dele de acerto, luz falsa e sombra falsa"
+    },
+    "reference": "Eduardo's report sfs_comparacao/entrega_relatorio/RESULTADOS-SFS.md ('Resultado 2'), commit 2195fcb of his branch eduardo/cockpit-multirresolucao (a research workspace with no common history with this repository): accuracy, false light and false shadow of his horizon engine on five terrains (SfS 5 m, LOLA 5, 20, 60 and 240 m), per region and for the two polar regions together, against the real photos (a pixel is lit above brightness 0.001). Ours: the same table (60 numbers) and photo and pixel counts recomputed from his per-photo counts, data/sfs_fotos_todas.csv (byte for byte his fotos_todas.csv, SHA-256 4ecd4faa…, 486 photos in three regions: Leibnitz Beta 120, de Gerlache Rim 194, Peak Near Shackleton 172). His scripts that made the counts are in validation/sfs/eduardo/ (photo2.py, photo3.py, ray.c). It is Eduardo's shadow engine, not ours",
+    "tolerance": {
+      "en": "each of the 60 numbers within 0.05 percentage points of the one he prints (half of his last digit); photo counts exact, pixels to the 8.87 million he prints",
+      "pt": "cada um dos 60 números a 0,05 ponto percentual do que ele imprime (metade do último dígito dele); contagens de fotos exatas, pixels nos 8,87 milhões que ele imprime"
+    },
+    "result": {
+      "en": "All 60 numbers reproduce from his counts (largest difference 0.048 points), over 486 photos and 8,873,452 sampled pixels. Polar photos together, accuracy / false light / false shadow in %: SfS 5 m 95.7 / 2.1 / 6.0; LOLA 20 m 94.2 / 3.4 / 7.7; LOLA 240 m 93.6 / 9.1 / 4.2. False light from SfS 5 m to LOLA 240 m: Leibnitz Beta 7.7 to 13.8, de Gerlache Rim 2.1 to 6.5, Peak Near Shackleton 2.2 to 11.5. His figure 4 photo M115416165LE gives 5.4 / 7.9 / 24.4 % false light here (every 8th pixel) against 5.2 / 8.7 / 24.7 in his figure (every 2nd pixel), not judged",
+      "pt": "Os 60 números reproduzem a partir das contagens dele (maior diferença 0,048 ponto), em 486 fotos e 8.873.452 pixels amostrados. Fotos polares juntas, acerto / luz falsa / sombra falsa em %: SfS 5 m 95,7 / 2,1 / 6,0; LOLA 20 m 94,2 / 3,4 / 7,7; LOLA 240 m 93,6 / 9,1 / 4,2. Luz falsa do SfS 5 m ao LOLA 240 m: Leibnitz Beta 7,7 a 13,8, de Gerlache Rim 2,1 a 6,5, Peak Near Shackleton 2,2 a 11,5. A foto M115416165LE da figura 4 dele dá 5,4 / 7,9 / 24,4 % de luz falsa aqui (um pixel a cada 8) contra 5,2 / 8,7 / 24,7 na figura dele (um a cada 2), não julgado"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "It shows his table follows from his counts, and nothing about the counts: remaking them needs the 486 photos, the SfS elevation products and the DE440 kernels, none of which is here, so his scripts are kept and not run. Eduardo's engine, not ours: ours has not been run against these photos (not done). The SfS terrain was fitted to these same photos, so its row is not an independent test; the LOLA rows are. One brightness threshold for every photo; the pixels are every 8th row and column of each photo, not all of them; the 60 m and 240 m grids are block means of LOLA 20 m (polar) or LOLA 5 m (Leibnitz Beta), not official products; Leibnitz Beta (85.4°S) lies outside the polar LOLA 20 m map, so its absolute numbers are optimistic. His Sun for each photo (0.006° against 33 camera files) is not rechecked: the camera files are not here. His figure 4 example is a re-run at every 2nd pixel and is not judged. His horizon code is the exact one of ray.c; the 111,320 m/degree error he fixed later was in other code these scripts never used, and the file was committed before the fix.",
+      "pt": "Mostra que a tabela dele segue das contagens dele, e nada sobre as contagens: refazê-las pede as 486 fotos, os produtos de elevação SfS e os kernels DE440, que não estão aqui; os scripts dele ficam guardados e não são rodados. Motor do Eduardo, não o nosso: o nosso não foi rodado contra estas fotos (não feito). O terreno SfS foi ajustado a estas mesmas fotos, então a linha dele não é um teste independente; as do LOLA são. Um único limiar de brilho para todas as fotos; os pixels são uma linha e coluna a cada 8 de cada foto, não todos; as grades de 60 m e 240 m são médias de blocos do LOLA 20 m (polares) ou do LOLA 5 m (Leibnitz Beta), não produtos oficiais; Leibnitz Beta (85,4°S) fica fora do mapa LOLA 20 m polar, então os absolutos dela são otimistas. O Sol de cada foto (0,006° contra 33 arquivos de câmera) não é conferido de novo: os arquivos de câmera não estão aqui. O exemplo da figura 4 dele é uma nova rodada a cada 2 pixels e não é julgado. O código de horizonte dele é o exato do ray.c; o erro de 111.320 m/grau que ele corrigiu depois estava em outro código que estes scripts nunca usaram, e o arquivo foi commitado antes da correção."
+    },
+    "script_path": "validation/test_sfs_photos.py",
+    "run_at": "2026-11-15T20:02:27Z"
+  },
+  {
+    "id": "eduardo-photos-sfs-vs-lola20",
+    "title": {
+      "en": "Eduardo's photos: how many beat LOLA 20 m, and the 20 m to 5 m gain",
+      "pt": "Fotos do Eduardo: quantas superam o LOLA 20 m, e o ganho de 20 m para 5 m"
+    },
+    "reference": "Eduardo's report sfs_comparacao/entrega_relatorio/RESULTADOS-SFS.md ('Resultado 2'), commit 2195fcb of his branch eduardo/cockpit-multirresolucao (a research workspace with no common history with this repository): photo by photo, in how many photos SfS 5 m and LOLA 5 m predict more pixels right than LOLA 20 m (polar 346 and 349 of 366; Leibnitz Beta 98 and 54 of 120), and the gains his text states: about 0.9 point of accuracy from 20 m to 5 m in the polar regions and none in Leibnitz Beta, about 0.6 more for SfS, and the polar LOLA 60 m grid at least as accurate as LOLA 20 m. Ours: the same photo counts (strictly more pixels right, same pixels for every terrain) recomputed from his per-photo counts, data/sfs_fotos_todas.csv (byte for byte his fotos_todas.csv, SHA-256 4ecd4faa…, 486 photos in three regions: Leibnitz Beta 120, de Gerlache Rim 194, Peak Near Shackleton 172). His scripts that made the counts are in validation/sfs/eduardo/ (photo2.py, photo3.py, ray.c). It is Eduardo's shadow engine, not ours",
+    "tolerance": {
+      "en": "photo counts exact; each gain within 0.1 point of the one his text states (the difference of two numbers rounded to 0.1); the 60 m grid at least as accurate as 20 m in de Gerlache Rim, in Peak Near Shackleton and in the two together",
+      "pt": "contagens de fotos exatas; cada ganho a 0,1 ponto do que o texto dele afirma (a diferença de dois números arredondados a 0,1); a grade de 60 m com acerto pelo menos igual ao de 20 m em de Gerlache Rim, em Peak Near Shackleton e nas duas juntas"
+    },
+    "result": {
+      "en": "Photos with more pixels right than LOLA 20 m: SfS 5 m 346 of 366 polar and 98 of 120 in Leibnitz Beta; LOLA 5 m 349 and 54, as he states. Accuracy gain from LOLA 20 m to 5 m +0.90 points polar and +0.03 in Leibnitz Beta; SfS over LOLA 5 m +0.62 polar. The polar LOLA 60 m grid is at least as accurate as 20 m in both regions and together; in Leibnitz Beta it is less accurate. Read literally, SfS 5 m beats LOLA 5 m in 312 of 366 polar photos and 104 of 120 in Leibnitz Beta",
+      "pt": "Fotos com mais pixels certos que o LOLA 20 m: SfS 5 m 346 de 366 polares e 98 de 120 em Leibnitz Beta; LOLA 5 m 349 e 54, como ele afirma. Ganho de acerto do LOLA 20 m para 5 m de +0,90 ponto nas polares e +0,03 em Leibnitz Beta; SfS sobre o LOLA 5 m +0,62 nas polares. A grade LOLA 60 m polar acerta pelo menos tanto quanto a de 20 m nas duas regiões e juntas; em Leibnitz Beta acerta menos. Lido literalmente, o SfS 5 m supera o LOLA 5 m em 312 de 366 fotos polares e 104 de 120 em Leibnitz Beta"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Eduardo's engine, not ours, and counts of photos, not of how much better: a photo counts as better by one pixel. His sentence is ambiguous ('346 of 366, and LOLA 5 m in 349'): it reads as LOLA 5 m against LOLA 20 m, and that is what is judged; SfS against LOLA 5 m, read literally, gives other numbers, shown in the result. SfS was fitted to these photos. In the polar regions the 60 m grid is as accurate as the 20 m one only because it trades false shadow for false light (his text says the cause was not investigated, and it is not here). The 20 m, 60 m and 240 m grids of Leibnitz Beta are block means of LOLA 5 m, so 'nothing there' is a statement about that construction.",
+      "pt": "Motor do Eduardo, não o nosso, e contagens de fotos, não de quanto melhor: uma foto conta como melhor por um pixel. A frase dele é ambígua ('346 de 366, e o LOLA 5 m em 349'): lê-se como LOLA 5 m contra LOLA 20 m, e é isso que se julga; SfS contra LOLA 5 m, lido literalmente, dá outros números, mostrados no resultado. O SfS foi ajustado a estas fotos. Nas regiões polares a grade de 60 m acerta tanto quanto a de 20 m só porque troca sombra falsa por luz falsa (o texto dele diz que a causa não foi investigada, e aqui também não). As grades de 20, 60 e 240 m de Leibnitz Beta são médias de blocos do LOLA 5 m, então 'nada ali' é uma afirmação sobre essa construção."
+    },
+    "script_path": "validation/test_sfs_photos.py",
+    "run_at": "2026-11-15T20:02:27Z"
+  },
+  {
+    "id": "negative-control-eduardo-photos-limb",
+    "title": {
+      "en": "Negative control: the same table with the Sun's upper limb instead of its centre",
+      "pt": "Controle negativo: a mesma tabela com a borda superior do Sol em vez do centro"
+    },
+    "reference": "The 60 numbers of Eduardo's photo table, recomputed from the same per-photo counts but from the columns where the prediction uses the upper limb of the Sun's disc (+0.267°) instead of its centre",
+    "tolerance": {
+      "en": "must break the table: every one of the five terrain rows has at least one number more than 0.05 points from the one he prints",
+      "pt": "tem que quebrar a tabela: cada uma das cinco linhas de terreno tem pelo menos um número a mais de 0,05 ponto do que ele imprime"
+    },
+    "result": {
+      "en": "broke the table in all five terrain rows (60 of 60 numbers off; polar SfS 5 m at the limb 96.2 / 3.8 / 3.8 % against his 95.7 / 2.1 / 6.0)",
+      "pt": "quebrou a tabela nas cinco linhas de terreno (60 dos 60 números fora; SfS 5 m polar na borda 96,2 / 3,8 / 3,8 % contra 95,7 / 2,1 / 6,0 dele)"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Shows the check can fail; says nothing about his engine.",
+      "pt": "Mostra que a checagem pode falhar; não diz nada sobre o motor dele."
+    },
+    "script_path": "validation/test_sfs_photos.py",
+    "run_at": "2026-11-15T20:02:27Z"
+  },
+  {
+    "id": "eduardo-traverse-battery-pop100",
+    "title": {
+      "en": "Eduardo's battery of simulated traverses: Multiresolution against Normal navigation, N0 to N2",
+      "pt": "Bateria de travessias simuladas do Eduardo: Multirresolução contra Navegação Normal, N0 a N2"
+    },
+    "reference": "Eduardo's battery of simulated traverses (commit 2195fcb of his branch eduardo/cockpit-multirresolucao, a research workspace with no common history with this repository): every row of his paired-statistics CSV (two batteries, four difficulty levels, eight pairs of configurations: arrival and tumbling, the difference, the Wilcoxon test over 16 lanes, the McNemar test over 1,600 traverses, the odds ratio and r), and the numbers his plan quotes for Multiresolution against Normal navigation at N0, N1 and N2 (arrival 78.06 / 48.62 / 47.75 % against 67.31 / 35.44 / 35.44 %). Ours: the same, recomputed from the outcome of each of the 1,600 traverses per configuration and level, data/traverse_outcomes.json (made by validation/sfs/extract_battery.py from his 64 raw files, whose SHA-256 it lists). His scripts that made the raw files are in validation/sfs/eduardo/ (exp_dif.js, rodar_dif_multi.js). It is Eduardo's simulation, which plans with his shadow engine, not ours",
+    "tolerance": {
+      "en": "arrival and tumbling within 0.005 points, r within 0.0005, the odds ratio within 0.005, p-values within a relative 1e-6, counts of traverses and of lanes exact; numbers quoted in his plan at the digits it prints",
+      "pt": "chegada e tombamento a 0,005 ponto, r a 0,0005, a razão de chances a 0,005, valores-p a uma diferença relativa de 1e-6, contagens de travessias e de faixas exatas; números citados no plano dele nos dígitos em que ele os imprime"
+    },
+    "result": {
+      "en": "All 64 rows of his CSV reproduce from the per-traverse outcomes, and so do the numbers his plan quotes at N0, N1 and N2. Multiresolution against Normal navigation, 800 s cap: N0 78.06 % against 67.31 % (+10.75 points, +16.0 %), Wilcoxon over the 16 lanes p = 0.115, McNemar p = 3.3e-31; N1 48.62 % against 35.44 % (+13.19 points, +37.2 %), Wilcoxon over the 16 lanes p = 0.046, McNemar p = 3.3e-47; N2 47.75 % against 35.44 % (+12.31 points, +34.7 %), Wilcoxon over the 16 lanes p = 0.091, McNemar p = 4.7e-31. The lane-level test is below 0.05 at N1 (N3 of this battery is in its own entry). His bootstrap intervals came out the same in 64 of 64 rows (shown, not judged)",
+      "pt": "As 64 linhas do CSV dele reproduzem a partir dos resultados por travessia, e os números que o plano dele cita em N0, N1 e N2 também. Multirresolução contra Navegação Normal, teto de 800 s: N0 78,06 % contra 67,31 % (+10,75 pontos, +16,0 %), Wilcoxon sobre as 16 faixas p = 0,115, McNemar p = 3,3e-31; N1 48,62 % contra 35,44 % (+13,19 pontos, +37,2 %), Wilcoxon sobre as 16 faixas p = 0,046, McNemar p = 3,3e-47; N2 47,75 % contra 35,44 % (+12,31 pontos, +34,7 %), Wilcoxon sobre as 16 faixas p = 0,091, McNemar p = 4,7e-31. O teste por faixa fica abaixo de 0,05 em N1 (o N3 desta bateria tem entrada própria). Os intervalos bootstrap dele saíram iguais em 64 de 64 linhas (mostrados, não julgados)"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Eduardo's simulation, built on his shadow engine, not ours. It shows his statistics follow from his per-traverse results, not that the simulated rover resembles a real one: the traverses are a simulation of his rover model, over 16 strips of LOLA elevation from 8 Sites, and the harder levels are synthetic (relief times 1.3, a larger slope error, a worse camera). The simulation itself was not re-run (64 runs under Node.js, hours; the scripts are kept in validation/sfs/eduardo/), so the outcomes are his. McNemar treats the 1,600 traverses as independent although 100 of them share each lane, so its p-values (1e-31, 1e-47) overstate the evidence; the Wilcoxon over the 16 lanes is the one to read, it is a normal approximation with ties on 16 values, and the CSV holds 64 tests with no correction for that. The time cap hides part of the difference: about a fifth of the traverses end by time or off the map in every configuration. N3 is in its own entry.",
+      "pt": "Simulação do Eduardo, feita sobre o motor de sombras dele, não a nossa. Mostra que as estatísticas dele seguem dos resultados por travessia dele, não que o rover simulado se pareça com um real: as travessias são uma simulação do modelo de rover dele, sobre 16 faixas de elevação LOLA de 8 Sites, e os níveis mais difíceis são sintéticos (relevo vezes 1,3, erro de declive maior, câmera pior). A simulação em si não foi rodada de novo (64 execuções em Node.js, horas; os scripts ficam guardados em validation/sfs/eduardo/), então os resultados são dele. O McNemar trata as 1.600 travessias como independentes embora 100 delas dividam cada faixa, então os valores-p dele (1e-31, 1e-47) exageram a evidência; o Wilcoxon sobre as 16 faixas é o que se deve ler, é uma aproximação normal com empates em 16 valores, e o CSV traz 64 testes sem correção para isso. O teto de tempo esconde parte da diferença: cerca de um quinto das travessias termina por tempo ou fora do mapa em toda configuração. O N3 tem entrada própria."
+    },
+    "script_path": "validation/test_traverse_battery.py",
+    "run_at": "2026-11-15T20:02:27Z"
+  },
+  {
+    "id": "eduardo-traverse-n3-quote",
+    "title": {
+      "en": "Eduardo's N3 figure (+30.0 %) against his POP = 100 battery",
+      "pt": "Número do N3 do Eduardo (+30,0 %) contra a bateria POP = 100 dele"
+    },
+    "reference": "Eduardo's battery of simulated traverses (commit 2195fcb of his branch eduardo/cockpit-multirresolucao, a research workspace with no common history with this repository): the N3 figure of his plan (docs/PLANO_INTEGRACAO_COCKPIT_TESE.md, section 5, listed with the POP = 100 numbers in sections 6 and 7): Multiresolution 40.0 % against Normal navigation 30.8 %, +30.0 % relative, Wilcoxon p = 0.043. Ours: the same, recomputed from the outcome of each of the 1,600 traverses per configuration and level, data/traverse_outcomes.json (made by validation/sfs/extract_battery.py from his 64 raw files, whose SHA-256 it lists). His scripts that made the raw files are in validation/sfs/eduardo/ (exp_dif.js, rodar_dif_multi.js). It is Eduardo's simulation, which plans with his shadow engine, not ours",
+    "tolerance": {
+      "en": "the same as the N0 to N2 entry: arrival within 0.005 points of the 40.0 and 30.8 he prints (taken as exact), the gain within 0.05, the p-value at the two digits printed",
+      "pt": "o mesmo da entrada N0 a N2: chegada a 0,005 ponto dos 40,0 e 30,8 que ele imprime (tomados como exatos), o ganho a 0,05, o valor-p nos dois dígitos impressos"
+    },
+    "result": {
+      "en": "does not reproduce. On his POP = 100 battery (800 s cap) at N3 Multiresolution reaches the goal in 34.88 % of traverses against 29.62 % for Normal navigation (+5.25 points, +17.7 %, Wilcoxon over the 16 lanes p = 0.271, McNemar p = 1e-10); with the 4,000 s cap 41.25 % against 38.19 % (+3.06 points, p = 0.307). The plan quotes 40.0 % against 30.8 % (+30.0 %, p = 0.043). The 40.0 and 30.8 are the POP = 30 ladder (40.0 and 30.8 in his dados_escada.csv), which cannot be recomputed here",
+      "pt": "não reproduz. Na bateria POP = 100 dele (teto de 800 s), no N3, a Multirresolução chega à meta em 34,88 % das travessias contra 29,62 % da Navegação Normal (+5,25 pontos, +17,7 %, Wilcoxon sobre as 16 faixas p = 0,271, McNemar p = 1e-10); com o teto de 4.000 s 41,25 % contra 38,19 % (+3,06 pontos, p = 0,307). O plano cita 40,0 % contra 30,8 % (+30,0 %, p = 0,043). Os 40,0 e 30,8 são da escada com POP = 30 (40,0 e 30,8 no dados_escada.csv dele), que não dá para recalcular aqui"
+    },
+    "status": "failed",
+    "not_covered": {
+      "en": "Eduardo's simulation, built on his shadow engine, not ours. The 40.0 and 30.8 are the POP = 30 difficulty ladder (his dados_escada.csv has exactly those values), 480 traverses per cell, whose per-traverse files are not on his branch, so that run cannot be recomputed here; the plan's own bullet says 'POP = 30', its summary and prompt list the figure with the POP = 100 ones. This entry judges the figure against the POP = 100 battery, where it is presented, and says nothing against the POP = 30 run itself.",
+      "pt": "Simulação do Eduardo, feita sobre o motor de sombras dele, não a nossa. Os 40,0 e 30,8 são da escada de dificuldade com POP = 30 (o dados_escada.csv dele tem exatamente esses valores), 480 travessias por célula, cujos arquivos por travessia não estão na branch dele, então essa rodada não pode ser recalculada aqui; o item do plano diz 'POP = 30', mas o resumo e o prompt listam o número junto com os de POP = 100. Esta entrada julga o número contra a bateria POP = 100, onde ele é apresentado, e não diz nada contra a rodada POP = 30 em si."
+    },
+    "script_path": "validation/test_traverse_battery.py",
+    "run_at": "2026-11-15T20:02:27Z"
+  },
+  {
+    "id": "negative-control-eduardo-traverse-pairing",
+    "title": {
+      "en": "Negative control: the same battery with the traverses paired with the wrong lane",
+      "pt": "Controle negativo: a mesma bateria com as travessias pareadas com a faixa errada"
+    },
+    "reference": "Eduardo's battery, Multiresolution against Normal navigation at N0 to N3 (800 s cap), with the outcomes of Normal navigation shifted by one lane before they are paired",
+    "tolerance": {
+      "en": "must break the pairing: the McNemar counts change at every level",
+      "pt": "tem que quebrar o pareamento: as contagens do McNemar mudam em todos os níveis"
+    },
+    "result": {
+      "en": "broke the McNemar counts at every level (N0 499 / 327 instead of 206 / 34; N1 666 / 455 instead of 230 / 19; N2 657 / 460 instead of 253 / 56; N3 476 / 392 instead of 128 / 44)",
+      "pt": "quebrou as contagens do McNemar em todos os níveis (N0 499 / 327 em vez de 206 / 34; N1 666 / 455 em vez de 230 / 19; N2 657 / 460 em vez de 253 / 56; N3 476 / 392 em vez de 128 / 44)"
+    },
+    "status": "passed",
+    "not_covered": {
+      "en": "Shows the check can fail; says nothing about his simulation.",
+      "pt": "Mostra que a checagem pode falhar; não diz nada sobre a simulação dele."
+    },
+    "script_path": "validation/test_traverse_battery.py",
+    "run_at": "2026-11-15T20:02:27Z"
   }
 ]

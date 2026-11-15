@@ -1,0 +1,16 @@
+{
+ "branch": "eduardo/cockpit-multirresolucao",
+ "commit": "2195fcb2d0ee447b1e72c877f4497b82371b917e",
+ "note": "Eduardo's scripts, byte for byte, kept as the record of how his data was made. They are not run by any check: they read photos, elevation products and kernels that are not in this repository, and paths on his machine. ruff.toml keeps the linters off them.",
+ "files": {
+  "ray.c": {"source": "sfs_comparacao/ray.c", "git_blob": "a3309ba58b6c3e3a73fc8c484c418ff8ff63fb4d", "sha256": "c82ce47870a1977c9951a396a29749eebd7b3c8496730e87e3bc1304c430291b"},
+  "lib.py": {"source": "sfs_comparacao/lib.py", "git_blob": "a3962279cf5857780236ef7465de4f2493c09b64", "sha256": "0255e188964f9c2d6bd3fd4eccfb848863f4bb4da0f4bec92be31a7874835502"},
+  "load.py": {"source": "sfs_comparacao/load.py", "git_blob": "883cfbc5a64f4d1de9bce00dacc2294ac1b60e18", "sha256": "e35af63de688a5399ab954ba4cb7ae3cae7107d895f8a7b4b5bbebcddfc65a03"},
+  "eph.py": {"source": "sfs_comparacao/eph.py", "git_blob": "521a9cdab56b9f3ba49250daac67eedec4ee87fa", "sha256": "b8eff76f7f51748470c6866cd94bc76d0b2a363c1a78d7e732c3fe7405e3cb36"},
+  "photo2.py": {"source": "sfs_comparacao/photo2.py", "git_blob": "639fb84bae276a18f7c5e3bb33fc6f2a00db4cdb", "sha256": "41092472838aec197e9df71ecc44c4d3321955a1194d1a10c908cf0a2a1d8a2a"},
+  "photo3.py": {"source": "sfs_comparacao/photo3.py", "git_blob": "c918285d2be6ad163b97184db92db8df6157fb6a", "sha256": "6128cf3c8b223937c33881a60a406cbffa82c53887e9893aadef7d0a95c1e9cd"},
+  "exp_dif.js": {"source": "simulacao_rover/testes/exp_dif.js", "git_blob": "93b669b6d828794666fe51a4ef2fc838dc444016", "sha256": "413dbcdf3bc90953beefcfaa62d4918598abc6a121fc43485d43d4a7f23e9654"},
+  "rodar_dif_multi.js": {"source": "simulacao_rover/testes/rodar_dif_multi.js", "git_blob": "a7e5acd10f0d3737f3d473c51e47be0e4da2ebac", "sha256": "ea5b7ab3e9e3cc31b103f8393b19509d12a5e148b858767264c9661bb3a8a53e"}
+ },
+ "not_ported": "sfs_comparacao/photo.py and metrics.py (the first 183 photos, with a Sun read from precalc ephemerides; which rows of fotos_todas.csv came from which script is not recorded on the branch), and entrega_relatorio/codigo/ (copies of the same files, plus the figures)"
+}

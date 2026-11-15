@@ -259,3 +259,26 @@ with the committed file to 1e-6, so the file cannot drift away from the code.
 
 Not covered: the surface level (0 m; the paper's Table 1 point is 325 m from C1), the Earth, the
 Sun at another Observer height, and any elevation product other than `LDEM_80S_20MPP_ADJ`.
+
+---
+
+## Eduardo's photos and traverse battery (issue #92)
+
+Two sets of Eduardo's results are recomputed from scripts and data in the repository. Both are his work, not ours: the shadow engine is his horizon code, and the traverses are a simulation that plans with it. The rules, the tolerances and the arithmetic are in `sfs/photos.py` and `sfs/battery.py`, written before any result; the explanation, with every number of his against the recomputed one, is in `docs/validation/eduardo-photos.md`.
+
+| id | Reference | Tolerance (fixed before the first run) | Runs |
+|---|---|---|---|
+| `eduardo-photos-sfs-table` | His accuracy, false light and false shadow of five terrains on 486 LROC NAC photos (three regions), `RESULTADOS-SFS.md`, from his per-photo counts `data/sfs_fotos_todas.csv` | each of 60 numbers within 0.05 points of the one he prints; photo counts exact | CI |
+| `eduardo-photos-sfs-vs-lola20` | The photo-by-photo counts (346 and 349 of 366; 98 and 54 of 120) and the 20 m to 5 m gains his text states | counts exact; gains within 0.1 point | CI |
+| `negative-control-eduardo-photos-limb` | The same table with the Sun's upper limb instead of its centre | must break every terrain row | CI |
+| `eduardo-traverse-battery-pop100` | All 64 rows of his paired-statistics CSV, and the numbers his plan quotes for Multiresolution against Normal navigation at N0, N1 and N2, from the outcome of each simulated traverse `data/traverse_outcomes.json` | arrival and tumbling 0.005 points, r 0.0005, odds ratio 0.005, p-values a relative 1e-6, counts exact | CI |
+| `eduardo-traverse-n3-quote` | The N3 figure of his plan (40.0 % against 30.8 %, +30.0 %, p = 0.043) against his POP = 100 battery | as above | CI |
+| `negative-control-eduardo-traverse-pairing` | The same pairing with Normal navigation's outcomes shifted by one lane | the McNemar counts must change at every level | CI |
+
+- The check runs on the committed data and needs neither the photos nor the elevation products nor Node.js: it shows his tables and statistics follow from his counts and outcomes, not that his counts are right. His scripts that made the data are kept byte for byte in `sfs/eduardo/`, with where they came from in `sfs/eduardo/SOURCE.json`, and are not run.
+- `eduardo-traverse-n3-quote` is `failed`, on purpose: the +30.0 % of N3 is the POP = 30 run, not the POP = 100 battery it is listed with (34.88 % against 29.62 %, +17.7 %, Wilcoxon over the 16 lanes p = 0.271). The test pins the numbers behind that verdict, so the suite stays green and the Proof page shows it. Nothing is tuned.
+- The McNemar test counts 1,600 traverses as independent although 100 share each lane, so its p-values overstate the evidence; the Wilcoxon test over the 16 lanes is the one to read.
+- The outcomes file is made from his raw files by `sfs/extract_battery.py` (it needs `git fetch origin eduardo/cockpit-multirresolucao`), which lists their SHA-256; running it again gives the same bytes.
+- Run: `uv run --project backend pytest validation/test_sfs_photos.py validation/test_traverse_battery.py`.
+
+Not covered: our own engine against these photos (not done), the simulation itself (not re-run), the photo counts themselves (they need the photos and elevation products), the POP = 30 ladder from per-traverse data (not on his branch).
