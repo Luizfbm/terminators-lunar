@@ -565,7 +565,8 @@ class Info:
         ellipse = glaser.maximum(self.output["site_001_points"], lambda p: p["judged"][field])
         years = [y[field] * 100.0 for y in best["years"].values()]
         fixture = self.value(best, "fixture_span")
-        sensitive = [p for p in self.output["points"] if "sensitivity" in p]
+        # Every point carries `sensitivity`: the series for the 5 sensitivity points, False for the rest.
+        sensitive = [p for p in self.output["points"] if isinstance(p.get("sensitivity"), dict)]
         step15 = max(
             abs(self.value(p, "judged") - p["sensitivity"]["step_15min"][field] * 100.0)
             for p in sensitive
