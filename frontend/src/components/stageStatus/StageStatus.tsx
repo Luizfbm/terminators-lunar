@@ -3,6 +3,7 @@ import { useI18n } from '../../i18n/I18nContext'
 import { fill } from '../globeMap/strings'
 import { limitText, placeText } from './format'
 import { STRINGS } from './strings'
+import './stageStatus.css'
 
 export interface StageStatusProps {
   /** The landing on its way, if any, and where it is. */

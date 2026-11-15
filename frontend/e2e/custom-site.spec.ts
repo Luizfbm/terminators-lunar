@@ -1,4 +1,5 @@
-import { expect, test, type Page, type Route } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page, Route } from '@playwright/test'
 
 // the requirement: a custom Site is a latitude and a longitude typed at the foot of the Site list. The mock
 // always answers for one Curated Site; these tests put the asked coordinate into the answer, the way
@@ -80,7 +81,8 @@ test.describe('in English', () => {
 
     await expect(trigger(page)).toHaveAccessibleName('Site: Your Site at 89.5° S, 10.25° E')
     await expect(trigger(page)).toBeFocused()
-    await expect(page).toHaveURL(/\?lat=-89\.5&lon=10\.25$/)
+    // This spec opens the classic layout, so the link also carries layout=classic.
+    await expect(page).toHaveURL(/\?lat=-89\.5&lon=10\.25&layout=classic$/)
     expect(asked.at(-1)).toEqual({ site_id: null, latitude_deg: '-89.5', longitude_deg: '10.25' })
 
     // Open again: the fields hold the point, and the list no longer marks a Curated Site as chosen.

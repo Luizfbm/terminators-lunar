@@ -10,7 +10,7 @@ const im2 = { id: 'IM2', source: 'clps', latitude_deg: -84.79 }
 const lroc = { id: 'SURVEYOR7', source: 'lroc2016', latitude_deg: -40.98 }
 const typed = { id: 'custom:-85,10', source: 'custom', latitude_deg: -85 }
 
-const only = (layers: Partial<Layers>): Layers => ({ sites: false, missions: false, ...layers })
+const only = (layers: Partial<Layers>): Layers => ({ sites: false, missions: false, planets: true, ...layers })
 
 describe('which switch governs a Site', () => {
   it('puts the Artemis Sites on Sites and every other curated source on Lunar Missions', () => {
@@ -27,7 +27,7 @@ describe('which switch governs a Site', () => {
 
 describe('which Sites are shown on the whole Moon (level 1)', () => {
   it('starts with the Artemis Sites shown and the missions hidden', () => {
-    expect(initialLayers()).toEqual({ sites: true, missions: false })
+    expect(initialLayers()).toEqual({ sites: true, missions: false, planets: true })
     expect(siteShown(artemis, initialLayers())).toBe(true)
     for (const mission of [apollo, isro, clps, lroc, im2]) expect(siteShown(mission, initialLayers())).toBe(false)
   })
@@ -35,7 +35,7 @@ describe('which Sites are shown on the whole Moon (level 1)', () => {
   it('shows the missions when Lunar Missions is pressed, with or without Sites', () => {
     for (const mission of [apollo, isro, clps, lroc, im2]) {
       expect(siteShown(mission, only({ missions: true }))).toBe(true)
-      expect(siteShown(mission, { sites: true, missions: true })).toBe(true)
+      expect(siteShown(mission, { sites: true, missions: true, planets: true })).toBe(true)
     }
     expect(siteShown(artemis, only({ missions: true }))).toBe(false)
   })
@@ -47,9 +47,16 @@ describe('which Sites are shown on the whole Moon (level 1)', () => {
     expect(layerShown(apollo, initialLayers())).toBe(false)
   })
 
+  it('does not let the planets switch hide or show a Site', () => {
+    for (const site of [artemis, apollo]) {
+      expect(siteShown(site, { ...only({ sites: true, missions: true }), planets: false })).toBe(true)
+      expect(siteShown(site, { ...only({}), planets: true })).toBe(false)
+    }
+  })
+
   it('never draws a typed coordinate as a dot of the lists', () => {
-    expect(siteShown(typed, { sites: true, missions: true })).toBe(false)
-    expect(layerShown(typed, { sites: true, missions: true })).toBe(false)
+    expect(siteShown(typed, { sites: true, missions: true, planets: true })).toBe(false)
+    expect(layerShown(typed, { sites: true, missions: true, planets: true })).toBe(false)
   })
 
   it('counts the dots of a mixed list as the switches ask', () => {
@@ -58,7 +65,7 @@ describe('which Sites are shown on the whole Moon (level 1)', () => {
     expect(count(initialLayers())).toBe(3)
     expect(count(only({}))).toBe(0)
     expect(count(only({ missions: true }))).toBe(3)
-    expect(count({ sites: true, missions: true })).toBe(6)
+    expect(count({ sites: true, missions: true, planets: true })).toBe(6)
   })
 })
 
@@ -72,7 +79,7 @@ describe('the polar scope (level 2, South Pole in detail)', () => {
   })
 
   it('keeps only the polar Sites of the layers that are pressed', () => {
-    const both = { sites: true, missions: true }
+    const both = { sites: true, missions: true, planets: true }
     expect(siteShown(artemis, both, 'polar')).toBe(true)
     expect(siteShown(im2, both, 'polar')).toBe(true)
     for (const away of [apollo, isro, clps, lroc]) expect(siteShown(away, both, 'polar')).toBe(false)
@@ -84,7 +91,7 @@ describe('the polar scope (level 2, South Pole in detail)', () => {
   })
 
   it('gives the whole set back on the whole Moon, as the switches say', () => {
-    const layers = { sites: true, missions: true }
+    const layers = { sites: true, missions: true, planets: true }
     expect([artemis, apollo, isro, clps, im2, lroc].filter((site) => siteShown(site, layers, 'global'))).toHaveLength(6)
   })
 })
@@ -105,8 +112,9 @@ describe('the ring of the chosen Site', () => {
 describe('pressing a switch', () => {
   it('turns that switch only, and does not change the state it is given', () => {
     const start = initialLayers()
-    expect(toggledLayer(start, 'missions')).toEqual({ sites: true, missions: true })
-    expect(toggledLayer(start, 'sites')).toEqual({ sites: false, missions: false })
+    expect(toggledLayer(start, 'missions')).toEqual({ sites: true, missions: true, planets: true })
+    expect(toggledLayer(start, 'sites')).toEqual({ sites: false, missions: false, planets: true })
+    expect(toggledLayer(start, 'planets')).toEqual({ sites: true, missions: false, planets: false })
     expect(start).toEqual(initialLayers())
   })
 })

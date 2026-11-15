@@ -6,6 +6,7 @@ did not compute the same way: the timeline samples, a second request, or a fixed
 
 import itertools
 import json
+import math
 import os
 import re
 import subprocess
@@ -20,6 +21,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
+from app import horizon
 from app.main import app
 from tests.assistant_stub import (
     call,
@@ -747,6 +749,7 @@ ENGINE_PATHS = (
     "/visibility/dsn",
     "/sites/{site_id}/year",
     "/sites/{site_id}/windows",
+    "/terrain/heights",
 )
 
 
@@ -1121,6 +1124,126 @@ def test_the_model_gets_durations_in_the_app_format_and_where_they_count_from(
     assert "from the start of the Window" in rules and "Cursor" in rules
 
 
+_MOON_RADIUS_M = 1_737_400.0
+
+
+def _bilinear(grid: Any, transform: Any, x: Any, y: Any) -> Any:
+    """Bilinear height at map points, written for this test (the engine has its own)."""
+    import numpy as np
+
+    col = (x - transform.c) / transform.a - 0.5
+    row = (y - transform.f) / transform.e - 0.5
+    c0, r0 = np.floor(col).astype(int), np.floor(row).astype(int)
+    fc, fr = col - c0, row - r0
+    return (
+        grid[r0, c0] * (1 - fc) * (1 - fr)
+        + grid[r0, c0 + 1] * fc * (1 - fr)
+        + grid[r0 + 1, c0] * (1 - fc) * fr
+        + grid[r0 + 1, c0 + 1] * fc * fr
+    )
+
+
+# 15/11/2026: a typed point past the 80 m DEM's square (here 81°S, 10°E) answered 422
+# outside-coverage, though the API takes typed points up to 80°S: the 80 m DEM is ±304 km
+# around the pole and the rays walk it out to 100 km. The 60 m DEM, which reaches 60°S, walks
+# those 5 to 100 km now (horizon.POLAR_WIDE). It runs only where the DEM folder has the 60 m
+# DEM (LUNAR_DEM_DIR on the full data); the fixtures and CI do not.
+_WIDE_DEM = horizon.dem_dir() / f"{horizon.WIDE_PRODUCT}.TIF"
+_PAST_THE_SQUARE = (-81.0, 10.0)
+
+
+def _polar_xy(latitude: Any, longitude: Any) -> tuple[Any, Any]:
+    """South polar stereographic on the 1737.4 km sphere, written for this test."""
+    import numpy as np
+
+    rho = 2.0 * _MOON_RADIUS_M * np.tan(np.pi / 4.0 + latitude / 2.0)
+    return rho * np.sin(longitude), rho * np.cos(longitude)
+
+
+@pytest.mark.skipif(
+    not _WIDE_DEM.is_file(),
+    reason=f"{horizon.WIDE_PRODUCT}.TIF is not in the DEM folder ({horizon.dem_dir()})",
+)
+def test_a_typed_point_past_the_80_m_square_is_answered_by_the_60_m_dem() -> None:
+    import math
+
+    import numpy as np
+    import rasterio
+    from rasterio.windows import from_bounds  # type: ignore[import-untyped]
+
+    payload = visibility(
+        {
+            "latitude_deg": _PAST_THE_SQUARE[0],
+            "longitude_deg": _PAST_THE_SQUARE[1],
+            "start": "2026-11-15T00:00:00Z",
+        }
+    )
+    samples = payload["horizon"]["samples"]
+    assert len(samples) == 720
+    assert all(math.isfinite(s["elevation_deg"]) for s in samples)
+    products = [d["product"] for d in payload["provenance"]["dems"]]
+    assert products == ["LDEM_80S_20MPP_ADJ", horizon.WIDE_PRODUCT, "LDEM_60S_240MPP_ADJ"]
+
+    # The same walk, written here: 20 m to 5 km, 60 m to 100 km, 240 m to 300 km.
+    lat0, lon0 = (math.radians(v) for v in _PAST_THE_SQUARE)
+    site_xy = _polar_xy(np.array(lat0), np.array(lon0))
+    windows: dict[str, Any] = {}
+    for product, reach in (
+        ("LDEM_80S_20MPP_ADJ", 6_000.0),
+        (horizon.WIDE_PRODUCT, 105_000.0),
+        ("LDEM_60S_240MPP_ADJ", 305_000.0),
+    ):
+        with rasterio.open(horizon.dem_dir() / f"{product}.TIF") as dataset:
+            window = (
+                from_bounds(
+                    float(site_xy[0]) - reach,
+                    float(site_xy[1]) - reach,
+                    float(site_xy[0]) + reach,
+                    float(site_xy[1]) + reach,
+                    dataset.transform,
+                )
+                .round_offsets()
+                .round_lengths()
+            )
+            grid = dataset.read(1, window=window).astype(np.float64)
+            windows[product] = (grid, dataset.window_transform(window))
+    grid, transform = windows["LDEM_80S_20MPP_ADJ"]
+    ground = float(_bilinear(grid, transform, site_xy[0], site_xy[1]))
+    observer = ground + payload["query"]["observer_height_m"]
+    up = np.array(
+        [math.cos(lat0) * math.cos(lon0), math.cos(lat0) * math.sin(lon0), math.sin(lat0)]
+    )
+    east = np.array([-math.sin(lon0), math.cos(lon0), 0.0])
+    north = np.cross(up, east)
+
+    def walk(azimuth: float) -> float:
+        bearing = math.radians(azimuth)
+        heading = math.cos(bearing) * north + math.sin(bearing) * east
+        best = -math.inf
+        for product, steps in (
+            ("LDEM_80S_20MPP_ADJ", ((0.1, 0.1, 500.0), (1.0, 501.0, 5_000.0))),
+            (horizon.WIDE_PRODUCT, ((10.0, 5_010.0, 100_000.0),)),
+            ("LDEM_60S_240MPP_ADJ", ((50.0, 100_050.0, 300_000.0),)),
+        ):
+            g, t = windows[product]
+            d = np.concatenate([np.arange(low, high, step) for step, low, high in steps])
+            theta = d / _MOON_RADIUS_M
+            point = up[None, :] * np.cos(theta)[:, None] + heading[None, :] * np.sin(theta)[:, None]
+            x, y = _polar_xy(np.arcsin(point[:, 2]), np.arctan2(point[:, 1], point[:, 0]))
+            r = _MOON_RADIUS_M + _bilinear(g, t, x, y)
+            elevation = np.degrees(
+                np.arctan2(r * np.cos(theta) - (_MOON_RADIUS_M + observer), r * np.sin(theta))
+            )
+            best = max(best, float(np.max(elevation)))
+        return best
+
+    # The walk can only miss a peak the engine's zoom finds: never above it, under it by little.
+    for azimuth in (0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0):
+        engine = samples[round(azimuth / 0.5)]["elevation_deg"]
+        independent = walk(azimuth)
+        assert independent - 0.0005 <= engine <= independent + 0.003, (azimuth, engine, independent)
+
+
 # 15/11/2026, the 17 mission Sites: Apollo 15 (3.6°E), Surveyor 6 (1.4°W) and Surveyor 7
 # (11.5°W) answered 422 outside-coverage. SLDEM2015's map has its seam at 0°E, where x jumps
 # by a whole Moon; a ray that crossed it read x a world away from the Site's window. The
@@ -1143,23 +1266,6 @@ _NO_WINDOWS = (
     f"{_OFFPOLE} (cut by deploy/crop_offpole.py, gitignored): "
     + ", ".join(str(w.relative_to(_OFFPOLE)) for w in _SEAM_WINDOWS if not w.is_file())
 )
-_MOON_RADIUS_M = 1_737_400.0
-
-
-def _bilinear(grid: Any, transform: Any, x: Any, y: Any) -> Any:
-    """Bilinear height at map points, written for this test (the engine has its own)."""
-    import numpy as np
-
-    col = (x - transform.c) / transform.a - 0.5
-    row = (y - transform.f) / transform.e - 0.5
-    c0, r0 = np.floor(col).astype(int), np.floor(row).astype(int)
-    fc, fr = col - c0, row - r0
-    return (
-        grid[r0, c0] * (1 - fc) * (1 - fr)
-        + grid[r0, c0 + 1] * fc * (1 - fr)
-        + grid[r0 + 1, c0] * (1 - fc) * fr
-        + grid[r0 + 1, c0 + 1] * fc * fr
-    )
 
 
 def _ray_elevation_deg(
@@ -1252,107 +1358,71 @@ def test_sites_near_the_sldem_seam_answer_with_a_horizon_that_matches_the_dem(
         )
 
 
-# 15/11/2026: a typed point past the 80 m DEM's square (here 81°S, 10°E) answered 422
-# outside-coverage, though the API takes typed points up to 80°S: the 80 m DEM is ±304 km
-# around the pole and the rays walk it out to 100 km. The 60 m DEM, which reaches 60°S, walks
-# those 5 to 100 km now (horizon.POLAR_WIDE). It runs only where the DEM folder has the 60 m
-# DEM (LUNAR_DEM_DIR on the full data); the fixtures and CI do not.
-from app import horizon as _horizon
+def test_every_route_that_answers_422_lets_schemathesis_expect_it() -> None:
+    # Found on 15/11/2026 in the integration branch: /visibility/uncertainty (ADR 0006)
+    # answers 422 for a Window outside the engine's coverage, as /visibility does, and the
+    # contract documents it, but schemathesis.toml had no entry for the new route. JSON
+    # Schema can't say "2025 to 2032", so schemathesis sent a Window in 2000, got the 422
+    # and failed ST202 on CI. Every route whose contract documents the 422 needs the entry.
+    import tomllib
 
-_WIDE_DEM = _horizon.dem_dir() / f"{_horizon.WIDE_PRODUCT}.TIF"
-_PAST_THE_SQUARE = (-81.0, 10.0)
+    root = Path(__file__).resolve().parents[2]
+    paths = (root / "contract" / "openapi.yaml").read_text("utf-8")
+    paths = paths.split("\npaths:\n", 1)[1].split("\ncomponents:\n", 1)[0]
+    documented: set[str] = set()
+    path = method = ""
+    for line in paths.splitlines():
+        if line.startswith("  /") and line.endswith(":"):
+            path = line.strip()[:-1]
+        elif re.fullmatch(r"    (get|post|put|patch|delete):", line):
+            method = line.strip()[:-1].upper()
+        elif "#/components/responses/Unprocessable" in line:
+            documented.add(f"{method} {path}")
+    assert "GET /visibility" in documented and "GET /visibility/uncertainty" in documented
+
+    config = tomllib.loads((root / "schemathesis.toml").read_text("utf-8"))
+    expected = {
+        operation["include-name"]: operation["checks"]["positive_data_acceptance"][
+            "expected-statuses"
+        ]
+        for operation in config.get("operations", [])
+        if "positive_data_acceptance" in operation.get("checks", {})
+    }
+    missing = sorted(name for name in documented if "422" not in expected.get(name, []))
+    assert missing == []
 
 
-def _polar_xy(latitude: Any, longitude: Any) -> tuple[Any, Any]:
-    """South polar stereographic on the 1737.4 km sphere, written for this test."""
-    import numpy as np
+# 15/11/2026: GET /terrain/heights reads up to 511 x 511 pixels and builds a JSON of about
+# 260 000 integers (~900 MB at peak, in a container of 4.5 GB). It first went in with no per-IP
+# cap and no engine slot, so one client could ask for ten grids at once beside a full set of
+# engine runs. Over the cap it answers what every engine route does: 503 busy with Retry-After.
+def test_terrain_heights_is_counted_by_the_per_ip_cap(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LUNAR_IP_LIMIT_PER_MINUTE", "2")
+    one = {"CF-Connecting-IP": "198.51.100.77", "Origin": "https://lunar.luizfbm.win"}
+    params = {"site_id": "001", "half_extent_m": 1000}
+    answers = [client.get("/terrain/heights", params=params, headers=one) for _ in range(3)]
+    # Under the cap the route answers as usual (200 with the DEM windows of fixtures/, 422
+    # without them); only the cap gives 503 here.
+    assert [a.status_code == 503 for a in answers] == [False, False, True]
+    assert answers[2].json()["code"] == "busy"
+    assert 1 <= int(answers[2].headers["Retry-After"]) <= 61
+    assert answers[2].headers["access-control-allow-origin"] == "https://lunar.luizfbm.win"
+    other = {"CF-Connecting-IP": "203.0.113.77"}
+    assert client.get("/terrain/heights", params=params, headers=other).status_code != 503
+    # /terrain, which reads a small window, stays out of the cap.
+    assert client.get("/terrain", params={"site_id": "001"}, headers=one).status_code != 503
 
-    rho = 2.0 * _MOON_RADIUS_M * np.tan(np.pi / 4.0 + latitude / 2.0)
-    return rho * np.sin(longitude), rho * np.cos(longitude)
 
+def test_terrain_heights_waits_for_an_engine_slot(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app import cache
 
-@pytest.mark.skipif(
-    not _WIDE_DEM.is_file(),
-    reason=f"{_horizon.WIDE_PRODUCT}.TIF is not in the DEM folder ({_horizon.dem_dir()})",
-)
-def test_a_typed_point_past_the_80_m_square_is_answered_by_the_60_m_dem() -> None:
-    import math
-
-    import numpy as np
-    import rasterio
-    from rasterio.windows import from_bounds  # type: ignore[import-untyped]
-
-    payload = visibility(
-        {
-            "latitude_deg": _PAST_THE_SQUARE[0],
-            "longitude_deg": _PAST_THE_SQUARE[1],
-            "start": "2026-11-15T00:00:00Z",
-        }
-    )
-    samples = payload["horizon"]["samples"]
-    assert len(samples) == 720
-    assert all(math.isfinite(s["elevation_deg"]) for s in samples)
-    products = [d["product"] for d in payload["provenance"]["dems"]]
-    assert products == ["LDEM_80S_20MPP_ADJ", _horizon.WIDE_PRODUCT, "LDEM_60S_240MPP_ADJ"]
-
-    # The same walk, written here: 20 m to 5 km, 60 m to 100 km, 240 m to 300 km.
-    lat0, lon0 = (math.radians(v) for v in _PAST_THE_SQUARE)
-    site_xy = _polar_xy(np.array(lat0), np.array(lon0))
-    windows: dict[str, Any] = {}
-    for product, reach in (
-        ("LDEM_80S_20MPP_ADJ", 6_000.0),
-        (_horizon.WIDE_PRODUCT, 105_000.0),
-        ("LDEM_60S_240MPP_ADJ", 305_000.0),
-    ):
-        with rasterio.open(_horizon.dem_dir() / f"{product}.TIF") as dataset:
-            window = (
-                from_bounds(
-                    float(site_xy[0]) - reach,
-                    float(site_xy[1]) - reach,
-                    float(site_xy[0]) + reach,
-                    float(site_xy[1]) + reach,
-                    dataset.transform,
-                )
-                .round_offsets()
-                .round_lengths()
-            )
-            grid = dataset.read(1, window=window).astype(np.float64)
-            windows[product] = (grid, dataset.window_transform(window))
-    grid, transform = windows["LDEM_80S_20MPP_ADJ"]
-    ground = float(_bilinear(grid, transform, site_xy[0], site_xy[1]))
-    observer = ground + payload["query"]["observer_height_m"]
-    up = np.array(
-        [math.cos(lat0) * math.cos(lon0), math.cos(lat0) * math.sin(lon0), math.sin(lat0)]
-    )
-    east = np.array([-math.sin(lon0), math.cos(lon0), 0.0])
-    north = np.cross(up, east)
-
-    def walk(azimuth: float) -> float:
-        bearing = math.radians(azimuth)
-        heading = math.cos(bearing) * north + math.sin(bearing) * east
-        best = -math.inf
-        for product, steps in (
-            ("LDEM_80S_20MPP_ADJ", ((0.1, 0.1, 500.0), (1.0, 501.0, 5_000.0))),
-            (_horizon.WIDE_PRODUCT, ((10.0, 5_010.0, 100_000.0),)),
-            ("LDEM_60S_240MPP_ADJ", ((50.0, 100_050.0, 300_000.0),)),
-        ):
-            g, t = windows[product]
-            d = np.concatenate([np.arange(low, high, step) for step, low, high in steps])
-            theta = d / _MOON_RADIUS_M
-            point = up[None, :] * np.cos(theta)[:, None] + heading[None, :] * np.sin(theta)[:, None]
-            x, y = _polar_xy(np.arcsin(point[:, 2]), np.arctan2(point[:, 1], point[:, 0]))
-            r = _MOON_RADIUS_M + _bilinear(g, t, x, y)
-            elevation = np.degrees(
-                np.arctan2(r * np.cos(theta) - (_MOON_RADIUS_M + observer), r * np.sin(theta))
-            )
-            best = max(best, float(np.max(elevation)))
-        return best
-
-    # The walk can only miss a peak the engine's zoom finds: never above it, under it by little.
-    for azimuth in (0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0):
-        engine = samples[round(azimuth / 0.5)]["elevation_deg"]
-        independent = walk(azimuth)
-        assert independent - 0.0005 <= engine <= independent + 0.003, (azimuth, engine, independent)
+    # Every slot taken: the grid is not built, the visitor gets 503 busy once the wait is up.
+    monkeypatch.setattr(cache, "_gate", cache._Gate(0))
+    monkeypatch.setenv("LUNAR_QUEUE_WAIT_SECONDS", "0.1")
+    answer = client.get("/terrain/heights", params={"site_id": "001", "half_extent_m": 1000})
+    assert answer.status_code == 503
+    assert answer.json()["code"] == "busy"
+    assert answer.headers["Retry-After"]
 
 
 # 15/11/2026: a typed point north of 80°S answered 422 outside-coverage, so the globe could
@@ -1360,7 +1430,7 @@ def test_a_typed_point_past_the_80_m_square_is_answered_by_the_60_m_dem() -> Non
 # on the server (237 m, simple cylindrical centred on 180°E), the rays of a typed point between
 # 70°S and 70°N walk it out to 300 km, across 0°E too (horizon.GLOBAL). It runs only where the
 # DEM folder has LDEM_128 (LUNAR_DEM_DIR on the full data); the fixtures and CI do not.
-_GLOBAL_DEM = _horizon.dem_dir() / f"{_horizon.GLOBAL_PRODUCT}.TIF"
+_GLOBAL_DEM = horizon.dem_dir() / f"{horizon.GLOBAL_PRODUCT}.TIF"
 # On 0°E itself, where the map's first column meets its last, and in the northern hemisphere.
 _GLOBAL_POINTS = ((0.0, 0.05), (45.0, -100.0))
 
@@ -1397,7 +1467,7 @@ def _global_grid(site: tuple[float, float], reach_m: float) -> tuple[Any, Any, i
 
 @pytest.mark.skipif(
     not _GLOBAL_DEM.is_file(),
-    reason=f"{_horizon.GLOBAL_PRODUCT}.TIF is not in the DEM folder ({_horizon.dem_dir()})",
+    reason=f"{horizon.GLOBAL_PRODUCT}.TIF is not in the DEM folder ({horizon.dem_dir()})",
 )
 @pytest.mark.parametrize("site", _GLOBAL_POINTS)
 def test_a_typed_point_north_of_80s_is_answered_by_the_global_dem(
@@ -1413,7 +1483,7 @@ def test_a_typed_point_north_of_80s_is_answered_by_the_global_dem(
     samples = payload["horizon"]["samples"]
     assert len(samples) == 720
     assert all(math.isfinite(s["elevation_deg"]) for s in samples)
-    assert [d["product"] for d in payload["provenance"]["dems"]] == [_horizon.GLOBAL_PRODUCT]
+    assert [d["product"] for d in payload["provenance"]["dems"]] == [horizon.GLOBAL_PRODUCT]
     assert client.get("/meta").json()["coverage"]["custom_max_latitude_deg"] == 90.0
 
     grid, transform, c0, r0 = _global_grid(site, 305_000.0)
@@ -1469,6 +1539,70 @@ def test_a_typed_point_north_of_80s_is_answered_by_the_global_dem(
         assert independent - 0.0005 <= engine <= independent + 0.003, (azimuth, engine, independent)
 
 
+def test_the_uncertainty_of_a_global_point_names_each_unvaried_dem_once(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # 15/11/2026, found checking /visibility/uncertainty for a typed point over LDEM_128: the
+    # global map is walked as two bands (near and far), and `uncovered` listed the DEM once
+    # per band, ["LDEM_128", "LDEM_128"]. It is one DEM, with no error raster to vary.
+    from tests.test_global_dem import _write_global
+
+    _write_global(tmp_path)
+    monkeypatch.setenv("LUNAR_DEM_DIR", str(tmp_path))
+    response = client.get(
+        "/visibility/uncertainty",
+        params={
+            "latitude_deg": 10.0,
+            "longitude_deg": 20.0,
+            "start": "2026-11-15T00:00:00Z",
+            "duration_hours": 24,
+        },
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["uncovered"] == [horizon.GLOBAL_PRODUCT]
+
+
+def test_the_sampling_step_argument_leaves_the_horizon_mask_as_it_was() -> None:
+    """regression guard, 15/11/2026: the convergence check (validation/test_convergence.py)
+    needed `horizon._compute` to take a step scale. Its default has to be the engine's
+    answer: 720 rays every 0.5°, half a pixel along each. The expected elevations are the
+    Site 001 mask at 2 m, read off the code before the argument existed (every 30th ray).
+    """
+    expected = [
+        0.7246977,
+        -0.0390404,
+        -1.2253873,
+        -1.6225507,
+        -2.0754625,
+        -1.485687,
+        -1.1593553,
+        -2.2465989,
+        -1.6714597,
+        -1.5624739,
+        -2.2112717,
+        -1.250739,
+        -1.2956555,
+        -0.7432153,
+        -0.1958176,
+        -0.9819816,
+        -0.9530123,
+        -1.6000338,
+        -0.8342478,
+        -0.5363619,
+        -0.0686374,
+        0.2632918,
+        0.6462246,
+        0.97551,
+    ]
+    payload = visibility({**MARCH_2025, "observer_height_m": 2})
+    samples = payload["horizon"]["samples"]
+    assert len(samples) == 720
+    assert payload["horizon"]["azimuth_step_deg"] == 0.5
+    assert [samples[i]["elevation_deg"] for i in range(0, 720, 30)] == pytest.approx(
+        expected, abs=1e-6
+    )
+
+
 def test_each_sample_gives_the_true_angular_radius_of_the_sun_and_the_earth() -> None:
     # 15/11/2026: the view from the ground drew the Sun at the Window's mean radius and the Earth
     # at a fixed 0.95°, both enlarged with the stretched heights. The engine already had both
@@ -1486,3 +1620,123 @@ def test_each_sample_gives_the_true_angular_radius_of_the_sun_and_the_earth() ->
     assert sum(sun) / len(sun) == pytest.approx(payload["timeline"]["sun_radius_deg"], rel=1e-9)
     # Over two days the Moon's distance changes, so the Earth's radius is not a constant.
     assert max(earth) - min(earth) > 0.0005
+
+
+def test_route_takes_the_coarse_grid_as_a_query_string() -> None:
+    # Found on 15/11/2026 while writing GET /sites/{site_id}/route: `coarse_m` was typed
+    # Literal[60, 20], and a query string "60" is not the integer 60 for a Literal, so every
+    # request that named the parameter was answered 422 invalid_parameter although the contract
+    # lists 60 and 20. The numbers are what Eduardo's engine printed under Node for AR06, VIPER,
+    # P90, Sun 0.5 from (609.9, 1159.0) to (2009.9, 2259.0): Normal navigation on the 60 m grid
+    # hits 11 steep waypoints over 2289 m, on the 20 m grid 12 over 2356 m.
+    where = {"start_x_m": 609.9, "start_y_m": 1159.0, "goal_x_m": 2009.9, "goal_y_m": 2259.0}
+    seen = {}
+    for coarse in (60, 20):
+        response = client.get("/sites/AR06/route", params={**where, "coarse_m": coarse})
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["coarse_m"] == coarse
+        seen[coarse] = (body["plans"][0]["hazards_hit"], body["plans"][0]["distance_m"])
+    assert seen == {60: (11, 2289), 20: (12, 2356)}
+
+
+def test_a_dem_too_coarse_for_the_radius_has_its_own_problem_code(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # 15/11/2026, found building the slope panel over LDEM_128: GET /terrain at a typed global
+    # point with the default 100 m radius was a 422 `outside_coverage`, the same code as a point
+    # no DEM covers, so the frontend had to match the English `detail` to tell "the DEM is too
+    # coarse for this radius" from "there is no DEM here". The cells of LDEM_128 are 236.9 m
+    # across (written out here, not read from the code: 128 px/deg of a 1737.4 km sphere), so
+    # with the Site on a cell corner none of them has its centre within 100 m.
+    from tests.test_global_dem import _write_global
+
+    _write_global(tmp_path)
+    monkeypatch.setenv("LUNAR_DEM_DIR", str(tmp_path))
+    coarse = client.get("/terrain", params={"latitude_deg": 10.0, "longitude_deg": 20.0})
+    assert coarse.status_code == 422, coarse.text
+    problem = coarse.json()
+    assert problem["code"] == "dem_too_coarse"
+    assert problem["type"].endswith("/dem-too-coarse")
+    assert "no cell centre of LDEM_128 (236.9 m) lies within 100 m" in problem["detail"]
+
+    # A point no DEM covers keeps its code: 85°N is a pole cap that holds only LDEM_60N_240M,
+    # which this server does not have, and a Curated Site with no DEM folder at all.
+    nothing = client.get("/terrain", params={"latitude_deg": 85.0, "longitude_deg": 20.0})
+    assert (nothing.status_code, nothing.json()["code"]) == (422, "outside_coverage")
+    monkeypatch.setenv("LUNAR_DEM_DIR", str(tmp_path / "empty"))
+    empty = client.get("/terrain", params={"site_id": "001"})
+    assert (empty.status_code, empty.json()["code"]) == (422, "outside_coverage")
+
+
+def _sphere_limb_deg(radius_km: float, distance_km: float) -> float:
+    return math.degrees(math.asin(radius_km / distance_km))
+
+
+@pytest.mark.parametrize(
+    "where",
+    [
+        pytest.param({"site_id": "001"}, id="polar-site-001"),
+        pytest.param({"site_id": "APOLLO11"}, id="off-pole-apollo-11"),
+        pytest.param({"latitude_deg": 10.0, "longitude_deg": 20.0}, id="global-point-level-1"),
+    ],
+)
+def test_the_sun_and_earth_radius_matches_an_independent_ephemeris_computation(
+    where: dict[str, Any], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Issue #123 (Larissa, 15/11/2026): in the level-1 landings (Explore the Moon, global points
+    # answered from LOLA's global map) the Sun and the Earth look small in the ground view. Before
+    # drawing anything, check the number the view is given: the answer's `angular_radius_deg`
+    # against one worked out here from SPICE state vectors, not through app.engine: the body's
+    # position from the Moon's centre (LT+S, MOON_ME), minus the Observer's own vector (a
+    # 1737.4 km sphere plus 2 m), then asin(radius / distance). Same answer at the pole, off the
+    # pole and for a typed point over the global map: the radii do not depend on the Horizon mask.
+    import numpy as np
+    import spiceypy as spice
+
+    from tests.test_global_dem import _write_global
+
+    if "site_id" not in where:
+        # The global map is not in the fixtures: a flat synthetic LDEM_128 stands in for it.
+        _write_global(tmp_path)
+        monkeypatch.setenv("LUNAR_DEM_DIR", str(tmp_path))
+    params = {
+        **where,
+        "start": "2026-11-15T00:00:00Z",
+        "duration_hours": 48,
+        "observer_height_m": 2,
+    }
+    payload = visibility(params)
+    site = payload["query"]["site"]
+    lat, lon = math.radians(site["latitude_deg"]), math.radians(site["longitude_deg"])
+    observer = (1737.4 + 0.002) * np.array(
+        [math.cos(lat) * math.cos(lon), math.cos(lat) * math.sin(lon), math.sin(lat)]
+    )
+    samples = payload["timeline"]["samples"]
+    assert len(samples) > 100
+    # IAU 2015: the Sun's nominal radius 695,700 km; the Earth's equatorial 6378.1366 km, polar
+    # 6356.7519 km (its disc is an ellipse, the limb lies between the two) and mean 6371.0 km.
+    for sample in samples[::12]:
+        epoch = spice.str2et(sample["t"].removesuffix("Z"))
+        sun_distance, earth_distance = (
+            float(
+                np.linalg.norm(
+                    np.array(spice.spkpos(body, epoch, "MOON_ME", "LT+S", "MOON")[0]) - observer
+                )
+            )
+            for body in ("SUN", "EARTH")
+        )
+        sun = sample["sun"]["angular_radius_deg"]
+        earth = sample["earth"]["angular_radius_deg"]
+        at = sample["t"]
+        assert sun == pytest.approx(_sphere_limb_deg(695_700.0, sun_distance), abs=1e-5), at
+        # Published sizes from the Moon: about 0.26-0.27 deg for the Sun, 0.90-0.99 deg for the Earth.
+        assert 0.258 < sun < 0.276
+        assert 0.88 < earth < 1.04
+        polar = _sphere_limb_deg(6356.7519, earth_distance)
+        equatorial = _sphere_limb_deg(6378.1366, earth_distance)
+        mean = _sphere_limb_deg(6371.0, earth_distance)
+        assert polar - 1e-5 <= earth <= equatorial + 1e-5, sample["t"]
+        # The contract names the equatorial radius; the mean one is 0.11% smaller.
+        assert earth == pytest.approx(equatorial, abs=1e-5), sample["t"]
+        assert earth == pytest.approx(mean, rel=2e-3), sample["t"]

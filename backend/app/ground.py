@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from . import catalog, heights, horizon, psr, slope
+from . import cache, catalog, heights, horizon, psr, slope
 from .problems import ApiProblem, missing_site
 
 
@@ -74,8 +74,8 @@ def terrain(site: catalog.Site, radius_m: float, slope_limit_deg: float) -> dict
         ) from missing
     except slope.NoCellInRadius as empty:
         raise ApiProblem(
-            "outside_coverage",
-            "Outside coverage",
+            "dem_too_coarse",
+            "DEM too coarse",
             f"The DEM is too coarse for this radius: {empty}.",
         ) from empty
     answer: dict[str, Any] = {
@@ -92,20 +92,27 @@ def terrain(site: catalog.Site, radius_m: float, slope_limit_deg: float) -> dict
 
 
 def terrain_heights(site: catalog.Site, half_extent_m: float) -> bytes:
-    """The contract's `TerrainHeights` as JSON, or the 422 that says why there is none."""
-    try:
-        found = heights.grid(
-            site["latitude_deg"],
-            site["longitude_deg"],
-            half_extent_m,
-            site["id"] if site["curated"] else None,
-        )
-    except horizon.DemUnavailable as missing:
-        # Never a flat or made-up ground: without a DEM there is no grid.
-        raise ApiProblem(
-            "outside_coverage",
-            "Outside coverage",
-            f"No DEM holds the ground {half_extent_m:g} m around this Site ({missing}).",
-        ) from missing
-    body = {"site": site, **heights.as_json(found, half_extent_m)}
-    return json.dumps(body, separators=(",", ":"), allow_nan=False).encode()
+    """The contract's `TerrainHeights` as JSON, or the 422 that says why there is none.
+
+    It reads up to 511 x 511 pixels and builds a JSON of about 260 000 integers (about 900 MB
+    at peak, against the container's 4.5 GB), so it waits for an engine slot like any other
+    heavy run: a burst queues or gets 503 busy, never a second grid in memory beside a full
+    set of engine runs.
+    """
+    with cache.engine_slot():
+        try:
+            found = heights.grid(
+                site["latitude_deg"],
+                site["longitude_deg"],
+                half_extent_m,
+                site["id"] if site["curated"] else None,
+            )
+        except horizon.DemUnavailable as missing:
+            # Never a flat or made-up ground: without a DEM there is no grid.
+            raise ApiProblem(
+                "outside_coverage",
+                "Outside coverage",
+                f"No DEM holds the ground {half_extent_m:g} m around this Site ({missing}).",
+            ) from missing
+        body = {"site": site, **heights.as_json(found, half_extent_m)}
+        return json.dumps(body, separators=(",", ":"), allow_nan=False).encode()

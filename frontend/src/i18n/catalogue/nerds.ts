@@ -12,6 +12,8 @@ export const en = {
   'nerds.dem': '{product} ({resolution} m)',
   'nerds.kernels': 'SPICE kernels',
   'nerds.engine': 'Engine version',
+  'nerds.earthCentre': 'Earth visible, by its centre',
+  'nerds.earthAnyPart': 'Earth visible, with any part of its disc',
 }
 
 export const pt: Record<keyof typeof en, string> = {
@@ -27,4 +29,6 @@ export const pt: Record<keyof typeof en, string> = {
   'nerds.dem': '{product} ({resolution} m)',
   'nerds.kernels': 'Kernels SPICE',
   'nerds.engine': 'Versão do motor',
+  'nerds.earthCentre': 'Terra visível, pelo centro',
+  'nerds.earthAnyPart': 'Terra visível, com qualquer pedaço do disco',
 }

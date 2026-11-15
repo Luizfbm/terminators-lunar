@@ -14,9 +14,18 @@ describe('the words of a landing on the stage', () => {
 
   // The limit comes from /meta, so it follows the server when it opens up the whole Moon.
   it('says the limit of a custom Site as /meta gives it, whatever it is', () => {
-    expect(limitText(-80, 'en')).toBe('80° S')
-    expect(limitText(-60, 'pt')).toBe('60° S')
-    expect(limitText(90, 'en')).toBe('90° N')
+    expect(limitText(-80, 'en')).toBe('80°\u00a0S')
+    expect(limitText(-60, 'pt')).toBe('60°\u00a0S')
+    expect(limitText(90, 'en')).toBe('90°\u00a0N')
+  })
+
+  // Regression (2026-11-15): Back came in English only, whatever the language of the page.
+  it('has Back, "Land" and the missions in Portuguese too, and not as a copy of the English', () => {
+    for (const key of ['back', 'land', 'landHere', 'landAt', 'missions', 'cancel', 'retry'] as const) {
+      expect(STRINGS.pt[key], key).not.toBe('')
+      expect(STRINGS.pt[key], key).not.toBe(STRINGS.en[key])
+    }
+    expect(STRINGS.pt.back).toBe('Voltar')
   })
 
   it('has the same words in both languages, with the same placeholders', () => {

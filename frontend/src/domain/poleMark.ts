@@ -18,7 +18,7 @@ export interface PoleMark {
 }
 
 /**
- * The mark of a pole of the Moon on the stage, as in `globo_hemisferios.html`. The letter belongs to
+ * The mark of a pole of the Moon on the stage. The letter belongs to
  * the pole and to nothing else: it stands on the pole's own line, `POLE_LETTER_RADII` out from the
  * Moon's centre, so it turns with the Moon. It is drawn when the pole faces the eye, and when the pole
  * is behind the Moon but the letter, projected, is still outside the disc. It is fainter once the pole
@@ -35,25 +35,33 @@ export function poleMark(pole: Spot, letter: Spot, facing: boolean, depth: numbe
   return { letter, dot: facing ? pole : null, opacity: depth > FAINT_BEHIND ? 1 : 0.6 }
 }
 
+/** A round thing on the stage that a letter must not cover: the Sun's disc or the Earth's. */
+export interface Disc extends Spot {
+  r: number
+}
+
+/** A rectangle on the stage, in pixels from its top left corner. */
+export interface Rect {
+  left: number
+  top: number
+  right: number
+  bottom: number
+}
+
 /**
- * The Equator as runs of screen points, only the half turned to the eye. `faces` says whether each of
- * the points round the circle is on the near side. The run that wraps past the last point back to the
- * first is joined into one.
+ * Whether a letter of a pole, as a square `half` pixels from its centre to each side, keeps clear of the discs
+ * (the Sun and the Earth in the sky behind the Moon) and of the rectangles (the menu on the left of the globe).
+ * A letter that does not is not drawn: the marks of the Moon never cover what is behind it.
  */
-export function visibleRuns(points: readonly Spot[], faces: readonly boolean[]): Spot[][] {
-  const runs: Spot[][] = []
-  let current: Spot[] = []
-  points.forEach((point, at) => {
-    if (faces[at]) current.push(point)
-    else if (current.length) {
-      runs.push(current)
-      current = []
-    }
-  })
-  if (current.length) {
-    // The circle is closed: a run still open at the end continues the one that started at the beginning.
-    if (runs.length && faces[0]) runs[0] = current.concat(runs[0])
-    else runs.push(current)
+export function letterClear(letter: Spot, half: number, discs: readonly Disc[], boxes: readonly Rect[]): boolean {
+  for (const disc of discs) {
+    // The distance from the disc's centre to the nearest point of the letter's square.
+    const dx = Math.max(Math.abs(disc.x - letter.x) - half, 0)
+    const dy = Math.max(Math.abs(disc.y - letter.y) - half, 0)
+    if (Math.hypot(dx, dy) < disc.r) return false
   }
-  return runs
+  for (const box of boxes) {
+    if (letter.x + half > box.left && letter.x - half < box.right && letter.y + half > box.top && letter.y - half < box.bottom) return false
+  }
+  return true
 }

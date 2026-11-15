@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './classic'
 
 // the requirement, step 1 of the identity pass: a loading state for the Moon, controls that look like
 // controls, and a serif for the statements.

@@ -6,7 +6,7 @@ import { expect, test, type Page, type Route } from '@playwright/test'
 // Regression (2026-11-15): the click only wrote `[land] {...}` to the console and said "Not wired yet",
 // and the same click also picked the nearest Site, two destinations for one click.
 
-// The words of the bubble are English in both languages, like the menu.
+// The words of the bubble, the status and Back follow the language (English here; one test in Portuguese).
 test.use({ locale: 'en-US' })
 
 const canvas = (page: Page) => page.locator('.globe canvas')
@@ -192,7 +192,7 @@ test('a point the server does not cover shows the real error on the stage, with 
   await expect(alert).toHaveAttribute('role', 'alert')
   await expect(alert).toContainText('Could not land at')
   // The limit is the one /meta gives, not a number of the frontend's own.
-  await expect(alert).toContainText(/only south of \d+(\.\d+)?° [NS]/)
+  await expect(alert).toContainText(/only south of \d+(\.\d+)?°\s[NS]/)
   // The stage did not go down to the ground of the point before.
   await expect(page.locator('.stage__ground')).toHaveCount(0)
   await alert.getByRole('button', { name: 'Try again' }).click()
@@ -201,6 +201,36 @@ test('a point the server does not cover shows the real error on the stage, with 
   await status(page).getByRole('button', { name: 'Cancel' }).click()
   await expect(status(page)).toHaveCount(0)
   await expect(page).not.toHaveURL(/lat=/)
+})
+
+test('Back goes up from the ground to the orbit it came from', async ({ page }) => {
+  const { middle } = await open(page)
+  await page.mouse.move(middle.x, middle.y)
+  await page.mouse.down()
+  await page.mouse.up()
+  await expect(page.locator('.stage__ground')).toBeVisible({ timeout: 15_000 })
+  // Back is on the ground and nowhere else.
+  await page.getByRole('button', { name: 'Back', exact: true }).click()
+  await expect(page.locator('.views').getByRole('button', { name: 'From orbit', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('.stage__ground')).toHaveCount(0, { timeout: 15_000 })
+  await expect(page.locator('.globe')).toHaveAttribute('data-mode', 'orbit')
+  await expect(page.getByRole('button', { name: 'Back', exact: true })).toHaveCount(0)
+})
+
+test('in Portuguese the bubble, the status and Back are in Portuguese', async ({ page }) => {
+  let release!: () => void
+  const hold = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  const { middle } = await open(page, { hold, link: '/?lang=pt' })
+  await page.mouse.move(middle.x, middle.y)
+  await expect(page.getByRole('button', { name: 'Pousar aqui' })).toContainText('Pousar')
+  await page.mouse.down()
+  await page.mouse.up()
+  await expect(status(page)).toContainText(/Pousando em \d+\.?\d*° [NS], \d+\.?\d*° [LO]…/)
+  release()
+  await expect(page.locator('.stage__ground')).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByRole('button', { name: 'Voltar', exact: true })).toBeVisible()
 })
 
 test.describe('on the polar map', () => {
@@ -226,6 +256,20 @@ test.describe('on the polar map', () => {
     await expect(page.locator('.stage__ground')).toBeVisible({ timeout: 15_000 })
     await page.waitForTimeout(500)
     expect(asked.slice(before)).toHaveLength(1)
+  })
+
+  test('Back from the ground of a landing on the map returns to the map', async ({ page }) => {
+    const { box } = await openMap(page)
+    const x = box.x + box.width / 2
+    const y = box.y + box.height / 2 + box.height * 0.2
+    await page.mouse.move(x, y)
+    await expect(layer(page)).toBeVisible()
+    await page.mouse.click(x, y)
+    await expect(page.locator('.stage__ground')).toBeVisible({ timeout: 15_000 })
+    await page.getByRole('button', { name: 'Back', exact: true }).click()
+    await expect(page.locator('.views').getByRole('button', { name: 'Map', exact: true })).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.locator('.stage__ground')).toHaveCount(0, { timeout: 15_000 })
+    await expect(page.locator('.globe')).toHaveAttribute('data-mode', 'map')
   })
 
   test('a double click still asks about the point once and stays on the map', async ({ page }) => {

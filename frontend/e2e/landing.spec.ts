@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page } from '@playwright/test'
 
 // the requirement: a way in to the IM-2 Athena landing, and a note at that Site saying what the map
 // cannot see. The mock always answers for its example Site, so the Site that was asked is put
@@ -25,9 +26,10 @@ test('the line under the numbers opens the IM-2 landing, where a note says what 
   const link = entry(page, 'A real landing: IM-2 Athena, March 2025')
   await expect(link).toBeVisible()
   await expect(note(page)).toHaveCount(0)
-  // A real address, so it can be copied or opened in another tab.
+  // A real address, so it can be copied or opened in another tab. This spec opens the classic
+  // layout, so the link also carries layout=classic.
   const href = new URL((await link.getAttribute('href'))!, 'http://app.test')
-  expect(Object.fromEntries(href.searchParams)).toEqual({ site: 'IM2', lang: 'en', start: '2025-03-06', hours: '48' })
+  expect(Object.fromEntries(href.searchParams)).toEqual({ site: 'IM2', lang: 'en', start: '2025-03-06', hours: '48', layout: 'classic' })
 
   const asked = page.waitForRequest((request) => new URL(request.url()).searchParams.get('site_id') === 'IM2')
   await link.click()

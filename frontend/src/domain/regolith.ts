@@ -1,5 +1,5 @@
 /**
- * How the terrain returns the Sun's light (issue #250): a mix of Lommel-Seeliger, the law for dry
+ * How the terrain returns the Sun's light: a mix of Lommel-Seeliger, the law for dry
  * regolith, and Lambert, in the form of the Lunar-Lambert function of planetary photometry:
  *
  *   light = (1 - weight) * μ0  +  weight * exposure * μ0 / (μ0 + μ)

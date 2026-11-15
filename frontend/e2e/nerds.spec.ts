@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page } from '@playwright/test'
 
 // the requirement: "Stats for nerds". The plain sentences are the default screen; the numbers, the panels
 // and where the answer comes from are one click away, and the link remembers the click.

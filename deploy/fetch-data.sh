@@ -3,6 +3,17 @@
 # backend loads. Safe to rerun: files already in place are skipped,
 # and every file is written to a temp name first, so a cut download never
 # leaves a half file in place.
+#
+# The whole-Moon landing (the requirement) adds two LOLA products from the PDS Geosciences
+# archive (LRO-L-LOLA-4-GDR-V1.0, lrolol_1xxx/data/lola_gdr), kept under pds/ as published and
+# turned into GeoTIFFs in dem/ by deploy/pds_to_tif.py:
+#   ldem_128.img       2,123,366,400 B (1.98 GiB)  ->  dem/LDEM_128.TIF       about 1.5 to 2.5 GB
+#   ldem_60n_240m.img    120,435,200 B (115 MiB)   ->  dem/LDEM_60N_240M.TIF  about 0.1 to 0.2 GB
+# Disk for the two: 2.25 GB of downloads plus the TIFs, so about 4 to 5 GB when they stay (the
+# TIFs are estimates, not measured). Worst case 6.5 GB: the TIFs are 4.5 GB before compression.
+# pds/*.img can be deleted once the TIFs are in place (2.25 GB back), but the next run then
+# downloads them again, so they stay. The 17 mission windows in dem/offpole/ (crop_offpole.py)
+# add under 1 GB. Nothing here touches the south polar DEMs or the windows already cut.
 set -euo pipefail
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 cd "${LUNAR_DATA_DIR:-/opt/lunar-data}"
@@ -51,7 +62,20 @@ for k in "${DSN_KERNELS[@]}"; do get_naif "$k"; done
 mv kernels/.dsn.tm.part kernels/dsn.tm
 
 P=https://pgda.gsfc.nasa.gov/data/LOLA_20mpp
-for f in LDEM_80S_20MPP_ADJ LDEM_80S_80MPP_ADJ LDEM_60S_60MPP_ADJ LDEM_60S_240MPP_ADJ LDEM_80S_20MPP_ADJ_ERR; do get dem "$P/$f.TIF"; done
+for f in LDEM_80S_20MPP_ADJ LDEM_80S_80MPP_ADJ LDEM_60S_60MPP_ADJ LDEM_60S_240MPP_ADJ LDEM_80S_20MPP_ADJ_ERR LDEM_80S_80MPP_ADJ_ERR LDEM_60S_60MPP_ADJ_ERR LDEM_60S_240MPP_ADJ_ERR; do get dem "$P/$f.TIF"; done
+# The per-pixel surface height error of the polar DEMs and of the 60°S 60 m one (PGDA product
+# 90, "LDEM surface height error (in meters)", Barker et al. 2023), on the DEMs' own grids:
+# what the Uncertainty band perturbs them by (ADR 0006). The 60 m one (4.2 GB) is only read
+# through deploy/crop_offpole.py, which cuts its window around Chandrayaan-3 next to the DEM's.
+# SLDEM2015 has no error product; see ADR 0006 for what Apollo 11 and Blue Ghost 1 use.
+# Sizes are the server's Content-Length of 2026-11-15; a download that stopped short fails here.
+err_size() { # err_size <name> <bytes>
+  [ "$(stat -c %s "dem/$1.TIF")" = "$2" ] || { echo "$1 is not the $2 bytes the server announced" >&2; exit 1; }
+}
+err_size LDEM_80S_20MPP_ADJ_ERR 3954709201
+err_size LDEM_80S_80MPP_ADJ_ERR 254808965
+err_size LDEM_60S_60MPP_ADJ_ERR 4218063226
+err_size LDEM_60S_240MPP_ADJ_ERR 267005175
 # Permanently shadowed regions down to 85°S (the requirement): PGDA product 69, LOLA team,
 # Mazarico et al. 2011 (Icarus 211, doi:10.1016/j.icarus.2010.10.030). GeoTIFF of the PDS
 # IMG, 5058 x 5058 cells of 60 m in south polar stereographic on the 1737.4 km sphere,
@@ -64,6 +88,25 @@ get psr https://pgda.gsfc.nasa.gov/data/MoonIllumination/LPSR_85S_060M_201608.TI
 get psr https://imbrium.mit.edu/EXTRAS/ILLUMINATION/IMG/LPSR_85S_060M_201608.LBL
 [ "$(stat -c %s psr/LPSR_85S_060M_201608.TIF)" = 656183 ] || { echo "PSR map is not the 656183 bytes the server announced" >&2; exit 1; }
 if [ -s "$REPO/deploy/psr.sha256" ]; then (cd psr && sha256sum -c "$REPO/deploy/psr.sha256"); fi
+
+# LOLA's global height map (128 px/deg, 236.9 m, the whole Moon) and its north polar 240 m one
+# (60°N to the pole), the products the typed points away from the south pole are walked over.
+# Official source: PDS Geosciences Node, LRO LOLA GDR (DATA_SET_ID LRO-L-LOLA-4-GDR-V1.0).
+# The archive publishes no checksum of the IMG: the sizes are the server's Content-Length
+# of 2026-11-15 and deploy/pds_to_tif.py checks each IMG against its label. If
+# deploy/pds.sha256 is here (made on the VPS from the first good fetch), it is checked too.
+mkdir -p pds
+G=https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr
+get pds "$G/cylindrical/img/ldem_128.lbl"
+get pds "$G/cylindrical/img/ldem_128.img"
+get pds "$G/polar/img/ldem_60n_240m.lbl"
+get pds "$G/polar/img/ldem_60n_240m.img"
+pds_size() { # pds_size <name> <bytes>
+  [ "$(stat -c %s "pds/$1")" = "$2" ] || { echo "$1 is not the $2 bytes the server announced" >&2; exit 1; }
+}
+pds_size ldem_128.img 2123366400
+pds_size ldem_60n_240m.img 120435200
+if [ -s "$REPO/deploy/pds.sha256" ]; then (cd pds && sha256sum -c "$REPO/deploy/pds.sha256"); fi
 
 S=https://imbrium.mit.edu/DATA/SLDEM2015/TILES/FLOAT_IMG
 for t in 000_045 045_090; do for e in IMG LBL; do get sldem "$S/SLDEM2015_512_00N_30N_${t}_FLOAT.$e"; done; done
@@ -79,6 +122,12 @@ docker compose -f "$REPO/deploy/compose.yaml" --env-file "$REPO/.env" run --rm -
   -v "$PWD/dem:/out" -v "$PWD/sldem:/sldem:ro" -v "$REPO/deploy:/deploy:ro" \
   --entrypoint python backend /deploy/crop_offpole.py /out /out /sldem </dev/null
 
+# The two PDS maps as the GeoTIFFs the engine reads, dem/LDEM_128.TIF and dem/LDEM_60N_240M.TIF.
+# Skips the ones already written; the backend image has rasterio and numpy.
+docker compose -f "$REPO/deploy/compose.yaml" --env-file "$REPO/.env" run --rm --no-deps -T \
+  -v "$PWD/pds:/pds:ro" -v "$PWD/dem:/out" -v "$REPO/deploy:/deploy:ro" \
+  --entrypoint python backend /deploy/pds_to_tif.py /pds /out </dev/null
+
 # Images of the 3D globe (the requirement), from the NASA SVS Moon Kit and the polar DEM
 # above, served by Caddy at lunar.luizfbm.win/moon/. Rebuilt only when an input or
 # the script changes.
@@ -88,5 +137,5 @@ docker compose -f "$REPO/deploy/compose.yaml" --env-file "$REPO/.env" run --rm -
   -v "$REPO/deploy:/deploy:ro" \
   --entrypoint python backend /deploy/globe_assets.py /moon /dem /moon-src </dev/null
 
-sha256sum kernels/* dem/*.TIF dem/offpole/*/*.TIF sldem/* psr/* > MANIFEST.sha256
+sha256sum kernels/* dem/*.TIF dem/offpole/*/*.TIF sldem/* psr/* pds/* > MANIFEST.sha256
 date -u +%FT%TZ > FETCHED_AT

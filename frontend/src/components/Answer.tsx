@@ -8,10 +8,14 @@ import { useI18n } from '../i18n/I18nContext'
 import type { I18n } from '../i18n/i18n'
 import type { MessageKey } from '../i18n/messages'
 import { Extras } from './Extras'
+import { NearbyLine } from './phase4/nearby/NearbyLine'
+import { UncertaintyLine } from './UncertaintyLine'
+import { useUncertainty, type UncertaintyState } from '../hooks/useUncertainty'
 import type { WindowChoice } from './YearPanel'
 import { Nerds } from './Nerds'
 import { FlatLine, FlatMetrics } from './phase4/flat-line/FlatLine'
 import { KnifeEdgeWarning } from './phase4/miss/KnifeEdgeWarning'
+import { FragileLine } from './phase4/fragile/FragileLine'
 import { MissPanel } from './phase4/miss/MissPanel'
 import { useRadius, useScatter } from './phase4/miss/useMiss'
 import { WhenToLand } from './phase4/site-windows/WhenToLand'
@@ -55,13 +59,15 @@ export function occluderLabel(i18n: I18n, occluder: Occluder): string {
   return occluder.feature ? `${occluder.feature.name}, ${distance}` : distance
 }
 
-function BodyStatement({
+/** The sentence about one body, with the Occluder of its next Sunset or Earthset and the DEM Uncertainty band under it. */
+export function BodyStatement({
   body,
   result,
   cursorMs,
   heading,
   marked,
   onMark,
+  uncertainty,
 }: {
   body: Body
   result: VisibilityResult
@@ -69,6 +75,7 @@ function BodyStatement({
   heading: 'h1' | 'h2'
   marked: boolean
   onMark?: (body: Body) => void
+  uncertainty: UncertaintyState
 }) {
   const i18n = useI18n()
   const { t, formatDay, formatTime, formatSpan } = i18n
@@ -96,6 +103,7 @@ function BodyStatement({
           t('why', { date: formatDay(at), time: formatTime(at), where })
         )}
       </p>
+      <UncertaintyLine uncertainty={uncertainty} event={said.event} events={result.events} />
     </>
   )
 }
@@ -108,17 +116,8 @@ function summaryKey(metrics: VisibilityResult['metrics']): MessageKey {
   return 'summary'
 }
 
-export function Answer({
-  result,
-  cursorMs,
-  where,
-  onWindow,
-  marked = null,
-  onMark,
-  landing,
-  stats = false,
-  onStats,
-}: {
+/** What the answer column takes: the Query line, the statements and the panels under them. */
+export interface AnswerProps {
   result: VisibilityResult
   cursorMs: number
   /** The Query line, built by the App, which owns the Query. */
@@ -133,7 +132,32 @@ export function Answer({
   /** Whether "Stats for nerds" is open, and the way to open or close it. */
   stats?: boolean
   onStats?: (open: boolean) => void
-}) {
+}
+
+/** The whole column (the classic layout). It asks for the DEM Uncertainty band itself. */
+export function Answer(props: AnswerProps) {
+  // The DEM Uncertainty band, asked once the answer is here; the answer never waits on it.
+  const uncertainty = useUncertainty(props.result)
+  return <AnswerBody {...props} uncertainty={uncertainty} part="all" />
+}
+
+/**
+ * The column, or only what goes under the card in the default layout (`details`): the Sun and Earth
+ * statements are the card's then. The band is asked by whoever draws both, once, and handed in.
+ */
+export function AnswerBody({
+  result,
+  cursorMs,
+  where,
+  onWindow,
+  marked = null,
+  onMark,
+  landing,
+  stats = false,
+  onStats,
+  uncertainty,
+  part,
+}: AnswerProps & { uncertainty: UncertaintyState; part: 'all' | 'details' }) {
   const i18n = useI18n()
   const { t, formatSpan } = i18n
   const { metrics } = result
@@ -144,12 +168,13 @@ export function Answer({
   return (
     <>
       {where}
-      <BodyStatement body="sun" result={result} cursorMs={cursorMs} heading="h1" marked={marked === 'sun'} onMark={onMark} />
+      {part === 'all' && <BodyStatement body="sun" result={result} cursorMs={cursorMs} heading="h1" marked={marked === 'sun'} onMark={onMark} uncertainty={uncertainty} />}
       <FlatLine result={result} cursorMs={cursorMs} />
-      <BodyStatement body="earth" result={result} cursorMs={cursorMs} heading="h2" marked={marked === 'earth'} onMark={onMark} />
+      {part === 'all' && <BodyStatement body="earth" result={result} cursorMs={cursorMs} heading="h2" marked={marked === 'earth'} onMark={onMark} uncertainty={uncertainty} />}
       {/* The engine sees this point sunlit, and the mission still ended: say why, here. */}
       {atLanding && <p className="landing-note">{t('landing.im2.note')}</p>}
       <KnifeEdgeWarning scatter={scatter.state} />
+      <FragileLine result={result} onOpenStats={() => onStats?.(true)} />
       <p className="sum">
         {t(summaryKey(metrics), {
           both: formatSpan(metrics.sun_and_earth_hours * HOUR_MS),
@@ -157,12 +182,13 @@ export function Answer({
           dark: formatSpan(metrics.lcsp_hours * HOUR_MS),
         })}
       </p>
+      <NearbyLine result={result} />
       <Reach result={result} cursorMs={cursorMs} />
       <FlatMetrics result={result} />
       <WhenToLand result={result} onWindow={onWindow} />
       <Battery result={result} />
       <PlanCompare result={result} />
-      <Nerds result={result} cursorMs={cursorMs} open={stats} onOpen={(open) => onStats?.(open)} onWindow={onWindow} />
+      <Nerds result={result} cursorMs={cursorMs} open={stats} onOpen={(open) => onStats?.(open)} onWindow={onWindow} uncertainty={uncertainty} />
       {landing && !atLanding && (
         <p className="landing-open">
           <a

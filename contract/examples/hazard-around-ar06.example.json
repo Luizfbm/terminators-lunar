@@ -1,0 +1,17 @@
+{
+ "summary": "AR06: 250 m around the Site on the DM1 grid, slope limit 15°",
+ "value": {
+  "site_id": "AR06",
+  "grid_id": "DM1",
+  "centre": {
+   "x_m": 609.9,
+   "y_m": 1159.0
+  },
+  "radius_m": 250,
+  "slope_limit_deg": 15,
+  "cells": 81,
+  "over_limit_5m": 0,
+  "over_limit_20m": 0,
+  "over_limit_60m": 0
+ }
+}

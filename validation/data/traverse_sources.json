@@ -1,0 +1,23 @@
+{
+ "branch": "eduardo/cockpit-multirresolucao",
+ "commit": "2195fcb2d0ee447b1e72c877f4497b82371b917e",
+ "files": {
+  "traverse_paired_stats_pop100.csv": {
+   "source": "simulacao_rover/monte_carlo_lola/figuras/dados_estatisticos_pareados_pop100.csv",
+   "added_in": "2195fcb, 2026-11-15 15:11 -0300",
+   "git_blob": "9cfb2111e438b06a4109832fc7d694a4ece6f1a0",
+   "sha256": "01e5ac1e98737e78648df14b80bfb6ea40bb2264e307381c319d83f631ace0fb",
+   "made_by": "simulacao_rover/testes/gerar_figs_estatisticas_pop100.py (compute_paired_stats) with analisa_dif_multi.py, from the raw battery files; cited, not copied: they need seaborn, scipy and pandas"
+  },
+  "traverse_ladder_pop30.csv": {
+   "source": "simulacao_rover/monte_carlo_lola/figuras/dados_escada.csv",
+   "added_in": "2195fcb, 2026-11-15 15:11 -0300",
+   "git_blob": "198ecc0b74ecd43224240caa2531f3df9dbec1e5",
+   "sha256": "9bccaed07a67ec2011eaa71a7c9c0c85d7e9b12b21e177c19941c8450729cf06",
+   "made_by": "the POP = 30 difficulty ladder (simulacao_rover/monte_carlo_lola/RESULTADOS-ESCADA-DIFICULDADE.md). Aggregates only: its per-traverse files (a folder called lola4) are not on the branch, so nothing here can be recomputed from them"
+  }
+ },
+ "battery_raw_files": "simulacao_rover/testes/lola_dif_teto/ and lola_dif_semteto/ (added in 8dea6de and 43df8fb), read by validation/sfs/extract_battery.py into traverse_outcomes.json, which lists the SHA-256 of each of the 64 files",
+ "battery_generator": "validation/sfs/eduardo/exp_dif.js and rodar_dif_multi.js (his scripts, byte for byte). They run his rover simulation, embedded in the v18 animation file of simulacao_rover/ at that commit, under Node.js; the 64 files take hours on many cores and were not re-run for this check",
+ "levels": "N0 base strips; N1 relief x 1.3; N2 N1 + slope error x 1.5 + camera range x 0.75; N3 N1 + slope error x 2 + degraded camera + no replanning (exp_dif.js, the lines on NIV)"
+}

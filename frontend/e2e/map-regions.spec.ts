@@ -172,7 +172,7 @@ test('the point under the pointer is shown, and a double click asks about it', a
 test.describe('with reduced motion', () => {
   test.use({ reducedMotion: 'reduce' })
 
-  test('a Region is reached by a short fade, not a flight', async ({ page }) => {
+  test('a Region is reached by a short fade, not a flight', { tag: '@timing' }, async ({ page }) => {
     await openMap(page)
     // The Moon itself fades in once it is dressed; wait for that before watching for the fade.
     const canvas = page.locator('.globe canvas')

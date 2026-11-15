@@ -1,0 +1,173 @@
+{
+ "rovers": [
+  {
+   "id": "lrv",
+   "name": "Lunar Roving Vehicle (Apollo 15-17)",
+   "body": "moon",
+   "description": {
+    "en": "1971-72, two astronauts, 81.8 cm wire-mesh wheels",
+    "pt": "1971-72, dois astronautas, rodas de tela de aço de 81,8 cm"
+   },
+   "mass_kg": 210,
+   "battery_wh": 8712,
+   "solar_w": 0,
+   "rtg_w": 0,
+   "power_shadow_w": 350,
+   "mast_height_m": 1.14,
+   "slope_limit_deg": 15,
+   "estimated": [
+    "power_shadow_w"
+   ],
+   "source_reference": "NSSDC: 210 kg, 3.10 m, two 36 V 121 Ah silver-zinc batteries, not rechargeable. Mean draw estimated. Eduardo's cockpit catalogue, commit 2195fcb."
+  },
+  {
+   "id": "viper",
+   "name": "VIPER (NASA)",
+   "body": "moon",
+   "description": {
+    "en": "South pole ice hunter, 1 m drill, three upright solar panels",
+    "pt": "Caçador de gelo do polo sul, broca de 1 m, três painéis solares em pé"
+   },
+   "mass_kg": 430,
+   "battery_wh": 5420,
+   "solar_w": 450,
+   "rtg_w": 0,
+   "power_shadow_w": 95,
+   "mast_height_m": 2.45,
+   "slope_limit_deg": 15,
+   "estimated": [],
+   "source_reference": "NASA NTRS (LSIC 2024): battery 5,420 Wh, panels 320-450 W; 57 h on battery alone in test, so about 95 W. Eduardo's cockpit catalogue, commit 2195fcb."
+  },
+  {
+   "id": "ltv",
+   "name": "Lunar Terrain Vehicle (Artemis)",
+   "body": "moon",
+   "description": {
+    "en": "In development, two astronauts, design not frozen",
+    "pt": "Em desenvolvimento, dois astronautas, desenho ainda não congelado"
+   },
+   "mass_kg": 500,
+   "battery_wh": 6650,
+   "solar_w": 650,
+   "rtg_w": 0,
+   "power_shadow_w": 110,
+   "mast_height_m": 2.0,
+   "slope_limit_deg": 18,
+   "estimated": [
+    "mass_kg",
+    "battery_wh",
+    "solar_w",
+    "power_shadow_w",
+    "mast_height_m"
+   ],
+   "source_reference": "NASA has not published mass or size; class estimates (about 500 kg). Eduardo's cockpit catalogue, commit 2195fcb."
+  },
+  {
+   "id": "mapp",
+   "name": "Lunar Outpost MAPP",
+   "body": "moon",
+   "description": {
+    "en": "Compact commercial rover, side solar wall and camera tower",
+    "pt": "Rover comercial compacto, parede solar lateral e torre de câmeras"
+   },
+   "mass_kg": 10,
+   "battery_wh": 420,
+   "solar_w": 180,
+   "rtg_w": 0,
+   "power_shadow_w": 120,
+   "mast_height_m": 0.6,
+   "slope_limit_deg": 14,
+   "estimated": [
+    "mass_kg",
+    "battery_wh",
+    "solar_w",
+    "power_shadow_w",
+    "mast_height_m"
+   ],
+   "source_reference": "Illustrative values: the maker has not published a full data sheet. Eduardo's cockpit catalogue, commit 2195fcb."
+  },
+  {
+   "id": "sojourner",
+   "name": "Sojourner (Mars Pathfinder)",
+   "body": "mars",
+   "description": {
+    "en": "What if it went to the Moon? 10.6 kg, six 13 cm wheels",
+    "pt": "E se fosse à Lua? 10,6 kg, seis rodas de 13 cm"
+   },
+   "mass_kg": 10.6,
+   "battery_wh": 150,
+   "solar_w": 16,
+   "rtg_w": 0,
+   "power_shadow_w": 10,
+   "mast_height_m": 0.3,
+   "slope_limit_deg": 12,
+   "estimated": [
+    "battery_wh",
+    "power_shadow_w"
+   ],
+   "source_reference": "NASA: 10.6 kg, 30 cm tall, 0.22 m² panel giving about 16 W; non-rechargeable Li-SOCl2 battery (capacity estimated). Eduardo's cockpit catalogue, commit 2195fcb."
+  },
+  {
+   "id": "mer",
+   "name": "Mars Exploration Rover (Spirit / Opportunity)",
+   "body": "mars",
+   "description": {
+    "en": "What if it went to the Moon?",
+    "pt": "E se fosse à Lua?"
+   },
+   "mass_kg": 180,
+   "battery_wh": 450,
+   "solar_w": 140,
+   "rtg_w": 0,
+   "power_shadow_w": 100,
+   "mast_height_m": 1.4,
+   "slope_limit_deg": 15,
+   "estimated": [
+    "battery_wh"
+   ],
+   "source_reference": "Panels about 140 W, about 100 W to drive; two 8 Ah Li-ion batteries (energy estimated). Eduardo's cockpit catalogue, commit 2195fcb."
+  },
+  {
+   "id": "curiosity",
+   "name": "Curiosity (Mars Science Laboratory)",
+   "body": "mars",
+   "description": {
+    "en": "What if it went to the Moon? Nuclear (MMRTG), 899 kg",
+    "pt": "E se fosse à Lua? Nuclear (MMRTG), 899 kg"
+   },
+   "mass_kg": 899,
+   "battery_wh": 2350,
+   "solar_w": 0,
+   "rtg_w": 110,
+   "power_shadow_w": 100,
+   "mast_height_m": 2.2,
+   "slope_limit_deg": 20,
+   "estimated": [
+    "battery_wh",
+    "power_shadow_w"
+   ],
+   "source_reference": "science.nasa.gov: 899 kg, 3.0 x 2.7 x 2.2 m; MMRTG about 110 W; two 42 Ah Li-ion batteries (energy estimated). Eduardo's cockpit catalogue, commit 2195fcb."
+  },
+  {
+   "id": "perseverance",
+   "name": "Perseverance (Mars 2020)",
+   "body": "mars",
+   "description": {
+    "en": "What if it went to the Moon?",
+    "pt": "E se fosse à Lua?"
+   },
+   "mass_kg": 1025,
+   "battery_wh": 2400,
+   "solar_w": 0,
+   "rtg_w": 110,
+   "power_shadow_w": 100,
+   "mast_height_m": 2.2,
+   "slope_limit_deg": 20,
+   "estimated": [
+    "battery_wh",
+    "power_shadow_w"
+   ],
+   "source_reference": "NSSDC: about 1,025 kg, 3.0 x 2.7 x 2.2 m; MMRTG about 110 W; two 43 Ah Li-ion batteries (energy estimated). Eduardo's cockpit catalogue, commit 2195fcb."
+  }
+ ]
+}

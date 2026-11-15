@@ -1,12 +1,18 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
-import { Answer, occluderLabel } from './components/Answer'
+import { Answer, occluderLabel, type AnswerProps } from './components/Answer'
+import { AnswerLayer } from './components/answerCard/AnswerLayer'
+import { Brief } from './components/brief/Brief'
+import { briefText } from './components/brief/strings'
+import { Assistant } from './components/phase4/assistant/Assistant'
 import { StageLoading } from './components/StageLoading'
 import { Cover, coverSeen, rememberCover } from './components/Cover'
+import { Guide } from './components/Guide'
 import type { GroundMark } from './components/Ground'
 import { GroundView, prepareGround } from './components/GroundView'
 import type { GlobeLanding, GlobeSite } from './components/Globe'
 import { StageStatus } from './components/stageStatus/StageStatus'
 import { limitText } from './components/stageStatus/format'
+import { STRINGS as STAGE_STRINGS } from './components/stageStatus/strings'
 import { ClassroomSheet } from './components/phase4/classroom/Sheet'
 import { Proof } from './components/Proof'
 import { TimeStrip } from './components/TimeStrip'
@@ -14,9 +20,11 @@ import { siteName } from './components/siteName'
 import { Where } from './components/Where'
 import {
   clampCursor,
+  goToPage,
   initialCursor,
   isCoordinate,
   isCustomSite,
+  linkWithoutLayout,
   readLink,
   siteKey,
   writeLink,
@@ -30,13 +38,12 @@ import { DIVE_MS, fadeMs, scenesOf, startStage, stepStage } from './domain/stage
 import { chosenGlobeSite } from './domain/chosenSite'
 import { levelOfView } from './domain/globeLevels'
 import { landingPhase, landRef, startLanding, type Landing } from './domain/land'
-import { initialLayers, type Layers } from './domain/siteLayers'
 import { sampleAt, subPointsAt, type LatLon } from './domain/sky'
 import { isUp, statement, type Body } from './domain/statement'
 import { useAnswer, useSites, type Answer as Answered } from './hooks/useAnswer'
 import { useI18n } from './i18n/I18nContext'
 import type { I18n } from './i18n/i18n'
-import type { MessageKey } from './i18n/messages'
+import type { Locale, MessageKey } from './i18n/messages'
 
 /** A screen worked with a finger: the map's hint names the touch gestures. */
 const touchScreen = () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
@@ -65,7 +72,7 @@ function named(answer: Answered, i18n: I18n): Answered {
 /** The whole Window passes in this long while playing. */
 const PLAY_MS = 24_000
 
-export function App() {
+export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: Locale) => void }) {
   const i18n = useI18n()
   const { t } = i18n
   const link = useMemo(() => readLink(window.location.search), [])
@@ -77,6 +84,7 @@ export function App() {
     startStage(start, window.matchMedia('(prefers-reduced-motion: reduce)').matches),
   )
   const view = stage.wanted
+  // Back from the ground goes to the exploration view the visitor came from: the orbit or the polar map.
   const explorationView = useRef<'orbit' | 'map'>(link.view === 'map' ? 'map' : 'orbit')
   const setView = useCallback((next: View) => {
     if (next !== 'ground') explorationView.current = next
@@ -90,12 +98,20 @@ export function App() {
   const globeMounted = globeSeen || scenes.globeShown
   const [page, setPage] = useState<Page>(link.page)
   const [stats, setStats] = useState(link.stats)
+  // The drawer of details, in Larissa's layout (the default): its open state goes in the link as `details=1`.
+  const [detailsOpen, setDetailsOpen] = useState(link.classic !== true && link.details === true)
   // The cover is for the plain address, once per browser: a link with a Query goes to its answer.
-  const [cover, setCover] = useState(() => window.location.search === '' && !coverSeen())
+  // The plain address opens the cover. `layout=classic` says only which layout, not which Query, so it does not count as a link.
+  // Larissa's layout (the default) has no cover and no guide (Luiz, 15/11/2026): only `layout=classic` opens them.
+  const [cover, setCover] = useState(
+    () => new URLSearchParams(window.location.search).get('layout') === 'classic' && linkWithoutLayout(window.location.search) === '' && !coverSeen(),
+  )
+  const [guideStep, setGuideStep] = useState<number | null>(null)
   const closeCover = useCallback(() => {
     rememberCover()
     setCover(false)
   }, [])
+  const closeGuide = useCallback(() => setGuideStep(null), [])
   // While the cover is up the app waits behind it, out of reach of the mouse and the keyboard.
   const coverOpen = cover && page === 'answer'
   useEffect(() => {
@@ -108,14 +124,11 @@ export function App() {
   const [playing, setPlaying] = useState(false)
   // Whose Occluder is marked on the horizon: set by clicking the reason under a statement.
   const [marked, setMarked] = useState<Body | null>(null)
-  // The language goes in the link when the link already had it.
-  const linkLanguage = link.language
+  // The language goes in the link once the visitor picks one, or when the link already had it.
+  const [linkLanguage, setLinkLanguage] = useState(link.language)
   const [openedAt] = useState(() => Date.now())
   const sites = useSites()
   const { state, retry } = useAnswer(siteRef, choice)
-  // The two switches of the globe's menu live here, so the orbit, the map and the way back from the
-  // ground all show the same layers. Going to the map presses nothing by itself.
-  const [layers, setLayers] = useState<Layers>(initialLayers)
   // "Land" (the requirement): the place goes to the Query, as the map's double click does, and the stage
   // goes down to the ground once the answer for that very place is ready. The Window, the Observer
   // height and the Cursor stay as they are.
@@ -128,11 +141,11 @@ export function App() {
     [siteRef],
   )
   const landingNow = landingPhase(landing, siteKey(siteRef), state.status)
-  // Settled while rendering, like `globeSeen` below: the answer for the landing place is in, so down to
+  // Settled while rendering, like `globeSeen` above: the answer for the landing place is in, so down to
   // the ground there; or another Site was asked for meanwhile, so the landing is dropped.
   if (landingNow === 'arrived' || landingNow === 'stale') {
     setLanding(null)
-    if (landingNow === 'arrived') setView('ground')
+    if (landingNow === 'arrived') move({ type: 'want', view: 'ground' })
   }
   const cancelLanding = useCallback(() => {
     if (landing) setSiteRef(landing.previous)
@@ -214,11 +227,11 @@ export function App() {
     if (playing) return
     const timer = window.setTimeout(() => {
       // What the App does not own (a panel's own setting) passes through from the current link.
-      const query = writeLink({ ...readLink(window.location.search), site: siteRef, cursorMs: movedCursor, language: linkLanguage, view, ...choice, page, stats }, window.location.search)
+      const query = writeLink({ ...readLink(window.location.search), site: siteRef, cursorMs: movedCursor, language: linkLanguage, view, ...choice, page, stats, details: detailsOpen ? true : undefined }, window.location.search)
       window.history.replaceState(null, '', `${window.location.pathname}${query}`)
     }, 300)
     return () => window.clearTimeout(timer)
-  }, [playing, siteRef, movedCursor, linkLanguage, view, choice, page, stats])
+  }, [playing, siteRef, movedCursor, linkLanguage, view, choice, page, stats, detailsOpen])
 
   const play = () => {
     if (!playing && result && cursorMs >= endMs) setMovedCursor(startMs)
@@ -278,12 +291,103 @@ export function App() {
   // A link can carry a point north of the polar maps: say so, and offer the way back.
   const customOutside = state.status === 'error' && state.code === 'outside_coverage' && isCoordinate(siteRef)
 
+  // What the answer column and the answer card take, the same for both: the column is the classic layout's, the
+  // card and its drawer are the default layout's.
+  const answerProps: AnswerProps | null =
+    result && answer
+      ? {
+          result,
+          cursorMs,
+          where: <Where result={result} meta={answer.meta} sites={sites} choice={choice} onSite={setSiteRef} onCoordinate={setSiteRef} onChoice={setChoice} />,
+          // A Window starts on a whole UTC day in the Query, so a best Window opens from its first day.
+          marked,
+          onMark,
+          onWindow: (best) => setChoice({ ...choice, startDay: best.start.slice(0, 10), hours: best.durationHours }),
+          stats,
+          onStats: setStats,
+          landing: {
+            href: writeLink({ site: IM2_LANDING.site, cursorMs: null, language: linkLanguage, view, ...IM2_LANDING.choice, page: 'answer', stats, classic: link.classic }),
+            open: () => {
+              setSiteRef(IM2_LANDING.site)
+              setChoice(IM2_LANDING.choice)
+              // The Cursor goes back to the start of the new Window.
+              setMovedCursor(null)
+              // The link sits under the numbers; the new answer is read from its first line.
+              document.querySelector('main.answer')?.scrollTo({ top: 0 })
+              document.querySelector('.details__body')?.scrollTo({ top: 0 })
+              window.scrollTo({ top: 0 })
+            },
+          },
+        }
+      : null
+
   return (
-    <div className="screen">
+    <div className="screen" data-layout={link.classic ? 'classic' : undefined}>
+      {/* Larissa's layout is the default: no header, no answer column (the stylesheet hides them). `?layout=classic` shows both. */}
+      <header className="bar">
+        <p>
+          <strong>{t('app.name')}</strong> · {t('app.place')}
+        </p>
+        <p className="bar__nav">
+          <button
+            type="button"
+            onClick={() => {
+              closeCover()
+              setPage('answer')
+              setGuideStep(0)
+            }}
+          >
+            {t('bar.guide')}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setGuideStep(null)
+              setPage('answer')
+              setCover(true)
+            }}
+          >
+            {t('bar.about')}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setGuideStep(null)
+              goToPage('brief')
+            }}
+          >
+            {briefText(i18n)('brief.open')}
+          </button>
+          <Assistant result={result} />
+        </p>
+        <p className="bar__lang">
+          {(['pt', 'en'] as const).map((code) => (
+            <button key={code} type="button" lang={code} aria-pressed={locale === code} aria-label={`${code.toUpperCase()} ${t(`lang.${code}`)}`}
+              onClick={() => {
+                setLinkLanguage(code)
+                onLocale(code)
+              }}
+            >
+              {code.toUpperCase()}
+            </button>
+          ))}
+        </p>
+      </header>
 
       {page === 'proof' && <Proof />}
 
-      <section className="stage" hidden={page === 'proof'} inert={coverOpen}>
+      {/* The printable brief takes the Proof page's place: the Query on screen, as one sheet. */}
+      {page === 'brief' && result && answer && (
+        <Brief
+          result={result}
+          meta={answer.meta}
+          cursorMs={cursorMs}
+          baseUrl={`${window.location.origin}${window.location.pathname}`}
+          loading={state.status === 'loading'}
+        />
+      )}
+
+      <section className="stage" hidden={page !== 'answer'} inert={coverOpen}>
         {result && site && globeSite && globeMounted && (
           // Under the view from the ground the globe waits, hidden and paused, for the way back up.
           <div className="stage__globe" hidden={!scenes.globeShown}>
@@ -293,8 +397,7 @@ export function App() {
               site={globeSite}
               sun={overhead?.sun ?? null}
               earth={overhead?.earth ?? null}
-              sunLabel={t('strip.sun')}
-              earthLabel={t('strip.earth')}
+              cursorMs={cursorMs}
               sunAzimuthDeg={sky?.sun.azimuth_deg ?? null}
               earthAzimuthDeg={sky?.earth.azimuth_deg ?? null}
               sunUp={sunUp}
@@ -302,6 +405,7 @@ export function App() {
               label={t('globe.label', { site: site.name, state: t(sunUp ? 'globe.lit' : 'globe.dark') })}
               unavailable={t('globe.unavailable')}
               onSelect={setSiteRef}
+              onLand={land}
               mode={stage.globeMode}
               level={levelOfView(view)}
               onLevel={setView}
@@ -312,9 +416,6 @@ export function App() {
               }}
               occluder={markOnMoon}
               onPoint={(point) => setSiteRef({ latitudeDeg: point.latitude_deg, longitudeDeg: point.longitude_deg })}
-              layers={layers}
-              onLayers={setLayers}
-              onLand={land}
               meridianLabels={[
                 '0°',
                 `90°\u00a0${t('sites.hemisphere.E')}`,
@@ -326,14 +427,14 @@ export function App() {
           </div>
         )}
         {!result && state.status === 'loading' && <StageLoading />}
-        {/* The column of answers is hidden: the stage says itself what it waits for, and what failed. */}
+        {/* The stage says itself what it waits for, and what failed, so it does not depend on the column of answers. */}
         {result && page === 'answer' && (
           <StageStatus
             landing={landing}
             phase={landingNow}
             status={state.status}
             reason={state.status === 'error' ? t(ERROR_KEYS[state.code] ?? 'error.unknown') : null}
-            outsideCustom={state.status === 'error' && state.code === 'outside_coverage' && isCoordinate(siteRef)}
+            outsideCustom={customOutside}
             customLimitDeg={answer?.meta.coverage.custom_max_latitude_deg ?? null}
             hasAnswer={answer !== null}
             onRetry={retry}
@@ -344,13 +445,18 @@ export function App() {
         {stage.shown === 'map' && stage.phase === 'idle' && <p className="stage__caption">{t(touchScreen() ? 'map.caption.touch' : 'map.caption')}</p>}
         {result && scenes.groundMounted && (
           <div className="stage__ground" data-fade={scenes.groundFade ?? undefined} style={{ animationDuration: `${fadeMs(still)}ms` }}>
-            <GroundView result={result} cursorMs={cursorMs} mark={mark} pose={scenes.skyPose} />
+            <GroundView result={result} cursorMs={cursorMs} mark={mark} pose={scenes.skyPose} classic={link.classic === true} />
           </div>
         )}
         {view === 'ground' && (
-          <button type="button" className="stage__back" lang="en" onClick={() => setView(explorationView.current)}>
-            <span aria-hidden="true">← </span>Back
+          <button type="button" className="stage__back" onClick={() => setView(explorationView.current)}>
+            <span aria-hidden="true">← </span>
+            {STAGE_STRINGS[i18n.locale].back}
           </button>
+        )}
+        {/* Larissa's layout (the default) has no column: the answer is a card, and a drawer holds the rest of the column. */}
+        {answerProps && link.classic !== true && (
+          <AnswerLayer {...answerProps} open={detailsOpen && page === 'answer'} onOpen={setDetailsOpen} stale={state.status === 'loading'} />
         )}
         {/* Under 900 px wide the foot sits below the picture, never on it (the requirement). */}
         <div className="stage__foot">
@@ -366,7 +472,7 @@ export function App() {
       </section>
 
       {/* While the next Site is asked for, the last answer stays, dimmed: never a blank column. */}
-      <main className="answer" hidden={page === 'proof'} inert={coverOpen} data-stale={state.status === 'loading' && answer !== null} aria-busy={state.status === 'loading'}>
+      <main className="answer" hidden={page === 'proof' || (page === 'brief' && result !== null)} inert={coverOpen} data-stale={state.status === 'loading' && answer !== null} aria-busy={state.status === 'loading'}>
         {result?.provenance.synthetic && <p className="demo">{t('demo')}</p>}
         {state.status === 'loading' && (
           <p className="status" role="status">
@@ -393,33 +499,7 @@ export function App() {
             )}
           </div>
         )}
-        {result && answer && (
-          <Answer
-            result={result}
-            cursorMs={cursorMs}
-            where={
-              <Where result={result} meta={answer.meta} sites={sites} choice={choice} onSite={setSiteRef} onCoordinate={setSiteRef} onChoice={setChoice} />
-            }
-            // A Window starts on a whole UTC day in the Query, so a best Window opens from its first day.
-            marked={marked}
-            onMark={onMark}
-            onWindow={(best) => setChoice({ ...choice, startDay: best.start.slice(0, 10), hours: best.durationHours })}
-            stats={stats}
-            onStats={setStats}
-            landing={{
-              href: writeLink({ site: IM2_LANDING.site, cursorMs: null, language: linkLanguage, view, ...IM2_LANDING.choice, page: 'answer', stats }),
-              open: () => {
-                setSiteRef(IM2_LANDING.site)
-                setChoice(IM2_LANDING.choice)
-                // The Cursor goes back to the start of the new Window.
-                setMovedCursor(null)
-                // The link sits under the numbers; the new answer is read from its first line.
-                document.querySelector('main.answer')?.scrollTo({ top: 0 })
-                window.scrollTo({ top: 0 })
-              },
-            }}
-          />
-        )}
+        {answerProps && page !== 'brief' && link.classic === true && <Answer {...answerProps} />}
       </main>
 
       {result && answer && page === 'answer' && (
@@ -438,7 +518,10 @@ export function App() {
       )}
       {coverOpen && (
         <Cover
-          onStart={closeCover}
+          onStart={() => {
+            closeCover()
+            setGuideStep(0)
+          }}
           onLanding={() => {
             closeCover()
             setSiteRef(IM2_LANDING.site)
@@ -448,6 +531,7 @@ export function App() {
           onClose={closeCover}
         />
       )}
+      {guideStep !== null && !cover && result && page === 'answer' && <Guide step={guideStep} onStep={setGuideStep} onClose={closeGuide} />}
     </div>
   )
 }

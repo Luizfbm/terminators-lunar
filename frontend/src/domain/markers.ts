@@ -48,4 +48,4 @@ export function nearestMarker<T extends ScreenMarker>(markers: readonly T[], at:
 }
 
 /** Compact map label; the full catalog name remains available on hover and to assistive technology. */
-export const missionLabel = (name: string): string => name.split(" (")[0].replace(/ landing point$/i, "")
+export const missionLabel = (name: string): string => name.split(' (')[0].replace(/ landing point$/i, '')

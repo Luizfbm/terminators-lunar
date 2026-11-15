@@ -1,5 +1,6 @@
-// The words of the stage's own status: a landing on its way, and an answer that failed, shown over the
-// picture because the column of answers is hidden (the requirement). Both languages.
+// The words of the stage's own status (a landing on its way, an answer that failed), of "Land" on the
+// globe and of the Back button over the ground, in both languages. The status is shown over the picture
+// because the column of answers may be out of sight (the requirement).
 // Glossary terms as written in GLOSSARY.md: Site is "Local" in Portuguese, Query "Consulta".
 
 const en = {
@@ -12,6 +13,11 @@ const en = {
   retry: 'Try again',
   cancel: 'Cancel',
   backToDefault: 'Back to the default Site',
+  back: 'Back',
+  land: 'Land',
+  landHere: 'Land here',
+  landAt: 'Land at {place}',
+  missions: 'Lunar Missions',
 }
 
 type Strings = typeof en
@@ -26,6 +32,11 @@ const pt: Strings = {
   retry: 'Tentar de novo',
   cancel: 'Cancelar',
   backToDefault: 'Voltar ao Local padrão',
+  back: 'Voltar',
+  land: 'Pousar',
+  landHere: 'Pousar aqui',
+  landAt: 'Pousar em {place}',
+  missions: 'Missões lunares',
 }
 
 export const STRINGS = { en, pt }

@@ -5,7 +5,7 @@ import { LUNAR_LAMBERT } from '../domain/regolith'
  * What is left on a surface no Sun reaches, as a light strength (the surface keeps this over pi of
  * its colour). It is neutral, not blue: the Moon has no sky to scatter light, and this stands in
  * for light bounced off the ground and the Earth. A visibility aid, not Earthshine: it does not
- * follow the Earth's phase or height. The one open product point of issue #250.
+ * follow the Earth's phase or height.
  */
 export const SHADOW_FLOOR = 0.06
 

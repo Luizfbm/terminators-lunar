@@ -11,30 +11,32 @@ export const MENU_ITEMS = [
   { id: 'south', label: 'Southern Hemisphere' },
   { id: 'missions', label: 'Lunar Missions' },
   { id: 'sites', label: 'Sites' },
+  { id: 'planets', label: 'Planets' },
 ] as const
 
 export type MenuId = (typeof MENU_ITEMS)[number]['id']
 export type MenuState = Record<MenuId, boolean>
 
-/** The two switches of the layers, the only buttons of the orbit that also make sense on the polar map. */
+/** The two switches of the dots, the only buttons of the orbit that also make sense on the polar map. */
 export const LAYER_BUTTONS = ['missions', 'sites'] as const
 
 /**
- * The buttons under the levels for a view: all six in orbit; on the polar map only the two switches, since
- * the map does not turn the Moon. The switches are the same in both, so their state carries over.
+ * The buttons under the levels for a view: all of them in orbit; on the polar map only the two switches of
+ * the dots, since the map does not turn the Moon and has no sky of planets. The switches are the same in
+ * both, so their state carries over.
  */
 export const menuItemsFor = (mode: 'orbit' | 'map') =>
   mode === 'orbit' ? MENU_ITEMS : MENU_ITEMS.filter((item) => (LAYER_BUTTONS as readonly string[]).includes(item.id))
 
-/** Only "Sites" starts pressed. */
-export const initialMenu = (): MenuState => ({ initial: false, dark_side: false, north: false, south: false, missions: false, sites: true })
+/** Only the Artemis Sites start pressed among the dots (the missions are released); the planets start shown, as before the menu. */
+export const initialMenu = (): MenuState => ({ initial: false, dark_side: false, north: false, south: false, missions: false, sites: true, planets: true })
 
 /** The four buttons that turn the Moon: pressing one releases the other three, as the Moon can only face one way. */
 export const VIEW_BUTTONS = ['initial', 'dark_side', 'north', 'south'] as const
 
 /**
  * A click presses a released button and releases a pressed one. Pressing one of the four that turn the
- * Moon releases the other three; Missions and Sites are their own switches and never touch another.
+ * Moon releases the other three; Missions, Sites and Planets are their own switches and never touch another.
  */
 export function toggled(state: MenuState, id: MenuId): MenuState {
   const next = { ...state, [id]: !state[id] }
@@ -50,7 +52,7 @@ export function releasedTurns(state: MenuState): MenuState {
 }
 
 /**
- * What the two switches say about the dots of the globe. The four buttons that turn the Moon act through
+ * What the three switches say about what the globe draws. The four buttons that turn the Moon act through
  * the camera (`GlobeMenu`'s `onView`) and have nothing to add here.
  */
-export const layersOf = (state: MenuState): Layers => ({ sites: state.sites, missions: state.missions })
+export const layersOf = (state: MenuState): Layers => ({ sites: state.sites, missions: state.missions, planets: state.planets })

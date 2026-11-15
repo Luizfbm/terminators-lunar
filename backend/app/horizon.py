@@ -116,7 +116,7 @@ GLOBAL: tuple[Band, ...] = (
 # ray reaches 60.1°, inside both products' 60° circle. In the south that is the PGDA 240 m
 # DEM the polar ladder already reads (after the 60 m one, where it reaches); in the north
 # it is LOLA's LDEM_60N_240M (PDS, the same release as LDEM_128).
-POLAR_LIMIT_DEG = -80.0
+POLAR_LIMIT_DEG = CUSTOM_MAX_LATITUDE_DEG
 CAP_LATITUDE_DEG = 70.0
 SOUTH_CAP: tuple[Band, ...] = (
     Band("LDEM_60S_240MPP_ADJ", 240.0, 0.0, NEAR_M, step_m=NEAR_STEP_M),
@@ -127,8 +127,8 @@ NORTH_CAP: tuple[Band, ...] = (
     Band(NORTH_PRODUCT, 240.0, 0.0, NEAR_M, "polar_north", step_m=NEAR_STEP_M),
     Band(NORTH_PRODUCT, 240.0, NEAR_M, 300_000.0, "polar_north"),
 )
-# How far north a typed point is taken with and without the global map (the contract's
-# `coverage.custom_max_latitude_deg`).
+# How far north a typed point is taken with the global map (the contract's
+# `coverage.custom_max_latitude_deg`); without it, CUSTOM_MAX_LATITUDE_DEG.
 GLOBAL_MAX_LATITUDE_DEG = 90.0
 # Ray points don't sit on pixel centres, so a fixed step misses the top of a nearby bump:
 # one sample per pixel put the mask 0.2° low 90 m from Site 001, and at the pole the Sun
@@ -140,6 +140,8 @@ ZOOM_POINTS = 33
 ZOOM_ROUNDS = 4
 # rasterio datasets are not safe to share between threads.
 _LOCK = threading.Lock()
+# The pixel window a mask holds per product is shared by that product's bands (see `_heights`).
+_WINDOWS = threading.Lock()
 
 
 class DemUnavailable(Exception):
@@ -189,8 +191,9 @@ def products() -> list[dict[str, Any]]:
     if (folder / f"{WIDE_PRODUCT}.TIF").is_file():
         found.append({"product": WIDE_PRODUCT, "resolution_m": 60.0})
     for band in (*GLOBAL, *NORTH_CAP):
-        if (folder / f"{band.product}.TIF").is_file():
-            found.append({"product": band.product, "resolution_m": band.resolution_m})
+        entry = {"product": band.product, "resolution_m": band.resolution_m}
+        if entry not in found and (folder / f"{band.product}.TIF").is_file():
+            found.append(entry)
     for ladder in OFFPOLE_LADDERS:
         for band in ladder:
             entry = {"product": band.product, "resolution_m": band.resolution_m}
@@ -226,8 +229,7 @@ def beyond_polar(latitude_deg: float) -> tuple[tuple[Band, ...], ...]:
 
     Between 80°S and 70°S: the polar ladders while their squares reach (the 20 m one's
     corners and the 60 m one go past 80°S), then the PGDA 240 m DEM alone. A ladder that
-    does not reach fails on a bounds check before its pixels are read, at worst after its
-    other bands' walk.
+    does not reach fails on a bounds check before its pixels are read.
     Between 70°S and 70°N: the global LDEM_128. From 70°N: LOLA's north polar 240 m DEM.
     """
     if latitude_deg <= -CAP_LATITUDE_DEG:
@@ -275,6 +277,104 @@ def rung(finest_m: float, ladder: tuple[Band, ...] = LADDER) -> tuple[Band, ...]
 POLE_LATITUDE_DEG = -90.0 + 1e-6
 
 
+def bands_for(
+    latitude_deg: float,
+    longitude_deg: float,
+    site_id: str | None = None,
+    finest_m: float = 20.0,
+) -> tuple[Path, tuple[Band, ...]]:
+    """The folder and the DEM bands that walk this point's rays at the `finest_m` rung.
+
+    The one place that chooses: `mask()`, the Observer's ground and the clones of the
+    Uncertainty band all ask here, so they never read different DEMs for the same point.
+    An off-pole Curated Site has its own windows. A polar point takes the polar ladder when
+    the DEMs it names cover every ray; past the 80 m square (a typed point up to 80°S) it takes
+    POLAR_WIDE, and right at the 20 m square's edge POLAR_EDGE, when the 60 m DEM is there.
+    North of the polar DEMs (80°S), with LOLA's global map on the server, a typed point takes the
+    ladders of `beyond_polar` in order, the first that covers its rays. When nothing covers the
+    rays it is the polar ladder (or, north of 80°S, the last of those), so the error that
+    follows is its own.
+    """
+    folder, ladder = ladder_for(site_id)
+    if ladder is not LADDER:
+        return folder, rung(finest_m, ladder)
+    latitude_deg, longitude_deg = _placed(latitude_deg, longitude_deg)
+    candidates: tuple[tuple[Band, ...], ...] = (LADDER,)
+    fallback = LADDER
+    if latitude_deg > POLAR_LIMIT_DEG and has_global(folder):
+        candidates = beyond_polar(latitude_deg)
+        fallback = candidates[-1]
+    elif (folder / f"{WIDE_PRODUCT}.TIF").is_file():
+        candidates = (LADDER, POLAR_WIDE, POLAR_EDGE)
+    for candidate in candidates:
+        bands = rung(finest_m, candidate)
+        if _covers(folder, bands, latitude_deg, longitude_deg):
+            return folder, bands
+    return folder, rung(finest_m, fallback)
+
+
+def _placed(latitude_deg: float, longitude_deg: float) -> tuple[float, float]:
+    """Where the rays leave from: off the pole by a hair, rounded to 7 places."""
+    # At exactly -90° every bearing leaves along the same meridian (cos(lat) is 0 in the
+    # great-circle step), so the 720 rays collapse onto one line. 0.1 m off the pole they
+    # fan out again, and the local frame (east, north from the longitude) is the same. The
+    # north pole has the same collapse.
+    latitude = min(max(latitude_deg, POLE_LATITUDE_DEG), -POLE_LATITUDE_DEG)
+    return round(latitude, 7), round(longitude_deg, 7)
+
+
+def _step_of(band: Band) -> float:
+    """How far apart a band's ray samples are: half a pixel, unless the band says otherwise."""
+    return band.resolution_m / SAMPLES_PER_PIXEL if band.step_m is None else band.step_m
+
+
+@lru_cache(maxsize=32)
+def _raster_shape(path: str, size: int, modified_ns: int) -> tuple[int, int, Any]:
+    """Width, height and inverse transform of a DEM file (size and mtime key a rewrite)."""
+    with _LOCK, rasterio.open(path) as dataset:
+        return dataset.width, dataset.height, ~dataset.transform
+
+
+def _covers(
+    folder: Path, bands: tuple[Band, ...], latitude_deg: float, longitude_deg: float
+) -> bool:
+    """Whether every band's file is there and holds the rays' pixels, without reading them.
+
+    The test `_heights` applies, on the Site and the ring each band starts and ends at in
+    the 720 directions: a subset of the points the walk reads, so a point this passes
+    can only fail the walk for missing data, never for the edge of the file.
+    """
+    azimuths: Array = np.arange(HORIZON_SAMPLES, dtype=np.float64) * AZIMUTH_STEP_DEG
+    for band in bands:
+        path = folder / f"{band.product}.TIF"
+        if not path.is_file():
+            return False
+        stat = path.stat()
+        width, height, inverse = _raster_shape(str(path), stat.st_size, stat.st_mtime_ns)
+        ring = np.array([max(band.inner_m, _step_of(band)), band.outer_m])
+        lat, lon = _destination(latitude_deg, longitude_deg, azimuths, ring)
+        x, y = _project(
+            band,
+            np.append(lat.ravel(), latitude_deg),
+            np.append(lon.ravel(), longitude_deg),
+            longitude_deg,
+        )
+        col = inverse.a * x + inverse.b * y + inverse.c - 0.5
+        row = inverse.d * x + inverse.e * y + inverse.f - 0.5
+        col0 = math.floor(float(col.min()))
+        col1 = math.floor(float(col.max())) + 2
+        if math.floor(float(row.min())) < 0 or math.floor(float(row.max())) + 2 > height:
+            return False
+        if band.wraps:
+            # Columns past either edge read on from the other one; the rays of a point near
+            # a pole span every column, which no window can hold (see `_heights`).
+            if col1 - col0 > width + 2:
+                return False
+        elif col0 < 0 or col1 > width:
+            return False
+    return True
+
+
 def mask(
     latitude_deg: float,
     longitude_deg: float,
@@ -282,63 +382,17 @@ def mask(
     finest_m: float = 20.0,
     site_id: str | None = None,
 ) -> Mask:
-    folder, ladder = ladder_for(site_id)
-    # At exactly -90° every bearing leaves along the same meridian (cos(lat) is 0 in the
-    # great-circle step), so the 720 rays collapse onto one line. 0.1 m off the pole they
-    # fan out again, and the local frame (east, north from the longitude) is the same.
-    latitude_deg = max(latitude_deg, POLE_LATITUDE_DEG)
-    if ladder is LADDER and latitude_deg > POLAR_LIMIT_DEG and has_global(folder):
-        # A typed point north of the polar DEMs. The north pole has the same collapse.
-        latitude_deg = min(latitude_deg, -POLE_LATITUDE_DEG)
-        last: DemUnavailable | None = None
-        for candidate in beyond_polar(latitude_deg):
-            try:
-                return _mask(
-                    str(folder),
-                    candidate,
-                    round(latitude_deg, 7),
-                    round(longitude_deg, 7),
-                    height_m,
-                    finest_m,
-                )
-            except DemUnavailable as missing:
-                last = missing
-        if os.environ.get(FLAT_WITHOUT_DEM) != "1":
-            assert last is not None
-            raise last
-        return flat(latitude_deg, longitude_deg, height_m)
+    folder, bands = bands_for(latitude_deg, longitude_deg, site_id, finest_m)
+    placed = _placed(latitude_deg, longitude_deg)
     try:
-        return _mask(
-            str(folder),
-            ladder,
-            round(latitude_deg, 7),
-            round(longitude_deg, 7),
-            height_m,
-            finest_m,
-        )
+        return _mask(str(folder), bands, *placed, height_m)
     except DemUnavailable:
-        # A polar point past the 80 m square: the 60 m DEM walks those 5 to 100 km
-        # instead (POLAR_WIDE), and right at its edge every ray from the Site (POLAR_EDGE).
-        if ladder is LADDER and (folder / f"{WIDE_PRODUCT}.TIF").is_file():
-            for wide in (POLAR_WIDE, POLAR_EDGE):
-                try:
-                    return _mask(
-                        str(folder),
-                        wide,
-                        round(latitude_deg, 7),
-                        round(longitude_deg, 7),
-                        height_m,
-                        finest_m,
-                    )
-                except DemUnavailable:
-                    continue
         # Off by default and in production. Only checks of where the Sun and the Earth
         # are in the sky turn it on, for Sites past the DEM fixtures; the answer then
         # says so with an empty `provenance.dems`.
         if os.environ.get(FLAT_WITHOUT_DEM) != "1":
-            # The polar ladder's own error, not the fallbacks': it says what is missing.
             raise
-        return flat(latitude_deg, longitude_deg, height_m)
+        return flat(placed[0], longitude_deg, height_m)
 
 
 def flat(latitude_deg: float, longitude_deg: float, height_m: float) -> Mask:
@@ -368,26 +422,43 @@ def flat(latitude_deg: float, longitude_deg: float, height_m: float) -> Mask:
 @lru_cache(maxsize=64)
 def _mask(
     folder: str,
-    ladder: tuple[Band, ...],
+    bands: tuple[Band, ...],
     latitude_deg: float,
     longitude_deg: float,
     height_m: float,
-    finest_m: float,
 ) -> Mask:
-    bands = rung(finest_m, ladder)
-    azimuths: Array = np.arange(HORIZON_SAMPLES, dtype=np.float64) * AZIMUTH_STEP_DEG
+    return _compute(folder, bands, latitude_deg, longitude_deg, height_m, {})
+
+
+def _compute(
+    folder: str,
+    bands: tuple[Band, ...],
+    latitude_deg: float,
+    longitude_deg: float,
+    height_m: float,
+    reads: Reads,
+    step_scale: float = 1.0,
+) -> Mask:
+    """The Horizon mask over `bands`. `reads` may already hold a band's pixels (the clones').
+
+    `step_scale` multiplies both sampling steps, the one between rays and the one along each
+    ray: 1.0 is the engine's (720 rays, half a pixel), 0.5 is half the step in both (1440
+    rays, a quarter of a pixel). Only the convergence check in validation/ passes anything
+    else, to see whether the sampling changes the mask.
+    """
+    rays = round(HORIZON_SAMPLES / step_scale)
+    azimuths: Array = np.arange(rays, dtype=np.float64) * (AZIMUTH_STEP_DEG * step_scale)
     first = bands[0]
     site_x, site_y = _project(first, np.array([latitude_deg]), np.array([longitude_deg]))
-    site_height = float(_heights(Path(folder), first, site_x, site_y)[0])
-    reads: Reads = {}
+    site_height = float(_heights(Path(folder), first, site_x, site_y, reads)[0])
     observer_radius = MOON_RADIUS_M + site_height + height_m
 
-    best = np.full(HORIZON_SAMPLES, -math.inf)
-    best_distance = np.zeros(HORIZON_SAMPLES)
-    best_lat = np.zeros(HORIZON_SAMPLES)
-    best_lon = np.zeros(HORIZON_SAMPLES)
-    best_height = np.zeros(HORIZON_SAMPLES)
-    rows = np.arange(HORIZON_SAMPLES)
+    best = np.full(rays, -math.inf)
+    best_distance = np.zeros(rays)
+    best_lat = np.zeros(rays)
+    best_lon = np.zeros(rays)
+    best_height = np.zeros(rays)
+    rows = np.arange(rays)
 
     def look(distances: Array, band: Band) -> tuple[Array, Array, Array, Array]:
         lat, lon = _destination(latitude_deg, longitude_deg, azimuths, distances)
@@ -402,7 +473,7 @@ def _mask(
 
     def band_peaks(band: Band) -> tuple[Array, Array, Array, Array, Array]:
         """The highest point of every ray inside one band, after the peak zoom."""
-        step = band.resolution_m / SAMPLES_PER_PIXEL if band.step_m is None else band.step_m
+        step = _step_of(band) * step_scale
         start = max(band.inner_m, step)
         coarse: Array = np.arange(start, band.outer_m + step / 2, step)
         elevation, _, _, _ = look(coarse, band)
@@ -413,17 +484,17 @@ def _mask(
         count = min(PEAKS_PER_RAY, coarse.size)
         picks = np.argpartition(-ranked, count - 1, axis=1)[:, :count]
         centre = np.broadcast_to(coarse[picks], picks.shape).copy()
-        half = np.full(HORIZON_SAMPLES, step)
+        half = np.full(rays, step)
         offsets = np.linspace(-1.0, 1.0, ZOOM_POINTS)
         low, high = start, band.outer_m
         for _ in range(ZOOM_ROUNDS):
             grid = np.clip(
                 centre[:, :, None] + half[:, None, None] * offsets[None, None, :], low, high
-            ).reshape(HORIZON_SAMPLES, -1)
+            ).reshape(rays, -1)
             values, lat, lon, terrain = look(grid, band)
-            values = values.reshape(HORIZON_SAMPLES, count, ZOOM_POINTS)
+            values = values.reshape(rays, count, ZOOM_POINTS)
             centre = np.take_along_axis(
-                grid.reshape(HORIZON_SAMPLES, count, ZOOM_POINTS),
+                grid.reshape(rays, count, ZOOM_POINTS),
                 values.argmax(axis=2)[:, :, None],
                 axis=2,
             )[:, :, 0]
@@ -462,7 +533,7 @@ def _mask(
                 "terrain_height_m": float(best_height[i]),
             },
         }
-        for i in range(HORIZON_SAMPLES)
+        for i in range(rays)
     ]
     used: list[dict[str, Any]] = []
     for band in bands:
@@ -484,53 +555,58 @@ class _Read:
     col0: int = 0
     row0: int = 0
     grid: npt.NDArray[np.float64] | None = None
+    # A clone's heights live in memory only: asking for pixels beyond them must not fall
+    # back to reading the file, which would hand back the unperturbed DEM.
+    fixed: bool = False
 
 
-# Per band, by product and where the band starts: bands run side by side, and two bands of one
-# product (GLOBAL's near and far) must not swap each other's window mid-read. Every other
-# ladder has one band per product, so for those this is the per-product cache it always was.
-Reads = dict[tuple[str, float], _Read]
+Reads = dict[str, _Read]
 
 
 def _heights(folder: Path, band: Band, x: Array, y: Array, reads: Reads | None = None) -> Array:
     """Bilinear terrain height at projected points, from one DEM product.
 
-    `reads` keeps, per band, the pixels this mask has already read. The arithmetic is
+    `reads` keeps, per product, the pixels this mask has already read. The arithmetic is
     the same with or without it, so the heights are the same to the bit.
     """
     path = folder / f"{band.product}.TIF"
     if not path.is_file():
         raise DemUnavailable(band.product, f"not found in {folder}")
-    key = (band.product, band.inner_m)
-    read = reads.get(key) if reads is not None else None
-    if read is None:
-        with _LOCK, rasterio.open(path) as dataset:
-            read = _Read(dataset.width, dataset.height, ~dataset.transform)
-        if reads is not None:
-            reads[key] = read
-    inverse = read.inverse
-    col = (inverse.a * x + inverse.b * y + inverse.c) - 0.5
-    row = (inverse.d * x + inverse.e * y + inverse.f) - 0.5
-    col0 = math.floor(float(col.min()))
-    row0 = math.floor(float(row.min()))
-    col1 = math.floor(float(col.max())) + 2
-    row1 = math.floor(float(row.max())) + 2
-    if row0 < 0 or row1 > read.height or (not band.wraps and (col0 < 0 or col1 > read.width)):
-        raise DemUnavailable(band.product, "the rays run past the edge of the DEM")
-    if col1 - col0 > read.width + 2:
-        # Only a ray over a pole spans every longitude; the polar DEMs answer there.
-        raise DemUnavailable(band.product, "the rays cross every longitude of the map")
-    held = read.grid
-    if (
-        held is None
-        or col0 < read.col0
-        or row0 < read.row0
-        or col1 > read.col0 + held.shape[1]
-        or row1 > read.row0 + held.shape[0]
-    ):
-        with _LOCK, rasterio.open(path) as dataset:
-            held = read_window(dataset, col0, row0, col1, row1, band.wraps)
-        read.col0, read.row0, read.grid = col0, row0, held
+    # The near and far bands of one product (GLOBAL's, the caps') run in two threads and share
+    # this product's pixels: the window they hold is checked, swapped and taken as one step.
+    with _WINDOWS:
+        read = reads.get(band.product) if reads is not None else None
+        if read is None:
+            with _LOCK, rasterio.open(path) as dataset:
+                read = _Read(dataset.width, dataset.height, ~dataset.transform)
+            if reads is not None:
+                reads[band.product] = read
+        inverse = read.inverse
+        col = (inverse.a * x + inverse.b * y + inverse.c) - 0.5
+        row = (inverse.d * x + inverse.e * y + inverse.f) - 0.5
+        col0 = math.floor(float(col.min()))
+        row0 = math.floor(float(row.min()))
+        col1 = math.floor(float(col.max())) + 2
+        row1 = math.floor(float(row.max())) + 2
+        if row0 < 0 or row1 > read.height or (not band.wraps and (col0 < 0 or col1 > read.width)):
+            raise DemUnavailable(band.product, "the rays run past the edge of the DEM")
+        if col1 - col0 > read.width + 2:
+            # Only a ray over a pole spans every longitude; the polar DEMs answer there.
+            raise DemUnavailable(band.product, "the rays cross every longitude of the map")
+        held = read.grid
+        if (
+            held is None
+            or col0 < read.col0
+            or row0 < read.row0
+            or col1 > read.col0 + held.shape[1]
+            or row1 > read.row0 + held.shape[0]
+        ):
+            if read.fixed:
+                raise DemUnavailable(band.product, "the rays leave the pixels read for the clones")
+            with _LOCK, rasterio.open(path) as dataset:
+                held = read_window(dataset, col0, row0, col1, row1, band.wraps)
+            read.col0, read.row0, read.grid = col0, row0, held
+        held_col0, held_row0 = read.col0, read.row0
     c = col - col0
     r = row - row0
     ci = np.floor(c).astype(int)
@@ -538,8 +614,8 @@ def _heights(folder: Path, band: Band, x: Array, y: Array, reads: Reads | None =
     fc = c - ci
     fr = r - ri
     # The same pixels a read at (col0, row0) would give, indexed from where they were read.
-    ci += col0 - read.col0
-    ri += row0 - read.row0
+    ci += col0 - held_col0
+    ri += row0 - held_row0
     # Gather the four corners through one flat index: the same pixels as held[ri, ci] and
     # its neighbours, in one pass instead of four 2-D fancy indexings.
     flat = held.ravel()
@@ -589,7 +665,11 @@ def _project(
     longitude_deg: Array,
     site_longitude_deg: float | None = None,
 ) -> tuple[Array, Array]:
-    """Map metres of lat/lon points; `site_longitude_deg` keeps eqc x continuous around the Site."""
+    """Map metres of lat/lon points.
+
+    `site_longitude_deg` is the Site the points belong to. Only an equirectangular band could
+    need it, to keep x continuous across its seam at 0°E; the polar projections ignore it.
+    """
     if band.projection == "eqc":
         return _equirectangular(latitude_deg, longitude_deg, site_longitude_deg)
     if band.projection == "polar_north":
@@ -651,3 +731,19 @@ def _destination(
     )
     longitude = (np.degrees(lon2) + 180.0) % 360.0 - 180.0
     return np.degrees(lat2), longitude
+
+
+def site_height_m(latitude_deg: float, longitude_deg: float, site_id: str | None = None) -> float:
+    """The DEM height under a Site: what `mask()` puts the Observer on, without the mask."""
+    folder, bands = bands_for(latitude_deg, longitude_deg, site_id)
+    latitude_deg, longitude_deg = _placed(latitude_deg, longitude_deg)
+    x, y = _project(bands[0], np.array([latitude_deg]), np.array([longitude_deg]))
+    return float(_heights(folder, bands[0], x, y)[0])
+
+
+ERROR_SUFFIX = "_ERR"
+
+
+def error_path(folder: Path, band: Band) -> Path:
+    """The PGDA per-pixel height error raster that goes with a DEM product, if it is there."""
+    return folder / f"{band.product}{ERROR_SUFFIX}.TIF"

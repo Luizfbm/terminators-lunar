@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from './classic'
+import type { Page } from '@playwright/test'
 
 // the requirement: everyone can use the answer. axe checks WCAG 2.1 A and AA on each state of the screen;
 // the rest checks what axe cannot: the keyboard, the phone and what a screen reader is told.

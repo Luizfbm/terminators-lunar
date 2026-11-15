@@ -180,3 +180,43 @@ def test_at_the_edge_of_the_20_m_square_every_ray_walks_the_60_m_dem(
     mask = horizon.mask(*SITE, 2.0)
     assert _products(mask) == [W60, W240]
     assert np.all(np.isfinite(mask.elevations_deg))
+
+
+# 15/11/2026: one resolver chooses the bands, for the mask and for the clones of the
+# Uncertainty band, so the two never read different DEMs for the same point.
+def _band_products() -> list[str]:
+    return [band.product for band in horizon.bands_for(*SITE, None)[1]]
+
+
+@pytest.mark.parametrize(
+    ("with_60", "eighty_covers_site", "twenty_at_site", "expected"),
+    [
+        (True, True, True, [W20, W80, W240]),
+        (True, False, True, [W20, W60, W240]),
+        (True, False, False, [W60, W240]),
+        # Nothing covers the rays: the polar ladder, so the error that follows is its own.
+        (False, False, True, [W20, W80, W240]),
+    ],
+)
+def test_the_resolver_picks_the_bands_the_mask_walks(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    with_60: bool,
+    eighty_covers_site: bool,
+    twenty_at_site: bool,
+    expected: list[str],
+) -> None:
+    _dems(
+        tmp_path,
+        with_60=with_60,
+        eighty_covers_site=eighty_covers_site,
+        twenty_at_site=twenty_at_site,
+    )
+    monkeypatch.setenv("LUNAR_DEM_DIR", str(tmp_path))
+    assert _band_products() == expected
+    # The 80 m rung of the same point: the 60 m DEM stands in for it, and it is what the mask walks.
+    rung_80 = [band.product for band in horizon.bands_for(*SITE, None, 80.0)[1]]
+    assert rung_80 == [W60 if W60 in expected else W80, W240]
+    if with_60 or eighty_covers_site:
+        assert _products(horizon.mask(*SITE, 2.0)) == expected
+        assert horizon.site_height_m(*SITE) == pytest.approx(0.0)

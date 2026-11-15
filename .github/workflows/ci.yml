@@ -1,20 +1,33 @@
 name: CI
 
 on:
+  # Only pull requests into main: the ones into an integration branch get their run on the
+  # integration PR's head, so the two runners don't queue a run per feature branch.
   pull_request:
+    branches: [main]
   push:
     branches: [main]
+  # The e2e below runs only on these two, as a second opinion on the Mac's run.
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * *" # 06:00 UTC, every night, on main
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # The event is in the name so the nightly run never cancels a run for a push to main.
+  group: ci-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
-# CI is split in two halves.
-# - Here, on our two runners on the VPS (deploy/runner/): the slow checks, Playwright (in two
-#   shards, one per runner) and schemathesis, plus the contract lint, which takes seconds.
-# - On Luiz's Mac, scripts/ci-mac.sh: ruff, mypy, pytest, the validation suite, eslint, tsc,
-#   vitest and the generated-types check. It reports the commit status `mac-gates`.
-# A pull request merges only with both halves green.
+# CI is split in two halves (decided by Luiz on 15/11/2026, to cut the time from a push to green
+# from about 45 minutes to about 15).
+# - On Luiz's Mac, scripts/ci-mac.sh, started by .github/workflows/mac.yml on every pull request
+#   into main and every push to main: everything heavy. ruff, mypy, pytest, the validation suite,
+#   eslint, tsc, vitest, the generated-types check and the full Playwright e2e. It reports the
+#   commit status `mac-gates`.
+# - Here, on our two runners on the VPS (deploy/runner/): the light checks, the contract lint
+#   (seconds) and schemathesis (about 5 minutes). They run on every pull request and push to main.
+#   The e2e job below runs only by hand (workflow_dispatch) and every night: the same suite on a
+#   second machine, software WebGL, one browser per runner, in two shards (about 40 minutes).
+# A pull request merges only with both halves green: this workflow and `mac-gates`.
 # Conventions: backend/ is a uv project exposing the FastAPI app at app.main:app;
 # frontend/ has npm scripts lint, typecheck, test, e2e and generate:types.
 jobs:
@@ -52,6 +65,8 @@ jobs:
       - run: uvx schemathesis run contract/openapi.yaml --url http://localhost:8000 --checks all
 
   e2e:
+    # Not on a pull request or a push: the Mac runs the whole suite there (mac.yml).
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: [self-hosted, lunar-vps]
     strategy:
       fail-fast: false

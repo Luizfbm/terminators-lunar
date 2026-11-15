@@ -5,7 +5,7 @@ from __future__ import annotations
 import itertools
 import math
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 from functools import cached_property
 from typing import Any, Literal
@@ -20,6 +20,8 @@ from .visibility import metrics, periods
 
 Body = Literal["sun", "earth"]
 BODIES: tuple[Body, ...] = ("sun", "earth")
+# What `Look.above` can be asked: a body, or the Earth by the other rule (any part of its disc).
+Seen = Literal["sun", "earth", "earth_any_part"]
 EVENT_NAMES: dict[Body, tuple[str, str]] = {
     "sun": ("sunrise", "sunset"),
     "earth": ("earthrise", "earthset"),
@@ -37,22 +39,36 @@ class Look:
     earth_radius_rad: float
     mask: horizon.Mask
 
-    def above(self, body: Body) -> bool:
-        """The Sun counts while any part of its disc clears the terrain; the Earth by its centre."""
+    def above(self, body: Seen) -> bool:
+        """The Sun counts while any part of its disc clears the terrain; the Earth by its centre.
+
+        "earth_any_part" is the Earth by the Sun's rule, kept next to the main one so a
+        reader can see where a difference with a tool that counts the whole disc comes from.
+        """
         if body == "sun":
             return self._sun_over_terrain > 0.0
+        if body == "earth_any_part":
+            return self._earth_over_terrain > 0.0
         return bool(self.earth.elevation_deg > self.mask.elevation_at(self.earth.azimuth_deg))
 
     @cached_property
     def _sun_over_terrain(self) -> float:
         # Asked several times per instant (events, periods, the sample); computed once.
+        return self._disc_over_terrain(self.sun, self.sun_radius_rad)
+
+    @cached_property
+    def _earth_over_terrain(self) -> float:
+        return self._disc_over_terrain(self.earth, self.earth_radius_rad)
+
+    def _disc_over_terrain(self, body: ephemeris.Apparent, radius_rad: float) -> float:
         # Near the horizon a horizontal offset across the disc spans 1/cos(e) of azimuth.
-        stretch = 1.0 / max(math.cos(math.radians(self.sun.elevation_deg)), 1e-6)
+        # Same definition validation/run_pgda_engine.py uses to count the Earth by any part.
+        stretch = 1.0 / max(math.cos(math.radians(body.elevation_deg)), 1e-6)
         return geometry.disc_over_profile(
-            math.radians(self.sun.elevation_deg),
-            self.sun_radius_rad,
+            math.radians(body.elevation_deg),
+            radius_rad,
             lambda offsets: np.radians(
-                self.mask.elevation_at(self.sun.azimuth_deg + np.degrees(offsets) * stretch)
+                self.mask.elevation_at(body.azimuth_deg + np.degrees(offsets) * stretch)
             ),
         )
 
@@ -100,14 +116,12 @@ def calculate(
     def look(instant: datetime) -> Look:
         return look_at(instant, observer, mask)
 
-    looks = scan(start, end, look)
+    looks, found, period_list = transitions(start, end, look)
 
     events: list[dict[str, Any]] = []
-    period_list: list[dict[str, Any]] = []
     for body in BODIES:
         rise, fall = EVENT_NAMES[body]
-        found = crossings(looks, body, look)
-        for instant, rises in found:
+        for instant, rises in found[body]:
             position = getattr(look(instant), body)
             events.append(
                 {
@@ -117,7 +131,6 @@ def calculate(
                     "occluder": mask.occluder_at(position.azimuth_deg),
                 }
             )
-        period_list += body_periods(start, end, [instant for instant, _ in found], body, look)
 
     events.sort(key=lambda event: event["t"])
     period_list.sort(key=lambda p: (p["start"], p["body"]))
@@ -135,7 +148,7 @@ def calculate(
         "sub_points": sub_points(start, end),
         "events": events,
         "periods": period_list,
-        "metrics": metrics(period_list, samples),
+        "metrics": metrics(period_list, samples, earth_any_part_hours(start, end, looks, look)),
         "provenance": {
             "engine_version": ENGINE_VERSION,
             "synthetic": False,
@@ -143,6 +156,70 @@ def calculate(
             "dems": mask.products,
         },
     }
+
+
+def transitions(
+    start: datetime, end: datetime, look: Callable[[datetime], Look]
+) -> tuple[list[Look], dict[Body, list[tuple[datetime, bool]]], list[dict[str, Any]]]:
+    """The scan of a Window, each body's refined crossings, and the periods they cut."""
+    looks = scan(start, end, look)
+    found: dict[Body, list[tuple[datetime, bool]]] = {}
+    period_list: list[dict[str, Any]] = []
+    for body in BODIES:
+        found[body] = crossings(looks, body, look)
+        period_list += body_periods(start, end, [instant for instant, _ in found[body]], body, look)
+    return looks, found, period_list
+
+
+class Sky:
+    """Where the Sun and the Earth are over one Query, kept so any Horizon mask can be put under it.
+
+    The ephemeris does not depend on the terrain, so the clones of the Uncertainty band
+    (ADR 0006) share one `Sky` and only swap the mask. The Observer stands at the Site's
+    DEM height plus its own.
+    """
+
+    def __init__(self, observer: ephemeris.Observer) -> None:
+        self.observer = observer
+        self._looks: dict[datetime, Look] = {}
+
+    def look(self, instant: datetime, mask: horizon.Mask) -> Look:
+        base = self._looks.get(instant)
+        if base is None:
+            base = self._looks[instant] = look_at(instant, self.observer, mask)
+        # Look.mask is all that differs; a new Look also starts with its own cached disc.
+        return base if base.mask is mask else replace(base, mask=mask)
+
+
+def make_sky(site: Site, height_m: float) -> Sky:
+    """The Sky `calculate` builds for a Site: the Observer on the DEM, `height_m` above it."""
+    ground = horizon.site_height_m(site["latitude_deg"], site["longitude_deg"], site["id"])
+    return Sky(
+        ephemeris.make_observer(site["latitude_deg"], site["longitude_deg"], ground + height_m)
+    )
+
+
+def band_run(
+    sky: Sky, start: datetime, end: datetime, mask: horizon.Mask
+) -> tuple[list[tuple[str, datetime]], dict[str, float]]:
+    """One Query's Events (type, instant) in time order and its metrics, over `mask`.
+
+    The same scan, crossings, periods and metrics as `calculate`, without the parts that
+    only draw the answer; `calculate` and this share `transitions`.
+    """
+
+    def look(instant: datetime) -> Look:
+        return sky.look(instant, mask)
+
+    looks, found, period_list = transitions(start, end, look)
+    events = [
+        (EVENT_NAMES[body][0 if rises else 1], instant)
+        for body in BODIES
+        for instant, rises in found[body]
+    ]
+    events.sort(key=lambda event: event[1])
+    samples = [{"sun": {"fraction": item.sun_fraction()}} for item in looks]
+    return events, metrics(period_list, samples, earth_any_part_hours(start, end, looks, look))
 
 
 def query_echo(
@@ -165,7 +242,7 @@ def scan(start: datetime, end: datetime, look: Callable[[datetime], Look]) -> li
 
 
 def crossings(
-    looks: list[Look], body: Body, look: Callable[[datetime], Look]
+    looks: list[Look], body: Seen, look: Callable[[datetime], Look]
 ) -> list[tuple[datetime, bool]]:
     """Each instant the body crosses the horizon between two looks, refined, and if it rises."""
     found: list[tuple[datetime, bool]] = []
@@ -180,13 +257,29 @@ def body_periods(
     start: datetime,
     end: datetime,
     instants: list[datetime],
-    body: Body,
+    body: Seen,
     look: Callable[[datetime], Look],
 ) -> list[dict[str, Any]]:
     """A body's periods over [start, end], cut by its own crossings only."""
     boundaries = sorted({start, end, *instants})
     states = [look(a + (b - a) / 2).above(body) for a, b in itertools.pairwise(boundaries)]
     return periods(boundaries, states, body)
+
+
+def earth_any_part_hours(
+    start: datetime, end: datetime, looks: list[Look], look: Callable[[datetime], Look]
+) -> float:
+    """Hours of the Window with any part of the Earth's disc above the Horizon mask.
+
+    Built the way the Earth's periods are (grid, then bisection to a second), only with the
+    Sun's rule for the disc. The Earth's own periods and every other metric keep the centre.
+    """
+    found = [instant for instant, _ in crossings(looks, "earth_any_part", look)]
+    return sum(
+        float(p["duration_hours"])
+        for p in body_periods(start, end, found, "earth_any_part", look)
+        if p["state"] == "visible"
+    )
 
 
 SUB_POINT_STEP_HOURS = 1
@@ -246,7 +339,7 @@ def _grid(start: datetime, end: datetime) -> list[datetime]:
     return times
 
 
-def _refine(left: Look, right: Look, body: Body, look: Callable[[datetime], Look]) -> datetime:
+def _refine(left: Look, right: Look, body: Seen, look: Callable[[datetime], Look]) -> datetime:
     """Bisect the instant the body crosses the horizon, to about one second."""
     before, after = left.instant, right.instant
     was_above = left.above(body)

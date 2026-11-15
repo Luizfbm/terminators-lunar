@@ -1,0 +1,3 @@
+# Eduardo's scripts are kept byte for byte (SOURCE.json); they are not ours to reformat.
+exclude = ["*.py"]
+force-exclude = true

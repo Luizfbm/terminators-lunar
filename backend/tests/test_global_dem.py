@@ -21,10 +21,12 @@ from pathlib import Path
 import numpy as np
 import pytest
 import rasterio  # type: ignore[import-untyped]
+from fastapi.testclient import TestClient
 from rasterio.transform import from_origin  # type: ignore[import-untyped]
 
 from app import horizon, slope
 from app.constants import AZIMUTH_STEP_DEG
+from app.main import app
 from tests.synthetic_dem import EQC, R
 from tests.test_polar_wide import SITE as POLAR_SITE
 from tests.test_polar_wide import _dems as polar_dems
@@ -171,8 +173,8 @@ def test_a_point_away_from_the_seam_reads_the_map_exactly_as_a_plain_read(
     monkeypatch.setenv("LUNAR_DEM_DIR", str(tmp_path))
     plain = tuple(replace(band, wraps=False) for band in horizon.GLOBAL)
     for site in ((10.0, 180.0), (-40.0, 90.0)):
-        wrapped = horizon._mask(str(tmp_path), horizon.GLOBAL, *site, 2.0, 20.0)
-        unwrapped = horizon._mask(str(tmp_path), plain, *site, 2.0, 20.0)
+        wrapped = horizon._mask(str(tmp_path), horizon.GLOBAL, *site, 2.0)
+        unwrapped = horizon._mask(str(tmp_path), plain, *site, 2.0)
         assert np.array_equal(wrapped.elevations_deg, unwrapped.elevations_deg)
         assert wrapped.samples == unwrapped.samples
 
@@ -243,3 +245,113 @@ def test_the_slope_of_a_typed_point_past_80s_tries_the_finest_dem_first(
     assert len({band.product for band in bands}) == len(bands)
     # The polar ladder of a point south of 80°S is the ladder itself, as before.
     assert horizon.slope_bands(None, -85.0)[1] == horizon.LADDER
+
+
+def test_the_near_and_far_bands_of_one_dem_share_its_pixels_without_changing_the_mask(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # The two bands walk in their own threads over one window of LDEM_128. The mask must be what
+    # each band gives alone, with a window of its own, element by element: the highest of the two.
+    _write_global(tmp_path, lambda lon: 800.0 * np.sin(40.0 * lon) + 300.0 * np.cos(90.0 * lon))
+    monkeypatch.setenv("LUNAR_DEM_DIR", str(tmp_path))
+    site = (20.0, 359.9)  # a few cells from the 0°E seam, so the shared window wraps
+    near, far = horizon.GLOBAL
+    together = horizon._compute(str(tmp_path), (near, far), *site, 2.0, {})
+    alone_near = horizon._compute(str(tmp_path), (near,), *site, 2.0, {})
+    alone_far = horizon._compute(str(tmp_path), (far,), *site, 2.0, {})
+    assert np.array_equal(
+        together.elevations_deg, np.maximum(alone_near.elevations_deg, alone_far.elevations_deg)
+    )
+
+
+# --- through the HTTP API: what every route that takes a typed point does with a global one ----
+
+client = TestClient(app)
+START = "2026-11-15T00:00:00Z"
+POINT = {"latitude_deg": 10.0, "longitude_deg": 20.0, "start": START, "duration_hours": 24}
+
+
+@pytest.fixture
+def global_dem(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """A server whose DEM folder holds only LDEM_128 (flat ground, a wall at 359.1°E)."""
+    _write_global(tmp_path)
+    monkeypatch.setenv("LUNAR_DEM_DIR", str(tmp_path))
+    return tmp_path
+
+
+def test_a_typed_point_is_answered_and_the_provenance_names_the_dem_and_its_cell(
+    global_dem: Path,
+) -> None:
+    meta = client.get("/meta").json()
+    assert meta["coverage"]["custom_max_latitude_deg"] == 90.0
+    assert meta["dems"] == [{"product": GLOBAL, "resolution_m": 236.9}]
+    response = client.get("/visibility", params=POINT)
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert len(payload["horizon"]["samples"]) == 720
+    # The product and its true cell (128 px/deg of a 1737.4 km sphere is 236.9 m), for the
+    # screen to show: not the 20 m of the rung the Query asked at.
+    assert payload["provenance"]["dems"] == [{"product": GLOBAL, "resolution_m": 236.9}]
+    cell_m = R * math.radians(1.0 / 128.0)
+    assert payload["provenance"]["dems"][0]["resolution_m"] == pytest.approx(cell_m, abs=0.05)
+
+
+@pytest.mark.usefixtures("without_global_dem")
+def test_without_the_global_map_the_same_point_is_422_south_of_80s(global_dem: Path) -> None:
+    assert client.get("/meta").json()["coverage"]["custom_max_latitude_deg"] == -80.0
+    response = client.get("/visibility", params=POINT)
+    assert (response.status_code, response.json()["code"]) == (422, "outside_coverage")
+    assert "south of 80°S" in response.json()["detail"]
+
+
+@pytest.mark.parametrize("latitude", [85.0, 90.0])
+def test_near_the_north_pole_without_the_north_polar_dem_the_answer_is_422_naming_it(
+    global_dem: Path, latitude: float
+) -> None:
+    for path in ("/visibility", "/visibility/ladder", "/visibility/scatter"):
+        response = client.get(path, params={**POINT, "latitude_deg": latitude})
+        assert (response.status_code, response.json()["code"]) == (422, "outside_coverage"), path
+        assert horizon.NORTH_PRODUCT in response.json()["detail"], path
+
+
+def test_the_ladder_of_a_global_point_has_one_dem_on_every_rung(global_dem: Path) -> None:
+    # One DEM answers on every rung, as the off-pole Curated Sites' 237 m map does for the 240
+    # and 80 m rungs: each rung's `dems` says which one it was, and the rungs agree.
+    response = client.get("/visibility/ladder", params=POINT)
+    assert response.status_code == 200, response.text
+    rungs = response.json()["rungs"]
+    assert [rung["resolution_m"] for rung in rungs] == [240, 80, 20]
+    assert all(rung["dems"] == [{"product": GLOBAL, "resolution_m": 236.9}] for rung in rungs)
+    assert rungs[0]["metrics"] == rungs[1]["metrics"] == rungs[2]["metrics"]
+
+
+def test_the_uncertainty_of_a_global_point_is_its_nominal_answer_as_a_band_of_one(
+    global_dem: Path,
+) -> None:
+    # LDEM_128 has no per-pixel error raster, so no clone varies its heights (ADR 0006): the
+    # band is the nominal answer and `uncovered` says the DEM was not varied.
+    response = client.get("/visibility/uncertainty", params=POINT)
+    assert response.status_code == 200, response.text
+    band = response.json()
+    nominal = client.get("/visibility", params=POINT).json()
+    assert band["clones"] == 1
+    assert band["error_products"] == []
+    assert band["uncovered"] == [GLOBAL]
+    for name, value in nominal["metrics"].items():
+        if name in band["metrics"]:
+            assert band["metrics"][name] == {"low": value, "high": value}
+
+
+def test_the_landing_scatter_of_a_global_point_has_its_19_points(global_dem: Path) -> None:
+    response = client.get("/visibility/scatter", params=POINT)
+    assert response.status_code == 200, response.text
+    assert len(response.json()["points"]) == 19
+
+
+def test_the_slope_of_a_global_point_is_422_where_the_cell_is_too_coarse_for_the_radius(
+    global_dem: Path,
+) -> None:
+    # Never a made-up slope: with no cell centre inside the radius there is no Slope.
+    response = client.get("/terrain", params={"latitude_deg": 10.0, "longitude_deg": 20.0})
+    assert (response.status_code, response.json()["code"]) == (422, "dem_too_coarse")
+    assert GLOBAL in response.json()["detail"]

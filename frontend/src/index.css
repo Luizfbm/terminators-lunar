@@ -77,10 +77,24 @@ input[type='date']:focus-within {
   white-space: nowrap;
 }
 
-/* The Moon across the whole width, time along the bottom. The answer column on the right is not shown. */
+/* The classic layout (`?layout=classic`): the Moon on the left, the answer in words on the right, time along the bottom. */
 .screen {
   display: grid;
   height: 100%;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 30rem);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'bar bar'
+    'stage answer'
+    'strip strip';
+}
+
+/*
+ * The default layout (Larissa's): the Moon across the whole width, time along the bottom. The header (Guide,
+ * About, Ask, PT/EN) and the answer column are not shown. They stay mounted, so the Moon and the timeline
+ * keep their data and the classic layout is only a link away. Everything below this block is shared.
+ */
+.screen:not([data-layout='classic']) {
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr) auto;
   grid-template-areas:
@@ -88,8 +102,64 @@ input[type='date']:focus-within {
     'strip';
 }
 
+.screen:not([data-layout='classic']) > .bar,
+.screen:not([data-layout='classic']) > .answer {
+  display: none;
+}
+
+/* The Proof page takes the stage and the strip: the header is not shown, so the grid has two rows. */
+.screen:not([data-layout='classic']) > .proof {
+  grid-row: 1 / 3;
+}
+
+.bar {
+  grid-area: bar;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 20px var(--gutter) 0;
+  font-size: var(--small);
+  color: var(--dim);
+}
+
+.bar strong {
+  font-weight: 500;
+  color: var(--fg);
+}
+
+.bar__lang {
+  white-space: nowrap;
+}
+
+/* Guide and About: the two ways back to the introduction (the requirement). */
+.bar__nav {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.bar__nav button {
+  min-height: 44px;
+  margin: -12px 0;
+  padding: 0 10px;
+  border: 0;
+  background: none;
+  color: var(--dim);
+  font: inherit;
+  cursor: pointer;
+}
+
+.bar__nav button:hover {
+  color: var(--fg);
+}
+
 /* The cover of the first visit. The Moon shows through on the stage's side; the text sits where
-   the answer will be. */
+   the answer will be. The top bar stays above it, so the language can be changed from here. */
+.bar {
+  position: relative;
+  z-index: 50;
+}
+
 .cover {
   position: fixed;
   inset: 0;
@@ -129,7 +199,9 @@ input[type='date']:focus-within {
 }
 
 .cover__start,
-.cover__landing {
+.cover__landing,
+.guide__next,
+.guide__skip {
   min-height: 44px;
   padding: 0 18px;
   border: 1px solid var(--edge);
@@ -140,15 +212,72 @@ input[type='date']:focus-within {
   cursor: pointer;
 }
 
-.cover__start {
+.cover__start,
+.guide__next {
   border-color: var(--fg);
   background: var(--fg);
   color: var(--bg);
   font-weight: 500;
 }
 
-.cover__landing:hover {
+.cover__landing:hover,
+.guide__skip:hover {
   border-color: var(--dim);
+}
+
+/* The guide: one tip at a time in a card, and a ring around what it talks about. */
+.guide {
+  position: fixed;
+  right: var(--gutter);
+  bottom: 132px;
+  z-index: 35;
+  width: min(22rem, calc(100vw - 2 * var(--gutter)));
+  padding: 16px 18px;
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  background: var(--field);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.55);
+}
+
+.guide__count {
+  margin: 0 0 6px;
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: var(--small);
+}
+
+.guide__tip {
+  margin: 0 0 14px;
+}
+
+.guide__ways {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 0;
+}
+
+.guide__next,
+.guide__skip {
+  min-height: 36px;
+  padding: 0 14px;
+}
+
+[data-guide='true'] {
+  outline: 2px solid var(--sun);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+footer[data-guide='true'] {
+  outline-offset: -4px;
+}
+
+@media (pointer: coarse) {
+  .guide__next,
+  .guide__skip {
+    min-height: 44px;
+  }
 }
 
 @media (max-width: 760px) {
@@ -164,11 +293,27 @@ input[type='date']:focus-within {
   }
 }
 
+.bar__lang button {
+  min-width: 44px;
+  min-height: 44px;
+  margin: -12px 0;
+  border: 0;
+  background: none;
+  color: var(--dim);
+  cursor: pointer;
+}
+
+.bar__lang button[aria-pressed='true'] {
+  color: var(--fg);
+}
+
 .stage {
   grid-area: stage;
   position: relative;
   min-height: 0;
   overflow: hidden;
+  /* The width the globe's menu takes in the corner of the stage: what the caption keeps clear of. */
+  --menu-w: calc(clamp(250px, 20vw, 420px) * 0.85);
 }
 
 .globe,
@@ -238,6 +383,7 @@ input[type='date']:focus-within {
 }
 
 .globe[data-dressed='false'] .globe__pin,
+.globe[data-dressed='false'] .globe__planets,
 .globe[data-dressed='false'] .globe__grid {
   visibility: hidden;
 }
@@ -303,6 +449,29 @@ input[type='date']:focus-within {
     0 0 2px var(--bg);
 }
 
+.globe__planets {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* The name of a planet in the sky behind the Moon: small and dim, beside its point of light. */
+.globe__planets span {
+  position: absolute;
+  transform: translate(0, -50%);
+  color: var(--dim);
+  font-size: 11px;
+  line-height: 14px;
+  white-space: nowrap;
+  text-shadow:
+    0 0 6px var(--bg),
+    0 0 2px var(--bg);
+}
+
+.globe__planets span[data-side='left'] {
+  transform: translate(-100%, -50%);
+}
+
 .globe__pin--left {
   transform: translate(calc(-100% - 12px), -50%);
 }
@@ -311,30 +480,7 @@ input[type='date']:focus-within {
   white-space: normal;
 }
 
-/* The Sun and the Earth, marked on the side of the Moon where each lies (seen from orbit). */
-.globe__body {
-  position: absolute;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transform: translate(-7px, -50%);
-  font-size: var(--small);
-  white-space: nowrap;
-  pointer-events: none;
-  text-shadow:
-    0 0 6px var(--bg),
-    0 0 2px var(--bg);
-}
-
-.globe__body::before {
-  content: '';
-  flex: none;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-}
-
-/* The Equator and the poles of the Moon, drawn over it each frame (as in globo_hemisferios.html). */
+/* The letters N and S of the poles of the Moon, over the stage; the Equator, the circle and the dots are drawn in the scene. */
 .globe__poles {
   position: absolute;
   inset: 0;
@@ -344,32 +490,8 @@ input[type='date']:focus-within {
   pointer-events: none;
 }
 
-.globe__equator {
-  stroke: #ffd400;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.globe__equator--base {
-  stroke: rgba(0, 0, 0, 0.55);
-}
-
-.globe__circle {
-  stroke: #fff;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.globe__circle--base {
-  stroke: rgba(0, 0, 0, 0.55);
-}
-
 .globe__poles line {
   stroke: rgba(255, 255, 255, 0.75);
-}
-
-.globe__poles circle {
-  fill: #fff;
 }
 
 .globe__poles text {
@@ -383,26 +505,6 @@ input[type='date']:focus-within {
 }
 
 .globe[data-dressed='false'] .globe__poles {
-  visibility: hidden;
-}
-
-.globe__body--sun::before {
-  background: var(--sun);
-  box-shadow: 0 0 14px 3px color-mix(in srgb, var(--sun) 55%, transparent);
-}
-
-.globe__body--earth::before {
-  background: radial-gradient(circle at 35% 35%, #cfe1ff, var(--earth) 55%, #3f6fc4);
-  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--earth) 45%, transparent);
-}
-
-/* Against the right edge the word goes on the inner side of the dot. */
-.globe__body--left {
-  flex-direction: row-reverse;
-  transform: translate(calc(-100% + 7px), -50%);
-}
-
-.globe[data-dressed='false'] .globe__body {
   visibility: hidden;
 }
 
@@ -477,6 +579,11 @@ input[type='date']:focus-within {
   position: absolute;
   inset: 0;
   display: grid;
+  grid-template-rows: minmax(0, 1fr) clamp(84px, 22%, 150px) 60px;
+}
+
+/* Larissa's layout (the default) has no strip: the sky and the row for the view buttons. */
+.ground-view--bare {
   grid-template-rows: minmax(0, 1fr) 60px;
 }
 
@@ -600,6 +707,45 @@ input[type='date']:focus-within {
   border-color: var(--dim);
 }
 
+/* An arrow to the Sun or the Earth while it is out of frame or below the horizon: pressed, it turns the view there. */
+.sky__body-guide {
+  position: absolute;
+  z-index: 4;
+  padding: 5px 8px;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  color: var(--fg);
+  font-size: 0.75rem;
+  line-height: 1.3;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+}
+
+.sky__body-guide[hidden] {
+  display: none;
+}
+
+.sky__body-guide:hover {
+  border-color: var(--dim);
+}
+
+.sky__body-guide:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
+}
+
+.sky__body-guide span {
+  display: inline-block;
+  margin-right: 5px;
+}
+
+@media (pointer: coarse) {
+  .sky__body-guide {
+    min-height: 44px;
+  }
+}
+
 @media (pointer: coarse) {
   .sky__turn button {
     width: 44px;
@@ -696,6 +842,11 @@ input[type='date']:focus-within {
   pointer-events: none;
 }
 
+/* On the map the menu of the globe is in the top left corner: the caption starts beside it. */
+.stage__caption {
+  left: calc(var(--menu-w) + 16px);
+}
+
 .ground-view__caption p {
   margin: 0;
 }
@@ -756,8 +907,6 @@ input[type='date']:focus-within {
   min-height: 0;
   overflow-y: auto;
   padding: 24px var(--gutter) 24px 8px;
-  /* The column on the right is not shown. It stays mounted, so the Moon and the timeline keep their data. */
-  display: none;
 }
 
 .where {
@@ -1176,6 +1325,27 @@ input[type='date']:focus-within {
     min-height: 100%;
   }
 
+  /* With the Printable brief button the header no longer fits one line at 390 px: it wraps
+     instead of pushing the language buttons off the screen. */
+  .bar {
+    flex-wrap: wrap;
+    row-gap: 8px;
+    padding-top: 16px;
+  }
+
+  .bar__nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    white-space: normal;
+  }
+
+  /* Wrapped, the buttons' negative margins would pull a second line over the app's name. */
+  .bar__nav button,
+  .bar__nav .ask-button.ask-button {
+    margin: 0;
+  }
+
   /* The picture takes at least half the screen, and the foot of the stage sits below it (the requirement). */
   .stage {
     --picture: max(60vh, 320px);
@@ -1197,6 +1367,10 @@ input[type='date']:focus-within {
 
   /* No row left free for the view buttons: they are below the picture now. */
   .ground-view {
+    grid-template-rows: minmax(0, 1fr) clamp(84px, 22%, 150px);
+  }
+
+  .ground-view.ground-view--bare {
     grid-template-rows: minmax(0, 1fr);
   }
 
@@ -1759,13 +1933,39 @@ button.site {
   font-weight: 500;
 }
 
+/* ---- DEM Uncertainty band (src/components/UncertaintyLine.tsx, Numbers.tsx) ---- */
+/* The window an Event can fall in sits right under its time, so the reason and the window read as one. */
+.band-line {
+  max-width: 36ch;
+  margin: 0 0 clamp(16px, 3.5vh, 32px);
+  color: var(--dim);
+  font-size: var(--small);
+}
+
+.why:has(+ .band-line) {
+  margin-bottom: 2px;
+}
+
+.band-line--working {
+  font-style: italic;
+}
+
+/* In the Numbers table the range takes a line of its own under the value, so a narrow screen never overflows. */
+.metrics__band {
+  display: block;
+  margin-top: 2px;
+  color: var(--dim);
+  font-family: inherit;
+  font-size: 0.92em;
+  white-space: normal;
+}
+
 /*
- * The menu on the left of the globe: eight push buttons on a dark glass panel, in the top left corner of
+ * The menu on the left of the globe: nine push buttons on a dark glass panel, in the top left corner of
  * the globe's own box. Sizes scale with the window; `--s` scales them all by one number.
- * Values are those of larissa/menu_preview.html.
  */
 .globe-menu {
-  /* 85% and the very corner: the values the Larissa chose by trying them (see reminder.md). */
+  /* 85% of the design size, in the very corner of the globe. */
   --s: 0.85;
   --adj: 0.78;
   position: absolute;
@@ -1780,9 +1980,76 @@ button.site {
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
-  /* Eight buttons and a rule are tall: if the stage is lower than that, the menu scrolls rather than being cut. */
-  max-height: 100%;
+  /* Nine buttons and a rule are tall: if the stage is lower than that, the menu scrolls rather than being cut.
+     On a wide screen the view buttons sit over the bottom of the stage, and the menu stops above them. */
+  max-height: calc(100% - 64px);
   overflow-y: auto;
+}
+
+/* Under 900 px the view buttons are below the picture, so the menu may use all of its height. */
+@media (max-width: 899px) {
+  .globe-menu {
+    max-height: 100%;
+  }
+}
+
+/* On a phone the panel does not fit beside the Moon: it folds into a button in the corner. */
+.globe-menu__toggle {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .stage {
+    --menu-w: 44px;
+  }
+
+  .globe-menu__toggle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 6;
+    display: block;
+    box-sizing: border-box;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 8px;
+    background: rgba(60, 60, 60, 0.72);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    cursor: pointer;
+  }
+
+  /* Three bars. */
+  .globe-menu__toggle span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 18px;
+    height: 2px;
+    background: #fff;
+    box-shadow:
+      0 -6px 0 #fff,
+      0 6px 0 #fff;
+    transform: translate(-50%, -50%);
+  }
+
+  .globe-menu__toggle:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+
+  /* The panel opens under the button, and is not there while it is folded. */
+  .globe-menu {
+    top: 48px;
+    max-height: calc(100% - 48px);
+  }
+
+  .globe-menu[data-open='false'] {
+    display: none;
+  }
 }
 
 /* The rule between the two levels at the top and the buttons of the orbit. */
@@ -1797,7 +2064,7 @@ button.site {
   box-sizing: border-box;
   display: block;
   width: 100%;
-  /* The 6vh keeps the eight of them inside a low stage. */
+  /* The 6vh keeps them all inside a low stage. */
   height: calc(min(clamp(40px, 3.2vw, 64px), 6vh) * var(--s));
   margin: 0 0 calc(clamp(6px, 0.55vw, 12px) * var(--s));
   padding: 0 8px;
@@ -1806,7 +2073,8 @@ button.site {
   border-bottom-color: rgba(0, 0, 0, 0.4);
   border-radius: 3px;
   background: #857b6c;
-  color: #1f1414;
+  /* Black, not #1f1414: on #857b6c that one was 4.3:1, under WCAG AA's 4.5:1. */
+  color: #000;
   /* Orbitron is wide: the factor keeps "Northern Hemisphere" on one line. */
   font-family: Orbitron, system-ui, sans-serif;
   font-weight: 600;
@@ -1835,7 +2103,8 @@ button.site {
   padding-top: 2px;
   border-color: rgba(0, 0, 0, 0.35);
   background: #464139;
-  color: #8e8e8e;
+  /* 5.4:1 on #464139; #8e8e8e was 3.1:1, under WCAG AA. */
+  color: #bdbdbd;
   box-shadow:
     inset 2px 2px 6px rgba(0, 0, 0, 0.7),
     inset 0 0 0 1px rgba(0, 0, 0, 0.25);
@@ -1845,282 +2114,3 @@ button.site {
   outline: 2px solid #fff;
   outline-offset: 2px;
 }
-
-/* "Land here": a small orange dot under the cursor on the Moon and a light speech bubble beside it. */
-.globe-land {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  pointer-events: none;
-}
-
-.globe-land[hidden] {
-  display: none;
-}
-
-.globe-land__dot {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: clamp(8px, 0.7vw, 12px);
-  height: clamp(8px, 0.7vw, 12px);
-  box-sizing: border-box;
-  border: 1.5px solid #fff;
-  border-radius: 50%;
-  background: #ff9f1c;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .globe-land__dot {
-    animation: land-pulse 1.6s ease-out infinite;
-  }
-}
-
-@keyframes land-pulse {
-  from {
-    box-shadow: 0 0 0 0 rgba(255, 159, 28, 0.4);
-  }
-  to {
-    box-shadow: 0 0 0 clamp(8px, 0.9vw, 16px) rgba(255, 159, 28, 0);
-  }
-}
-
-.globe-land__bubble {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.15em;
-  box-sizing: border-box;
-  padding: 0.4em 0.95em;
-  border: 1px solid rgba(17, 17, 17, 0.55);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.94);
-  color: #111;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-  font: 500 clamp(10px, 0.8vw, 15px) / 1 Orbitron, system-ui, sans-serif;
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-  cursor: pointer;
-  pointer-events: auto;
-}
-
-.globe-land__site {
-  font-size: 0.78em;
-  font-weight: 500;
-  opacity: 0.7;
-}
-
-.globe-land__site[hidden] {
-  display: none;
-}
-
-/* The tail points to the dot, from the lower corner of the bubble on the side of the dot. */
-.globe-land__bubble::before {
-  content: '';
-  position: absolute;
-  bottom: 0.22em;
-  left: -0.34em;
-  width: 0.55em;
-  height: 0.55em;
-  border-bottom: 1px solid rgba(17, 17, 17, 0.55);
-  border-left: 1px solid rgba(17, 17, 17, 0.55);
-  background: rgba(255, 255, 255, 0.94);
-  transform: rotate(45deg);
-}
-
-.globe-land__bubble[data-side='left']::before {
-  right: -0.34em;
-  left: auto;
-  border-right: 1px solid rgba(17, 17, 17, 0.55);
-  border-bottom: 1px solid rgba(17, 17, 17, 0.55);
-  border-left: 0;
-  transform: rotate(-45deg);
-}
-
-.globe-land__bubble:focus-visible {
-  outline: 2px solid #ff9f1c;
-  outline-offset: 3px;
-}
-
-.stage-status {
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  z-index: 6;
-  box-sizing: border-box;
-  width: max-content;
-  max-width: min(46ch, calc(100% - 32px));
-  margin: 0;
-  padding: 10px 14px;
-  border: 1px solid var(--edge);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  color: var(--fg);
-  font-size: var(--small);
-  transform: translateX(-50%);
-}
-
-.stage-status p {
-  margin: 0;
-}
-
-.stage-status p + p {
-  margin-top: 6px;
-}
-
-.stage-status__title {
-  font-weight: 600;
-}
-
-.stage-status--error {
-  border-color: color-mix(in srgb, #ff6b6b 70%, var(--edge));
-}
-
-/* A plain loading, with an answer already on screen: one quiet line. */
-.stage-status--quiet {
-  padding: 4px 10px;
-  color: var(--dim);
-  pointer-events: none;
-}
-
-.stage-status__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.stage-status__actions button {
-  min-height: 32px;
-  padding: 0 12px;
-  border: 1px solid var(--edge);
-  border-radius: 8px;
-  background: none;
-  color: var(--fg);
-  font: inherit;
-  cursor: pointer;
-}
-
-.stage-status__actions button:first-child {
-  background: var(--fg);
-  color: var(--bg);
-}
-
-@media (pointer: coarse) {
-  .stage-status__actions button {
-    min-height: 44px;
-  }
-}
-
-/*
- * The names of the missions in orbit (the requirement): beside the dot, in the colour of the missions'
- * dots (domain/markers.ts). The button itself is the size of nothing and lets the drag through; its name
- * is clicked to land there. A name with no room waits for the focus, and the dot's hover names it in the
- * bubble of "Land".
- */
-.globe-marks {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  pointer-events: none;
-}
-
-.globe-marks[hidden],
-.globe-mark[hidden] {
-  display: none;
-}
-
-.globe[data-dressed='false'] .globe-marks {
-  visibility: hidden;
-}
-
-.globe-mark {
-  position: absolute;
-  width: 0;
-  height: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  pointer-events: none;
-}
-
-.globe-mark__name {
-  position: absolute;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 400;
-  line-height: 14px;
-  white-space: nowrap;
-  cursor: pointer;
-  pointer-events: auto;
-  text-shadow:
-    0 0 6px var(--bg),
-    0 0 2px var(--bg),
-    0 0 1px #000;
-}
-
-.globe-mark__name:hover {
-  color: #fff;
-  text-decoration: underline;
-}
-
-.globe-mark[data-quiet='true'] .globe-mark__name {
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.globe-mark:focus-visible {
-  outline: none;
-}
-
-.globe-mark:focus-visible .globe-mark__name {
-  visibility: visible;
-  color: #fff;
-  outline: 2px solid #fff;
-  outline-offset: 2px;
-}
-
-/* Available over every ground scene, independent of the hidden answer column. */
-.stage__back {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  z-index: 8;
-  min-height: 40px;
-  padding: 8px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.8);
-  color: #fff;
-  font: inherit;
-  cursor: pointer;
-}
-
-.stage__back:hover {
-  background: #242424;
-}
-
-.stage__back:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: 3px;
-}
-
-.sky__body-guide {
-  position: absolute;
-  z-index: 4;
-  padding: 5px 8px;
-  border: 1px solid #ffffff50;
-  border-radius: 5px;
-  background: #000b;
-  color: #fff;
-  font: 12px/1.3 sans-serif;
-  cursor: pointer;
-  transform: translate(-50%, -50%);
-}
-.sky__body-guide[hidden] { display: none; }
-.sky__body-guide:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-.sky__body-guide span { display: inline-block; margin-right: 5px; }

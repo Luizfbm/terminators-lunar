@@ -2,10 +2,9 @@
 
 The grid is a square window of pixels of the finest DEM the engine reads near the Site (the
 same choice as the Slope, `horizon.slope_bands`): the 20 m PGDA DEM at the south pole, the
-off-pole window of a Curated Site, LOLA's LDEM_128 (237 m) between 70°S and 70°N, and LOLA's
-polar stereographic 240 m products within 20° of either pole. Nothing is resampled: every
-value is one pixel of the file, in the file's own projection, so the frontend draws the
-Moon's measured ground and not a guess of it.
+off-pole window of a Curated Site, and the 80 m and 240 m polar products where the finer one
+does not reach. Nothing is resampled: every value is one pixel of the file, in the file's own
+projection, so the frontend draws the Moon's measured ground and not a guess of it.
 
 The heights are sent as the published ground maps of `/moon/` are: integers 0 to 65535, row
 by row from the top left, that stand for heights in metres above the 1737.4 km sphere from
@@ -27,6 +26,7 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 import rasterio  # type: ignore[import-untyped]
+from rasterio.windows import Window  # type: ignore[import-untyped]
 
 from . import horizon, slope
 from .constants import MOON_RADIUS_M
@@ -37,17 +37,13 @@ HALF_EXTENT_DEFAULT_M = 20_000.0
 HALF_EXTENT_MAX_M = 30_000.0
 # At most 255 pixels on each side of the Site's own: 511 x 511, about 260 000 heights. With a
 # DEM finer than ~120 m the grid then reaches less far than asked (5.1 km on the 20 m DEM),
-# and on the simple cylindrical maps near 70° it is narrower east to west than north to south.
+# and on the simple cylindrical maps it is narrower east to west than north to south.
 MAX_HALF_PX = 255
 # The engine's projection names, as the contract spells them.
-PROJECTIONS = {
-    "polar": "south_polar_stereographic",
-    "polar_north": "north_polar_stereographic",
-    "eqc": "equirectangular",
-}
-# Every simple cylindrical DEM of the engine is centred on 180°E (SLDEM2015, LDEM_128); the
-# polar ones have 0°E along their central meridian.
-CENTRE_LONGITUDE_DEG = {"polar": 0.0, "polar_north": 0.0, "eqc": 180.0}
+PROJECTIONS = {"polar": "south_polar_stereographic", "eqc": "equirectangular"}
+# The simple cylindrical DEM of the engine (SLDEM2015) is centred on 180°E; the polar ones
+# have 0°E along their central meridian.
+CENTRE_LONGITUDE_DEG = {"polar": 0.0, "eqc": 180.0}
 
 
 @dataclass(frozen=True)
@@ -68,7 +64,8 @@ def grid(
 
     Raises `horizon.DemUnavailable`, with every DEM's reason, when none does.
     """
-    folder, bands = horizon.slope_bands(site_id, latitude_deg)
+    # The same DEMs, in the same order, as the Slope reads (slope.measure).
+    folder, bands = horizon.ladder_for(site_id)
     return _grid(str(folder), bands, round(latitude_deg, 7), round(longitude_deg, 7), half_extent_m)
 
 
@@ -83,7 +80,6 @@ def _grid(
     reasons: list[str] = []
     tried: set[str] = set()
     for band in bands:
-        # A DEM walked as two bands (GLOBAL's near and far) is one file.
         if band.product in tried:
             continue
         tried.add(band.product)
@@ -127,11 +123,9 @@ def _window(
         row0 = round(row) - half_px
         size = 2 * half_px + 1
         col1, row1 = col0 + size, row0 + size
-        outside_cols = col0 < 0 or col1 > dataset.width
-        if row0 < 0 or row1 > dataset.height or (outside_cols and not band.wraps):
+        if col0 < 0 or row0 < 0 or col1 > dataset.width or row1 > dataset.height:
             return "the grid runs past the edge of the DEM"
-        # Across 0°E the global map reads on from its other edge (horizon.read_window).
-        heights = horizon.read_window(dataset, col0, row0, col1, row1, band.wraps)
+        heights = dataset.read(1, window=Window(col0, row0, size, size)).astype(np.float64)
         nodata = dataset.nodata
     if nodata is not None and not math.isnan(nodata):
         heights[heights == nodata] = np.nan
@@ -142,8 +136,7 @@ def _window(
         resolution_m=band.resolution_m,
         projection=band.projection,
         metres_per_pixel=cell,
-        # The corner of the first pixel read. Past 0°E on the global map it runs on beyond
-        # -pi R or +pi R, so x stays continuous across the grid, as the rays' x does.
+        # The corner of the first pixel read.
         x_min_m=float(transform.c + col0 * transform.a),
         y_max_m=float(transform.f + row0 * transform.e),
         heights=heights,

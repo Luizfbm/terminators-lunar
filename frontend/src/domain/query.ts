@@ -108,8 +108,12 @@ function readView(value: string | null): View {
 
 export type View = 'orbit' | 'map' | 'ground'
 
-/** The answer screen, or the Proof page in its place. */
-export type Page = 'answer' | 'proof'
+function readPage(value: string | null): Page {
+  return value === 'proof' || value === 'brief' ? value : 'answer'
+}
+
+/** The answer screen, or the Proof page or the printable brief in its place. */
+export type Page = 'answer' | 'proof' | 'brief'
 
 /**
  * The second plan of the Plan A x Plan B comparison. A null field means "as in Plan A", so the link
@@ -137,6 +141,16 @@ export interface LinkState extends Choice {
   radiusM?: number | null
   /** Plan B of the comparison, kept by its panel; undefined when the comparison is closed. */
   planB?: PlanBLink | null
+  /**
+   * `layout=classic`: the header and the answer column are shown, as before Larissa's layout. Only present
+   * when the link has it, so a link without it reads back exactly as before and gets her layout.
+   */
+  classic?: true
+  /**
+   * `details=1`: the drawer with the rest of the answer is open (the default layout). Only present when the
+   * link has it, so a link without it reads back exactly as before.
+   */
+  details?: true
 }
 
 export function readLink(search: string): LinkState {
@@ -169,11 +183,13 @@ export function readLink(search: string): LinkState {
     cursorMs: Number.isFinite(cursorMs) ? cursorMs : null,
     language: language === 'en' || language === 'pt' ? language : null,
     view: readView(params.get('view')),
-    page: params.get('page') === 'proof' ? 'proof' : 'answer',
+    page: readPage(params.get('page')),
     stats: params.get('stats') === '1',
     // Only when the link has one, so a link without it reads back exactly as before.
     ...(Number.isFinite(radius) && radius >= RADIUS_MIN_M && radius <= RADIUS_MAX_M ? { radiusM: radius } : {}),
     ...(planB ? { planB } : {}),
+    ...(params.get('layout') === 'classic' ? { classic: true as const } : {}),
+    ...(params.get('details') === '1' ? { details: true as const } : {}),
   }
 }
 
@@ -201,6 +217,7 @@ function readPlanB(params: URLSearchParams, numberParam: (name: string) => numbe
 const LINK_KEYS = new Set([
   'lat', 'lon', 'site', 't', 'lang', 'view', 'start', 'hours', 'height', 'stats', 'page', 'radius',
   // Plan B of the comparison, carried by `planB` in the state.
+  'layout', 'details',
   'compare', 'bsite', 'blat', 'blon', 'bstart', 'bhours', 'bheight',
 ])
 
@@ -227,7 +244,9 @@ export function writeLink(state: LinkState, keep = ''): string {
   if (state.heightM !== null) params.set('height', String(state.heightM))
   if (state.stats) params.set('stats', '1')
   if (state.radiusM != null) params.set('radius', String(state.radiusM))
-  if (state.page === 'proof') params.set('page', 'proof')
+  if (state.page !== 'answer') params.set('page', state.page)
+  if (state.classic) params.set('layout', 'classic')
+  if (state.details) params.set('details', '1')
   if (state.planB) {
     const b = state.planB
     params.set('compare', '1')
@@ -241,6 +260,14 @@ export function writeLink(state: LinkState, keep = ''): string {
     if (b.hours !== null) params.set('bhours', String(b.hours))
     if (b.heightM !== null) params.set('bheight', String(b.heightM))
   }
+  const text = params.toString()
+  return text ? `?${text}` : ''
+}
+
+/** A query string without `layout`: which layout the page opens in says nothing about which Query it asks. */
+export function linkWithoutLayout(search: string): string {
+  const params = new URLSearchParams(search)
+  params.delete('layout')
   const text = params.toString()
   return text ? `?${text}` : ''
 }

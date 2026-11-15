@@ -17,5 +17,5 @@ export function placeText(place: { lat: number; lon: number }, name: string | nu
 export function limitText(latitudeDeg: number, locale: Locale): string {
   const s = MAP_STRINGS[locale]
   const value = Math.round(Math.abs(latitudeDeg) * 100) / 100
-  return `${value}° ${latitudeDeg < 0 ? s.S : s.N}`
+  return `${value}°\u00a0${latitudeDeg < 0 ? s.S : s.N}`
 }

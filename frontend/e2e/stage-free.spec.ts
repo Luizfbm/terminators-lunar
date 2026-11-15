@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { classic } from './classic'
 
 // the requirement: from the ground the picture is free. Over it sit only the one-line hint, the compass
 // (the implementation) and the turn arrows; the rest of the caption waits behind "About this view", and under
@@ -49,6 +50,24 @@ for (const viewport of [
     test('the hill link and the view buttons cover neither the picture nor each other', async ({ page }) => {
       await open(page)
       const sky = await box(page, '.sky canvas')
+      // Larissa's layout has no strip under the sky.
+      await expect(page.locator('.ground-view__strip')).toHaveCount(0)
+      const views = await box(page, '.views')
+      const hill = await box(page, '.classroom-open')
+      expect(overlaps(views, hill)).toBe(false)
+      for (const control of [views, hill]) {
+        expect(control.x).toBeGreaterThanOrEqual(0)
+        expect(control.x + control.width).toBeLessThanOrEqual(viewport.width)
+        expect(overlaps(control, sky)).toBe(false)
+        // Below 900 px they go below the picture.
+        if (viewport.width < 900) expect(control.y).toBeGreaterThanOrEqual(sky.y + sky.height - 0.5)
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(viewport.width)
+    })
+
+    test('in the classic layout the hill link and the view buttons cover neither the picture nor each other', async ({ page }) => {
+      await open(page, classic('/?view=ground'))
+      const sky = await box(page, '.sky canvas')
       const strip = await box(page, '.ground-view__strip')
       const views = await box(page, '.views')
       const hill = await box(page, '.classroom-open')
@@ -80,10 +99,12 @@ test.describe('on a phone, 390×844', () => {
     // One line: the hint and its button.
     await expect(page.locator('.stage__caption > p').first()).toHaveText('Drag to look around. About this view')
     await expect(page.locator('.ground-view__note')).toBeHidden()
-    // Nothing else of the page sits over the sky but the compass and the turn arrows.
+    // Nothing else of the page sits over the sky but the compass, the turn arrows, the Back button,
+    // the arrows to the Sun and the Earth, and the safety circle (Luiz, 15/11/2026: the three new
+    // ones may sit over the sky, the 300 px above stay free).
     const over = await page.evaluate(() => {
       const sky = document.querySelector('.sky canvas')!.getBoundingClientRect()
-      const allowed = ['.stage__caption', '.sky__dial', '.sky__turn']
+      const allowed = ['.stage__caption', '.sky__dial', '.sky__turn', '.stage__back', '.sky__body-guide', '.safety']
       return [...document.querySelectorAll('.stage *')]
         .filter((element) => element instanceof HTMLElement && element.offsetParent !== null && !element.closest('.sky canvas, .ground-view__strip, dialog'))
         .filter((element) => !allowed.some((selector) => element.closest(selector)) && !element.contains(document.querySelector('.sky canvas')))

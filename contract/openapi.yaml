@@ -31,6 +31,10 @@ tags:
     description: Validation results for the Proof page.
   - name: assistant
     description: Questions in plain words, answered with the engine's numbers.
+  - name: hazard
+    description: >-
+      Steep ground near a Site at 5 m, Normal navigation against Multiresolution, the Rovers and
+      their drives (Eduardo's multiresolution work).
 
 paths:
   /health:
@@ -583,6 +587,62 @@ paths:
         "503":
           $ref: "#/components/responses/Busy"
 
+  /visibility/uncertainty:
+    get:
+      tags: [visibility]
+      operationId: getVisibilityUncertainty
+      summary: How far the answer can move with the map's own height error
+      description: |
+        DEM Uncertainty band (ADR 0003): the Query recomputed over `clones` versions of the
+        terrain, each one the DEM raised and lowered by the height error NASA publishes for
+        every pixel, with the error correlated in space as the method in the ADR states. Each
+        Event of the `/visibility` answer gets the time range that 90 % of the clones put it
+        in (5th to 95th percentile), and how many clones have it at all. The metrics get the
+        same 5th to 95th percentile range.
+        This is map error, not landing error (`/visibility/scatter`) and not resolution
+        (`/visibility/ladder`).
+        It is heavy, so it runs in the background. The first request starts it and answers
+        202 with the progress; ask again after `Retry-After` and get 200 once it is done.
+        The Curated Sites over the default Window are computed ahead and answer 200 at once.
+        Pass either `site_id` or both coordinates, never both, as in `/visibility`.
+      parameters:
+        - $ref: "#/components/parameters/QuerySiteId"
+        - $ref: "#/components/parameters/QueryLatitude"
+        - $ref: "#/components/parameters/QueryLongitude"
+        - $ref: "#/components/parameters/QueryStart"
+        - $ref: "#/components/parameters/QueryDuration"
+        - $ref: "#/components/parameters/QueryObserverHeight"
+      responses:
+        "200":
+          description: The band of every Event and metric.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UncertaintyResult"
+              examples:
+                connecting-ridge-001:
+                  $ref: ./examples/visibility-uncertainty-001.example.json
+        "202":
+          description: Started or still running; ask again after `Retry-After` seconds.
+          headers:
+            Retry-After:
+              description: Seconds to wait before asking again.
+              schema: { type: integer, minimum: 1 }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UncertaintyPending"
+              example:
+                status: computing
+                clones_done: 12
+                clones: 32
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/Unprocessable"
+        "503":
+          $ref: "#/components/responses/Busy"
+
   /visibility/energy:
     get:
       tags: [visibility]
@@ -756,6 +816,10 @@ paths:
         Artemis III landing requirement, slope under 10° over 100 m (Artemis Human Landing System
         Overview for Space Apps 2025, NTRS 20250009323).
         A DEM this coarse cannot see boulders or craters a few metres across.
+        Where the finest DEM that covers the point is coarser than the radius (LOLA's 237 m global
+        map with the default 100 m), no cell centre lies within `radius_m` and the answer is a 422
+        `dem_too_coarse`, never a made-up Slope; where no DEM covers the point it is a 422
+        `outside_coverage`.
         `permanent_shadow` is left out until the map of permanently shadowed regions is on the
         server.
         Pass either `site_id` or both coordinates, never both, as in `/visibility`.
@@ -792,7 +856,29 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
         "422":
-          $ref: "#/components/responses/Unprocessable"
+          description: >-
+            The Query is outside what the engine covers: `dem_too_coarse` when the finest DEM that
+            covers the point has no cell centre within `radius_m`, `outside_coverage` when no DEM
+            covers the point, and the Site problems of `/visibility`.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+              examples:
+                no-dem-covers-the-point:
+                  value:
+                    type: https://lunar-api.luizfbm.win/problems/outside-coverage
+                    title: Outside coverage
+                    status: 422
+                    detail: "No DEM covers 100 m around this Site (LDEM_128: LDEM_128 not found)."
+                    code: outside_coverage
+                dem-too-coarse-for-the-radius:
+                  value:
+                    type: https://lunar-api.luizfbm.win/problems/dem-too-coarse
+                    title: DEM too coarse
+                    status: 422
+                    detail: "The DEM is too coarse for this radius: no cell centre of LDEM_128 (236.9 m) lies within 100 m."
+                    code: dem_too_coarse
 
   /terrain/heights:
     get:
@@ -839,6 +925,8 @@ paths:
           $ref: "#/components/responses/NotFound"
         "422":
           $ref: "#/components/responses/Unprocessable"
+        "503":
+          $ref: "#/components/responses/Busy"
 
   /visibility/dsn:
     get:
@@ -876,6 +964,223 @@ paths:
           $ref: "#/components/responses/Unprocessable"
         "503":
           $ref: "#/components/responses/Busy"
+
+  /rovers:
+    get:
+      tags: [hazard]
+      operationId: listRovers
+      summary: The Rovers a mission can bring
+      description: |
+        Eight Rovers from Eduardo's cockpit catalogue (commit 2195fcb): four for the Moon and four
+        Mars rovers asked "what if it went to the Moon?". Each number has its source in
+        `source_reference`; the ones the source does not give are listed in `estimated` and the
+        screen marks them. `darkness_tolerance_hours` is the GLOSSARY's Darkness tolerance:
+        `battery_wh / (power_shadow_w - rtg_w)`, null when the RTG covers the load.
+      responses:
+        "200":
+          description: Every Rover, Moon ones first.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoverList"
+              examples:
+                catalogue:
+                  $ref: ./examples/rovers.example.json
+
+  /sites/{site_id}/hazard:
+    get:
+      tags: [hazard]
+      operationId: getSiteHazard
+      summary: How much of the steep ground each kind of navigation misses near a Site
+      description: |
+        Eduardo's Monte Carlo over the real LOLA 5 m data (PGDA product 78, Barker et al. 2021):
+        from a coarse grid (60 m or 20 m), how much of the ground steeper than `slope_limit_deg`
+        at 5 m does each navigation miss? Normal navigation reads the coarse grid only;
+        Multiresolution adds the 5 m detail only where the laser really measured (LDEC > 0) and
+        a margin per cell at the chosen Confidence level. Truth is the measured 5 m cells, held out
+        by cross-validation; the true slope of each is drawn `draws` times from Normal(slope, NASA's
+        slope error). Each value comes with its 95% interval.
+
+        The numbers belong to the 10 x 10 km grid nearest the Site (`grid`), not to the Site's own
+        point; `grid.distance_km` says how far its centre is. Sites with no 5 m grid within 15 km
+        answer with `grid: null` and empty `runs`. `measured` is the share of the 5 m cells that
+        hold a real laser shot. Precomputed offline by `validation/hazard/mc_lola.py`; nothing
+        here depends on the Window.
+      parameters:
+        - $ref: "#/components/parameters/SiteIdPath"
+      responses:
+        "200":
+          description: The hazard numbers for the Site's grid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteHazard"
+              examples:
+                ar06:
+                  $ref: ./examples/site-hazard-ar06.example.json
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /sites/{site_id}/hazard/grid:
+    get:
+      tags: [hazard]
+      operationId: getSiteHazardGrid
+      summary: The 10 x 10 km ground grid nearest a Site
+      description: |
+        The central 10 x 10 km of the PGDA 78 tile nearest the Site, as 200 x 200 cells of 50 m,
+        built by Eduardo's `build_map_bundle.py` from the official 5 m layers (surf, ldec, slp,
+        slperr). Arrays are base64, little-endian, row-major, `n` x `n`; row 0 is the +y edge and
+        column 0 the -x edge of the polar stereographic plane, centred on `centre`. Decode each
+        value as described in `encoding`. 422 `no_hazard_grid` when no grid lies within 15 km.
+      parameters:
+        - $ref: "#/components/parameters/SiteIdPath"
+      responses:
+        "200":
+          description: The grid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HazardGrid"
+              examples:
+                ar06-dm1:
+                  $ref: ./examples/hazard-grid-ar06.example.json
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/NoHazardGrid"
+
+  /sites/{site_id}/hazard/around:
+    get:
+      tags: [hazard]
+      operationId: getSiteHazardAround
+      summary: Steep ground within a radius of a point of the grid
+      description: |
+        Counts the 50 m cells of the hazard grid whose centre lies within `radius_m` of the point
+        (`x_m`, `y_m`, metres in the grid's plane; the Site's own offset when left out) and how
+        many of them are steeper than `slope_limit_deg`, read three ways: the 5 m slope (the 90th
+        percentile of the 5 m cells in the block), the 20 m grid and the 60 m grid. It is what the
+        safety circle around the Rover shows. 422 `no_hazard_grid` when no grid lies within 15 km,
+        or `invalid_parameter` when the point is outside the grid.
+      parameters:
+        - $ref: "#/components/parameters/SiteIdPath"
+        - name: x_m
+          in: query
+          schema: { type: number, minimum: -5000, maximum: 5000 }
+        - name: y_m
+          in: query
+          schema: { type: number, minimum: -5000, maximum: 5000 }
+        - name: radius_m
+          in: query
+          schema: { type: number, minimum: 50, maximum: 2000, default: 250 }
+        - $ref: "#/components/parameters/SlopeLimit"
+      responses:
+        "200":
+          description: The count.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HazardAround"
+              examples:
+                ar06:
+                  $ref: ./examples/hazard-around-ar06.example.json
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/NoHazardGrid"
+
+  /sites/{site_id}/route:
+    get:
+      tags: [hazard]
+      operationId: getSiteRoute
+      summary: A drive across the grid, planned by Normal navigation and by Multiresolution
+      description: |
+        Plans the same drive twice on the Site's hazard grid with Eduardo's A* planner
+        (`planGridAStar`, ported from `rover_tese_engine.js`): Normal navigation sees only the
+        coarse grid (`coarse_m`); Multiresolution sees the 5 m slope, the laser density and the
+        margin at `confidence_level`. Each plan is then driven at 50 m steps and scored against the
+        5 m slope: `hazards_hit` counts waypoints steeper than the Rover's slope limit.
+
+        The Rover is `rover_id` from `/rovers`, or the numbers given one by one (`slope_limit_deg`,
+        `battery_wh`, `power_shadow_w`, `solar_w`, `rtg_w`), which override the catalogue's.
+        `sun_fraction` is the Sun fraction the panels get during the drive, usually the Site's at
+        the Cursor. The planner's costs, the speed and the battery model are Eduardo's and are not
+        from a paper: `assumptions` lists every one of them.
+
+        `swarm` (with `swarm=true`) is an illustration for the animation, not a result: 100
+        agents per generation are blended toward the Multiresolution path as the generations go,
+        and the first two generations die on a lowered slope limit. Its survival counts are not
+        evidence for either navigation. `solar_points` are sunlit-facing spots along the path,
+        by Eduardo's local hillshade rule with the Sun at `sun_azimuth_deg`, for the animation
+        only; they carry no energy.
+
+        422 `no_hazard_grid` when no grid lies within 15 km, `invalid_parameter` for a start or
+        goal outside the grid.
+      parameters:
+        - $ref: "#/components/parameters/SiteIdPath"
+        - name: rover_id
+          in: query
+          schema: { type: string, default: viper }
+        - $ref: "#/components/parameters/SlopeLimit"
+        - name: battery_wh
+          in: query
+          schema: { type: number, exclusiveMinimum: 0, maximum: 100000 }
+        - name: power_shadow_w
+          in: query
+          schema: { type: number, minimum: 0, maximum: 10000 }
+        - name: solar_w
+          in: query
+          schema: { type: number, minimum: 0, maximum: 10000 }
+        - name: rtg_w
+          in: query
+          schema: { type: number, minimum: 0, maximum: 10000 }
+        - name: start_x_m
+          in: query
+          description: Start, metres in the grid's plane. The Site's own offset when left out.
+          schema: { type: number, minimum: -5000, maximum: 5000 }
+        - name: start_y_m
+          in: query
+          schema: { type: number, minimum: -5000, maximum: 5000 }
+        - name: goal_x_m
+          in: query
+          description: Goal, metres in the grid's plane. 1400 m east and 1100 m north of the start when left out.
+          schema: { type: number, minimum: -5000, maximum: 5000 }
+        - name: goal_y_m
+          in: query
+          schema: { type: number, minimum: -5000, maximum: 5000 }
+        - name: coarse_m
+          in: query
+          description: The grid Normal navigation reads.
+          schema: { type: integer, enum: [60, 20], default: 60 }
+        - name: confidence_level
+          in: query
+          schema:
+            $ref: "#/components/schemas/ConfidenceLevelName"
+        - name: sun_fraction
+          in: query
+          schema: { type: number, minimum: 0, maximum: 1, default: 0.5 }
+        - name: sun_azimuth_deg
+          in: query
+          description: >-
+            The Sun's azimuth at the Site (clockwise from local north), usually the one at the Cursor.
+            Only `solar_points` use it; without it `solar_points` is empty.
+          schema: { type: number, minimum: 0, exclusiveMaximum: 360 }
+        - name: swarm
+          in: query
+          schema: { type: boolean, default: false }
+      responses:
+        "200":
+          description: The two plans.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteComparison"
+              examples:
+                ar06-viper:
+                  $ref: ./examples/route-ar06.example.json
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/NoHazardGrid"
 
   /validations:
     get:
@@ -950,6 +1255,14 @@ components:
       required: true
       schema:
         type: string
+    SlopeLimit:
+      name: slope_limit_deg
+      in: query
+      description: The slope above which ground is a hazard for the Rover. The Rover's own limit, or 15°, when left out.
+      schema:
+        type: number
+        exclusiveMinimum: 0
+        maximum: 45
     QuerySiteId:
       name: site_id
       in: query
@@ -1053,6 +1366,20 @@ components:
             status: 422
             detail: Custom Sites must be at or south of 80°S.
             code: outside_coverage
+    NoHazardGrid:
+      description: >-
+        No 5 m hazard grid lies within 15 km of the Site (`no_hazard_grid`), or a point is outside
+        the grid (`invalid_parameter`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: https://lunar-api.luizfbm.win/problems/no-hazard-grid
+            title: No hazard grid
+            status: 422
+            detail: "No 5 m grid lies within 15 km of Site 'MMA01'."
+            code: no_hazard_grid
 
   schemas:
     Problem:
@@ -1066,8 +1393,11 @@ components:
         detail: { type: string }
         code:
           type: string
-          description: Stable machine code the frontend translates.
-          enum: [outside_coverage, window_out_of_range, ambiguous_site, missing_site, invalid_parameter, busy]
+          description: |
+            Stable machine code the frontend translates. `outside_coverage`: no DEM or period
+            covers the asked point. `dem_too_coarse`: a DEM covers the point but is too coarse for
+            the asked radius (`/terrain` only: no cell centre within `radius_m`).
+          enum: [outside_coverage, dem_too_coarse, window_out_of_range, ambiguous_site, missing_site, invalid_parameter, busy, no_hazard_grid]
 
     LocalizedText:
       type: object
@@ -1257,7 +1587,7 @@ components:
                   exclusiveMinimum: 0
                   description: |
                     Apparent radius of the Earth seen from the Observer at this instant, from its
-                    mean radius over its topocentric distance (a sphere, not the ellipsoid's limb),
+                    equatorial radius (6378.1366 km) over its topocentric distance (a sphere, not the ellipsoid's limb),
                     in degrees. Optional for older answers; this server always sends it.
 
     Event:
@@ -1303,14 +1633,26 @@ components:
 
     Metrics:
       type: object
-      required: [sun_and_earth_hours, sunlit_hours, earth_visible_hours, lcip_hours, lcsp_hours, mean_sun_fraction]
+      required: [sun_and_earth_hours, sunlit_hours, earth_visible_hours, earth_visible_hours_any_part, lcip_hours, lcsp_hours, mean_sun_fraction]
       properties:
         sun_and_earth_hours: { type: number, minimum: 0 }
         sunlit_hours:
           type: number
           minimum: 0
           description: Hours with any part of the Sun's disc visible.
-        earth_visible_hours: { type: number, minimum: 0 }
+        earth_visible_hours:
+          type: number
+          minimum: 0
+          description: Hours with the Earth's centre above the Horizon mask (Earth visible).
+        earth_visible_hours_any_part:
+          type: number
+          minimum: 0
+          description: >-
+            Hours with any part of the Earth's disc above the Horizon mask, the rule the Sun
+            already uses. Never less than `earth_visible_hours`, and equal to it when the Earth
+            is wholly up or wholly down for the Window. Shown next to `earth_visible_hours` so a
+            reader comparing with a tool that counts the whole disc sees where the difference
+            comes from; no other metric uses it.
         lcip_hours: { type: number, minimum: 0 }
         lcsp_hours: { type: number, minimum: 0 }
         mean_sun_fraction: { type: number, minimum: 0, maximum: 1 }
@@ -1684,6 +2026,86 @@ components:
             lcip_hours: { $ref: "#/components/schemas/ScatterRange" }
             lcsp_hours: { $ref: "#/components/schemas/ScatterRange" }
             mean_sun_fraction: { $ref: "#/components/schemas/ScatterRange" }
+
+    UncertaintyPending:
+      type: object
+      required: [status, clones_done, clones]
+      properties:
+        status: { type: string, const: computing }
+        clones_done: { type: integer, minimum: 0 }
+        clones: { type: integer, minimum: 1 }
+
+    UncertaintyResult:
+      type: object
+      required: [query, clones, method, error_products, events, metrics]
+      properties:
+        query:
+          $ref: "#/components/schemas/Query"
+        clones:
+          type: integer
+          minimum: 1
+          description: How many versions of the terrain were computed.
+        method:
+          type: string
+          const: dem_error_clones
+        error_products:
+          type: array
+          description: The per-pixel height error products used, by PGDA name, with the DEM each one belongs to.
+          items:
+            type: object
+            required: [dem, error]
+            properties:
+              dem: { type: string }
+              error: { type: string }
+        uncovered:
+          type: array
+          description: DEM products in the Query with no published per-pixel error; their heights are not varied.
+          items: { type: string }
+        events:
+          type: array
+          description: One per Event of the `/visibility` answer, in the same order.
+          items:
+            $ref: "#/components/schemas/EventBand"
+        metrics:
+          type: object
+          required: [sunlit_hours, earth_visible_hours, sun_and_earth_hours, lcsp_hours, mean_sun_fraction]
+          properties:
+            sunlit_hours: { $ref: "#/components/schemas/MetricBand" }
+            earth_visible_hours: { $ref: "#/components/schemas/MetricBand" }
+            sun_and_earth_hours: { $ref: "#/components/schemas/MetricBand" }
+            lcsp_hours: { $ref: "#/components/schemas/MetricBand" }
+            mean_sun_fraction: { $ref: "#/components/schemas/MetricBand" }
+
+    EventBand:
+      type: object
+      required: [type, t, clones_with_event]
+      properties:
+        type:
+          type: string
+          enum: [sunrise, sunset, earthrise, earthset]
+        t:
+          type: string
+          format: date-time
+          description: The Event as `/visibility` gives it, on the DEM itself.
+        earliest:
+          type: string
+          format: date-time
+          description: 5th percentile of the clones' time for this Event. Absent when fewer than half the clones have it.
+        latest:
+          type: string
+          format: date-time
+          description: 95th percentile of the clones' time for this Event. Absent when fewer than half the clones have it.
+        clones_with_event:
+          type: integer
+          minimum: 0
+          description: Clones where this Event happens within the Window at all.
+
+    MetricBand:
+      type: object
+      required: [low, high]
+      properties:
+        low: { type: number, description: 5th percentile across the clones. }
+        high: { type: number, description: 95th percentile across the clones. }
 
     Lander:
       type: object
@@ -2100,3 +2522,500 @@ components:
           description: Hours with the Earth visible from the Site and no antenna with the Moon in view.
         provenance:
           $ref: "#/components/schemas/Provenance"
+
+    ConfidenceLevelName:
+      type: string
+      enum: [P50, P90, P99]
+      default: P90
+      description: Which edge of the margin the Multiresolution shield reads (z = 0, 1.282, 2.326).
+
+    Navigation:
+      type: string
+      enum: [normal, multiresolution]
+      description: >-
+        Normal navigation reads only the coarse grid, with no margin. Multiresolution reads the
+        coarse grid corrected by the 5 m detail where the laser measured, plus a margin per cell.
+
+    RoverList:
+      type: object
+      required: [rovers]
+      properties:
+        rovers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Rover"
+
+    Rover:
+      type: object
+      required:
+        - id
+        - name
+        - body
+        - mass_kg
+        - battery_wh
+        - solar_w
+        - rtg_w
+        - power_shadow_w
+        - mast_height_m
+        - slope_limit_deg
+        - darkness_tolerance_hours
+        - estimated
+        - source_reference
+      properties:
+        id: { type: string, description: "Stable id, such as \"viper\"." }
+        name: { type: string, description: "The Rover's proper name, not translated." }
+        body:
+          type: string
+          enum: [moon, mars]
+          description: Where the Rover was built for. Mars ones are shown as "what if it went to the Moon?".
+        description:
+          $ref: "#/components/schemas/LocalizedText"
+        mass_kg: { type: number, exclusiveMinimum: 0 }
+        battery_wh: { type: number, exclusiveMinimum: 0, description: Stored energy. }
+        solar_w: { type: number, minimum: 0, description: Panel power in full Sun. }
+        rtg_w: { type: number, minimum: 0, description: "Radioisotope power, constant, Sun or not." }
+        power_shadow_w: { type: number, minimum: 0, description: Power draw in shadow. }
+        mast_height_m:
+          type: number
+          exclusiveMinimum: 0
+          description: Height of the mast, a natural Observer height for this Rover.
+        slope_limit_deg: { type: number, exclusiveMinimum: 0, maximum: 45 }
+        darkness_tolerance_hours:
+          type: [number, "null"]
+          minimum: 0
+          description: battery_wh / (power_shadow_w - rtg_w); null when the RTG covers the load.
+        estimated:
+          type: array
+          description: The fields the source does not give, estimated in the catalogue.
+          items: { type: string }
+        source_reference: { type: string }
+
+    HazardInterval:
+      type: object
+      description: A Monte Carlo mean and its 95% interval, as fractions from 0 to 1 or in degrees.
+      required: [mean, low, high]
+      properties:
+        mean: { type: number }
+        low: { type: number }
+        high: { type: number }
+
+    HazardGridRef:
+      type: object
+      description: The PGDA 78 tile whose central 10 x 10 km the numbers come from.
+      required: [id, latitude_deg, longitude_deg, distance_km, site_offset_m, site_inside, lroc]
+      properties:
+        id: { type: string, description: "PGDA 78 tile name, such as \"DM1\"." }
+        latitude_deg: { type: number }
+        longitude_deg: { type: number }
+        distance_km:
+          type: number
+          minimum: 0
+          description: Surface distance from the Site to the grid's centre.
+        site_offset_m:
+          $ref: "#/components/schemas/PlanePoint"
+        site_inside:
+          type: boolean
+          description: The Site falls inside the 10 x 10 km grid.
+        lroc:
+          type: object
+          description: LROC NAC images that cover the grid, from Eduardo's survey of the LROC archive.
+          required: [images_covering, best_resolution_m_px, best_incidence_deg, best_product, viewer_url]
+          properties:
+            images_covering: { type: integer, minimum: 0 }
+            best_resolution_m_px: { type: [number, "null"] }
+            best_incidence_deg: { type: [number, "null"] }
+            best_product: { type: [string, "null"] }
+            viewer_url: { type: [string, "null"], format: uri }
+
+    PlanePoint:
+      type: object
+      description: Metres in the polar stereographic plane, from the grid's centre (+x, +y as the tile's axes).
+      required: [x_m, y_m]
+      properties:
+        x_m: { type: number }
+        y_m: { type: number }
+
+    HazardTileStats:
+      type: object
+      description: The central 10 x 10 km at 5 m, before resampling.
+      required:
+        - elevation_min_m
+        - elevation_max_m
+        - slope_median_deg
+        - slope_p90_deg
+        - slope_max_deg
+        - over_limit_fraction_5m
+        - over_limit_fraction_20m
+        - over_limit_fraction_60m
+        - slope_error_median_deg
+      properties:
+        elevation_min_m: { type: number }
+        elevation_max_m: { type: number }
+        slope_median_deg: { type: number }
+        slope_p90_deg: { type: number }
+        slope_max_deg: { type: number }
+        over_limit_fraction_5m: { type: number, minimum: 0, maximum: 1, description: Share steeper than 15° at 5 m. }
+        over_limit_fraction_20m: { type: number, minimum: 0, maximum: 1 }
+        over_limit_fraction_60m: { type: number, minimum: 0, maximum: 1 }
+        slope_error_median_deg: { type: number, minimum: 0, description: Median of NASA's slope error layer. }
+
+    HazardMeasured:
+      type: object
+      description: Share of 5 m cells with a real laser shot (LDEC > 0); the rest is interpolated.
+      required: [ellipse_fraction, grid_fraction]
+      properties:
+        ellipse_fraction:
+          type: [number, "null"]
+          minimum: 0
+          maximum: 1
+          description: Inside the Site's 100 m Landing ellipse, from LDEC_875S_5M or the PGDA 78 tile; null without 5 m data.
+        grid_fraction:
+          type: [number, "null"]
+          minimum: 0
+          maximum: 1
+          description: Over the 10 x 10 km grid.
+
+    HazardMethod:
+      type: object
+      required: [navigation, confidence_level, missed_hazard, false_alarm, coverage, mean_abs_error_deg]
+      properties:
+        navigation:
+          $ref: "#/components/schemas/Navigation"
+        confidence_level:
+          description: The margin's level; null for Normal navigation, which has none.
+          oneOf:
+            - $ref: "#/components/schemas/ConfidenceLevelName"
+            - type: "null"
+        missed_hazard:
+          description: Unvetoed hazard, the share of the truly steep cells this navigation calls safe.
+          allOf:
+            - $ref: "#/components/schemas/HazardInterval"
+        false_alarm:
+          description: The share of the truly safe cells this navigation blocks.
+          allOf:
+            - $ref: "#/components/schemas/HazardInterval"
+        coverage:
+          description: The share of the truly steep cells this navigation blocks.
+          allOf:
+            - $ref: "#/components/schemas/HazardInterval"
+        mean_abs_error_deg:
+          description: Mean absolute error of the slope it reads, in degrees.
+          allOf:
+            - $ref: "#/components/schemas/HazardInterval"
+
+    HazardTradeOffPoint:
+      type: object
+      required: [false_alarm, missed_hazard]
+      properties:
+        false_alarm: { type: number, minimum: 0, maximum: 1 }
+        missed_hazard: { type: number, minimum: 0, maximum: 1 }
+
+    HazardRun:
+      type: object
+      description: One Monte Carlo run of `mc_lola.py` on the grid, from one coarse grid.
+      required:
+        - coarse_m
+        - cells_checked
+        - draws
+        - folds
+        - seed
+        - methods
+        - trade_off
+        - median_error_deg
+        - paired_tests
+      properties:
+        coarse_m: { type: integer, enum: [60, 20] }
+        cells_checked: { type: integer, minimum: 0, description: Measured 5 m cells used as truth. }
+        draws: { type: integer, minimum: 1 }
+        folds: { type: integer, minimum: 2 }
+        seed: { type: integer }
+        methods:
+          type: array
+          description: Normal navigation, then Multiresolution at P50, P90 and P99 (nominal margin).
+          items:
+            $ref: "#/components/schemas/HazardMethod"
+        trade_off:
+          type: object
+          description: >-
+            Unvetoed hazard at the same false alarm (5, 10, 15, 20, 25 and 30%), with a uniform
+            margin on each navigation: the fair comparison.
+          required: [normal, multiresolution]
+          properties:
+            normal:
+              type: array
+              items:
+                $ref: "#/components/schemas/HazardTradeOffPoint"
+            multiresolution:
+              type: array
+              items:
+                $ref: "#/components/schemas/HazardTradeOffPoint"
+        median_error_deg:
+          type: object
+          required: [normal, multiresolution]
+          properties:
+            normal: { type: number, minimum: 0 }
+            multiresolution: { type: number, minimum: 0 }
+        paired_tests:
+          type: object
+          description: McNemar on the steep cells (b only Normal blocks, c only Multiresolution blocks) and Wilcoxon on the absolute errors.
+          required: [mcnemar_b, mcnemar_c, mcnemar_p, wilcoxon_p, wilcoxon_n]
+          properties:
+            mcnemar_b: { type: integer, minimum: 0 }
+            mcnemar_c: { type: integer, minimum: 0 }
+            mcnemar_p: { type: number, minimum: 0, maximum: 1 }
+            wilcoxon_p: { type: number, minimum: 0, maximum: 1 }
+            wilcoxon_n: { type: integer, minimum: 0 }
+
+    SiteHazard:
+      type: object
+      required: [site_id, slope_limit_deg, grid, measured, stats, runs, source_reference]
+      properties:
+        site_id: { type: string }
+        slope_limit_deg:
+          type: number
+          description: The slope the Monte Carlo counted as a hazard (15°).
+        grid:
+          description: The grid the numbers belong to; null when no grid lies within 15 km.
+          oneOf:
+            - $ref: "#/components/schemas/HazardGridRef"
+            - type: "null"
+        measured:
+          $ref: "#/components/schemas/HazardMeasured"
+        stats:
+          description: The grid's terrain at 5 m; null without a grid.
+          oneOf:
+            - $ref: "#/components/schemas/HazardTileStats"
+            - type: "null"
+        runs:
+          type: array
+          description: From the 60 m grid, then from the 20 m grid. Empty without a grid.
+          items:
+            $ref: "#/components/schemas/HazardRun"
+        source_reference: { type: string }
+
+    HazardGridEncoding:
+      type: object
+      description: How to turn the stored integers into values.
+      required: [elevation, slope_5m, slope_20m, slope_60m, slope_error, ldec]
+      properties:
+        elevation: { type: string, example: "int16, decimetres from z_mid_m" }
+        slope_5m: { type: string, example: "uint8, half degrees; 90th percentile of the 5 m slope in the 50 m block" }
+        slope_20m: { type: string }
+        slope_60m: { type: string }
+        slope_error: { type: string }
+        ldec: { type: string }
+
+    HazardGrid:
+      type: object
+      required:
+        - site_id
+        - grid
+        - n
+        - cell_m
+        - span_m
+        - z_mid_m
+        - z_min_m
+        - z_max_m
+        - encoding
+        - elevation_i16
+        - slope_5m_u8
+        - slope_20m_u8
+        - slope_60m_u8
+        - slope_error_u8
+        - ldec_u8
+        - source_reference
+      properties:
+        site_id: { type: string }
+        grid:
+          $ref: "#/components/schemas/HazardGridRef"
+        n: { type: integer, minimum: 2, description: Cells per side. }
+        cell_m: { type: number, exclusiveMinimum: 0 }
+        span_m: { type: number, exclusiveMinimum: 0 }
+        z_mid_m: { type: number, description: Height every elevation value is relative to. }
+        z_min_m: { type: number }
+        z_max_m: { type: number }
+        encoding:
+          $ref: "#/components/schemas/HazardGridEncoding"
+        elevation_i16:
+          type: string
+          contentEncoding: base64
+          description: Mean height of each 50 m block, int16 decimetres from z_mid_m.
+        slope_5m_u8:
+          type: string
+          contentEncoding: base64
+          description: 90th percentile of the 5 m slope in the block, uint8 half degrees.
+        slope_20m_u8:
+          type: string
+          contentEncoding: base64
+          description: Mean slope of the 20 m grid in the block, uint8 half degrees.
+        slope_60m_u8:
+          type: string
+          contentEncoding: base64
+          description: Mean slope of the 60 m grid in the block, uint8 half degrees.
+        slope_error_u8:
+          type: string
+          contentEncoding: base64
+          description: Mean of NASA's slope error in the block, uint8 quarter degrees.
+        ldec_u8:
+          type: string
+          contentEncoding: base64
+          description: Bit 7 set when the block holds a real laser shot; bits 0-6 the local shot density times 127 (Gaussian, σ 50 m).
+        source_reference: { type: string }
+
+    HazardAround:
+      type: object
+      required:
+        - site_id
+        - grid_id
+        - centre
+        - radius_m
+        - slope_limit_deg
+        - cells
+        - over_limit_5m
+        - over_limit_20m
+        - over_limit_60m
+      properties:
+        site_id: { type: string }
+        grid_id: { type: string }
+        centre:
+          $ref: "#/components/schemas/PlanePoint"
+        radius_m: { type: number }
+        slope_limit_deg: { type: number }
+        cells: { type: integer, minimum: 0, description: 50 m cells counted. }
+        over_limit_5m: { type: integer, minimum: 0 }
+        over_limit_20m: { type: integer, minimum: 0 }
+        over_limit_60m: { type: integer, minimum: 0 }
+
+    RouteWaypoint:
+      type: object
+      required: [x_m, y_m, slope_5m_deg, hazard, veto, battery_fraction]
+      properties:
+        x_m: { type: number }
+        y_m: { type: number }
+        slope_5m_deg: { type: number, minimum: 0 }
+        hazard: { type: boolean, description: Steeper than the Rover's slope limit at 5 m. }
+        veto: { type: boolean, description: The shield blocked the straight line to the goal here (Multiresolution only). }
+        battery_fraction: { type: number, minimum: 0, maximum: 1 }
+
+    RoutePlan:
+      type: object
+      required: [navigation, reached, distance_m, duration_hours, hazards_hit, vetoes, battery_min_fraction, path]
+      properties:
+        navigation:
+          $ref: "#/components/schemas/Navigation"
+        reached: { type: boolean, description: The path ends within 120 m of the goal. }
+        distance_m: { type: number, minimum: 0 }
+        duration_hours: { type: number, minimum: 0 }
+        hazards_hit: { type: integer, minimum: 0 }
+        vetoes: { type: integer, minimum: 0 }
+        battery_min_fraction: { type: number, minimum: 0, maximum: 1 }
+        path:
+          type: array
+          description: Waypoints every 50 m along the planned path.
+          items:
+            $ref: "#/components/schemas/RouteWaypoint"
+
+    RouteRover:
+      type: object
+      description: The Rover numbers the plan used, after the query's overrides.
+      required: [rover_id, slope_limit_deg, battery_wh, power_shadow_w, solar_w, rtg_w]
+      properties:
+        rover_id: { type: [string, "null"] }
+        slope_limit_deg: { type: number }
+        battery_wh: { type: number }
+        power_shadow_w: { type: number }
+        solar_w: { type: number }
+        rtg_w: { type: number }
+
+    SwarmAgent:
+      type: object
+      required: [dead, path]
+      properties:
+        dead: { type: boolean }
+        path:
+          type: array
+          description: "[x_m, y_m] pairs, up to where the agent stopped."
+          items:
+            type: array
+            minItems: 2
+            maxItems: 2
+            items: { type: number }
+
+    SwarmGeneration:
+      type: object
+      required: [generation, survivors, agents]
+      properties:
+        generation: { type: integer, minimum: 1 }
+        survivors: { type: integer, minimum: 0 }
+        agents:
+          type: array
+          items:
+            $ref: "#/components/schemas/SwarmAgent"
+
+    Swarm:
+      type: object
+      description: An illustration for the animation, not a result (see the route's description).
+      required: [illustration, agents_per_generation, generations]
+      properties:
+        illustration: { type: boolean, const: true }
+        agents_per_generation: { type: integer, minimum: 1 }
+        generations:
+          type: array
+          items:
+            $ref: "#/components/schemas/SwarmGeneration"
+
+    RouteComparison:
+      type: object
+      required:
+        - site_id
+        - grid_id
+        - rover
+        - coarse_m
+        - confidence_level
+        - sun_fraction
+        - start
+        - goal
+        - plans
+        - hazards_avoided
+        - assumptions
+        - swarm
+        - solar_points
+      properties:
+        site_id: { type: string }
+        grid_id: { type: string }
+        rover:
+          $ref: "#/components/schemas/RouteRover"
+        coarse_m: { type: integer, enum: [60, 20] }
+        confidence_level:
+          $ref: "#/components/schemas/ConfidenceLevelName"
+        sun_fraction: { type: number, minimum: 0, maximum: 1 }
+        start:
+          $ref: "#/components/schemas/PlanePoint"
+        goal:
+          $ref: "#/components/schemas/PlanePoint"
+        plans:
+          type: array
+          minItems: 2
+          maxItems: 2
+          description: Normal navigation first, then Multiresolution.
+          items:
+            $ref: "#/components/schemas/RoutePlan"
+        hazards_avoided:
+          type: integer
+          minimum: 0
+          description: Normal's hazards_hit minus Multiresolution's, never below 0.
+        assumptions:
+          type: object
+          description: >-
+            Every planner and battery number that is Eduardo's choice rather than a measurement or
+            a published value, by name, so the screen can say so.
+          additionalProperties: { type: number }
+        swarm:
+          oneOf:
+            - $ref: "#/components/schemas/Swarm"
+            - type: "null"
+        solar_points:
+          type: array
+          description: Sunlit-facing spots along the path, for the animation only.
+          items:
+            $ref: "#/components/schemas/PlanePoint"

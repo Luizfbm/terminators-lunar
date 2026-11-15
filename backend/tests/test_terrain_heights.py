@@ -12,24 +12,27 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
-from tests.synthetic_dem import POLAR, R, eqc_latlon, polar_xy, write_dem
-from tests.test_global_dem import CELL_DEG, _write_global
+from tests.synthetic_dem import POLAR, R, polar_xy, write_dem
 
 client = TestClient(app)
 W20, W80, W240 = "LDEM_80S_20MPP_ADJ", "LDEM_80S_80MPP_ADJ", "LDEM_60S_240MPP_ADJ"
 POLE_SITE = (-89.9, 30.0)
 
 
-def _heights(payload: dict[str, Any]) -> np.ndarray:
+def _heights(payload: dict[str, Any]) -> npt.NDArray[np.float64]:
     """The grid's heights in metres, decoded as the contract says."""
     grid = payload["heights"]
     size = payload["size_px"]
     values = np.asarray(grid["values"], dtype=np.float64).reshape(size, size)
-    return grid["at_0_m"] + values / 65535.0 * (grid["at_65535_m"] - grid["at_0_m"])
+    decoded: npt.NDArray[np.float64] = grid["at_0_m"] + values / 65535.0 * (
+        grid["at_65535_m"] - grid["at_0_m"]
+    )
+    return decoded
 
 
 def _centres(payload: dict[str, Any]) -> tuple[np.ndarray, np.ndarray]:
@@ -47,51 +50,6 @@ def _ask(**params: Any) -> Any:
 def _bowl(x: Any, y: Any) -> Any:
     """Uneven polar ground: a bowl around the pole, so every pixel has its own height."""
     return 1e-6 * (x * x + y * y) + 0.01 * x - 0.02 * y
-
-
-def test_a_point_on_the_equator_gets_the_global_dems_own_pixels(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    # Heights vary with longitude only: 1 km times the sine of the cell centre's longitude.
-    _write_global(tmp_path, lambda lon: 1_000.0 * np.sin(lon))
-    monkeypatch.setenv("LUNAR_DEM_DIR", str(tmp_path))
-    answer = _ask(latitude_deg=0.1, longitude_deg=100.0, half_extent_m=20_000)
-    assert answer.status_code == 200
-    payload = answer.json()
-    assert payload["dem"] == {"product": "LDEM_128", "resolution_m": 236.9}
-    assert payload["projection"] == "equirectangular"
-    assert payload["center_longitude_deg"] == 180.0
-    cell = R * math.radians(CELL_DEG)
-    assert payload["metres_per_pixel"] == pytest.approx(cell, rel=1e-12)
-    # 20 km is under three 7.6 km cells: three on each side of the Site's own.
-    assert payload["size_px"] == 2 * math.ceil(20_000 / cell) + 1
-    xs, ys = _centres(payload)
-    expected = np.array([1_000.0 * math.sin(math.radians(eqc_latlon(x, 0.0)[1])) for x in xs])
-    got = _heights(payload)
-    quantum = payload["heights"]["quantum_m"]
-    assert np.max(np.abs(got - expected[np.newaxis, :])) <= quantum / 2 + 1e-9
-    # The Site sits in the middle pixel.
-    middle = payload["size_px"] // 2
-    lat, lon = eqc_latlon(xs[middle], ys[middle])
-    assert abs(lon - 100.0) <= CELL_DEG / 2 + 1e-9
-    assert abs(lat - 0.1) <= CELL_DEG / 2 + 1e-9
-
-
-def test_a_grid_across_0e_reads_on_from_the_other_edge_of_the_map(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Before the window wrapped, a grid around 0°E ran off the map and was a 422."""
-    _write_global(tmp_path, lambda lon: 1_000.0 * np.sin(lon))
-    monkeypatch.setenv("LUNAR_DEM_DIR", str(tmp_path))
-    payload = _ask(latitude_deg=0.0, longitude_deg=0.3, half_extent_m=20_000).json()
-    xs, _ = _centres(payload)
-    # x runs on past -pi R, continuous: the western columns are west of 0°E.
-    assert xs[0] < -math.pi * R < xs[-1]
-    assert np.all(np.diff(xs) > 0)
-    expected = np.array([1_000.0 * math.sin(math.radians(eqc_latlon(x, 0.0)[1])) for x in xs])
-    assert expected[0] < 0 < expected[-1]
-    got = _heights(payload)
-    assert np.max(np.abs(got - expected[np.newaxis, :])) <= payload["heights"]["quantum_m"] / 2 + 1e-9
 
 
 def _polar_dems(folder: Path, *, with_20: bool = True) -> None:
@@ -174,14 +132,16 @@ def test_with_no_dem_under_the_grid_the_answer_is_a_422_and_never_flat_ground(
 
 def test_the_site_is_asked_for_as_in_visibility() -> None:
     assert _ask().json()["code"] == "missing_site"
-    assert _ask(site_id="001", latitude_deg=-89.9, longitude_deg=0).json()["code"] == "ambiguous_site"
+    assert (
+        _ask(site_id="001", latitude_deg=-89.9, longitude_deg=0).json()["code"] == "ambiguous_site"
+    )
     assert _ask(latitude_deg=-89.9).json()["code"] == "ambiguous_site"
     assert _ask(site_id="NOPE").status_code == 404
     assert _ask(site_id="001", half_extent_m=500).status_code == 422
     assert _ask(site_id="001", half_extent_m=30_001).status_code == 422
 
 
-def test_without_the_global_map_a_typed_point_north_of_80s_is_outside_coverage(
+def test_a_typed_point_north_of_80s_is_outside_coverage(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _polar_dems(tmp_path)
