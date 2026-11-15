@@ -1036,7 +1036,8 @@ paths:
         agents per generation are blended toward the Multiresolution path as the generations go,
         and the first two generations die on a lowered slope limit. Its survival counts are not
         evidence for either navigation. `solar_points` are sunlit-facing spots along the path,
-        by Eduardo's local hillshade rule, for the animation only.
+        by Eduardo's local hillshade rule with the Sun at `sun_azimuth_deg`, for the animation
+        only; they carry no energy.
 
         422 `no_hazard_grid` when no grid lies within 15 km, `invalid_parameter` for a start or
         goal outside the grid.
@@ -1083,6 +1084,12 @@ paths:
         - name: sun_fraction
           in: query
           schema: { type: number, minimum: 0, maximum: 1, default: 0.5 }
+        - name: sun_azimuth_deg
+          in: query
+          description: >-
+            The Sun's azimuth at the Site (clockwise from local north), usually the one at the Cursor.
+            Only `solar_points` use it; without it `solar_points` is empty.
+          schema: { type: number, minimum: 0, exclusiveMaximum: 360 }
         - name: swarm
           in: query
           schema: { type: boolean, default: false }
