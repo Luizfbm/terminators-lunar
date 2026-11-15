@@ -18,7 +18,7 @@ jobs:
   # the whole run does not fit in one runner's 45 minutes and costs about 400 runner
   # minutes.
   plan:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, lunar-vps]
     outputs:
       shards: ${{ steps.plan.outputs.shards }}
     defaults:
@@ -45,7 +45,7 @@ jobs:
   shard:
     needs: plan
     if: needs.plan.outputs.shards != '[]'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, lunar-vps]
     timeout-minutes: 45
     strategy:
       fail-fast: false
@@ -81,7 +81,7 @@ jobs:
   gate:
     needs: [plan, shard]
     if: always() && needs.plan.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, lunar-vps]
     defaults:
       run:
         working-directory: backend
