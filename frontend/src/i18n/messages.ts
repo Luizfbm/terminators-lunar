@@ -13,6 +13,9 @@ import * as battery from '../components/phase4/battery/strings'
 import * as cursorSun from '../components/cursorSun/strings'
 import * as reach from '../components/phase4/reach/strings'
 import * as horizons from '../components/horizons/strings'
+import * as landingPanel from '../components/landing/panelStrings'
+import * as landingTimeline from '../components/landing/timelineStrings'
+import * as vehiclePicker from '../components/vehiclePicker/strings'
 
 export type Locale = 'en' | 'pt'
 
@@ -31,6 +34,9 @@ export const en = {
   ...cursorSun.en,
   ...reach.en,
   ...horizons.en,
+  ...vehiclePicker.en,
+  ...landingPanel.en,
+  ...landingTimeline.en,
   'app.name': 'Lunar Landing Site Navigator',
   'app.place': 'south pole of the Moon',
   'lang.en': 'English',
@@ -119,7 +125,10 @@ export const en = {
   'planet.uranus': 'Uranus',
   'planet.neptune': 'Neptune',
   'globe.dark': 'in shadow',
-  'globe.unavailable': 'This browser cannot draw the 3D Moon. The answer beside it is complete.',
+  'globe.blocked': 'The browser blocked 3D after a graphics failure. Open the lightweight view. If it remains blocked, close and reopen the browser.',
+  'globe.light': 'Open lightweight graphics',
+  'globe.light.active': 'Lightweight graphics · simplified globe textures',
+  'globe.unavailable': 'The 3D Moon could not start. Try again or reload the page.',
   'ground.label': 'The horizon all around {site}, unrolled, with the Sun and the Earth over it.',
   'ground.caption': 'Terrain around the Site. Heights are stretched so the hills show.',
   'sky.label': 'The sky and the horizon seen from {site}, in 3D, with the Sun and the Earth where they are.',
@@ -175,6 +184,9 @@ export const pt: Record<MessageKey, string> = {
   ...cursorSun.pt,
   ...reach.pt,
   ...horizons.pt,
+  ...vehiclePicker.pt,
+  ...landingPanel.pt,
+  ...landingTimeline.pt,
   'app.name': 'Lunar Landing Site Navigator',
   'app.place': 'polo sul da Lua',
   'lang.en': 'English',
@@ -262,7 +274,10 @@ export const pt: Record<MessageKey, string> = {
   'planet.uranus': 'Urano',
   'planet.neptune': 'Netuno',
   'globe.dark': 'na sombra',
-  'globe.unavailable': 'Este navegador não consegue desenhar a Lua em 3D. A resposta ao lado está completa.',
+  'globe.blocked': 'O navegador bloqueou o 3D após uma falha gráfica. Abra a versão gráfica leve. Se continuar bloqueado, feche e reabra o navegador.',
+  'globe.light': 'Abrir gráficos leves',
+  'globe.light.active': 'Gráficos leves · texturas do globo simplificadas',
+  'globe.unavailable': 'Não foi possível iniciar a Lua em 3D. Tente novamente ou recarregue a página.',
   'ground.label': 'O horizonte em volta de {site}, desenrolado, com o Sol e a Terra sobre ele.',
   'ground.caption': 'Relevo em volta do Local. As alturas estão esticadas para os morros aparecerem.',
   'sky.label': 'O céu e o horizonte vistos de {site}, em 3D, com o Sol e a Terra onde estão.',

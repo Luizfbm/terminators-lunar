@@ -1,3 +1,4 @@
+import './domain/graphicsMode'
 import { StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App'

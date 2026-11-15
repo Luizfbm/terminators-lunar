@@ -1,0 +1,627 @@
+/* The vehicle picker: a window floating over the globe, which stays visible round it.
+   z-index 70 sits above the globe, its menu and the Site picker (60 and 61 in SitePicker.css).
+   The rover row and the data cards follow nasa-2026's hangar (.lu-* in src/cockpit_missao_lunar.html,
+   about lines 1855–1990, commit 9c923e0).
+   The window is light for legibility (white, near opaque, dark text); only the rover stage and the data
+   cards stay dark, since the 3D lighting is tuned for a dark ground. Every text colour below meets WCAG AA
+   (4.5:1) on its background, also with the 5% of globe that shows through the white. */
+
+.vehicle-picker {
+  /* The light window: dark text (17:1 on white), dark grey for secondary text (8:1). */
+  --vp-line: #d5dbe3;
+  --vp-text: #0f1a2a;
+  --vp-muted: #44505f;
+  --vp-error: #b42318;
+  /* The focus ring: a darker teal, so it shows on white (5:1); the dark stage switches it to the bright one. */
+  --vp-ring: #0d7a65;
+  --vp-button: #eef1f5;
+  --vp-button-hover: #dde3ea;
+  --vp-field-line: #7b8594;
+  /* The name in a darker orange: the hangar's #f2a33a is only 2:1 on white, this is 5.8:1. */
+  --vp-name: #9c5204;
+  /* The hangar's orange, its card blue (now opaque) and its light caption colour, for the dark parts. */
+  --vp-orange: #f2a33a;
+  --vp-card: rgba(6, 18, 36, 0.95);
+  --vp-card-line: rgba(255, 255, 255, 0.13);
+  --vp-caption: #c9d6e8;
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: transparent;
+  overflow-y: auto;
+}
+
+.vehicle-picker__window {
+  position: relative;
+  box-sizing: border-box;
+  width: min(760px, 100%);
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin: auto;
+  color: var(--vp-text);
+  /* The same face as the globe's left menu. */
+  font-family: Orbitron, system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid var(--vp-line);
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(15, 26, 42, 0.28);
+}
+
+.vehicle-picker__window *,
+.vehicle-picker__window *::before,
+.vehicle-picker__window *::after {
+  box-sizing: border-box;
+}
+
+.vehicle-picker__window button {
+  font-family: inherit;
+  letter-spacing: inherit;
+}
+
+.vehicle-picker__window :focus-visible {
+  outline: 2px solid var(--vp-ring);
+  outline-offset: 2px;
+}
+
+/* Read by screen readers only: the dialog's title. */
+.vehicle-picker__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Inside the stage's top-right corner, now that the stage is inset in the window. */
+.vehicle-picker__close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 5;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--vp-line);
+  border-radius: 50%;
+  background: var(--vp-button);
+  color: var(--vp-text);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.vehicle-picker__close:hover {
+  background: var(--vp-button-hover);
+}
+
+/* The hangar: a night sky over grey hills and a lit patch of lunar floor. It stays a dark, opaque
+   panel with rounded corners inside the white window, since the 3D lighting is tuned for dark. */
+.vehicle-picker__stage {
+  --vp-ring: #2fd4b1;
+  position: relative;
+  height: 250px;
+  margin: 10px 10px 0;
+  overflow: hidden;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(150, 165, 190, 0) 60%, rgba(150, 165, 190, 0.22) 60%, rgba(20, 26, 36, 0) 85%),
+    linear-gradient(180deg, #020815 0%, #061a33 44%, #10233b 58%, #1a2332 60%, #252b35 100%);
+}
+
+.vehicle-picker__hills {
+  position: absolute;
+  left: 0;
+  top: 40%;
+  width: 100%;
+  height: 20%;
+  pointer-events: none;
+}
+
+/* The four rovers side by side, all in sight; room is left at the sides for the ‹ › buttons. */
+.vehicle-picker__row {
+  position: absolute;
+  inset: 44px 44px 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+}
+
+.vehicle-picker__who {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #fff;
+  cursor: pointer;
+  transform: translateY(var(--y)) scale(var(--s));
+  transform-origin: 50% 85%;
+  /* Dimmed but readable: at 0.55 the dark-hours line fell to about 4.2:1, at 0.7 it is about 6:1. */
+  opacity: 0.7;
+  transition:
+    opacity 0.3s ease,
+    transform 0.35s ease;
+}
+
+.vehicle-picker__who:hover {
+  opacity: 0.9;
+}
+
+.vehicle-picker__who--on {
+  z-index: 2;
+  opacity: 1;
+  transform: translateY(var(--y)) scale(calc(var(--s) * 1.18));
+  cursor: default;
+}
+
+.vehicle-picker__tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-shadow: 0 2px 6px #000;
+}
+
+.vehicle-picker__dot {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(#ffe2a8, var(--vp-orange));
+  box-shadow: 0 0 9px var(--vp-orange);
+}
+
+.vehicle-picker__lv {
+  margin: 2px 0;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--vp-caption);
+  white-space: nowrap;
+}
+
+.vehicle-picker__who--on .vehicle-picker__lv {
+  color: var(--vp-orange);
+  font-weight: 600;
+}
+
+.vehicle-picker__fig {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 72%;
+}
+
+.vehicle-picker__main {
+  position: absolute;
+  inset: 0 0 auto;
+  display: block;
+  height: 69%;
+}
+
+.vehicle-picker__live {
+  display: none;
+}
+
+/* The host of the live canvas fills the picture area of the focused rover. */
+.vehicle-picker__who--on .vehicle-picker__live {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.vehicle-picker__main img,
+.vehicle-picker__main svg,
+.vehicle-picker__live canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.vehicle-picker__main svg {
+  filter: drop-shadow(0 8px 6px rgba(0, 0, 0, 0.45));
+}
+
+.vehicle-picker__who:not(.vehicle-picker__who--on) .vehicle-picker__main img,
+.vehicle-picker__who:not(.vehicle-picker__who--on) .vehicle-picker__main svg {
+  filter: saturate(0.5) brightness(0.8) drop-shadow(0 14px 12px rgba(0, 0, 0, 0.6));
+}
+
+.vehicle-picker__live canvas {
+  filter: drop-shadow(0 16px 16px rgba(0, 0, 0, 0.6));
+  /* A drag turns the rover; it must not scroll the window on a touch screen. */
+  touch-action: none;
+  cursor: grab;
+}
+
+/* The still picture flipped under each rover, fading into the floor. */
+.vehicle-picker__refl {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 66%;
+  display: block;
+  height: 31%;
+  overflow: hidden;
+  opacity: 0.2;
+  pointer-events: none;
+  filter: blur(1px);
+  -webkit-mask-image: linear-gradient(180deg, #000, transparent 85%);
+  mask-image: linear-gradient(180deg, #000, transparent 85%);
+}
+
+.vehicle-picker__refl img {
+  display: block;
+  width: 100%;
+  height: 222%;
+  margin-top: -78%;
+  object-fit: contain;
+  transform: scaleY(-1);
+  transform-origin: 50% 25%;
+}
+
+/* The orange ring on the floor under the focused rover. */
+.vehicle-picker__who--on .vehicle-picker__fig::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 60%;
+  width: 92%;
+  height: 15%;
+  transform: translateX(-50%);
+  border: 2px solid rgba(242, 163, 58, 0.85);
+  border-radius: 50%;
+  box-shadow:
+    0 0 26px rgba(242, 163, 58, 0.5),
+    inset 0 0 20px rgba(242, 163, 58, 0.35);
+  pointer-events: none;
+}
+
+.vehicle-picker__nav {
+  position: absolute;
+  top: 55%;
+  z-index: 4;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--vp-line);
+  border-radius: 50%;
+  transform: translateY(-50%);
+  background: var(--vp-button);
+  color: var(--vp-text);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.vehicle-picker__nav:hover {
+  background: var(--vp-button-hover);
+}
+
+.vehicle-picker__nav--prev {
+  left: 6px;
+}
+
+.vehicle-picker__nav--next {
+  right: 6px;
+}
+
+/* Choose overlaps the bottom of the stage, as in the prototype. */
+.vehicle-picker__pick-wrap {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  justify-content: center;
+  margin-top: -22px;
+}
+
+.vehicle-picker__pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 30px;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  /* A deeper teal than the hangar's, so the white label passes AA (4.9:1 at the top, 7:1 at the bottom). */
+  background: linear-gradient(180deg, #0e7f69, #0a6453);
+  box-shadow:
+    0 6px 18px rgba(13, 122, 101, 0.35),
+    0 0 14px rgba(47, 212, 177, 0.25);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+  transition:
+    filter 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.vehicle-picker__arrow {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.vehicle-picker__pick:hover:not(:disabled) {
+  /* Only a little lighter, so the label stays above 4.5:1. */
+  filter: brightness(1.04);
+  box-shadow:
+    0 8px 22px rgba(13, 122, 101, 0.45),
+    0 0 26px rgba(47, 212, 177, 0.45);
+}
+
+.vehicle-picker__pick:hover:not(:disabled) .vehicle-picker__arrow {
+  transform: translateX(4px);
+}
+
+/* A dark teal ring with a gap: the button straddles the dark stage and the white window, and the ring
+   shows on both (5:1 on white, 3.4:1 on the stage). */
+.vehicle-picker__window .vehicle-picker__pick:focus-visible {
+  outline: 3px solid #0d7a65;
+  outline-offset: 3px;
+  box-shadow: 0 0 18px rgba(47, 212, 177, 0.45);
+}
+
+/* Disabled stays legible on white: dark grey on light grey, 7:1. */
+.vehicle-picker__pick:disabled {
+  background: #dde2e8;
+  color: #3d4856;
+  box-shadow: none;
+  text-shadow: none;
+  cursor: not-allowed;
+  filter: none;
+}
+
+/* The figures of the focused rover, in the hangar's blue cards. */
+.vehicle-picker__info {
+  margin: 14px 12px 0;
+}
+
+.vehicle-picker__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+
+.vehicle-picker__st {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 9px;
+  border: 1px solid var(--vp-card-line);
+  border-radius: 12px;
+  background: var(--vp-card);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.vehicle-picker__icon {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  color: var(--vp-orange);
+}
+
+/* The value reads first, its caption under it; in the markup dt still comes before dd. */
+.vehicle-picker__st-text {
+  display: flex;
+  flex-direction: column-reverse;
+  min-width: 0;
+}
+
+.vehicle-picker__st dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--vp-orange);
+  white-space: nowrap;
+}
+
+.vehicle-picker__unit {
+  font-size: 10px;
+  color: #fff;
+}
+
+.vehicle-picker__st dt {
+  font-size: 9.5px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--vp-caption);
+}
+
+.vehicle-picker__about {
+  padding: 10px 4px 0;
+}
+
+.vehicle-picker__name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--vp-name);
+  overflow-wrap: anywhere;
+}
+
+.vehicle-picker__desc {
+  margin: 4px 0 0;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--vp-text);
+}
+
+/* No opacity: a faded grey would drop under 4.5:1 at this small size. */
+.vehicle-picker__source {
+  margin: 4px 0 0;
+  font-size: 9.5px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--vp-muted);
+}
+
+.vehicle-picker__dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 14px 18px 6px;
+}
+
+.vehicle-picker__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  font-size: 10.5px;
+}
+
+/* The fields use the system face: Orbitron is too wide for a date and a time side by side. */
+.vehicle-picker__input {
+  width: 100%;
+  min-width: 0;
+  padding: 6px;
+  /* The border is 3.7:1 on white, so the field's edge is seen (AA asks 3:1 for it). */
+  border: 1px solid var(--vp-field-line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--vp-text);
+  font: 500 12.5px system-ui, sans-serif;
+  letter-spacing: 0;
+  /* Light, so the browser's own picker icon and pop-up match the white window. */
+  color-scheme: light;
+}
+
+.vehicle-picker__window .vehicle-picker__input:focus-visible {
+  outline: 2px solid var(--vp-ring);
+  outline-offset: 1px;
+}
+
+.vehicle-picker__input[aria-invalid='true'] {
+  border-color: var(--vp-error);
+  box-shadow: 0 0 0 1px var(--vp-error);
+}
+
+.vehicle-picker__hint {
+  min-height: 34px;
+  margin: 0;
+  padding: 0 18px 16px;
+  font-size: 9.5px;
+  font-weight: 500;
+  color: var(--vp-muted);
+}
+
+.vehicle-picker__hint--error {
+  color: var(--vp-error);
+}
+
+/* The time-zone line stays muted even under an error. */
+.vehicle-picker__zone {
+  color: var(--vp-muted);
+}
+
+/* On a phone the row gets shorter, the dark-hours line may wrap, the cards go 3 then 2 per row
+   with the icon above the value, and the description goes (the source note stays: it carries the *). */
+@media (max-width: 560px) {
+  .vehicle-picker__stage {
+    height: 200px;
+    margin: 8px 8px 0;
+  }
+
+  .vehicle-picker__row {
+    inset: 40px 34px 0;
+  }
+
+  .vehicle-picker__tag {
+    gap: 4px;
+    font-size: 10px;
+  }
+
+  .vehicle-picker__dot {
+    width: 7px;
+    height: 7px;
+  }
+
+  .vehicle-picker__lv {
+    font-size: 8.5px;
+    line-height: 1.2;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .vehicle-picker__nav {
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+  }
+
+  .vehicle-picker__nav--prev {
+    left: 3px;
+  }
+
+  .vehicle-picker__nav--next {
+    right: 3px;
+  }
+
+  .vehicle-picker__st {
+    flex: 1 1 calc((100% - 16px) / 3);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 7px 8px;
+  }
+
+  .vehicle-picker__icon {
+    flex-basis: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .vehicle-picker__st dd {
+    font-size: 13px;
+  }
+
+  .vehicle-picker__desc {
+    display: none;
+  }
+}
+
+/* On a very narrow phone the two fields stack, so a date and a time still fit. */
+@media (max-width: 340px) {
+  .vehicle-picker__dates {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vehicle-picker__who,
+  .vehicle-picker__pick,
+  .vehicle-picker__arrow {
+    transition: none;
+  }
+
+  .vehicle-picker__pick:hover:not(:disabled) .vehicle-picker__arrow {
+    transform: none;
+  }
+}

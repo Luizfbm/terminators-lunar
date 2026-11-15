@@ -1,3 +1,4 @@
+import { ownRenderer, releaseRenderer } from './rendererLifetime'
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import type { VisibilityResult } from '../api/client'
@@ -192,6 +193,7 @@ export function Sky({
       // The ground starts two metres from the eye and the stars are far beyond the horizon:
       // a logarithmic depth buffer keeps both sharp.
       renderer = new THREE.WebGLRenderer({ canvas: target, antialias: true, logarithmicDepthBuffer: true })
+      ownRenderer(renderer)
     } catch {
       // The check for WebGL passed and the context still failed: the ground view falls back to its flat drawing.
       latest.current.onFailed?.()
@@ -214,6 +216,7 @@ export function Sky({
     // No halo on the Sun here (issue 104): at its true angular size it would hide where the limb is.
     // The Earth is a ball lit from where the Sun is, so it shows the phase it has from here.
     const earthMaterial = makeEarthMaterial()
+
     // The map arrives after the first frames; until then, and without it, the Earth is its plain blue.
     let earthMap: THREE.Texture | null = null
     loadEarthMap(
@@ -788,7 +791,8 @@ export function Sky({
       for (const on of [fine, wide, site, patch]) on.material.map?.dispose()
       grain.dispose()
       earthMap?.dispose()
-      renderer.dispose()
+      releaseRenderer(renderer)
+
     }
   }, [])
 

@@ -1,0 +1,12 @@
+.strip-count { display: block; color: var(--fg); font-size: 11px; line-height: 1.4; text-align: right; grid-column: 1 / -1; }
+.strip-count--lost { color: #f5a9a9; }
+.strip-count--battery span + span { margin-left: 10px; }
+.strip__row:has(.strip-count) { height: auto; grid-template-rows: 12px auto; min-height: 28px; row-gap: 3px; }
+.strip__row > .strip-count { width: 100%; }
+.strip-note { line-height: 1.5; }
+.strip-note__retry { color: inherit; background: transparent; border: 1px solid currentColor; border-radius: 4px; cursor: pointer; }
+.landing-panel { --landing-panel-bottom: 72px; }
+
+.strip__cursor-axis { position: absolute; inset: 0 0 0 3.5rem; pointer-events: none; }
+.strip__cursor-axis .strip__cursor { margin-left: -1px; }
+.strip__row.charge-row:has(.strip-count) { grid-template-rows: 24px auto; }

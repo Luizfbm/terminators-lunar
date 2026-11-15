@@ -11,10 +11,20 @@ import type { GroundMark } from './components/Ground'
 import { GroundView, prepareGround } from './components/GroundView'
 import type { GlobeLanding, GlobeSite } from './components/Globe'
 import { StageStatus } from './components/stageStatus/StageStatus'
+import VehiclePicker, { type VehiclePick } from './components/vehiclePicker/VehiclePicker'
+import { toChoiceWindow, toLocalInput } from './components/vehiclePicker/pickWindow'
 import { limitText } from './components/stageStatus/format'
 import { STRINGS as STAGE_STRINGS } from './components/stageStatus/strings'
 import { ClassroomSheet } from './components/phase4/classroom/Sheet'
 import { Proof } from './components/Proof'
+import { VEHICLES, type Vehicle } from './components/vehiclePicker/vehicles'
+import { precisionContext } from './components/precision/context'
+import { PrecisionPanel } from './components/precision/PrecisionPanel'
+import { Level3Selection } from './components/exploration/Level3Selection'
+import { LandingInspector, type ExplorationPick } from './components/exploration/LandingInspector'
+import { insideLevel3, LEVEL3_EDGE } from './components/exploration/area'
+const SurfaceExploration = lazy(() => import('./components/exploration/SurfaceExploration').then(m => ({ default: m.SurfaceExploration })))
+import { LandingPanel } from './components/landing/LandingPanel'
 import { TimeStrip } from './components/TimeStrip'
 import { siteName } from './components/siteName'
 import { Where } from './components/Where'
@@ -78,16 +88,20 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
   const link = useMemo(() => readLink(window.location.search), [])
   // A Curated Site by its code, a custom Site by its coordinate, or null for the default Site.
   const [siteRef, setSiteRef] = useState<SiteRef | null>(link.site)
-  const [choice, setChoice] = useState<Choice>({ startDay: link.startDay, hours: link.hours, heightM: link.heightM })
+  const [choice, setChoice] = useState<Choice>({ startDay: link.startDay, startTime: link.startTime ?? null, hours: link.hours, heightM: link.heightM })
   // The view asked for, and the move between the globe and the ground towards it (the requirement).
   const [stage, move] = useReducer(stepStage, link.view, (start: View) =>
     startStage(start, window.matchMedia('(prefers-reduced-motion: reduce)').matches),
   )
+  const [level3, setLevel3] = useState(false)
+  const [inspectPlace, setInspectPlace] = useState<GlobeLanding | null>(null)
+  const [explorationPick, setExplorationPick] = useState<ExplorationPick | null>(null)
   const view = stage.wanted
   // Back from the ground goes to the exploration view the visitor came from: the orbit or the polar map.
   const explorationView = useRef<'orbit' | 'map'>(link.view === 'map' ? 'map' : 'orbit')
   const setView = useCallback((next: View) => {
     if (next !== 'ground') explorationView.current = next
+    if (next === 'orbit') setLevel3(false)
     move({ type: 'want', view: next })
   }, [])
   const scenes = scenesOf(stage)
@@ -97,6 +111,7 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
   if (scenes.globeShown && !globeSeen) setGlobeSeen(true)
   const globeMounted = globeSeen || scenes.globeShown
   const [page, setPage] = useState<Page>(link.page)
+  const [precisionOpen, setPrecisionOpen] = useState<string | null>(null)
   const [stats, setStats] = useState(link.stats)
   // The drawer of details, in Larissa's layout (the default): its open state goes in the link as `details=1`.
   const [detailsOpen, setDetailsOpen] = useState(link.classic !== true && link.details === true)
@@ -140,6 +155,45 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
     },
     [siteRef],
   )
+  // Before a landing from Level 2 (the south pole in detail), a window asks for the vehicle and the days.
+  // The selected vehicle supplies the backend energy model; the dates set the Query Window.
+  // Level 1 lands directly without carrying over the previous vehicle.
+  const [picking, setPicking] = useState<GlobeLanding | null>(null)
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null)
+  const [beforeLanding, setBeforeLanding] = useState<{ vehicle: Vehicle | null; choice: Choice; exploration: ExplorationPick | null } | null>(null)
+  const askToLand = useCallback(
+    (place: GlobeLanding) => {
+      if (level3) {
+        if (insideLevel3(place.lat, place.lon)) setInspectPlace(place)
+        return
+      }
+      setBeforeLanding({ vehicle, choice, exploration: explorationPick })
+      setExplorationPick(null)
+      if (view === 'map') setPicking(place)
+      else { setVehicle(null); land(place) }
+    },
+    [view, land, vehicle, choice, level3, explorationPick],
+  )
+  const confirmPick = useCallback(
+    (pick: VehiclePick) => {
+      if (!picking) return
+      setVehicle(VEHICLES.find((item) => item.id === pick.vehicle) ?? null)
+      setChoice((current) => ({ ...current, ...toChoiceWindow(pick.start, pick.end) }))
+      land(picking)
+      setPicking(null)
+    },
+    [picking, land],
+  )
+  const confirmExploration = (pick: ExplorationPick) => {
+    setBeforeLanding({ vehicle, choice, exploration: explorationPick })
+    setVehicle(pick.vehicle)
+    setChoice(current => ({ ...current, ...toChoiceWindow(pick.start, pick.end) }))
+    setMovedCursor(Date.parse(new Date(pick.start).toISOString()))
+    setExplorationPick(pick)
+    setInspectPlace(null)
+    land({ lat: pick.area.site.latitude_deg, lon: pick.area.site.longitude_deg, name: inspectPlace?.name ?? null })
+  }
+  const enterLevel3 = () => { setPlaying(false); setPrecisionOpen(null); setLevel3(true); setView('map') }
   const landingNow = landingPhase(landing, siteKey(siteRef), state.status)
   // Settled while rendering, like `globeSeen` above: the answer for the landing place is in, so down to
   // the ground there; or another Site was asked for meanwhile, so the landing is dropped.
@@ -148,9 +202,12 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
     if (landingNow === 'arrived') move({ type: 'want', view: 'ground' })
   }
   const cancelLanding = useCallback(() => {
-    if (landing) setSiteRef(landing.previous)
+    if (landing) {
+      setSiteRef(landing.previous)
+      if (beforeLanding) { setVehicle(beforeLanding.vehicle); setChoice(beforeLanding.choice); setExplorationPick(beforeLanding.exploration) }
+    }
     setLanding(null)
-  }, [landing])
+  }, [landing, beforeLanding])
 
   const answered = state.status === 'ready' ? state.answer : state.last
   // Right after the first answer the view from the ground is fetched in the background, so a
@@ -189,6 +246,10 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
   }, [phase, still])
   const answer = useMemo(() => (answered ? named(answered, i18n) : null), [answered, i18n])
   const result = answer?.result ?? null
+  // A new Query or view closes the analysis permanently, even if the user later returns to it.
+  if (precisionOpen !== null && (state.status !== 'ready' || !result || precisionOpen !== precisionContext(result.query, view))) {
+    setPrecisionOpen(null)
+  }
   const startMs = result ? Date.parse(result.query.start) : 0
   const endMs = result ? Date.parse(result.query.end) : 0
   const cursorMs = result
@@ -258,6 +319,10 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [sites, globeSite?.id],
   )
+  const level3Sites = useMemo(() => level3 ? globeSites.filter(s => insideLevel3(s.latitude_deg, s.longitude_deg)) : globeSites, [globeSites, level3])
+  const surfacePick = level3 && explorationPick && site &&
+    Math.abs(site.latitude_deg - explorationPick.area.site.latitude_deg) < 0.00001 &&
+    Math.abs(site.longitude_deg - explorationPick.area.site.longitude_deg) < 0.00001 ? explorationPick : null
   const sky = result ? sampleAt(result.timeline.samples, cursorMs) : null
   const overhead = result?.sub_points ? subPointsAt(result.sub_points.samples, cursorMs) : null
   const sunUp = result ? isUp('sun', result.periods, result.events, cursorMs) : false
@@ -393,7 +458,7 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
           <div className="stage__globe" hidden={!scenes.globeShown}>
           <Suspense fallback={<StageLoading />}>
             <Globe
-              sites={globeSites}
+              sites={level3Sites}
               site={globeSite}
               sun={overhead?.sun ?? null}
               earth={overhead?.earth ?? null}
@@ -405,17 +470,21 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
               label={t('globe.label', { site: site.name, state: t(sunUp ? 'globe.lit' : 'globe.dark') })}
               unavailable={t('globe.unavailable')}
               onSelect={setSiteRef}
-              onLand={land}
               mode={stage.globeMode}
               level={levelOfView(view)}
-              onLevel={setView}
+              onLevel={next => { setLevel3(false); setInspectPlace(null); setView(next) }}
+              onPrecision={enterLevel3}
+              precisionActive={level3}
+              selectionMaxLatitudeDeg={level3 ? LEVEL3_EDGE : undefined}
               dive={scenes.globeDived}
-              paused={!scenes.globeShown}
+              paused={!scenes.globeShown || inspectPlace !== null || picking !== null}
               onDive={(atSite) => {
                 if (atSite) move({ type: 'dived' })
               }}
               occluder={markOnMoon}
-              onPoint={(point) => setSiteRef({ latitudeDeg: point.latitude_deg, longitudeDeg: point.longitude_deg })}
+              onPoint={(point) => level3 ? askToLand({ lat: point.latitude_deg, lon: point.longitude_deg, name: null }) : setSiteRef({ latitudeDeg: point.latitude_deg, longitudeDeg: point.longitude_deg })}
+              onLand={askToLand}
+
               meridianLabels={[
                 '0°',
                 `90°\u00a0${t('sites.hemisphere.E')}`,
@@ -425,6 +494,19 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
             />
           </Suspense>
           </div>
+        )}
+        {level3 && view === 'map' && !landing && <Level3Selection onPick={askToLand} onExit={() => { setLevel3(false); setInspectPlace(null) }} />}
+        {inspectPlace && answer && <LandingInspector key={`${inspectPlace.lat},${inspectPlace.lon}`} place={inspectPlace}
+          coverage={answer.meta.coverage} initialVehicle={vehicle}
+          initialStart={toLocalInput(Date.parse(answer.result.query.start))} initialEnd={toLocalInput(Date.parse(answer.result.query.end))}
+          onClose={() => setInspectPlace(null)} onConfirm={confirmExploration} />}
+        {picking && answer && (
+          <VehiclePicker
+            coverage={answer.meta.coverage}
+            initialStart={toLocalInput(choice.startDay ? Date.parse(`${choice.startDay}T${choice.startTime ?? '00:00'}:00Z`) : openedAt)}
+            onConfirm={confirmPick}
+            onClose={() => setPicking(null)}
+          />
         )}
         {!result && state.status === 'loading' && <StageLoading />}
         {/* The stage says itself what it waits for, and what failed, so it does not depend on the column of answers. */}
@@ -442,10 +524,12 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
             onBackToDefault={() => setSiteRef(null)}
           />
         )}
-        {stage.shown === 'map' && stage.phase === 'idle' && <p className="stage__caption">{t(touchScreen() ? 'map.caption.touch' : 'map.caption')}</p>}
+        {!level3 && stage.shown === 'map' && stage.phase === 'idle' && <p className="stage__caption">{t(touchScreen() ? 'map.caption.touch' : 'map.caption')}</p>}
         {result && scenes.groundMounted && (
           <div className="stage__ground" data-fade={scenes.groundFade ?? undefined} style={{ animationDuration: `${fadeMs(still)}ms` }}>
-            <GroundView result={result} cursorMs={cursorMs} mark={mark} pose={scenes.skyPose} classic={link.classic === true} />
+            {surfacePick ? <Suspense fallback={<StageLoading />}><SurfaceExploration pick={surfacePick} result={result} cursorMs={cursorMs} paused={precisionOpen !== null || view !== 'ground'} /></Suspense>
+              : <GroundView result={result} cursorMs={cursorMs} mark={mark} pose={scenes.skyPose} classic={link.classic === true} />}
+
           </div>
         )}
         {view === 'ground' && (
@@ -458,11 +542,20 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
         {answerProps && link.classic !== true && (
           <AnswerLayer {...answerProps} open={detailsOpen && page === 'answer'} onOpen={setDetailsOpen} stale={state.status === 'loading'} />
         )}
+        {!surfacePick && result && vehicle && view === 'ground' && state.status === 'ready' && (
+          <LandingPanel result={result} siteName={result.query.site.name} vehicle={vehicle} cursorMs={cursorMs}
+            onCursor={(ms) => { setPlaying(false); setMovedCursor(clampCursor(ms, startMs, endMs)) }} />
+        )}
+        {result && state.status === 'ready' && view === 'ground' && <button type="button" className="stage__precision" onClick={surfacePick ? () => { setPlaying(false); setPrecisionOpen(precisionContext(result.query, view)) } : enterLevel3}>{surfacePick ? 'Advanced analysis' : 'Level 3 · Explore'}</button>}
+        {result && precisionOpen === precisionContext(result.query, view) && state.status === 'ready' && (
+          <PrecisionPanel result={result} vehicle={vehicle} onClose={() => setPrecisionOpen(null)} onProof={() => { setPrecisionOpen(null); setPage('proof') }} />
+
+        )}
         {/* Under 900 px wide the foot sits below the picture, never on it (the requirement). */}
         <div className="stage__foot">
           <p className="views">
             {(['orbit', 'map', 'ground'] as const).map((name) => (
-              <button key={name} type="button" aria-pressed={view === name} onClick={() => setView(name)}>
+              <button key={name} type="button" aria-pressed={view === name} disabled={name === 'ground' && level3 && !surfacePick} onClick={() => setView(name)}>
                 {t(`view.${name}`)}
               </button>
             ))}
@@ -500,11 +593,14 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
           </div>
         )}
         {answerProps && page !== 'brief' && link.classic === true && <Answer {...answerProps} />}
+
       </main>
 
-      {result && answer && page === 'answer' && (
+      {result && answer && page === 'answer' && view === 'ground' && (
         <TimeStrip
+          key={vehicle?.id ?? 'no-vehicle'}
           inert={coverOpen}
+          vehicle={state.status === 'ready' && !surfacePick ? vehicle : null}
           result={result}
           cursorMs={cursorMs}
           playing={playing}
