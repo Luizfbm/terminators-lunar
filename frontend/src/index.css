@@ -1660,3 +1660,19 @@ button.site {
   white-space: nowrap;
   pointer-events: none;
 }
+
+/* ---- Cursor Sun fraction readout (src/components/cursorSun) ---- */
+.cursor-sun {
+  font-variant-numeric: tabular-nums;
+}
+
+.strip__now .cursor-sun {
+  margin-left: 0.75em;
+  font-family: inherit;
+  color: var(--fg);
+}
+
+.cursor-sun--ground {
+  color: var(--fg);
+  font-weight: 500;
+}
