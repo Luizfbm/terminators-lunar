@@ -17,6 +17,8 @@ const TARGET_TOP_DEG = 30
 const LIMIT_DEG = 85
 /** The Earth's angular radius seen from the Moon, in degrees. */
 export const EARTH_RADIUS_DEG = 0.95
+/** The vertical field of view of the camera in the view from the ground, in degrees: the one Sky.tsx draws with. */
+export const GROUND_FIELD_OF_VIEW_DEG = 55
 
 /**
  * The scale of a flat unit disc, facing the Observer `distance` away, that subtends the angular
