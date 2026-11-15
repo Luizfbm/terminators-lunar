@@ -11,8 +11,8 @@
 #
 # Two groups run at the same time, each writing its own log in a temp dir:
 #   backend   uv sync, ruff, ruff format, mypy, pytest, validation
-#   frontend  npm ci, eslint, tsc, vitest, generated types, Playwright e2e
-# The e2e runs every test but the ones tagged @timing with $LUNAR_E2E_WORKERS workers (6 unless
+#   frontend  npm ci, eslint, tsc, vitest, generated types
+# Then, alone, the Playwright e2e: every test but the ones tagged @timing with $LUNAR_E2E_WORKERS workers (3 unless
 # set). The @timing tests assert how long something took, so they must not share the machine:
 # they run alone, with one worker, once both groups are done. Nothing is ever re-run until it passes.
 #
@@ -65,7 +65,9 @@ started=$(date +%s)
 # Dedicated ports, so the e2e never meets a dev server (4010 and 4173 are the usual ones).
 export E2E_MOCK_PORT=${E2E_MOCK_PORT:-4710}
 export E2E_APP_PORT=${E2E_APP_PORT:-4773}
-E2E_WORKERS=${LUNAR_E2E_WORKERS:-6}
+# 3 workers: with 6, alongside pytest and the validation suite, the Mac reached load 97 and 49 e2e
+# timed out (15/11/2026). With 3, only the known failures were left.
+E2E_WORKERS=${LUNAR_E2E_WORKERS:-3}
 
 exec 3>&1 # progress lines go to the terminal even while a group's output goes to its log
 
@@ -135,6 +137,12 @@ frontend_group() {
   run "vitest" npm --prefix frontend test --silent -- --run
   run "generated types" bash -c 'npm --prefix frontend run --silent generate:types && git diff --exit-code -- frontend/src/api/schema.ts'
   run "playwright browser" bash -c 'cd frontend && npx playwright install chromium'
+}
+
+# The e2e runs after both groups, never beside pytest and the validation suite: on 15/11/2026, with
+# the two overlapping, the backend's timed tests (test_http's 2 s, test_catalog's 60 s warm-up) and
+# 32 e2e tests timed out on load alone, even at 3 workers.
+e2e_main() {
   run "e2e" e2e --grep-invert @timing --workers="$E2E_WORKERS"
 }
 
@@ -177,6 +185,17 @@ for name in backend frontend; do
   fi
 done
 
+if [ "$RUN_FRONTEND" = 1 ] && [ "$frontend_rc" = 0 ]; then
+  step="e2e"
+  e2e_rc=0
+  group e2e e2e_main || e2e_rc=$?
+  if [ "$e2e_rc" != 0 ]; then
+    failed+=("frontend: e2e")
+    echo "---- e2e failed, the end of its log:" >&2
+    tail -n 60 "$LOGS/e2e.log" >&2
+  fi
+fi
+
 if [ ${#failed[@]} -eq 0 ] && [ "$RUN_FRONTEND" = 1 ]; then
   step="e2e @timing"
   echo "== [main] $step" >&3
@@ -200,6 +219,7 @@ fi
 
 rm -rf "$LOGS"
 took=$(( $(date +%s) - started ))
-ran=$([ "$RUN_BACKEND" = 1 ] && printf 'backend ')$([ "$RUN_FRONTEND" = 1 ] && printf 'frontend+e2e ')
+# `|| true`: a group that did not run leaves the test false, and set -e would take that for a failure.
+ran=$([ "$RUN_BACKEND" = 1 ] && printf 'backend ' || true)$([ "$RUN_FRONTEND" = 1 ] && printf 'frontend+e2e ' || true)
 status success "contract lint, ${ran:-no group (docs only) }in ${took}s"
 echo "mac-gates passed for $(git rev-parse --short HEAD) in ${took}s"
