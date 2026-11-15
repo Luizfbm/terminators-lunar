@@ -1,8 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { earthAttitude, subLunarPoint } from '../domain/earthFace'
 import { groundDirection, toVector, type LatLon } from '../domain/sky'
-import { bodyMarker, moonRadiusPx } from '../domain/stageMarkers'
+import {
+  BACKDROP_EARTH_DISTANCE,
+  BACKDROP_FAR,
+  BACKDROP_NEAR,
+  BACKDROP_SUN_DISTANCE,
+  discRadius,
+  EARTH_ANGULAR_RADIUS_DEG,
+  moonHides,
+  SUN_ANGULAR_RADIUS_DEG,
+  sphereRadius,
+} from '../domain/spaceScale'
 import { useRegions } from '../hooks/useRegions'
 import { useI18n } from '../i18n/I18nContext'
 import { MAP_EDGE_LATITUDE, mapPlaces, mapStep, pointOnMap, regionHeight, type MapEvent, type MapRegion, type MapView } from './globeMap/map'
@@ -11,6 +22,7 @@ import { positionMap, type NameSizes } from './globeMap/position'
 import { readoutText } from './globeMap/readout'
 import './globeMap/globeMap.css'
 import { dressMoon } from './moonSurface'
+import { earthMaterial as makeEarthMaterial, EARTH, glowTexture, loadEarthMap, SUN } from './spaceBodies'
 import { StageLoading } from './StageLoading'
 import { DIVE_MS } from '../domain/stageMove'
 import { canDraw } from './webgl'
@@ -29,9 +41,8 @@ export interface GlobeProps {
   sun: LatLon | null
   /** The sub-Earth point at the Cursor: the Earth is straight above it. */
   earth?: LatLon | null
-  /** The words for the two markers on the edge of the Moon's disc. */
-  sunLabel?: string
-  earthLabel?: string
+  /** The Cursor's instant: which face of the Earth is turned to the Moon. */
+  cursorMs?: number
   sunAzimuthDeg: number | null
   earthAzimuthDeg: number | null
   sunUp: boolean
@@ -62,16 +73,13 @@ export interface GlobeProps {
 const GRID_LATITUDES = [-88, -86, -84, -82, -80]
 const LABELLED_LATITUDES = [-85, -80]
 
-const SUN = 0xf5bd3a
-const EARTH = 0x9cc0ff
 const DOT = 0xe9e7e2
 const DOT_OTHER = 0x77787f
 const DOT_ON_MAP = 0xcfd3dc
 const PICK_RADIUS_PX = 16
 const FIELD_OF_VIEW_DEG = 32
-/** The Sun and Earth markers sit this far outside the Moon's disc, and keep clear of the caption and the view buttons. */
-const MARKER_GAP_PX = 22
-const MARKER_INSET = { top: 56, right: 44, bottom: 72, left: 44 }
+/** The Sun's halo reaches this many times the radius of its disc. */
+const HALO_REACH = 7
 /** How long the stage waits for the images of the Moon before showing it without them. */
 const DRESS_WAIT_MS = 6000
 /** The Site name starts this far from its dot and keeps this far from the edge of the stage. */
@@ -116,8 +124,6 @@ export function Globe(props: GlobeProps) {
   const frame = useRef<HTMLDivElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
   const pin = useRef<HTMLSpanElement>(null)
-  const sunMark = useRef<HTMLSpanElement>(null)
-  const earthMark = useRef<HTMLSpanElement>(null)
   const [dressed, setDressed] = useState(false)
   /** The name on the pin and its size on one line, measured once per name. */
   const pinText = useRef({ text: '', width: 0, height: 0 })
@@ -175,6 +181,8 @@ export function Globe(props: GlobeProps) {
       return
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    // The sky behind the Moon is drawn first and the Moon over it: each frame clears by hand.
+    renderer.autoClear = false
 
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(FIELD_OF_VIEW_DEG, 1, 0.01, 50)
@@ -210,6 +218,44 @@ export function Globe(props: GlobeProps) {
     scene.add(new THREE.AmbientLight(0xffffff, 0.085))
     const sunlight = new THREE.DirectionalLight(0xfff4e0, 3.2)
     scene.add(sunlight)
+
+    // The Sun and the Earth are in the sky behind the Moon: a backdrop scene of their own, drawn before
+    // the Moon and seen by a camera that turns as the main camera turns and never moves (the Sun and
+    // the Earth are too far for the camera's position to matter). So they pass behind the Moon as the
+    // orbit is dragged, the Moon covers them where it is in front of them, and the Moon itself is
+    // drawn as it always was. Each is only a direction and the angle it spans in the Moon's sky (see
+    // `spaceScale`, mean values for display): the Sun a disc with a soft halo, the Earth a ball with
+    // the Blue Marble, lit from the Sun's side so it shows its phase.
+    let gone = false
+    const sky = new THREE.Scene()
+    const skyCamera = new THREE.PerspectiveCamera(FIELD_OF_VIEW_DEG, 1, BACKDROP_NEAR, BACKDROP_FAR)
+    const sunDisc = new THREE.Mesh(new THREE.CircleGeometry(1, 48), new THREE.MeshBasicMaterial({ color: SUN }))
+    const sunHalo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), depthWrite: false, transparent: true }))
+    const earthShade = makeEarthMaterial()
+    let earthMap: THREE.Texture | null = null
+    loadEarthMap(
+      earthShade,
+      renderer.capabilities.getMaxAnisotropy(),
+      () => gone,
+      (texture) => {
+        earthMap = texture
+        target.dataset.earth = 'mapped'
+      },
+    )
+    const earthBall = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 48), earthShade)
+    for (const body of [sunHalo, sunDisc, earthBall]) {
+      body.visible = false
+      sky.add(body)
+    }
+    // Where each is on the stage, for whoever needs to know: pixels from its top left, and its radius.
+    // Empty when it is off the stage or the Moon is in front of it.
+    const publish = (name: 'sun' | 'earth', body: { x: number; y: number; r: number } | null) => {
+      const values = { X: body ? String(Math.round(body.x)) : '', Y: body ? String(Math.round(body.y)) : '', R: body ? body.r.toFixed(2) : '' }
+      for (const [axis, value] of Object.entries(values)) {
+        const key = `${name}${axis}`
+        if (host.dataset[key] !== value) host.dataset[key] = value
+      }
+    }
 
     const dotShape = new THREE.SphereGeometry(0.004, 12, 12)
     const dots = new THREE.Group()
@@ -547,6 +593,74 @@ export function Globe(props: GlobeProps) {
         dot.scale.setScalar((chosen ? 1.8 : 1) * dotSize)
       }
 
+      // The sky behind the Moon: the Sun and the Earth where the answer says they are at the Cursor.
+      skyCamera.quaternion.copy(camera.quaternion)
+      skyCamera.aspect = camera.aspect
+      skyCamera.fov = camera.fov
+      skyCamera.updateProjectionMatrix()
+      skyCamera.updateMatrixWorld()
+      const sunWay = state.sun ? vector(state.sun.latitude_deg, state.sun.longitude_deg).normalize() : null
+      const earthWay = state.earth ? vector(state.earth.latitude_deg, state.earth.longitude_deg).normalize() : null
+      sunDisc.visible = sunHalo.visible = sunWay !== null
+      if (sunWay) {
+        const radius = discRadius(BACKDROP_SUN_DISTANCE, SUN_ANGULAR_RADIUS_DEG)
+        sunDisc.position.copy(sunWay).multiplyScalar(BACKDROP_SUN_DISTANCE)
+        // The halo sits a little behind the disc, so the two never fight for the same depth.
+        sunHalo.position.copy(sunDisc.position).multiplyScalar(1.02)
+        sunDisc.scale.setScalar(radius)
+        sunHalo.scale.setScalar(radius * 2 * HALO_REACH)
+        sunDisc.lookAt(0, 0, 0)
+      }
+      earthBall.visible = earthWay !== null
+      if (earthWay && state.earth) {
+        earthBall.position.copy(earthWay).multiplyScalar(BACKDROP_EARTH_DISTANCE)
+        earthBall.scale.setScalar(sphereRadius(BACKDROP_EARTH_DISTANCE, EARTH_ANGULAR_RADIUS_DEG))
+        // Lit from where the Sun is, so it shows the phase it has from the Moon.
+        if (sunWay) earthShade.uniforms.sunDirection.value.copy(sunWay)
+        // The face turned to the Moon at the Cursor faces the Moon. Which way north leans is only
+        // known from the Site's own sky, which the view from the ground has; here the Earth's north
+        // is taken along the Moon's, which the Earth's axis is within about 30° of.
+        if (state.cursorMs !== undefined) {
+          const toMoon = earthWay.clone().negate()
+          const [x, y, z] = earthAttitude(subLunarPoint(state.cursorMs), 0, [toMoon.x, toMoon.y, toMoon.z])
+          if ([...x, ...y, ...z].every(Number.isFinite)) {
+            earthBall.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3(...x), new THREE.Vector3(...y), new THREE.Vector3(...z)))
+          }
+        }
+      }
+      // Where the eye sees each, and how wide, from its centre and its edge as the backdrop camera
+      // projects them: null when it is off the stage, behind the camera or behind the Moon.
+      const across = new THREE.Vector3().setFromMatrixColumn(skyCamera.matrixWorld, 0)
+      const ahead = skyCamera.getWorldDirection(new THREE.Vector3())
+      const placed = (body: THREE.Object3D, way: THREE.Vector3 | null, radius: number) => {
+        if (!way || way.dot(ahead) <= 0) return null
+        // The Moon is in front of it when the line from the camera along its direction goes through the Moon.
+        const far = way.clone().multiplyScalar(1e6).add(camera.position)
+        if (moonHides(camera.position.toArray(), far.toArray())) return null
+        const centre = body.position.clone().project(skyCamera)
+        const edge = body.position.clone().addScaledVector(across, radius).project(skyCamera)
+        const x = ((centre.x + 1) / 2) * host.clientWidth
+        const y = ((1 - centre.y) / 2) * host.clientHeight
+        if (x < 0 || x > host.clientWidth || y < 0 || y > host.clientHeight) return null
+        return { x, y, r: (Math.abs(edge.x - centre.x) / 2) * host.clientWidth }
+      }
+      publish('sun', placed(sunDisc, sunWay, discRadius(BACKDROP_SUN_DISTANCE, SUN_ANGULAR_RADIUS_DEG)))
+      publish('earth', placed(earthBall, earthWay, sphereRadius(BACKDROP_EARTH_DISTANCE, EARTH_ANGULAR_RADIUS_DEG)))
+      // Where the camera is round the Moon: its distance in Moon radii, and its angles from the north pole and from 0°.
+      const away = camera.position.length()
+      const facts = {
+        cameraDistance: away.toFixed(2),
+        cameraPolar: ((Math.acos(Math.max(-1, Math.min(1, camera.position.y / away))) * 180) / Math.PI).toFixed(1),
+        cameraAzimuth: ((Math.atan2(camera.position.x, camera.position.z) * 180) / Math.PI).toFixed(1),
+      }
+      for (const [key, value] of Object.entries(facts)) {
+        if (host.dataset[key] !== value) host.dataset[key] = value
+      }
+
+      // First the sky, then the Moon over it with a clean depth buffer.
+      renderer.clear()
+      renderer.render(sky, skyCamera)
+      renderer.clearDepth()
       renderer.render(scene, camera)
       target.dataset.ready = 'true'
 
@@ -607,25 +721,6 @@ export function Globe(props: GlobeProps) {
           )
         }
       }
-      // The Sun and the Earth are far outside the picture: each gets a marker on the side where it
-      // lies, just outside the Moon's disc. It says which way, not how far.
-      const moonAt = new THREE.Vector3(0, 0, 0).project(camera)
-      const markCentre = { x: ((moonAt.x + 1) / 2) * host.clientWidth, y: ((1 - moonAt.y) / 2) * host.clientHeight }
-      const markRing = moonRadiusPx(camera.position.length(), FIELD_OF_VIEW_DEG, host.clientHeight) + MARKER_GAP_PX
-      const markStage = { width: host.clientWidth, height: host.clientHeight, inset: MARKER_INSET }
-      for (const [mark, place] of [[sunMark.current, state.sun], [earthMark.current, state.earth ?? null]] as const) {
-        if (!mark) continue
-        const seen = place ? vector(place.latitude_deg, place.longitude_deg).transformDirection(camera.matrixWorldInverse) : null
-        const at = seen ? bodyMarker(seen.x, seen.y, markCentre, markRing, markStage) : null
-        mark.hidden = !at || flight !== null
-        if (at) {
-          mark.style.left = `${at.x}px`
-          mark.style.top = `${at.y}px`
-          // The word goes on the inner side of the dot when the dot is against the right edge.
-          mark.classList.toggle('globe__body--left', at.x > host.clientWidth * 0.6)
-        }
-      }
-
       const labels = gridLabels.current
       if (labels) {
         // Down in a Region the grid's labels are far off the picture, so they wait for the pole.
@@ -657,6 +752,7 @@ export function Globe(props: GlobeProps) {
     handle = requestAnimationFrame(draw)
 
     return () => {
+      gone = true
       cancelAnimationFrame(handle)
       observer.disconnect()
       target.removeEventListener('dblclick', onDouble)
@@ -677,6 +773,13 @@ export function Globe(props: GlobeProps) {
       ;(ring.material as THREE.Material).dispose()
       stars.geometry.dispose()
       stars.material.dispose()
+      for (const body of [sunDisc, earthBall]) {
+        body.geometry.dispose()
+        ;(body.material as THREE.Material).dispose()
+      }
+      earthMap?.dispose()
+      sunHalo.material.map?.dispose()
+      sunHalo.material.dispose()
       for (const line of [toSun, toEarth, toOccluder]) {
         line.geometry.dispose()
         ;(line.material as THREE.Material).dispose()
@@ -715,12 +818,6 @@ export function Globe(props: GlobeProps) {
         />
       )}
       <span className="globe__readout" ref={readout} aria-hidden="true" hidden />
-      <span className="globe__body globe__body--sun" ref={sunMark} aria-hidden="true" hidden>
-        {props.sunLabel}
-      </span>
-      <span className="globe__body globe__body--earth" ref={earthMark} aria-hidden="true" hidden>
-        {props.earthLabel}
-      </span>
       <div className="globe__grid" ref={gridLabels} aria-hidden="true" hidden>
         {(props.meridianLabels ?? []).slice(0, 4).map((text) => (
           <span key={text}>{text}</span>

@@ -22,9 +22,8 @@ import {
 import { useI18n } from '../i18n/I18nContext'
 import type { GroundMark } from './Ground'
 import { loadGround, loadSiteGround, loadWideGround, type GroundData } from './groundData'
+import { EARTH, earthMaterial as makeEarthMaterial, glowTexture, loadEarthMap, SUN } from './spaceBodies'
 
-const SUN = 0xf5bd3a
-const EARTH = 0x9cc0ff
 /** The crest of the horizon: dim all round, and warm where the Sun is behind or beside it. */
 const RIDGE = 0x55565d
 const RIDGE_LIT = 0xe8c070
@@ -73,9 +72,6 @@ const DIAL_TICK_IN_MINOR = 38
 /** Below this change of yaw, in degrees, the dial is not redrawn. */
 const DIAL_STEP_DEG = 0.05
 const PATH_POINTS = 320
-/** The map of the Earth, served beside the page: NASA's Blue Marble, without clouds. */
-const EARTH_MAP = `${import.meta.env.BASE_URL}earth_2k.jpg`
-
 const vector = (azimuthDeg: number, elevationDeg: number, radius: number) =>
   new THREE.Vector3(...direction(azimuthDeg, elevationDeg)).multiplyScalar(radius)
 
@@ -83,23 +79,6 @@ const vector = (azimuthDeg: number, elevationDeg: number, radius: number) =>
 function disc(radiusDeg: number, colour: number): THREE.Mesh {
   const radius = BODIES * Math.tan((radiusDeg * Math.PI) / 180)
   return new THREE.Mesh(new THREE.CircleGeometry(radius, 48), new THREE.MeshBasicMaterial({ color: colour }))
-}
-
-/** A soft halo for the Sun, drawn once into a small canvas. */
-function glowTexture(): THREE.Texture {
-  const size = 128
-  const canvas = document.createElement('canvas')
-  canvas.width = canvas.height = size
-  const context = canvas.getContext('2d')
-  if (context) {
-    const gradient = context.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2)
-    gradient.addColorStop(0, 'rgba(245, 189, 58, 0.55)')
-    gradient.addColorStop(0.35, 'rgba(245, 189, 58, 0.16)')
-    gradient.addColorStop(1, 'rgba(245, 189, 58, 0)')
-    context.fillStyle = gradient
-    context.fillRect(0, 0, size, size)
-  }
-  return new THREE.CanvasTexture(canvas)
 }
 
 /** The same stars on every visit: a small generator with a fixed seed. */
@@ -204,67 +183,18 @@ export function Sky({
     const sun = disc(1, SUN)
     const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), depthWrite: false, transparent: true }))
     // The Earth is a ball lit from where the Sun is, so it shows the phase it has from here.
-    // Its own small shader: the Earth is in sunlight whatever the terrain hides from the Site,
-    // while the lights of the scene dim with the Sun's disc and are for the ground.
-    const earthMaterial = new THREE.ShaderMaterial({
-      uniforms: {
-        sunDirection: { value: new THREE.Vector3(0, 1, 0) },
-        colour: { value: new THREE.Color(EARTH) },
-        map: { value: null as THREE.Texture | null },
-        mapped: { value: 0 },
-      },
-      vertexShader: `
-        #include <common>
-        #include <logdepthbuf_pars_vertex>
-        varying vec3 facing;
-        varying vec3 toEye;
-        varying vec2 place;
-        void main() {
-          facing = normalize(mat3(modelMatrix) * normal);
-          toEye = normalize(cameraPosition - (modelMatrix * vec4(position, 1.0)).xyz);
-          place = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          #include <logdepthbuf_vertex>
-        }`,
-      fragmentShader: `
-        #include <common>
-        #include <logdepthbuf_pars_fragment>
-        uniform vec3 sunDirection;
-        uniform vec3 colour;
-        uniform sampler2D map;
-        uniform float mapped;
-        varying vec3 facing;
-        varying vec3 toEye;
-        varying vec2 place;
-        void main() {
-          #include <logdepthbuf_fragment>
-          vec3 out_ = normalize(facing);
-          // Daylight fades over a few degrees at the terminator, as it does through the air.
-          float lit = smoothstep(-0.06, 0.25, dot(out_, sunDirection));
-          vec3 land = mix(colour, texture2D(map, place).rgb, mapped);
-          // The night side keeps a little light, more than it has: enough to tell the continents apart.
-          vec3 shade = land * (0.035 + 1.15 * lit);
-          // The air: a thin blue edge, brightest where the limb is in daylight.
-          float edge = pow(1.0 - max(dot(out_, normalize(toEye)), 0.0), 3.0);
-          shade += vec3(0.35, 0.55, 1.0) * edge * (0.08 + 0.9 * lit);
-          gl_FragColor = vec4(shade, 1.0);
-          #include <colorspace_fragment>
-        }`,
-    })
+    const earthMaterial = makeEarthMaterial()
     // The map arrives after the first frames; until then, and without it, the Earth is its plain blue.
     let earthMap: THREE.Texture | null = null
-    new THREE.TextureLoader().load(EARTH_MAP, (texture) => {
-      if (gone) {
-        texture.dispose()
-        return
-      }
-      texture.colorSpace = THREE.SRGBColorSpace
-      texture.anisotropy = renderer.capabilities.getMaxAnisotropy()
-      earthMap = texture
-      earthMaterial.uniforms.map.value = texture
-      earthMaterial.uniforms.mapped.value = 1
-      target.dataset.earth = 'mapped'
-    })
+    loadEarthMap(
+      earthMaterial,
+      renderer.capabilities.getMaxAnisotropy(),
+      () => gone,
+      (texture) => {
+        earthMap = texture
+        target.dataset.earth = 'mapped'
+      },
+    )
     // How far north leans on the sky, kept from the last instant it could be worked out.
     let earthLean: number | null = null
     const earth = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), earthMaterial)
