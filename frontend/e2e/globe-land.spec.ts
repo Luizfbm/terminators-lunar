@@ -192,7 +192,7 @@ test('a point the server does not cover shows the real error on the stage, with 
   await expect(alert).toHaveAttribute('role', 'alert')
   await expect(alert).toContainText('Could not land at')
   // The limit is the one /meta gives, not a number of the frontend's own.
-  await expect(alert).toContainText(/only south of \d+(\.\d+)?° [NS]/)
+  await expect(alert).toContainText(/only south of \d+(\.\d+)?°\s[NS]/)
   // The stage did not go down to the ground of the point before.
   await expect(page.locator('.stage__ground')).toHaveCount(0)
   await alert.getByRole('button', { name: 'Try again' }).click()

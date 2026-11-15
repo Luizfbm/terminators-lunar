@@ -1320,8 +1320,18 @@ footer[data-guide='true'] {
     min-height: 100%;
   }
 
+  /* With the Printable brief button the header no longer fits one line at 390 px: it wraps
+     instead of pushing the language buttons off the screen. */
   .bar {
+    flex-wrap: wrap;
+    row-gap: 8px;
     padding-top: 16px;
+  }
+
+  .bar__nav {
+    display: flex;
+    flex-wrap: wrap;
+    white-space: normal;
   }
 
   /* The picture takes at least half the screen, and the foot of the stage sits below it (the requirement). */
@@ -2047,7 +2057,8 @@ button.site {
   border-bottom-color: rgba(0, 0, 0, 0.4);
   border-radius: 3px;
   background: #857b6c;
-  color: #1f1414;
+  /* Black, not #1f1414: on #857b6c that one was 4.3:1, under WCAG AA's 4.5:1. */
+  color: #000;
   /* Orbitron is wide: the factor keeps "Northern Hemisphere" on one line. */
   font-family: Orbitron, system-ui, sans-serif;
   font-weight: 600;
@@ -2076,7 +2087,8 @@ button.site {
   padding-top: 2px;
   border-color: rgba(0, 0, 0, 0.35);
   background: #464139;
-  color: #8e8e8e;
+  /* 5.4:1 on #464139; #8e8e8e was 3.1:1, under WCAG AA. */
+  color: #bdbdbd;
   box-shadow:
     inset 2px 2px 6px rgba(0, 0, 0, 0.7),
     inset 0 0 0 1px rgba(0, 0, 0, 0.25);

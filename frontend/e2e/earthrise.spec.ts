@@ -66,7 +66,8 @@ test.describe('the hand over', () => {
       await images.gate
       await route.continue()
     })
-    await page.goto('/')
+    // The loading is announced in the answer column, which only the classic layout shows.
+    await page.goto(classic('/'))
 
     // The code runs and the answer is on its way; the terrain waits for the 3D code.
     await expect(step(page, 'sun')).toHaveAttribute('data-state', 'loading')

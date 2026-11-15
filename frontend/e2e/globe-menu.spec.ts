@@ -48,9 +48,11 @@ test('Space and Enter press and release a button from the keyboard', async ({ pa
 test('has the colours of the reference: taupe when released, dark and sunk when pressed', async ({ page }) => {
   await page.goto('/')
   await expect(button(page, 'Dark side')).toHaveCSS('background-color', 'rgb(133, 123, 108)')
-  await expect(button(page, 'Dark side')).toHaveCSS('color', 'rgb(31, 20, 20)')
+  // The words are black and light grey, not #1f1414 and #8e8e8e: those were under WCAG AA's 4.5:1 on
+  // these backgrounds (accessibility.spec.ts).
+  await expect(button(page, 'Dark side')).toHaveCSS('color', 'rgb(0, 0, 0)')
   await expect(button(page, 'Sites')).toHaveCSS('background-color', 'rgb(70, 65, 57)')
-  await expect(button(page, 'Sites')).toHaveCSS('color', 'rgb(142, 142, 142)')
+  await expect(button(page, 'Sites')).toHaveCSS('color', 'rgb(189, 189, 189)')
   await expect(page.getByRole('group', { name: 'Globe menu' })).toHaveCSS('background-color', 'rgba(60, 60, 60, 0.72)')
 })
 
