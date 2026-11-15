@@ -3,20 +3,27 @@ import { en, pt } from '../components/phase4/miss/strings'
 import { terrainProblem } from './terrainProblem'
 
 // Validation check: with LDEM_128 (a 236.9 m pixel) and the default 100 m radius, `/terrain`
-// answers 422 "The DEM is too coarse", and the screen said only that no 20 m map covers the Site.
+// answers 422 `dem_too_coarse`, and the screen said only that no 20 m map covers the Site.
 const TOO_COARSE = 'The DEM is too coarse for this radius: no cell centre of LDEM_128 (236.9 m) lies within 100 m.'
 const NO_DEM = 'No DEM covers 100 m around this Site (no DEM covers lat -45.0, lon 10.0).'
 
 describe('terrainProblem', () => {
-  it('reads the too-coarse 422 and the pixel the detail names', () => {
-    expect(terrainProblem('outside_coverage', TOO_COARSE)).toEqual({ kind: 'too_coarse', resolutionM: 236.9 })
+  it('reads the too-coarse 422 by its code and the pixel the detail names', () => {
+    expect(terrainProblem('dem_too_coarse', TOO_COARSE)).toEqual({ kind: 'too_coarse', resolutionM: 236.9 })
   })
 
-  it('still reads a too-coarse 422 when the detail does not name the pixel', () => {
-    expect(terrainProblem('outside_coverage', 'The DEM is too coarse for this radius.')).toEqual({
+  it('still reads a too-coarse 422 when the detail does not name the pixel or is missing', () => {
+    expect(terrainProblem('dem_too_coarse', 'The DEM is too coarse for this radius.')).toEqual({
       kind: 'too_coarse',
       resolutionM: null,
     })
+    expect(terrainProblem('dem_too_coarse', undefined)).toEqual({ kind: 'too_coarse', resolutionM: null })
+  })
+
+  it('goes by the code, not by the words of the detail', () => {
+    // The old contract sent both causes as outside_coverage and the text told them apart.
+    expect(terrainProblem('outside_coverage', TOO_COARSE)).toEqual({ kind: 'no_dem' })
+    expect(terrainProblem('dem_too_coarse', NO_DEM)).toEqual({ kind: 'too_coarse', resolutionM: null })
   })
 
   it('keeps the 422 with no DEM at all apart from the too-coarse one', () => {
