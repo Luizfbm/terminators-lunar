@@ -17,6 +17,7 @@ import { useRadius, useScatter } from './phase4/miss/useMiss'
 import { WhenToLand } from './phase4/site-windows/WhenToLand'
 import { Battery } from './phase4/battery/Battery'
 import { Reach } from './phase4/reach/Reach'
+import { PlanCompare } from './phase4/compare/PlanCompare'
 
 const HOUR_MS = 3_600_000
 
@@ -160,6 +161,7 @@ export function Answer({
       <FlatMetrics result={result} />
       <WhenToLand result={result} onWindow={onWindow} />
       <Battery result={result} />
+      <PlanCompare result={result} />
       <Nerds result={result} cursorMs={cursorMs} open={stats} onOpen={(open) => onStats?.(open)} onWindow={onWindow} />
       {landing && !atLanding && (
         <p className="landing-open">
