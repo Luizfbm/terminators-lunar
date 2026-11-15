@@ -1,0 +1,82 @@
+{
+ "fetched_at": "2026-11-14T19:44:45Z",
+ "credit": "NASA/GSFC/Arizona State University (LROC)",
+ "volume": "LRO-L-LROC-2-EDR-V1.0 / LROLRC_0062C",
+ "index_label_url": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-2-EDR-V1.0/LROLRC_0062C/INDEX/INDEX.LBL",
+ "index_label_sha256": "3819a59766a6c8a8bebcafb897c2af3b687ff8d651b35dc783e6552ab501359b",
+ "index_table_url": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-2-EDR-V1.0/LROLRC_0062C/INDEX/INDEX.TAB",
+ "index_table_bytes": 16120544,
+ "index_table_md5": "9eca4710e198625c3e963a6ad385753b",
+ "index_table_sha256": "e96688ff69245bb1ef7b2e568dd7adb9866cafe5a20b1e7770df02d68ef56c17",
+ "index_columns": {
+  "PRODUCT_ID": [
+   123,
+   13
+  ],
+  "START_TIME": [
+   320,
+   24
+  ],
+  "STOP_TIME": [
+   347,
+   24
+  ],
+  "INCIDENCE_ANGLE": [
+   732,
+   6
+  ],
+  "CENTER_LATITUDE": [
+   807,
+   6
+  ],
+  "CENTER_LONGITUDE": [
+   814,
+   6
+  ]
+ },
+ "note": "The image labels carry the exposure times only; the incidence angle and the image centre are the volume's PDS index columns for the same product. LROC's 'Sub solar azimuth' is an angle in the image plane, so it is not compared.",
+ "images": {
+  "M1495922531LE": {
+   "index_row": "\"LROLRC_0062C\",\" LRO-L-LROC-2-EDR-V1.0/LROLRC_0062C/DATA/ESM5/2025065/NAC/M1495922531LE.IMG\",\"LRO\",\"LROC\",\"nacl0032542c\",\"M1495922531LE\",\"        v1.8\",\" MOON\",70640, -54.627,\" FIFTH EXTENDED SCIENCE MISSION\",\"                                                      TARGET OF OPPORTUNITY\",  0,\" 2025-03-06 17:47:43.114\",\" 2025-03-06 17:47:43.760\",\" 2025-03-06 17:48:16.690\",\" 1\",\" 762976063:6422\",\" 762976063:48738\",\" 762976096:44168\",762976063,  48738,762976096,  44168,0.000627733,9.99999,\" LEFT\", 200, 47,106,  7,\"  N/A\",999,999,\"                                   N/A\",99999,9999.99,999,9,3,1,0,   2.375,  18.243, -13.218,   9.945,9999.999,9999.999,9999.999,9999.999,9999.999,9999.999, 52224,5064, 8,   2.85,  0.97,  1.911,57.33, 87.43, 32.29,183.25,189.42, -0.31, 94.60,-82.48, 64.51,148441312.8,347.86,-84.76, 30.11,-83.98, 26.04,-85.64, 28.94,-85.51, 35.35,-83.89, 30.74,  94.35,1831.77,\"D\",\"+X\"",
+   "index_row_sha256": "33729442f90d054ef3d3546087e184bb549ae80bfebb828beba586efe4d4e674",
+   "start_time": "2025-03-06 17:47:43.760",
+   "stop_time": "2025-03-06 17:48:16.690",
+   "incidence_deg": 87.43,
+   "center_latitude_deg": -84.76,
+   "center_longitude_deg": 30.11,
+   "label_url": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-2-EDR-V1.0/LROLRC_0062C/DATA/ESM5/2025065/NAC/M1495922531LE.IMG",
+   "label_bytes": 5064,
+   "label_sha256": "a5a98608efbb3fc834b64f8c02496a290d46341d5d617e92ecff587bcf153af3",
+   "label_start_time": "2025-03-06T17:47:43.760",
+   "label_stop_time": "2025-03-06T17:48:16.690",
+   "article": {
+    "url": "https://lroc.im-ldi.com/images/1408",
+    "title": "IM-2 Athena Seen Obliquely",
+    "quote": "acquired at 16:54:21 March 7",
+    "time_utc": "2025-03-07T16:54:21Z",
+    "page_sha256_at_fetch": "632632fdc7fe59bb48340501aa8788e79310893775fbdf2102f70eee73d0f2f9"
+   }
+  },
+  "M1496181900LE": {
+   "index_row": "\"LROLRC_0062C\",\" LRO-L-LROC-2-EDR-V1.0/LROLRC_0062C/DATA/ESM5/2025068/NAC/M1496181900LE.IMG\",\"LRO\",\"LROC\",\"nacl00325420\",\"M1496181900LE\",\"        v1.8\",\" MOON\",70677, -29.763,\" FIFTH EXTENDED SCIENCE MISSION\",\"                                                      TARGET OF OPPORTUNITY\",  0,\" 2025-03-09 17:50:32.595\",\" 2025-03-09 17:50:33.144\",\" 2025-03-09 17:51:01.150\",\" 1\",\"763235432:37027\",\"  763235433:7479\",\"  763235461:7880\",763235433,   7479,763235461,   7880,0.000533867,9.99999,\" LEFT\", 200, 46,104,  7,\"  N/A\",999,999,\"                                   N/A\",99999,9999.99,999,9,3,1,0,   1.839,  18.370, -13.530,   9.798,9999.999,9999.999,9999.999,9999.999,9999.999,9999.999, 52224,5064, 8,   1.13,  0.83,  0.982,29.64, 85.23, 56.00,183.27,186.99, -0.22, 58.07,-83.54, 37.61,148787221.4,352.09,-84.81, 29.27,-84.40, 22.86,-85.31, 35.48,-85.15, 36.65,-84.27, 24.17,  85.81,1823.22,\"D\",\"+X\"",
+   "index_row_sha256": "623f1da06f29611fbc56d2296f08b58fc25860edf206acbadee3591d1e186d1d",
+   "start_time": "2025-03-09 17:50:33.144",
+   "stop_time": "2025-03-09 17:51:01.150",
+   "incidence_deg": 85.23,
+   "center_latitude_deg": -84.81,
+   "center_longitude_deg": 29.27,
+   "label_url": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-2-EDR-V1.0/LROLRC_0062C/DATA/ESM5/2025068/NAC/M1496181900LE.IMG",
+   "label_bytes": 5064,
+   "label_sha256": "25a03aafc1197b13710ba6d1060b2fbcde642fce85d94b1e21b88cdd0a180ff1",
+   "label_start_time": "2025-03-09T17:50:33.144",
+   "label_stop_time": "2025-03-09T17:51:01.150",
+   "article": {
+    "url": "https://lroc.im-ldi.com/images/1409",
+    "title": "IM-2 Athena: A Closer View",
+    "quote": "on 10 March at 14:52 UTC",
+    "time_utc": "2025-03-10T14:52:00Z",
+    "page_sha256_at_fetch": "0079d1b2c7d7c21c5cee522ec2b552796a9a4bbb7829251dd097192e1a8e66f8"
+   }
+  }
+ }
+}

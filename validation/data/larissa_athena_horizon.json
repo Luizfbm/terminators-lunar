@@ -1,0 +1,14 @@
+{
+ "file": "larissa_athena_horizon.csv",
+ "source": "prototypes/moon/building/relevo/horizonte_athena.csv on branch 227-moon-prototype (the independent work)",
+ "commit": "57664030d0b19df32bc5eb294b5e2365576dece3",
+ "sha256": "d9cd67610731b8fbefd27ea21e7c0f9e85502ef032a16f728bc2f23faca5bdcb",
+ "credit": "Larissa, independent prototype shared in the independent work ",
+ "columns_used": [
+  "azimute_graus",
+  "elevacao_terreno_graus",
+  "distancia_bloqueio_km"
+ ],
+ "never_used": "elevacao_graus (her floor rule, wrong for this Observer: see the requirement)",
+ "lines": "data on lines 6 to 3605; lines 1 to 4 are her header of origin, line 5 the columns"
+}

@@ -1,0 +1,6233 @@
+{
+ "engine_version": "0.1.0",
+ "kernels": [
+  "naif0012.tls",
+  "pck00011.tpc",
+  "de440.bsp",
+  "moon_pa_de440_200625.bpc",
+  "moon_de440_250416.tf"
+ ],
+ "observer_height_m": 0.0,
+ "step_hours": 1.0,
+ "days": 6798,
+ "judged_start": "2023-08-01T00:00:00+00:00",
+ "second_start": "2032-11-20T00:00:00+00:00",
+ "control_longitude_shift_deg": 180.0,
+ "seconds": 9657.309014088009,
+ "points": [
+  {
+   "id": "sun-0.0-000",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.04734235559478278,
+    "sun_mean_fraction": 0.03617629384361764,
+    "earth_any": 0.507784152201628,
+    "earth_centre": 0.46219476316563696,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.045981661272923406,
+    "sun_mean_fraction": 0.035076253239570566,
+    "earth_any": 0.5063621653427479,
+    "earth_centre": 0.46086471511228794,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.37947435520251055,
+    "sun_mean_fraction": 0.3710681866266332,
+    "earth_any": 0.26070780621751494,
+    "earth_centre": 0.19025816416593117,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 204.31262683600653
+  },
+  {
+   "id": "sun-0.0-001",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.4673617240364813,
+    "sun_mean_fraction": 0.45303478598186864,
+    "earth_any": 0.311084142394822,
+    "earth_centre": 0.2509684220849269,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 199.16530976397917
+  },
+  {
+   "id": "sun-0.0-002",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.056450426596057666,
+    "sun_mean_fraction": 0.04910654952701038,
+    "earth_any": 0.40973448072962637,
+    "earth_centre": 0.3608107776797097,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.05568426988329901,
+    "sun_mean_fraction": 0.04829695729338868,
+    "earth_any": 0.40792635088751594,
+    "earth_centre": 0.35883102873394135,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.30143056781406297,
+    "sun_mean_fraction": 0.2957260743210629,
+    "earth_any": 0.35823649112484063,
+    "earth_centre": 0.2897053054820045,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 209.59937636798713
+  },
+  {
+   "id": "sun-0.0-003",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.03437898401490635,
+    "sun_mean_fraction": 0.024779169201792888,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.03328797685593802,
+    "sun_mean_fraction": 0.023958325492096776,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.00272751789742081,
+    "sun_mean_fraction": 0.0002318446640348548,
+    "earth_any": 0.4451860841423948,
+    "earth_centre": 0.39817470824752377,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 212.27703544998076
+  },
+  {
+   "id": "sun-0.0-004",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.05437873884475826,
+    "earth_centre": 0.0016303814847504169,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 226.0215438749874
+  },
+  {
+   "id": "sun-0.0-005",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.061893203883495146,
+    "earth_centre": 0.006208934000196136,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.05704496420515838,
+    "earth_centre": 0.006196675492791998,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.231232225164264,
+    "sun_mean_fraction": 0.20297011106705076,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 227.00037467700895
+  },
+  {
+   "id": "sun-0.1-006",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.12584583701088556,
+    "sun_mean_fraction": 0.1134256904674476,
+    "earth_any": 0.5278145532999902,
+    "earth_centre": 0.4813731979994116,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.12417868000392272,
+    "sun_mean_fraction": 0.11181631588241975,
+    "earth_any": 0.5256631852505639,
+    "earth_centre": 0.47968765323134255,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.33984260076493084,
+    "sun_mean_fraction": 0.32429813511782496,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 221.14685804897454
+  },
+  {
+   "id": "sun-0.1-007",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.14745758556438168,
+    "sun_mean_fraction": 0.1112603679528099,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.1438229381190546,
+    "sun_mean_fraction": 0.1083456603016546,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.2707659115426106,
+    "sun_mean_fraction": 0.23026453826208274,
+    "earth_any": 0.0029420417769932335,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 225.60844302608166
+  },
+  {
+   "id": "sun-0.1-008",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.17143522604687653,
+    "sun_mean_fraction": 0.15280863252367838,
+    "earth_any": 0.1960257918995783,
+    "earth_centre": 0.08173972737079534,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.1696516132195744,
+    "sun_mean_fraction": 0.1511234630874376,
+    "earth_any": 0.19737422771403354,
+    "earth_centre": 0.08647764048249486,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.40188903599097775,
+    "sun_mean_fraction": 0.3897052451619683,
+    "earth_any": 0.48973350004903404,
+    "earth_centre": 0.4436415122094734,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 206.68829038389958
+  },
+  {
+   "id": "sun-0.1-009",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.15117804256153772,
+    "sun_mean_fraction": 0.13284182054230587,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.14921668137687555,
+    "sun_mean_fraction": 0.13073958512036424,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.20602260468765324,
+    "sun_mean_fraction": 0.17603601825884738,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 207.88872614305
+  },
+  {
+   "id": "sun-0.1-010",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.1167132489948024,
+    "sun_mean_fraction": 0.10264297306614126,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.11524222810630577,
+    "sun_mean_fraction": 0.10122595416193621,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.18776355790918897,
+    "sun_mean_fraction": 0.16450152288502642,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 197.34468609909527
+  },
+  {
+   "id": "sun-0.1-011",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.16834608218103364,
+    "sun_mean_fraction": 0.13793086203703786,
+    "earth_any": 0.2696871628910464,
+    "earth_centre": 0.200690153966853,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.16453981563204864,
+    "sun_mean_fraction": 0.13448036710442676,
+    "earth_any": 0.26935005393743255,
+    "earth_centre": 0.200867902324213,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.34511988820241246,
+    "sun_mean_fraction": 0.3356139541525592,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 202.3693894869648
+  },
+  {
+   "id": "sun-0.2-012",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.21696332254584683,
+    "sun_mean_fraction": 0.19701428389877187,
+    "earth_any": 0.3584939197803276,
+    "earth_centre": 0.30542071197411,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.21500809061488674,
+    "sun_mean_fraction": 0.19512197165921344,
+    "earth_any": 0.3572741982936158,
+    "earth_centre": 0.30447680690399137,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.14033539276257723,
+    "sun_mean_fraction": 0.1168303901103435,
+    "earth_any": 0.49371138570167694,
+    "earth_centre": 0.4479258605472198,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 206.9375272289617
+  },
+  {
+   "id": "sun-0.2-013",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.20745685005393744,
+    "sun_mean_fraction": 0.19743706511301992,
+    "earth_any": 0.45916691183681474,
+    "earth_centre": 0.41261522996959893,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.20635358438756496,
+    "sun_mean_fraction": 0.19637999586589358,
+    "earth_any": 0.45750588408355397,
+    "earth_centre": 0.4106293517701285,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.1950512405609493,
+    "sun_mean_fraction": 0.17754593094566118,
+    "earth_any": 0.5299107580660979,
+    "earth_centre": 0.4841681376875552,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 205.06108706397936
+  },
+  {
+   "id": "sun-0.2-014",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.27932847896440127,
+    "sun_mean_fraction": 0.24628543289640784,
+    "earth_any": 0.5074470432480142,
+    "earth_centre": 0.46166151809355693,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.27372634108071003,
+    "sun_mean_fraction": 0.24088938452672654,
+    "earth_any": 0.5057614984799451,
+    "earth_centre": 0.46008017063842305,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.030113023438266155,
+    "sun_mean_fraction": 0.024450260690460697,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 207.70198707503732
+  },
+  {
+   "id": "sun-0.2-015",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.2812040305972345,
+    "sun_mean_fraction": 0.2441381516888226,
+    "earth_any": 0.5784299303716779,
+    "earth_centre": 0.5318230852211435,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.27738550554084535,
+    "sun_mean_fraction": 0.2402124134989236,
+    "earth_any": 0.5769466509757772,
+    "earth_centre": 0.530542071197411,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.17773609885260372,
+    "sun_mean_fraction": 0.15155226250586729,
+    "earth_any": 0.5015507011866235,
+    "earth_centre": 0.4560716387172698,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 207.12615248002112
+  },
+  {
+   "id": "sun-0.2-016",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.26712513484358147,
+    "sun_mean_fraction": 0.24775761416604203,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.2655008826125331,
+    "sun_mean_fraction": 0.2459268785820901,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.1457597822889085,
+    "sun_mean_fraction": 0.12876541652426965,
+    "earth_any": 0.5634622928312248,
+    "earth_centre": 0.5169596449936256,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 210.32373474002816
+  },
+  {
+   "id": "sun-0.2-017",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.2530646268510346,
+    "sun_mean_fraction": 0.24132578935047178,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.25210233401980975,
+    "sun_mean_fraction": 0.24025822110596448,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.30613783465725214,
+    "sun_mean_fraction": 0.2756740883420685,
+    "earth_any": 0.5778782975384917,
+    "earth_centre": 0.5316146905952731,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 209.7326848830562
+  },
+  {
+   "id": "sun-0.3-018",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.2787891046386192,
+    "sun_mean_fraction": 0.25733303468307883,
+    "earth_any": 0.2529481710306953,
+    "earth_centre": 0.16381656369520448,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.27646611748553496,
+    "sun_mean_fraction": 0.25508100772165004,
+    "earth_any": 0.2549279199764637,
+    "earth_centre": 0.16794155143669706,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.3404126213592233,
+    "sun_mean_fraction": 0.32971040118059297,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 202.45777968794573
+  },
+  {
+   "id": "sun-0.3-019",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.3872339903893302,
+    "sun_mean_fraction": 0.37664609114974273,
+    "earth_any": 0.4304881337648328,
+    "earth_centre": 0.38124570952240855,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.3861000784544474,
+    "sun_mean_fraction": 0.37558442579082035,
+    "earth_any": 0.42966681376875554,
+    "earth_centre": 0.38099441012062374,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.16117485534961262,
+    "sun_mean_fraction": 0.15023377931929927,
+    "earth_any": 0.32635211336667647,
+    "earth_centre": 0.26919682259488087,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 206.150878609973
+  },
+  {
+   "id": "sun-0.3-020",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.32095837010885553,
+    "sun_mean_fraction": 0.2989896152350049,
+    "earth_any": 0.5348202902814553,
+    "earth_centre": 0.4880111797587526,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.3184698931058154,
+    "sun_mean_fraction": 0.2962652717766778,
+    "earth_any": 0.5336741198391683,
+    "earth_centre": 0.4869753358831029,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.3589290967931745,
+    "sun_mean_fraction": 0.3424044382701806,
+    "earth_any": 0.17386241051289594,
+    "earth_centre": 0.0488317642443856,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 213.99751478305552
+  },
+  {
+   "id": "sun-0.3-021",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.39670981661272925,
+    "sun_mean_fraction": 0.3859706814545299,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.3955207413945278,
+    "sun_mean_fraction": 0.3847685134851548,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.021703687359027165,
+    "sun_mean_fraction": 0.011658070371565032,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 215.4835910430411
+  },
+  {
+   "id": "sun-0.3-022",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.37685716387172696,
+    "sun_mean_fraction": 0.35325457200489446,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.3756742179072276,
+    "sun_mean_fraction": 0.35175541295099194,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 204.86335523601156
+  },
+  {
+   "id": "sun-0.3-023",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.36339119348828086,
+    "sun_mean_fraction": 0.3409170065800885,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.36168726095910564,
+    "sun_mean_fraction": 0.33917462696904627,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.022114347357065803,
+    "sun_mean_fraction": 0.0063377526341092585,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 207.3614575319225
+  },
+  {
+   "id": "sun-0.4-024",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.44342698832990096,
+    "sun_mean_fraction": 0.43546270783663066,
+    "earth_any": 0.9563474551338629,
+    "earth_centre": 0.8260762969500833,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.4426240560949299,
+    "sun_mean_fraction": 0.43462791796077604,
+    "earth_any": 0.9577265372168284,
+    "earth_centre": 0.8256595076983426,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.06853731489653819,
+    "sun_mean_fraction": 0.05649464492474913,
+    "earth_any": 0.019674904383642246,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 210.99748078396078
+  },
+  {
+   "id": "sun-0.4-025",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.4078282828282828,
+    "sun_mean_fraction": 0.39599559074073715,
+    "earth_any": 0.20640261841718152,
+    "earth_centre": 0.12664876924585663,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.406424683730509,
+    "sun_mean_fraction": 0.3946760943794253,
+    "earth_any": 0.1993723644209081,
+    "earth_centre": 0.11847234480729626,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.3034838678042562,
+    "sun_mean_fraction": 0.2809196410086278,
+    "earth_any": 0.4450451113072472,
+    "earth_centre": 0.3979172795920369,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 208.4385993910255
+  },
+  {
+   "id": "sun-0.4-026",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.4192899872511523,
+    "sun_mean_fraction": 0.3972750140965632,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.4179599391978033,
+    "sun_mean_fraction": 0.39571129714353453,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.08441208198489752,
+    "sun_mean_fraction": 0.06879452902472892,
+    "earth_any": 0.49929513582426205,
+    "earth_centre": 0.45307443365695793,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 218.2276085849153
+  },
+  {
+   "id": "sun-0.4-027",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.4375551632833186,
+    "sun_mean_fraction": 0.41428879253523254,
+    "earth_any": 0.12493257820927724,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.43601059135039716,
+    "sun_mean_fraction": 0.4126347068099128,
+    "earth_any": 0.12507355104442483,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.11076787290379524,
+    "sun_mean_fraction": 0.08848473080334607,
+    "earth_any": 0.5139501814259095,
+    "earth_centre": 0.46780915955673236,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 214.1892441189848
+  },
+  {
+   "id": "sun-0.4-028",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.42534568990879673,
+    "sun_mean_fraction": 0.4173979235996167,
+    "earth_any": 0.25558375012258505,
+    "earth_centre": 0.17950745317250172,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.4245488869275277,
+    "sun_mean_fraction": 0.4165225438819303,
+    "earth_any": 0.2525742865548691,
+    "earth_centre": 0.17506374423850152,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.2134819064430715,
+    "sun_mean_fraction": 0.19572150233915722,
+    "earth_any": 0.14457070707070707,
+    "earth_centre": 0.08147004020790428,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 213.38662147091236
+  },
+  {
+   "id": "sun-0.4-029",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.4309294400313818,
+    "sun_mean_fraction": 0.4162599821662497,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.4292929292929293,
+    "sun_mean_fraction": 0.4146260136585817,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 226.87296706007328
+  },
+  {
+   "id": "sun-0.5-030",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.47696013533392173,
+    "sun_mean_fraction": 0.46514460920833733,
+    "earth_any": 0.9999325782092773,
+    "earth_centre": 0.9039729822496813,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.4754952436991272,
+    "sun_mean_fraction": 0.4636802604675963,
+    "earth_any": 0.9999264489555751,
+    "earth_centre": 0.9040649210552123,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.28547612042757675,
+    "sun_mean_fraction": 0.2689176238219319,
+    "earth_any": 0.0017713543198980093,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 205.78380432201084
+  },
+  {
+   "id": "sun-0.5-031",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.5018203883495146,
+    "sun_mean_fraction": 0.4865195218863441,
+    "earth_any": 0.3426559282141806,
+    "earth_centre": 0.2876520054918113,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.500091938805531,
+    "sun_mean_fraction": 0.48477978277835915,
+    "earth_any": 0.3403390703147985,
+    "earth_centre": 0.28499803863881534,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.27707904285574186,
+    "sun_mean_fraction": 0.25590134662405256,
+    "earth_any": 0.5703515739923507,
+    "earth_centre": 0.5237569873492204,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 216.0598432380939
+  },
+  {
+   "id": "sun-0.5-032",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.5011032656663724,
+    "sun_mean_fraction": 0.4938171382349573,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.5007355104442484,
+    "sun_mean_fraction": 0.49336738232654814,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.29561390605079924,
+    "sun_mean_fraction": 0.2817541164513918,
+    "earth_any": 0.16900191232715506,
+    "earth_centre": 0.039797244287535546,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 205.073966284981
+  },
+  {
+   "id": "sun-0.5-033",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.4795834559184074,
+    "sun_mean_fraction": 0.4735403236054248,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.4789214965185839,
+    "sun_mean_fraction": 0.472890200708039,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.16714474845542807,
+    "sun_mean_fraction": 0.1524310302426574,
+    "earth_any": 0.3668726095910562,
+    "earth_centre": 0.3150068647641463,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 208.7539274119772
+  },
+  {
+   "id": "sun-0.5-034",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.5003187211925076,
+    "sun_mean_fraction": 0.48460297043433964,
+    "earth_any": 0.21741075806609786,
+    "earth_centre": 0.12916789251740707,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.49893350985583995,
+    "sun_mean_fraction": 0.48320706005376834,
+    "earth_any": 0.21642394822006472,
+    "earth_centre": 0.1282485044620967,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.21372707659115425,
+    "sun_mean_fraction": 0.20370525267974038,
+    "earth_any": 0.6099342944003138,
+    "earth_centre": 0.5600973325487889,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 203.57383004704025
+  },
+  {
+   "id": "sun-0.5-035",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.480876728449544,
+    "sun_mean_fraction": 0.4746634129362874,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.48028832009414535,
+    "sun_mean_fraction": 0.4740207848784134,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.3602959203687359,
+    "sun_mean_fraction": 0.3536884001625841,
+    "earth_any": 0.9548212709620476,
+    "earth_centre": 0.8521562714523879,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 209.44141975196544
+  },
+  {
+   "id": "earth-0.0-036",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.3636241051289595,
+    "sun_mean_fraction": 0.3484109000028632,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 208.3165759720141
+  },
+  {
+   "id": "earth-0.0-037",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.3853645680101991,
+    "sun_mean_fraction": 0.37285100199256566,
+    "earth_any": 0.21327964107090322,
+    "earth_centre": 0.10762356575463372,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 211.68807491194457
+  },
+  {
+   "id": "earth-0.0-038",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.06721339609689124,
+    "sun_mean_fraction": 0.05105508757394678,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.06519687162891047,
+    "sun_mean_fraction": 0.049580716004595286,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.03272408551534765,
+    "sun_mean_fraction": 0.01872499887756774,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 209.67659761407413
+  },
+  {
+   "id": "earth-0.0-039",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.029873982543885458,
+    "sun_mean_fraction": 0.012516962936250592,
+    "earth_any": 0.33135971364126704,
+    "earth_centre": 0.275319947043248,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 212.8573497859761
+  },
+  {
+   "id": "earth-0.0-040",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.0012074629793076394,
+    "sun_mean_fraction": 8.779397955816398e-05,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.001146170442286947,
+    "sun_mean_fraction": 8.301434670626727e-05,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.05681205256447975,
+    "sun_mean_fraction": 0.041417116070984035,
+    "earth_any": 0.43259659703834463,
+    "earth_centre": 0.3850581053250956,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 205.04353752592579
+  },
+  {
+   "id": "earth-0.1-041",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.1323673629498872,
+    "earth_centre": 0.004100470726684319,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.13160733549083065,
+    "earth_centre": 0.0038920761008139648,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.01595444738648622,
+    "sun_mean_fraction": 0.010952942358263655,
+    "earth_any": 0.34669510640384427,
+    "earth_centre": 0.2925247621849564,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 220.5964993920643
+  },
+  {
+   "id": "earth-0.1-042",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.12953564773953125,
+    "sun_mean_fraction": 0.11155730337933284,
+    "earth_any": 0.15925639894086496,
+    "earth_centre": 0.07946577424732765,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.12867755222124155,
+    "sun_mean_fraction": 0.11052312957100763,
+    "earth_any": 0.16398205354516035,
+    "earth_centre": 0.08534985780131411,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 205.20839905599132
+  },
+  {
+   "id": "earth-0.1-043",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.1762037854270864,
+    "sun_mean_fraction": 0.15232757388204754,
+    "earth_any": 0.14112606649014417,
+    "earth_centre": 0.014789889183093067,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.17383789349808768,
+    "sun_mean_fraction": 0.14975222141654612,
+    "earth_any": 0.14254192409532215,
+    "earth_centre": 0.016297685593802097,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.03214793566735314,
+    "sun_mean_fraction": 0.017478321512670668,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 211.0743758289609
+  },
+  {
+   "id": "earth-0.1-044",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.3824163969795038,
+    "sun_mean_fraction": 0.37368079284533035,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.38150313817789544,
+    "sun_mean_fraction": 0.37277883516187676,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.1596057664018829,
+    "sun_mean_fraction": 0.13994131754165523,
+    "earth_any": 0.5039594978915367,
+    "earth_centre": 0.4584068843777582,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 205.1622233419912
+  },
+  {
+   "id": "earth-0.1-045",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.19082205550652154,
+    "sun_mean_fraction": 0.16500133698751446,
+    "earth_any": 0.1973006766696087,
+    "earth_centre": 0.08783220555065216,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.18816195939982347,
+    "sun_mean_fraction": 0.16208743880473536,
+    "earth_any": 0.19674291458272042,
+    "earth_centre": 0.087464450328528,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.3731612238893792,
+    "sun_mean_fraction": 0.35255458462177175,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 212.45195278595202
+  },
+  {
+   "id": "earth-0.2-046",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.07714891634794548,
+    "sun_mean_fraction": 0.0642340961177784,
+    "earth_any": 0.2663896243993331,
+    "earth_centre": 0.1963874178680004,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.07575144650387369,
+    "sun_mean_fraction": 0.06307999227553797,
+    "earth_any": 0.2665122094733745,
+    "earth_centre": 0.1972822889085025,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.1076848582916544,
+    "sun_mean_fraction": 0.09353238559392064,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 198.38072145998012
+  },
+  {
+   "id": "earth-0.2-047",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.06973864862214377,
+    "sun_mean_fraction": 0.057367712754317395,
+    "earth_any": 0.28816073354908306,
+    "earth_centre": 0.21165538883985485,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.06821859370403059,
+    "sun_mean_fraction": 0.05602295479727039,
+    "earth_any": 0.28330023536334215,
+    "earth_centre": 0.20439835245660487,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.26825291752476216,
+    "sun_mean_fraction": 0.2380756199818301,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 202.522012757021
+  },
+  {
+   "id": "earth-0.2-048",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.2944003138177895,
+    "earth_centre": 0.23269711679905855,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.2934502794939688,
+    "earth_centre": 0.23175934098264195,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.3278660390310876,
+    "sun_mean_fraction": 0.3155930110968353,
+    "earth_any": 0.434931842698833,
+    "earth_centre": 0.3866762283024419,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 201.00481900700834
+  },
+  {
+   "id": "earth-0.2-049",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.2344991173874669,
+    "sun_mean_fraction": 0.21796270353600591,
+    "earth_any": 0.24812444836716682,
+    "earth_centre": 0.17163136216534275,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.23297293321565166,
+    "sun_mean_fraction": 0.21635688904292247,
+    "earth_any": 0.24736442090811023,
+    "earth_centre": 0.1712636069432186,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.412713298028832,
+    "sun_mean_fraction": 0.40435105356330636,
+    "earth_any": 0.9386339119348828,
+    "earth_centre": 0.8257024124742571,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 206.81292837299407
+  },
+  {
+   "id": "earth-0.2-050",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.24102064332646858,
+    "earth_centre": 0.16078871236638226,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.23893056781406297,
+    "earth_centre": 0.15809184073747182,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.29504388545650684,
+    "sun_mean_fraction": 0.2794464147929569,
+    "earth_any": 0.9913332352652741,
+    "earth_centre": 0.8508507404138472,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 205.8669175800169
+  },
+  {
+   "id": "earth-0.3-051",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.04796141021869177,
+    "sun_mean_fraction": 0.032035546249480254,
+    "earth_any": 0.3947239384132588,
+    "earth_centre": 0.3433607923899186,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.04639845052466412,
+    "sun_mean_fraction": 0.030904501550697867,
+    "earth_any": 0.3919902912621359,
+    "earth_centre": 0.34008164165931154,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.4184993135235854,
+    "sun_mean_fraction": 0.40034187621323913,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 209.68196817592252
+  },
+  {
+   "id": "earth-0.3-052",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.3157852799843091,
+    "earth_centre": 0.25625183877611063,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.31368294596449936,
+    "earth_centre": 0.25385530057860156,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.3772065313327449,
+    "sun_mean_fraction": 0.3620541400191801,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 205.839865225018
+  },
+  {
+   "id": "earth-0.3-053",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.4373712856722565,
+    "sun_mean_fraction": 0.4182247340534494,
+    "earth_any": 0.31410586446994215,
+    "earth_centre": 0.25099906835343727,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.435287339413553,
+    "sun_mean_fraction": 0.41608580772484427,
+    "earth_any": 0.31026282239874475,
+    "earth_centre": 0.2459179170344219,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.1354381190546239,
+    "sun_mean_fraction": 0.11008627714411484,
+    "earth_any": 0.387123663822693,
+    "earth_centre": 0.335778905560459,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 212.70159343990963
+  },
+  {
+   "id": "earth-0.3-054",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.07567789545944886,
+    "sun_mean_fraction": 0.06475684464940486,
+    "earth_any": 0.31764244385603607,
+    "earth_centre": 0.2599355202510542,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.07417622830244189,
+    "sun_mean_fraction": 0.06325594050576963,
+    "earth_any": 0.31660047072668435,
+    "earth_centre": 0.2590038736883397,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.28163307835637935,
+    "sun_mean_fraction": 0.2695887480326046,
+    "earth_any": 0.10905781112091792,
+    "earth_centre": 0.01284691575953712,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 198.4102690749569
+  },
+  {
+   "id": "earth-0.3-055",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.3224784250269687,
+    "sun_mean_fraction": 0.3046133584578416,
+    "earth_any": 0.39752500735510443,
+    "earth_centre": 0.3478412768461312,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.32089707757183483,
+    "sun_mean_fraction": 0.3027890576508702,
+    "earth_any": 0.3956617142296754,
+    "earth_centre": 0.34572055506521526,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.3096866725507502,
+    "sun_mean_fraction": 0.2935701327097298,
+    "earth_any": 0.2760186819652839,
+    "earth_centre": 0.20897077571834854,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 207.0114668890601
+  },
+  {
+   "id": "earth-0.4-056",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.19749068353437285,
+    "sun_mean_fraction": 0.17258116172539203,
+    "earth_any": 0.4972663528488771,
+    "earth_centre": 0.45161567127586544,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.19511253309797,
+    "sun_mean_fraction": 0.1702428793028796,
+    "earth_any": 0.4956114543493184,
+    "earth_centre": 0.45014465038736884,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.4259463567715995,
+    "sun_mean_fraction": 0.4067368209820814,
+    "earth_any": 0.13562199666568597,
+    "earth_centre": 0.06177674806315583,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 202.00602922809776
+  },
+  {
+   "id": "earth-0.4-057",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.3381447974894577,
+    "sun_mean_fraction": 0.3196430028277479,
+    "earth_any": 0.4665526625478082,
+    "earth_centre": 0.4200254976954006,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.3362569873492204,
+    "sun_mean_fraction": 0.31817292614338444,
+    "earth_any": 0.4649529273315681,
+    "earth_centre": 0.418290918897715,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.34147298224968126,
+    "sun_mean_fraction": 0.32718424578868355,
+    "earth_any": 0.1729185054427773,
+    "earth_centre": 0.04777140335392763,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 204.731726662023
+  },
+  {
+   "id": "earth-0.4-058",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.03488771207217809,
+    "sun_mean_fraction": 0.026908996173260733,
+    "earth_any": 0.4069947043248014,
+    "earth_centre": 0.3569861233696185,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.03398058252427184,
+    "sun_mean_fraction": 0.026117472667877856,
+    "earth_any": 0.40640629596940275,
+    "earth_centre": 0.3567164362067275,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.18101524958321075,
+    "sun_mean_fraction": 0.15638051728364225,
+    "earth_any": 0.28517578699617535,
+    "earth_centre": 0.2205489359615573,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 202.6906304290751
+  },
+  {
+   "id": "earth-0.4-059",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.20426963812886142,
+    "sun_mean_fraction": 0.18054533564344385,
+    "earth_any": 0.462728008237717,
+    "earth_centre": 0.4160659998038639,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.20205084828871236,
+    "sun_mean_fraction": 0.17800060223638525,
+    "earth_any": 0.4616186133176424,
+    "earth_centre": 0.41517725801706384,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.07027802294792586,
+    "sun_mean_fraction": 0.0475141326092369,
+    "earth_any": 0.4766475433951162,
+    "earth_centre": 0.4306903991370011,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 202.27835410903208
+  },
+  {
+   "id": "earth-0.4-060",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.11737520839462587,
+    "sun_mean_fraction": 0.07722352583945687,
+    "earth_any": 0.49570952240855154,
+    "earth_centre": 0.4499975482985192,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.11382024124742571,
+    "sun_mean_fraction": 0.07464614937465955,
+    "earth_any": 0.4942691477885653,
+    "earth_centre": 0.448655241737766,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.3873565754633716,
+    "sun_mean_fraction": 0.37925606851019533,
+    "earth_any": 0.09991909385113269,
+    "earth_centre": 0.03130209865646759,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 202.23819379904307
+  },
+  {
+   "id": "earth-0.5-061",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.13125796802981268,
+    "sun_mean_fraction": 0.1180115350871973,
+    "earth_any": 0.5609860743355889,
+    "earth_centre": 0.5143056781406296,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.12951113072472295,
+    "sun_mean_fraction": 0.11629543295134699,
+    "earth_any": 0.5594598901637736,
+    "earth_centre": 0.5130982151613219,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.28140629596940275,
+    "sun_mean_fraction": 0.27017207474162974,
+    "earth_any": 0.15405879180151025,
+    "earth_centre": 0.008409336079238992,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 210.05806353897788
+  },
+  {
+   "id": "earth-0.5-062",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.28919657742473276,
+    "sun_mean_fraction": 0.26721062889471014,
+    "earth_any": 0.5791102775326076,
+    "earth_centre": 0.5329937726782387,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.2866774541531823,
+    "sun_mean_fraction": 0.26457783268421825,
+    "earth_any": 0.5774860253015592,
+    "earth_centre": 0.5313266156712758,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.32269294890654115,
+    "sun_mean_fraction": 0.3134269650822672,
+    "earth_any": 0.019043591252329118,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 204.20661742298398
+  },
+  {
+   "id": "earth-0.5-063",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.1693696675492792,
+    "sun_mean_fraction": 0.1551332986088344,
+    "earth_any": 0.5427760615867412,
+    "earth_centre": 0.494336569579288,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.16697312935177014,
+    "sun_mean_fraction": 0.15281079293125488,
+    "earth_any": 0.5399198293615769,
+    "earth_centre": 0.4922035892909679,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.4255418260272629,
+    "sun_mean_fraction": 0.4086447711367663,
+    "earth_any": 0.24072643914876923,
+    "earth_centre": 0.1610400117681671,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 210.16135992098134
+  },
+  {
+   "id": "earth-0.5-064",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.2992791997646367,
+    "sun_mean_fraction": 0.2832871565112507,
+    "earth_any": 0.5675382465431009,
+    "earth_centre": 0.5213114151220948,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.29780817887614003,
+    "sun_mean_fraction": 0.28170087448840303,
+    "earth_any": 0.5659936746101795,
+    "earth_centre": 0.5196810336373443,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.2618907521820143,
+    "sun_mean_fraction": 0.25028321154777117,
+    "earth_any": 0.1802490928704521,
+    "earth_centre": 0.05586814749436109,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 208.3893812149763
+  },
+  {
+   "id": "earth-0.5-065",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.1676350887515936,
+    "sun_mean_fraction": 0.1290680446686456,
+    "earth_any": 0.49308007257036385,
+    "earth_centre": 0.447417132489948,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.1626765225066196,
+    "sun_mean_fraction": 0.12457080205559998,
+    "earth_any": 0.49146194959301753,
+    "earth_centre": 0.44593998234774934,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.3585613415710503,
+    "sun_mean_fraction": 0.32154143340041885,
+    "earth_any": 0.4684220849269393,
+    "earth_centre": 0.42107360007845446,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 210.38740199897438
+  },
+  {
+   "id": "earth-0.6-066",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.24059159556732373,
+    "sun_mean_fraction": 0.2286187953902938,
+    "earth_any": 0.6973803569677356,
+    "earth_centre": 0.6444665097577719,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.23892443856036089,
+    "sun_mean_fraction": 0.22690178342910816,
+    "earth_any": 0.6960809551828969,
+    "earth_centre": 0.6430261351377856,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.3227848877120722,
+    "sun_mean_fraction": 0.3064050467653617,
+    "earth_any": 0.039974992644895554,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 207.3910833230475
+  },
+  {
+   "id": "earth-0.6-067",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.3940497205060312,
+    "sun_mean_fraction": 0.3839098581962309,
+    "earth_any": 0.6212795430028439,
+    "earth_centre": 0.5725397175639894,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.3933448563302932,
+    "sun_mean_fraction": 0.38312809926506913,
+    "earth_any": 0.6190423654015887,
+    "earth_centre": 0.5705906148867314,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.09811709326272433,
+    "sun_mean_fraction": 0.08166409387526516,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 213.1502823799383
+  },
+  {
+   "id": "earth-0.6-068",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.3676448955575169,
+    "sun_mean_fraction": 0.3505873415599861,
+    "earth_any": 0.6320547710110817,
+    "earth_centre": 0.5835478572129058,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.366149357654212,
+    "sun_mean_fraction": 0.3490494714186828,
+    "earth_any": 0.6302772874374816,
+    "earth_centre": 0.5819665097577719,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.4202461508286751,
+    "sun_mean_fraction": 0.4076032425103795,
+    "earth_any": 0.24865156418554477,
+    "earth_centre": 0.17025228008237717,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 213.753269914072
+  },
+  {
+   "id": "earth-0.6-069",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.26198269098754534,
+    "sun_mean_fraction": 0.2501913972941879,
+    "earth_any": 0.6337893498087673,
+    "earth_centre": 0.5854356673531431,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.2606771599490046,
+    "sun_mean_fraction": 0.2488856188828126,
+    "earth_any": 0.6322325193684417,
+    "earth_centre": 0.5839340001961362,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.3819996077277631,
+    "sun_mean_fraction": 0.3741184207148125,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 212.7457130929688
+  },
+  {
+   "id": "earth-0.6-070",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.09775546729430225,
+    "sun_mean_fraction": 0.08849882446899755,
+    "earth_any": 0.6089290967931744,
+    "earth_centre": 0.5608696185152496,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.09651735804648426,
+    "sun_mean_fraction": 0.08727297888971293,
+    "earth_any": 0.606943218593704,
+    "earth_centre": 0.5591718152397764,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.2281246935373149,
+    "sun_mean_fraction": 0.20789477965392844,
+    "earth_any": 0.4442115328037658,
+    "earth_centre": 0.3969304697460037,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 211.39674476906657
+  },
+  {
+   "id": "earth-0.7-071",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.3253653035206433,
+    "sun_mean_fraction": 0.3169814460077497,
+    "earth_any": 0.7948538785917427,
+    "earth_centre": 0.7279162989114445,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.324096548004315,
+    "sun_mean_fraction": 0.3157047708271751,
+    "earth_any": 0.7944309600862999,
+    "earth_centre": 0.7271685299597921,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.1380920859076199,
+    "earth_centre": 0.0014955379033048937,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 206.56191502395086
+  },
+  {
+   "id": "earth-0.7-072",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.42035647739531234,
+    "sun_mean_fraction": 0.41089867237393696,
+    "earth_any": 0.8018657448269099,
+    "earth_centre": 0.7329422869471414,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.41927772874374813,
+    "sun_mean_fraction": 0.40981825242636616,
+    "earth_any": 0.80239898989899,
+    "earth_centre": 0.7325132391879965,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.3918799646954987,
+    "sun_mean_fraction": 0.3832528789761764,
+    "earth_any": 0.25551019907816025,
+    "earth_centre": 0.16582695890948318,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 203.52126400510315
+  },
+  {
+   "id": "earth-0.7-073",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.21899210552123174,
+    "sun_mean_fraction": 0.2128757704995025,
+    "earth_any": 0.7494177208983034,
+    "earth_centre": 0.6901294498381877,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.2180175541826027,
+    "sun_mean_fraction": 0.2118085561576219,
+    "earth_any": 0.7477137883691282,
+    "earth_centre": 0.6884990683534373,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.32841154261057176,
+    "sun_mean_fraction": 0.31229419479556186,
+    "earth_any": 0.22115573207806216,
+    "earth_centre": 0.13502745905658528,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 222.0726584730437
+  },
+  {
+   "id": "earth-0.7-074",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.2124215455526135,
+    "sun_mean_fraction": 0.20385196152937793,
+    "earth_any": 0.7889697950377562,
+    "earth_centre": 0.7229577326664706,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.2111650485436893,
+    "sun_mean_fraction": 0.20260074682690285,
+    "earth_any": 0.786824556242032,
+    "earth_centre": 0.721137344316956,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.2739286064528783,
+    "sun_mean_fraction": 0.2529411887776678,
+    "earth_any": 0.07979062469353732,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 224.39951167698018
+  },
+  {
+   "id": "earth-0.7-075",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.2015666372462489,
+    "sun_mean_fraction": 0.19423744569934875,
+    "earth_any": 0.765133127390409,
+    "earth_centre": 0.7035218691772089,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.20037756202804746,
+    "sun_mean_fraction": 0.1931320635976806,
+    "earth_any": 0.7628101402373247,
+    "earth_centre": 0.7015850250073551,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.20775718348533884,
+    "sun_mean_fraction": 0.187039347764696,
+    "earth_any": 0.07508948710405021,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 211.7678440460004
+  },
+  {
+   "id": "earth-0.8-076",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.384383887417868,
+    "sun_mean_fraction": 0.37423167772591204,
+    "earth_any": 0.8923825634990683,
+    "earth_centre": 0.7916727959203688,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.38288222026086105,
+    "sun_mean_fraction": 0.3726868153460683,
+    "earth_any": 0.8932590467784642,
+    "earth_centre": 0.7911334215945867,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.10583995292733157,
+    "sun_mean_fraction": 0.08801515324777907,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 210.08279614092316
+  },
+  {
+   "id": "earth-0.8-077",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.39043959007551243,
+    "sun_mean_fraction": 0.3815695928263619,
+    "earth_any": 0.8862104050210846,
+    "earth_centre": 0.7902569383151907,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.38933632440913996,
+    "sun_mean_fraction": 0.3804551948114828,
+    "earth_any": 0.8831212611552417,
+    "earth_centre": 0.7883017063842307,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.08767284495439835,
+    "sun_mean_fraction": 0.07097650611105502,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 212.09407000499777
+  },
+  {
+   "id": "earth-0.8-078",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.33514146317544374,
+    "sun_mean_fraction": 0.3230348306289479,
+    "earth_any": 0.8728792782190841,
+    "earth_centre": 0.7828589290967932,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.3337746395998823,
+    "sun_mean_fraction": 0.32176609766316855,
+    "earth_any": 0.8698085221143473,
+    "earth_centre": 0.7807627243306855,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.28458124938707463,
+    "sun_mean_fraction": 0.26931589302216774,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 207.22584968793672
+  },
+  {
+   "id": "earth-0.8-079",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.38553005786015493,
+    "sun_mean_fraction": 0.3776579020087283,
+    "earth_any": 0.8280008826125331,
+    "earth_centre": 0.749374816122389,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.3844513092085908,
+    "sun_mean_fraction": 0.376571597153466,
+    "earth_any": 0.8251691674021772,
+    "earth_centre": 0.7470211827007943,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.0,
+    "sun_mean_fraction": 0.0,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 214.09105628193356
+  },
+  {
+   "id": "earth-0.8-080",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.24583823673629498,
+    "sun_mean_fraction": 0.23458576378748275,
+    "earth_any": 0.89801534765127,
+    "earth_centre": 0.7951296950083357,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.24445302539962735,
+    "sun_mean_fraction": 0.23331898241744953,
+    "earth_any": 0.8962010885554574,
+    "earth_centre": 0.7936586741198391,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.017137393350985585,
+    "sun_mean_fraction": 0.013140219181626434,
+    "earth_any": 0.24333750122585074,
+    "earth_centre": 0.1649688633911935,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 213.3537022540113
+  },
+  {
+   "id": "earth-0.9-081",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.4041936353829558,
+    "sun_mean_fraction": 0.39596862583383363,
+    "earth_any": 0.9441257232519369,
+    "earth_centre": 0.8210135333921742,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.4030781112091792,
+    "sun_mean_fraction": 0.3948857980752679,
+    "earth_any": 0.9443525056389134,
+    "earth_centre": 0.8203760910071589,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.28834461116014515,
+    "sun_mean_fraction": 0.2692941662647786,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 216.290833168081
+  },
+  {
+   "id": "earth-0.9-082",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.41541629891144455,
+    "sun_mean_fraction": 0.4064761517276491,
+    "earth_any": 0.9464058056291066,
+    "earth_centre": 0.8213445130920859,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.4142946454839659,
+    "sun_mean_fraction": 0.40541991322406296,
+    "earth_any": 0.9448796214572913,
+    "earth_centre": 0.8200696283220555,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.17646734333627537,
+    "sun_mean_fraction": 0.16056944195547085,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 216.17051290196832
+  },
+  {
+   "id": "earth-0.9-083",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.3839854859272335,
+    "sun_mean_fraction": 0.3760423244897771,
+    "earth_any": 0.9944652839070315,
+    "earth_centre": 0.8603265666372463,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.38270447190350104,
+    "sun_mean_fraction": 0.37469283374006523,
+    "earth_any": 0.994250760027459,
+    "earth_centre": 0.8579545454545454,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.3691465627145239,
+    "sun_mean_fraction": 0.35339195577245086,
+    "earth_any": 0.3321074825929195,
+    "earth_centre": 0.27621481808375015,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 210.26346268795896
+  },
+  {
+   "id": "earth-0.9-084",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.41096646072374227,
+    "sun_mean_fraction": 0.4070059721792243,
+    "earth_any": 1.0,
+    "earth_centre": 0.9244446896145925,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.4105741884868098,
+    "sun_mean_fraction": 0.40659987671857173,
+    "earth_any": 1.0,
+    "earth_centre": 0.9253027851328822,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.4499730312837109,
+    "sun_mean_fraction": 0.4377364229775566,
+    "earth_any": 0.0,
+    "earth_centre": 0.0,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 209.41821431205608
+  },
+  {
+   "id": "earth-0.9-085",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.4221462194763166,
+    "sun_mean_fraction": 0.41766503951308115,
+    "earth_any": 1.0,
+    "earth_centre": 0.9960711483769736,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "second_cycle": {
+    "steps": 163152,
+    "sun_any": 0.4216191036579386,
+    "sun_mean_fraction": 0.41720337600444285,
+    "earth_any": 1.0,
+    "earth_centre": 0.9962550259880357,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "control": {
+    "steps": 163152,
+    "sun_any": 0.08305751691674022,
+    "sun_mean_fraction": 0.06129289465340632,
+    "earth_any": 0.2678483867804256,
+    "earth_centre": 0.1986736294988722,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 215.25656171003357
+  }
+ ],
+ "bright_points": [
+  {
+   "id": "bright-0.6-000",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.22996346964793568,
+    "sun_mean_fraction": 0.1922223061378228,
+    "earth_any": 0.4531541139550848,
+    "earth_centre": 0.4064921055212317,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 73.8018390010111
+  },
+  {
+   "id": "bright-0.6-001",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.5775534470922821,
+    "sun_mean_fraction": 0.5110734621194643,
+    "earth_any": 0.6050063744238502,
+    "earth_centre": 0.5578601549475336,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 70.64053466799669
+  },
+  {
+   "id": "bright-0.6-002",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.3340627145238796,
+    "sun_mean_fraction": 0.30614671688749207,
+    "earth_any": 0.5655952731195449,
+    "earth_centre": 0.5189455231930961,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 69.38435591198504
+  },
+  {
+   "id": "bright-0.6-003",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.49377267823869764,
+    "sun_mean_fraction": 0.442363947141801,
+    "earth_any": 0.43881166029224283,
+    "earth_centre": 0.3916347945474159,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 71.32663840800524
+  },
+  {
+   "id": "bright-0.6-004",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.5086054721977052,
+    "sun_mean_fraction": 0.45548119180982655,
+    "earth_any": 0.2846670589389036,
+    "earth_centre": 0.20070241247425713,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 68.20937633397989
+  },
+  {
+   "id": "bright-0.6-005",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.6549720506031186,
+    "sun_mean_fraction": 0.6115522090703492,
+    "earth_any": 0.43472957732666473,
+    "earth_centre": 0.3867130038246543,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 71.32230746396817
+  },
+  {
+   "id": "bright-0.7-006",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.34956972639011474,
+    "sun_mean_fraction": 0.3056707965613964,
+    "earth_any": 0.500257428655487,
+    "earth_centre": 0.45454545454545453,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 70.70151113707107
+  },
+  {
+   "id": "bright-0.7-007",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.4035500637442385,
+    "sun_mean_fraction": 0.39263234484301907,
+    "earth_any": 0.518590026478376,
+    "earth_centre": 0.47273707953319605,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 70.26919803302735
+  },
+  {
+   "id": "bright-0.7-008",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.5557823379425321,
+    "sun_mean_fraction": 0.48463741469533483,
+    "earth_any": 0.5172415906639207,
+    "earth_centre": 0.4718115622241836,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 68.81018919800408
+  },
+  {
+   "id": "bright-0.7-009",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.5280106894184564,
+    "sun_mean_fraction": 0.4952161736600539,
+    "earth_any": 0.5688131313131313,
+    "earth_centre": 0.5222308031774051,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 73.77148791600484
+  },
+  {
+   "id": "bright-0.7-010",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.39401907423752086,
+    "sun_mean_fraction": 0.35907200749508,
+    "earth_any": 0.43046974600372656,
+    "earth_centre": 0.3829189957830735,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 67.08915779506788
+  },
+  {
+   "id": "bright-0.7-011",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.5011952044719035,
+    "sun_mean_fraction": 0.4437347453759199,
+    "earth_any": 0.4175737962145729,
+    "earth_centre": 0.3690913994312053,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 69.6390257300809
+  },
+  {
+   "id": "bright-0.8-012",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.5869250760027459,
+    "sun_mean_fraction": 0.5310084519900494,
+    "earth_any": 0.53877365891929,
+    "earth_centre": 0.4934233107776797,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 70.11978874204215
+  },
+  {
+   "id": "bright-0.8-013",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.5148266647053055,
+    "sun_mean_fraction": 0.4452773522652867,
+    "earth_any": 0.47110056879474355,
+    "earth_centre": 0.42503309796999117,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 68.54068447300233
+  },
+  {
+   "id": "bright-0.8-014",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.5269687162891047,
+    "sun_mean_fraction": 0.4665537880859793,
+    "earth_any": 0.5400730607041286,
+    "earth_centre": 0.4935275080906149,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 70.87431475997437
+  },
+  {
+   "id": "bright-0.8-015",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.666519564577817,
+    "sun_mean_fraction": 0.5965510200358616,
+    "earth_any": 0.5598276453858978,
+    "earth_centre": 0.5140727664999509,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 72.30690684495494
+  },
+  {
+   "id": "bright-0.8-016",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.7616149357654212,
+    "sun_mean_fraction": 0.702695586384097,
+    "earth_any": 0.5835049524369913,
+    "earth_centre": 0.5366958419142885,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 68.23548098106403
+  },
+  {
+   "id": "bright-0.8-017",
+   "judged": {
+    "steps": 163152,
+    "sun_any": 0.5456077767970972,
+    "sun_mean_fraction": 0.5122096887137422,
+    "earth_any": 0.4485265274100226,
+    "earth_centre": 0.40170515837991566,
+    "dems": [
+     {
+      "product": "LDEM_80S_20MPP_ADJ",
+      "resolution_m": 20.0
+     },
+     {
+      "product": "LDEM_80S_80MPP_ADJ",
+      "resolution_m": 80.0
+     },
+     {
+      "product": "LDEM_60S_240MPP_ADJ",
+      "resolution_m": 240.0
+     }
+    ]
+   },
+   "seconds": 66.36118817899842
+  }
+ ]
+}

@@ -1,0 +1,18 @@
+{
+ "fetched_at": "2026-11-14T19:44:45Z",
+ "url": "https://eclipse.gsfc.nasa.gov/LEplot/LEplot2001/LE2025Mar14T.pdf",
+ "sha256": "4df1efa14457a1e925c2e63c0d8a7a428d30627532abc11e5c15e3e219d2d166",
+ "credit": "Eclipse Predictions by Fred Espenak, NASA's GSFC",
+ "contacts_ut": {
+  "P1": "2025-03-14T03:57:24Z",
+  "U1": "2025-03-14T05:09:33Z",
+  "U2": "2025-03-14T06:25:59Z",
+  "U3": "2025-03-14T07:31:23Z",
+  "U4": "2025-03-14T08:47:48Z",
+  "P4": "2025-03-14T10:00:01Z"
+ },
+ "delta_t_s": 75,
+ "shadow_rule": "CdT (Danjon): the Earth's shadow enlarged for its atmosphere",
+ "ephemeris": "VSOP87/ELP2000-85",
+ "note": "Contacts of the whole Moon with the penumbra (P) and the umbra (U), transcribed by hand from the figure, which has no text layer. They are not contacts at a point, so the check uses them as intervals only."
+}

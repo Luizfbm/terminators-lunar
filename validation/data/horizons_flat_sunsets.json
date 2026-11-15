@@ -1,0 +1,262 @@
+{
+  "source": "JPL Horizons API, Sun (10) from coord@301 (geodetic, 1737.4 km sphere), quantities 4 (apparent az/el, airless) and 13 (angular diameter), UT",
+  "instants_from": "the engine's /visibility/flat Sunsets for each Query",
+  "fetched_at": "2026-11-14T11:33:23Z",
+  "queries": [
+    {
+      "params": {
+        "site_id": "001",
+        "start": "2025-03-01T00:00:00Z",
+        "observer_height_m": 2
+      },
+      "latitude_deg": -89.4661,
+      "longitude_deg": -136.949,
+      "observer_height_m": 2.0,
+      "search_end": "2025-09-26T12:43:48Z",
+      "sunsets": [
+        {
+          "t": "2025-03-11T05:27:08Z",
+          "horizons_time": "2025-Mar-11 05:27:08.000",
+          "azimuth_deg": 176.984677,
+          "elevation_deg": -0.354454,
+          "angular_diameter_arcsec": 1927.064
+        },
+        {
+          "t": "2025-04-01T17:30:50Z",
+          "horizons_time": "2025-Apr-01 17:30:50.000",
+          "azimuth_deg": 274.982119,
+          "elevation_deg": -0.353861,
+          "angular_diameter_arcsec": 1922.792
+        },
+        {
+          "t": "2025-08-27T04:19:23Z",
+          "horizons_time": "2025-Aug-27 04:19:23.000",
+          "azimuth_deg": 274.099556,
+          "elevation_deg": -0.351014,
+          "angular_diameter_arcsec": 1902.29
+        }
+      ],
+      "query_url": "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND=%2710%27&OBJ_DATA=%27NO%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27OBSERVER%27&CENTER=%27coord%40301%27&COORD_TYPE=%27GEODETIC%27&SITE_COORD=%27-136.949%2C-89.4661%2C0.0020%27&TLIST=%272025-03-11+05%3A27%3A08%27+%272025-04-01+17%3A30%3A50%27+%272025-08-27+04%3A19%3A23%27&QUANTITIES=%274%2C13%27&APPARENT=%27AIRLESS%27&TIME_TYPE=%27UT%27&CSV_FORMAT=%27YES%27"
+    },
+    {
+      "params": {
+        "latitude_deg": -89.9,
+        "longitude_deg": 0.0,
+        "start": "2028-08-01T00:00:00Z"
+      },
+      "latitude_deg": -89.9,
+      "longitude_deg": 0.0,
+      "observer_height_m": 2.0,
+      "search_end": "2029-02-26T12:43:48Z",
+      "sunsets": [
+        {
+          "t": "2029-01-12T10:40:01Z",
+          "horizons_time": "2029-Jan-12 10:40:01.000",
+          "azimuth_deg": 212.477552,
+          "elevation_deg": -0.358336,
+          "angular_diameter_arcsec": 1955.033
+        }
+      ],
+      "query_url": "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND=%2710%27&OBJ_DATA=%27NO%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27OBSERVER%27&CENTER=%27coord%40301%27&COORD_TYPE=%27GEODETIC%27&SITE_COORD=%270.0%2C-89.9%2C0.0020%27&TLIST=%272029-01-12+10%3A40%3A01%27&QUANTITIES=%274%2C13%27&APPARENT=%27AIRLESS%27&TIME_TYPE=%27UT%27&CSV_FORMAT=%27YES%27"
+    },
+    {
+      "params": {
+        "latitude_deg": -85.416,
+        "longitude_deg": 31.8506,
+        "start": "2027-01-01T00:00:00Z",
+        "observer_height_m": 2
+      },
+      "latitude_deg": -85.416,
+      "longitude_deg": 31.8506,
+      "observer_height_m": 2.0,
+      "search_end": "2027-07-29T12:43:48Z",
+      "sunsets": [
+        {
+          "t": "2027-01-28T02:51:05Z",
+          "horizons_time": "2027-Jan-28 02:51:05.000",
+          "azimuth_deg": 261.530641,
+          "elevation_deg": -0.357188,
+          "angular_diameter_arcsec": 1946.78
+        },
+        {
+          "t": "2027-02-25T20:51:35Z",
+          "horizons_time": "2027-Feb-25 20:51:35.000",
+          "azimuth_deg": 271.785764,
+          "elevation_deg": -0.355653,
+          "angular_diameter_arcsec": 1935.741
+        },
+        {
+          "t": "2027-03-26T17:24:05Z",
+          "horizons_time": "2027-Mar-26 17:24:05.000",
+          "azimuth_deg": 280.379027,
+          "elevation_deg": -0.3535,
+          "angular_diameter_arcsec": 1920.221
+        },
+        {
+          "t": "2027-04-24T20:40:59Z",
+          "horizons_time": "2027-Apr-24 20:40:59.000",
+          "azimuth_deg": 285.092146,
+          "elevation_deg": -0.351254,
+          "angular_diameter_arcsec": 1904.044
+        },
+        {
+          "t": "2027-05-24T09:29:15Z",
+          "horizons_time": "2027-May-24 09:29:15.000",
+          "azimuth_deg": 284.52803,
+          "elevation_deg": -0.349454,
+          "angular_diameter_arcsec": 1891.012
+        },
+        {
+          "t": "2027-06-23T07:44:51Z",
+          "horizons_time": "2027-Jun-23 07:44:51.000",
+          "azimuth_deg": 278.834368,
+          "elevation_deg": -0.348504,
+          "angular_diameter_arcsec": 1884.221
+        },
+        {
+          "t": "2027-07-23T12:37:44Z",
+          "horizons_time": "2027-Jul-23 12:37:44.000",
+          "azimuth_deg": 269.653443,
+          "elevation_deg": -0.348668,
+          "angular_diameter_arcsec": 1885.428
+        }
+      ],
+      "query_url": "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND=%2710%27&OBJ_DATA=%27NO%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27OBSERVER%27&CENTER=%27coord%40301%27&COORD_TYPE=%27GEODETIC%27&SITE_COORD=%2731.8506%2C-85.416%2C0.0020%27&TLIST=%272027-01-28+02%3A51%3A05%27+%272027-02-25+20%3A51%3A35%27+%272027-03-26+17%3A24%3A05%27+%272027-04-24+20%3A40%3A59%27+%272027-05-24+09%3A29%3A15%27+%272027-06-23+07%3A44%3A51%27+%272027-07-23+12%3A37%3A44%27&QUANTITIES=%274%2C13%27&APPARENT=%27AIRLESS%27&TIME_TYPE=%27UT%27&CSV_FORMAT=%27YES%27"
+    },
+    {
+      "params": {
+        "latitude_deg": -85.2,
+        "longitude_deg": -75.0,
+        "start": "2030-06-01T00:00:00Z",
+        "observer_height_m": 10
+      },
+      "latitude_deg": -85.2,
+      "longitude_deg": -75.0,
+      "observer_height_m": 10.0,
+      "search_end": "2030-12-27T12:43:48Z",
+      "sunsets": [
+        {
+          "t": "2030-06-30T10:56:37Z",
+          "horizons_time": "2030-Jun-30 10:56:37.000",
+          "azimuth_deg": 257.259184,
+          "elevation_deg": -0.457048,
+          "angular_diameter_arcsec": 1891.989
+        },
+        {
+          "t": "2030-07-30T13:07:41Z",
+          "horizons_time": "2030-Jul-30 13:07:41.000",
+          "azimuth_deg": 249.449921,
+          "elevation_deg": -0.457398,
+          "angular_diameter_arcsec": 1894.531
+        },
+        {
+          "t": "2030-08-29T07:48:32Z",
+          "horizons_time": "2030-Aug-29 07:48:32.000",
+          "azimuth_deg": 245.684474,
+          "elevation_deg": -0.458743,
+          "angular_diameter_arcsec": 1904.219
+        },
+        {
+          "t": "2030-09-27T16:49:50Z",
+          "horizons_time": "2030-Sep-27 16:49:50.000",
+          "azimuth_deg": 247.230757,
+          "elevation_deg": -0.460755,
+          "angular_diameter_arcsec": 1918.733
+        },
+        {
+          "t": "2030-10-26T17:23:27Z",
+          "horizons_time": "2030-Oct-26 17:23:27.000",
+          "azimuth_deg": 253.551786,
+          "elevation_deg": -0.46295,
+          "angular_diameter_arcsec": 1934.562
+        },
+        {
+          "t": "2030-11-24T13:16:03Z",
+          "horizons_time": "2030-Nov-24 13:16:03.000",
+          "azimuth_deg": 262.695114,
+          "elevation_deg": -0.464783,
+          "angular_diameter_arcsec": 1947.744
+        },
+        {
+          "t": "2030-12-23T09:00:57Z",
+          "horizons_time": "2030-Dec-23 09:00:57.000",
+          "azimuth_deg": 272.213843,
+          "elevation_deg": -0.465763,
+          "angular_diameter_arcsec": 1954.814
+        }
+      ],
+      "query_url": "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND=%2710%27&OBJ_DATA=%27NO%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27OBSERVER%27&CENTER=%27coord%40301%27&COORD_TYPE=%27GEODETIC%27&SITE_COORD=%27-75.0%2C-85.2%2C0.0100%27&TLIST=%272030-06-30+10%3A56%3A37%27+%272030-07-30+13%3A07%3A41%27+%272030-08-29+07%3A48%3A32%27+%272030-09-27+16%3A49%3A50%27+%272030-10-26+17%3A23%3A27%27+%272030-11-24+13%3A16%3A03%27+%272030-12-23+09%3A00%3A57%27&QUANTITIES=%274%2C13%27&APPARENT=%27AIRLESS%27&TIME_TYPE=%27UT%27&CSV_FORMAT=%27YES%27"
+    },
+    {
+      "params": {
+        "latitude_deg": -84.5,
+        "longitude_deg": 90.0,
+        "start": "2031-09-01T00:00:00Z",
+        "observer_height_m": 0
+      },
+      "latitude_deg": -84.5,
+      "longitude_deg": 90.0,
+      "observer_height_m": 0.0,
+      "search_end": "2032-03-28T12:43:48Z",
+      "sunsets": [
+        {
+          "t": "2031-09-03T04:21:09Z",
+          "horizons_time": "2031-Sep-03 04:21:09.000",
+          "azimuth_deg": 251.849102,
+          "elevation_deg": -0.263384,
+          "angular_diameter_arcsec": 1897.301
+        },
+        {
+          "t": "2031-10-02T07:09:56Z",
+          "horizons_time": "2031-Oct-02 07:09:56.000",
+          "azimuth_deg": 256.612405,
+          "elevation_deg": -0.265408,
+          "angular_diameter_arcsec": 1911.9
+        },
+        {
+          "t": "2031-10-31T05:13:28Z",
+          "horizons_time": "2031-Oct-31 05:13:28.000",
+          "azimuth_deg": 264.244897,
+          "elevation_deg": -0.26754,
+          "angular_diameter_arcsec": 1927.224
+        },
+        {
+          "t": "2031-11-29T02:21:23Z",
+          "horizons_time": "2031-Nov-29 02:21:23.000",
+          "azimuth_deg": 272.770551,
+          "elevation_deg": -0.269246,
+          "angular_diameter_arcsec": 1939.579
+        },
+        {
+          "t": "2031-12-28T02:39:32Z",
+          "horizons_time": "2031-Dec-28 02:39:32.000",
+          "azimuth_deg": 279.974653,
+          "elevation_deg": -0.270095,
+          "angular_diameter_arcsec": 1945.655
+        },
+        {
+          "t": "2032-01-26T09:55:27Z",
+          "horizons_time": "2032-Jan-26 09:55:27.000",
+          "azimuth_deg": 283.713106,
+          "elevation_deg": -0.269797,
+          "angular_diameter_arcsec": 1943.511
+        },
+        {
+          "t": "2032-02-25T02:16:36Z",
+          "horizons_time": "2032-Feb-25 02:16:36.000",
+          "azimuth_deg": 282.649003,
+          "elevation_deg": -0.268398,
+          "angular_diameter_arcsec": 1933.438
+        },
+        {
+          "t": "2032-03-26T02:39:56Z",
+          "horizons_time": "2032-Mar-26 02:39:56.000",
+          "azimuth_deg": 277.094099,
+          "elevation_deg": -0.266285,
+          "angular_diameter_arcsec": 1918.172
+        }
+      ],
+      "query_url": "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND=%2710%27&OBJ_DATA=%27NO%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27OBSERVER%27&CENTER=%27coord%40301%27&COORD_TYPE=%27GEODETIC%27&SITE_COORD=%2790.0%2C-84.5%2C0.0000%27&TLIST=%272031-09-03+04%3A21%3A09%27+%272031-10-02+07%3A09%3A56%27+%272031-10-31+05%3A13%3A28%27+%272031-11-29+02%3A21%3A23%27+%272031-12-28+02%3A39%3A32%27+%272032-01-26+09%3A55%3A27%27+%272032-02-25+02%3A16%3A36%27+%272032-03-26+02%3A39%3A56%27&QUANTITIES=%274%2C13%27&APPARENT=%27AIRLESS%27&TIME_TYPE=%27UT%27&CSV_FORMAT=%27YES%27"
+    }
+  ]
+}

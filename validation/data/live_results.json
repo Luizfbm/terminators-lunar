@@ -1,0 +1,1061 @@
+{
+  "api": "https://lunar-api.luizfbm.win",
+  "engine_version": "0.1.0",
+  "meta": {
+    "engine_version": "0.1.0",
+    "kernels": [
+      "naif0012.tls",
+      "pck00011.tpc",
+      "de440.bsp",
+      "moon_pa_de440_200625.bpc",
+      "moon_de440_250416.tf"
+    ],
+    "dems": [
+      {
+        "product": "LDEM_80S_20MPP_ADJ",
+        "resolution_m": 20.0
+      },
+      {
+        "product": "LDEM_80S_80MPP_ADJ",
+        "resolution_m": 80.0
+      },
+      {
+        "product": "LDEM_60S_240MPP_ADJ",
+        "resolution_m": 240.0
+      }
+    ],
+    "coverage": {
+      "custom_max_latitude_deg": -80.0,
+      "window_min": "2025-01-01T00:00:00Z",
+      "window_max": "2032-12-31T23:59:59Z",
+      "max_duration_hours": 1440.0
+    },
+    "defaults": {
+      "site_id": "001",
+      "duration_hours": 708.73,
+      "observer_height_m": 2.0
+    },
+    "short_shadow_max_hours": 12.0
+  },
+  "entries": [
+    {
+      "id": "wueller2026-sunlit-days",
+      "title": {
+        "en": "Consecutive sunlit days at the Artemis Sites vs Wueller et al. 2026",
+        "pt": "Dias seguidos de Sol nos Sites do Artemis contra Wueller et al. 2026"
+      },
+      "reference": "Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, data Zenodo 17084058: longest run of sunlit days in the 2026 southern mid-summer (06/11-27/11), 2 m | live: https://lunar-api.luizfbm.win, engine 0.1.0",
+      "tolerance": {
+        "en": "≤ 1 day per Site",
+        "pt": "≤ 1 dia por Site"
+      },
+      "result": {
+        "en": "75 of 130 Sites within 1 day; largest gap +19.23 d at MMO09. Of the 97 with a published value above 0, 75 within 1 day. 33 Sites are published as 0 days.",
+        "pt": "75 de 130 Sites dentro de 1 dia; maior diferença +19,23 d em MMO09. Dos 97 com valor publicado acima de 0, 75 dentro de 1 dia. 33 Sites aparecem publicados com 0 dia."
+      },
+      "status": "failed",
+      "not_covered": {
+        "en": "Only 2026. Wueller used LROC QuickMap TerrainShadows on a 60 m map, 12 h steps and shadows to 150 km; we use 20/80/240 m DEMs to 300 km and 15 min steps, and count any part of the Sun's disc as sunlit. At 2 Sites the published Sun-and-Earth days exceed the Sun days for 2026 (MMO08, MMO09...), which cannot happen, so some published zeros may not be measurements; they still count against us here. Checked live against the public API, not in CI.",
+        "pt": "Só 2026. O Wueller usou o TerrainShadows do LROC QuickMap num mapa de 60 m, passos de 12 h e sombras até 150 km; nós usamos DEMs de 20/80/240 m até 300 km e passos de 15 min, e contamos qualquer parte do disco do Sol como Sol. Em 2 Sites os dias de Sol e Terra publicados passam dos dias de Sol em 2026 (MMO08, MMO09...), o que não pode acontecer, então alguns zeros publicados talvez não sejam medidas; mesmo assim contam contra nós aqui. Conferido ao vivo na API pública, fora do CI."
+      },
+      "script_path": "validation/live_checks.py",
+    "run_at": "2026-11-15T13:02:11Z"
+    },
+    {
+      "id": "landing-im2-athena",
+      "title": {
+        "en": "IM-2 Athena landing point",
+        "pt": "Ponto de pouso do IM-2 Athena"
+      },
+      "reference": "LROC 1408 (resting point -84.7906°, 29.1957°); NASA 25-025 and Spaceflight Now: landed ~17:30 UTC 06/03/2025, mission ended ~06:15 UTC 07/03/2025 | live: https://lunar-api.luizfbm.win, engine 0.1.0",
+      "tolerance": {
+        "en": "no comparable number",
+        "pt": "sem número comparável"
+      },
+      "result": {
+        "en": "engine at the resting point: sunlit 12.75 h of 12.75 h, mean Sun fraction 1.00, Sun elevation 2.47° to 2.97°, events: none",
+        "pt": "motor no ponto final: Sol 12,75 h de 12,75 h, fração média do Sol 1,00, elevação do Sol 2,47° to 2,97°, eventos: nenhum"
+      },
+      "status": "pending",
+      "not_covered": {
+        "en": "Athena tipped over inside a ~20 m crater, smaller than our 20 m DEM resolves, and its panels faced away from the Sun. The end of the mission was not a terrain Sunset, so there is no published time to compare. This only shows what the engine says about the grazing Sun at the reconstructed point.",
+        "pt": "O Athena tombou dentro de uma cratera de ~20 m, menor do que o DEM de 20 m resolve, e os painéis ficaram de costas para o Sol. O fim da missão não foi um Sunset do terreno, então não há horário publicado para comparar. Isto só mostra o que o motor diz do Sol rasante no ponto reconstruído."
+      },
+      "script_path": "validation/live_checks.py",
+    "run_at": "2026-11-15T13:02:11Z"
+    },
+    {
+      "id": "landing-blue-ghost-1",
+      "title": {
+        "en": "Blue Ghost 1 Sunset",
+        "pt": "Sunset do Blue Ghost 1"
+      },
+      "reference": "NASA, end of the Blue Ghost Mission 1 surface operations (date to be cited with the implementation) | live: https://lunar-api.luizfbm.win, engine 0.1.0",
+      "tolerance": {
+        "en": "not set yet",
+        "pt": "ainda não definida"
+      },
+      "result": {
+        "en": "did not run",
+        "pt": "não rodou"
+      },
+      "status": "pending",
+      "not_covered": {
+        "en": "Waiting on the requirement: the landing point is outside the polar DEM, so the engine cannot answer it yet. The tolerance will be defined with the validation.",
+        "pt": "Espera a the requirement: o ponto de pouso fica fora do DEM polar, então o motor ainda não responde. A tolerância será escrita antes da primeira rodada."
+      },
+      "script_path": "validation/live_checks.py",
+    "run_at": "2026-11-15T13:02:11Z"
+    },
+    {
+      "id": "landing-chandrayaan-3",
+      "title": {
+        "en": "Chandrayaan-3 Sunset",
+        "pt": "Sunset do Chandrayaan-3"
+      },
+      "reference": "ISRO, date the Vikram lander was put to sleep (date to be cited with the implementation) | live: https://lunar-api.luizfbm.win, engine 0.1.0",
+      "tolerance": {
+        "en": "not set yet",
+        "pt": "ainda não definida"
+      },
+      "result": {
+        "en": "did not run",
+        "pt": "não rodou"
+      },
+      "status": "pending",
+      "not_covered": {
+        "en": "Waiting on the requirement: the landing point is outside the polar DEM, so the engine cannot answer it yet. The tolerance will be defined with the validation.",
+        "pt": "Espera a the requirement: o ponto de pouso fica fora do DEM polar, então o motor ainda não responde. A tolerância será escrita antes da primeira rodada."
+      },
+      "script_path": "validation/live_checks.py",
+    "run_at": "2026-11-15T13:02:11Z"
+    }
+  ],
+  "wueller_table": [
+    {
+      "site": "MMA01",
+      "published_days": 0.0,
+      "ours_days": 9.653,
+      "diff_days": 9.653,
+      "error": null
+    },
+    {
+      "site": "MMA_K2023",
+      "published_days": 21.0,
+      "ours_days": 21.0,
+      "diff_days": 0.0,
+      "error": null
+    },
+    {
+      "site": "MMA02",
+      "published_days": 0.0,
+      "ours_days": 8.873,
+      "diff_days": 8.873,
+      "error": null
+    },
+    {
+      "site": "MMA03",
+      "published_days": 21.0,
+      "ours_days": 21.0,
+      "diff_days": 0.0,
+      "error": null
+    },
+    {
+      "site": "MMO01",
+      "published_days": 21.0,
+      "ours_days": 21.0,
+      "diff_days": 0.0,
+      "error": null
+    },
+    {
+      "site": "MMO02",
+      "published_days": 21.0,
+      "ours_days": 21.0,
+      "diff_days": 0.0,
+      "error": null
+    },
+    {
+      "site": "MMO03",
+      "published_days": 8.0,
+      "ours_days": 10.594,
+      "diff_days": 2.594,
+      "error": null
+    },
+    {
+      "site": "MMO04",
+      "published_days": 0.0,
+      "ours_days": 10.313,
+      "diff_days": 10.313,
+      "error": null
+    },
+    {
+      "site": "MMO05",
+      "published_days": 0.0,
+      "ours_days": 10.461,
+      "diff_days": 10.461,
+      "error": null
+    },
+    {
+      "site": "MMO06",
+      "published_days": 0.0,
+      "ours_days": 10.172,
+      "diff_days": 10.172,
+      "error": null
+    },
+    {
+      "site": "NR101",
+      "published_days": 21.0,
+      "ours_days": 21.0,
+      "diff_days": 0.0,
+      "error": null
+    },
+    {
+      "site": "NR102",
+      "published_days": 0.0,
+      "ours_days": 16.56,
+      "diff_days": 16.56,
+      "error": null
+    },
+    {
+      "site": "NR103",
+      "published_days": 21.0,
+      "ours_days": 21.0,
+      "diff_days": 0.0,
+      "error": null
+    },
+    {
+      "site": "NR104",
+      "published_days": 0.0,
+      "ours_days": 13.418,
+      "diff_days": 13.418,
+      "error": null
+    },
+    {
+      "site": "NR105",
+      "published_days": 0.0,
+      "ours_days": 17.646,
+      "diff_days": 17.646,
+      "error": null
+    },
+    {
+      "site": "NR106",
+      "published_days": 16.0,
+      "ours_days": 16.032,
+      "diff_days": 0.032,
+      "error": null
+    },
+    {
+      "site": "NR107",
+      "published_days": 0.0,
+      "ours_days": 17.655,
+      "diff_days": 17.655,
+      "error": null
+    },
+    {
+      "site": "NR108",
+      "published_days": 17.0,
+      "ours_days": 16.859,
+      "diff_days": -0.141,
+      "error": null
+    },
+    {
+      "site": "NR109",
+      "published_days": 0.0,
+      "ours_days": 14.259,
+      "diff_days": 14.259,
+      "error": null
+    },
+    {
+      "site": "NR201",
+      "published_days": 14.0,
+      "ours_days": 14.908,
+      "diff_days": 0.908,
+      "error": null
+    },
+    {
+      "site": "NR202",
+      "published_days": 17.0,
+      "ours_days": 16.929,
+      "diff_days": -0.071,
+      "error": null
+    },
+    {
+      "site": "NR203",
+      "published_days": 0.0,
+      "ours_days": 15.146,
+      "diff_days": 15.146,
+      "error": null
+    },
+    {
+      "site": "NR204",
+      "published_days": 2.0,
+      "ours_days": 12.93,
+      "diff_days": 10.93,
+      "error": null
+    },
+    {
+      "site": "NR205",
+      "published_days": 0.0,
+      "ours_days": 17.505,
+      "diff_days": 17.505,
+      "error": null
+    },
+    {
+      "site": "NR206",
+      "published_days": 17.0,
+      "ours_days": 17.397,
+      "diff_days": 0.397,
+      "error": null
+    },
+    {
+      "site": "NR2_K2023",
+      "published_days": 17.0,
+      "ours_days": 16.852,
+      "diff_days": -0.148,
+      "error": null
+    },
+    {
+      "site": "NR207",
+      "published_days": 17.0,
+      "ours_days": 17.128,
+      "diff_days": 0.128,
+      "error": null
+    },
+    {
+      "site": "AR01",
+      "published_days": 15.0,
+      "ours_days": 14.915,
+      "diff_days": -0.085,
+      "error": null
+    },
+    {
+      "site": "AR02",
+      "published_days": 18.0,
+      "ours_days": 18.562,
+      "diff_days": 0.562,
+      "error": null
+    },
+    {
+      "site": "AR03",
+      "published_days": 19.0,
+      "ours_days": 18.737,
+      "diff_days": -0.263,
+      "error": null
+    },
+    {
+      "site": "AR04",
+      "published_days": 15.0,
+      "ours_days": 15.676,
+      "diff_days": 0.676,
+      "error": null
+    },
+    {
+      "site": "AR05",
+      "published_days": 18.0,
+      "ours_days": 18.727,
+      "diff_days": 0.727,
+      "error": null
+    },
+    {
+      "site": "AR06",
+      "published_days": 15.0,
+      "ours_days": 15.146,
+      "diff_days": 0.146,
+      "error": null
+    },
+    {
+      "site": "AR07",
+      "published_days": 18.0,
+      "ours_days": 17.796,
+      "diff_days": -0.204,
+      "error": null
+    },
+    {
+      "site": "AR08",
+      "published_days": 19.0,
+      "ours_days": 18.781,
+      "diff_days": -0.219,
+      "error": null
+    },
+    {
+      "site": "FRA01",
+      "published_days": 20.0,
+      "ours_days": 20.03,
+      "diff_days": 0.03,
+      "error": null
+    },
+    {
+      "site": "FRA02",
+      "published_days": 20.0,
+      "ours_days": 20.379,
+      "diff_days": 0.379,
+      "error": null
+    },
+    {
+      "site": "FRA03",
+      "published_days": 10.0,
+      "ours_days": 9.942,
+      "diff_days": -0.058,
+      "error": null
+    },
+    {
+      "site": "PNS01",
+      "published_days": 7.0,
+      "ours_days": 7.716,
+      "diff_days": 0.716,
+      "error": null
+    },
+    {
+      "site": "PNS02",
+      "published_days": 8.0,
+      "ours_days": 10.403,
+      "diff_days": 2.403,
+      "error": null
+    },
+    {
+      "site": "007",
+      "published_days": 21.0,
+      "ours_days": 21.0,
+      "diff_days": 0.0,
+      "error": null
+    },
+    {
+      "site": "PNS03",
+      "published_days": 11.0,
+      "ours_days": 10.516,
+      "diff_days": -0.484,
+      "error": null
+    },
+    {
+      "site": "PNS04",
+      "published_days": 0.0,
+      "ours_days": 12.463,
+      "diff_days": 12.463,
+      "error": null
+    },
+    {
+      "site": "CR01",
+      "published_days": 3.0,
+      "ours_days": 14.681,
+      "diff_days": 11.681,
+      "error": null
+    },
+    {
+      "site": "CR02",
+      "published_days": 21.0,
+      "ours_days": 21.0,
+      "diff_days": 0.0,
+      "error": null
+    },
+    {
+      "site": "CR03",
+      "published_days": 5.0,
+      "ours_days": 11.945,
+      "diff_days": 6.945,
+      "error": null
+    },
+    {
+      "site": "CR04",
+      "published_days": 8.0,
+      "ours_days": 8.773,
+      "diff_days": 0.773,
+      "error": null
+    },
+    {
+      "site": "CRE01",
+      "published_days": 21.0,
+      "ours_days": 21.0,
+      "diff_days": 0.0,
+      "error": null
+    },
+    {
+      "site": "CRE02",
+      "published_days": 1.0,
+      "ours_days": 8.547,
+      "diff_days": 7.547,
+      "error": null
+    },
+    {
+      "site": "dGR201",
+      "published_days": 9.0,
+      "ours_days": 8.894,
+      "diff_days": -0.106,
+      "error": null
+    },
+    {
+      "site": "dGR101",
+      "published_days": 7.0,
+      "ours_days": 7.767,
+      "diff_days": 0.767,
+      "error": null
+    },
+    {
+      "site": "011",
+      "published_days": 21.0,
+      "ours_days": 21.0,
+      "diff_days": 0.0,
+      "error": null
+    },
+    {
+      "site": "dGR102",
+      "published_days": 3.0,
+      "ours_days": 10.008,
+      "diff_days": 7.008,
+      "error": null
+    },
+    {
+      "site": "dGR103",
+      "published_days": 0.0,
+      "ours_days": 12.273,
+      "diff_days": 12.273,
+      "error": null
+    },
+    {
+      "site": "dGR104",
+      "published_days": 0.0,
+      "ours_days": 11.301,
+      "diff_days": 11.301,
+      "error": null
+    },
+    {
+      "site": "dGR202",
+      "published_days": 3.0,
+      "ours_days": 6.269,
+      "diff_days": 3.269,
+      "error": null
+    },
+    {
+      "site": "dGR203",
+      "published_days": 7.0,
+      "ours_days": 7.56,
+      "diff_days": 0.56,
+      "error": null
+    },
+    {
+      "site": "dGR204",
+      "published_days": 7.0,
+      "ours_days": 7.189,
+      "diff_days": 0.189,
+      "error": null
+    },
+    {
+      "site": "dGKM01",
+      "published_days": 1.0,
+      "ours_days": 9.173,
+      "diff_days": 8.173,
+      "error": null
+    },
+    {
+      "site": "dGKM_K2023",
+      "published_days": 13.0,
+      "ours_days": 12.867,
+      "diff_days": -0.133,
+      "error": null
+    },
+    {
+      "site": "dGKM02",
+      "published_days": 14.0,
+      "ours_days": 7.773,
+      "diff_days": -6.227,
+      "error": null
+    },
+    {
+      "site": "dGKM03",
+      "published_days": 12.0,
+      "ours_days": 7.081,
+      "diff_days": -4.919,
+      "error": null
+    },
+    {
+      "site": "HW01",
+      "published_days": 2.0,
+      "ours_days": 9.112,
+      "diff_days": 7.112,
+      "error": null
+    },
+    {
+      "site": "HW02",
+      "published_days": 1.0,
+      "ours_days": 6.548,
+      "diff_days": 5.548,
+      "error": null
+    },
+    {
+      "site": "HW03",
+      "published_days": 13.0,
+      "ours_days": 13.763,
+      "diff_days": 0.763,
+      "error": null
+    },
+    {
+      "site": "HW04",
+      "published_days": 13.0,
+      "ours_days": 13.102,
+      "diff_days": 0.102,
+      "error": null
+    },
+    {
+      "site": "HW05",
+      "published_days": 3.0,
+      "ours_days": 3.92,
+      "diff_days": 0.92,
+      "error": null
+    },
+    {
+      "site": "HW06",
+      "published_days": 21.0,
+      "ours_days": 21.0,
+      "diff_days": 0.0,
+      "error": null
+    },
+    {
+      "site": "HW_K2023",
+      "published_days": 21.0,
+      "ours_days": 21.0,
+      "diff_days": 0.0,
+      "error": null
+    },
+    {
+      "site": "HW07",
+      "published_days": 21.0,
+      "ours_days": 21.0,
+      "diff_days": 0.0,
+      "error": null
+    },
+    {
+      "site": "HW08",
+      "published_days": 6.0,
+      "ours_days": 5.326,
+      "diff_days": -0.674,
+      "error": null
+    },
+    {
+      "site": "CRE03",
+      "published_days": 9.0,
+      "ours_days": 9.094,
+      "diff_days": 0.094,
+      "error": null
+    },
+    {
+      "site": "PNS05",
+      "published_days": 15.0,
+      "ours_days": 15.186,
+      "diff_days": 0.186,
+      "error": null
+    },
+    {
+      "site": "CRE04",
+      "published_days": 9.0,
+      "ours_days": 9.297,
+      "diff_days": 0.297,
+      "error": null
+    },
+    {
+      "site": "CR05",
+      "published_days": 15.0,
+      "ours_days": 15.038,
+      "diff_days": 0.038,
+      "error": null
+    },
+    {
+      "site": "CR06",
+      "published_days": 21.0,
+      "ours_days": 21.0,
+      "diff_days": 0.0,
+      "error": null
+    },
+    {
+      "site": "CR07",
+      "published_days": 21.0,
+      "ours_days": 21.0,
+      "diff_days": 0.0,
+      "error": null
+    },
+    {
+      "site": "001",
+      "published_days": 21.0,
+      "ours_days": 21.0,
+      "diff_days": 0.0,
+      "error": null
+    },
+    {
+      "site": "PCB01",
+      "published_days": 1.0,
+      "ours_days": 5.45,
+      "diff_days": 4.45,
+      "error": null
+    },
+    {
+      "site": "PCB02",
+      "published_days": 0.0,
+      "ours_days": 8.054,
+      "diff_days": 8.054,
+      "error": null
+    },
+    {
+      "site": "PCB03",
+      "published_days": 1.0,
+      "ours_days": 7.494,
+      "diff_days": 6.494,
+      "error": null
+    },
+    {
+      "site": "PCB04",
+      "published_days": 3.0,
+      "ours_days": 5.677,
+      "diff_days": 2.677,
+      "error": null
+    },
+    {
+      "site": "PCB05",
+      "published_days": 5.0,
+      "ours_days": 5.332,
+      "diff_days": 0.332,
+      "error": null
+    },
+    {
+      "site": "SP01",
+      "published_days": 18.0,
+      "ours_days": 18.243,
+      "diff_days": 0.243,
+      "error": null
+    },
+    {
+      "site": "SP02",
+      "published_days": 2.0,
+      "ours_days": 10.945,
+      "diff_days": 8.945,
+      "error": null
+    },
+    {
+      "site": "SP03",
+      "published_days": 10.0,
+      "ours_days": 10.782,
+      "diff_days": 0.782,
+      "error": null
+    },
+    {
+      "site": "SP04",
+      "published_days": 12.0,
+      "ours_days": 11.753,
+      "diff_days": -0.247,
+      "error": null
+    },
+    {
+      "site": "SP05",
+      "published_days": 13.0,
+      "ours_days": 13.682,
+      "diff_days": 0.682,
+      "error": null
+    },
+    {
+      "site": "SP06",
+      "published_days": 21.0,
+      "ours_days": 19.078,
+      "diff_days": -1.922,
+      "error": null
+    },
+    {
+      "site": "SP07",
+      "published_days": 19.0,
+      "ours_days": 19.134,
+      "diff_days": 0.134,
+      "error": null
+    },
+    {
+      "site": "SP08",
+      "published_days": 9.0,
+      "ours_days": 9.405,
+      "diff_days": 0.405,
+      "error": null
+    },
+    {
+      "site": "SP09",
+      "published_days": 16.0,
+      "ours_days": 16.425,
+      "diff_days": 0.425,
+      "error": null
+    },
+    {
+      "site": "SP10",
+      "published_days": 17.0,
+      "ours_days": 17.011,
+      "diff_days": 0.011,
+      "error": null
+    },
+    {
+      "site": "SP11",
+      "published_days": 18.0,
+      "ours_days": 18.186,
+      "diff_days": 0.186,
+      "error": null
+    },
+    {
+      "site": "dGR2_K2023",
+      "published_days": 8.0,
+      "ours_days": 10.896,
+      "diff_days": 2.896,
+      "error": null
+    },
+    {
+      "site": "AR09",
+      "published_days": 11.0,
+      "ours_days": 11.589,
+      "diff_days": 0.589,
+      "error": null
+    },
+    {
+      "site": "AR10",
+      "published_days": 12.0,
+      "ours_days": 12.186,
+      "diff_days": 0.186,
+      "error": null
+    },
+    {
+      "site": "CR08",
+      "published_days": 0.0,
+      "ours_days": 6.731,
+      "diff_days": 6.731,
+      "error": null
+    },
+    {
+      "site": "CRE05",
+      "published_days": 9.0,
+      "ours_days": 9.076,
+      "diff_days": 0.076,
+      "error": null
+    },
+    {
+      "site": "CRE06",
+      "published_days": 7.0,
+      "ours_days": 7.351,
+      "diff_days": 0.351,
+      "error": null
+    },
+    {
+      "site": "dGKM04",
+      "published_days": 3.0,
+      "ours_days": 2.859,
+      "diff_days": -0.141,
+      "error": null
+    },
+    {
+      "site": "dGKM05",
+      "published_days": 0.0,
+      "ours_days": 2.797,
+      "diff_days": 2.797,
+      "error": null
+    },
+    {
+      "site": "dGKM06",
+      "published_days": 3.0,
+      "ours_days": 3.383,
+      "diff_days": 0.383,
+      "error": null
+    },
+    {
+      "site": "dGR105",
+      "published_days": 7.0,
+      "ours_days": 6.449,
+      "diff_days": -0.551,
+      "error": null
+    },
+    {
+      "site": "dGR205",
+      "published_days": 0.0,
+      "ours_days": 7.091,
+      "diff_days": 7.091,
+      "error": null
+    },
+    {
+      "site": "dGR206",
+      "published_days": 0.0,
+      "ours_days": 4.036,
+      "diff_days": 4.036,
+      "error": null
+    },
+    {
+      "site": "FRA04",
+      "published_days": 8.0,
+      "ours_days": 7.976,
+      "diff_days": -0.024,
+      "error": null
+    },
+    {
+      "site": "FRA05",
+      "published_days": 0.0,
+      "ours_days": 9.295,
+      "diff_days": 9.295,
+      "error": null
+    },
+    {
+      "site": "FRA06",
+      "published_days": 11.0,
+      "ours_days": 10.511,
+      "diff_days": -0.489,
+      "error": null
+    },
+    {
+      "site": "FRA07",
+      "published_days": 12.0,
+      "ours_days": 8.658,
+      "diff_days": -3.342,
+      "error": null
+    },
+    {
+      "site": "FRA08",
+      "published_days": 0.0,
+      "ours_days": 14.184,
+      "diff_days": 14.184,
+      "error": null
+    },
+    {
+      "site": "HW09",
+      "published_days": 2.0,
+      "ours_days": 1.803,
+      "diff_days": -0.197,
+      "error": null
+    },
+    {
+      "site": "HW10",
+      "published_days": 1.0,
+      "ours_days": 4.382,
+      "diff_days": 3.382,
+      "error": null
+    },
+    {
+      "site": "MMA04",
+      "published_days": 4.0,
+      "ours_days": 3.552,
+      "diff_days": -0.448,
+      "error": null
+    },
+    {
+      "site": "MMO07",
+      "published_days": 0.0,
+      "ours_days": 8.45,
+      "diff_days": 8.45,
+      "error": null
+    },
+    {
+      "site": "MMO08",
+      "published_days": 0.0,
+      "ours_days": 5.162,
+      "diff_days": 5.162,
+      "error": null
+    },
+    {
+      "site": "MMO09",
+      "published_days": 0.0,
+      "ours_days": 19.228,
+      "diff_days": 19.228,
+      "error": null
+    },
+    {
+      "site": "NR208",
+      "published_days": 13.0,
+      "ours_days": 13.438,
+      "diff_days": 0.438,
+      "error": null
+    },
+    {
+      "site": "MMO10",
+      "published_days": 0.0,
+      "ours_days": 14.016,
+      "diff_days": 14.016,
+      "error": null
+    },
+    {
+      "site": "MMP01",
+      "published_days": 0.0,
+      "ours_days": 10.876,
+      "diff_days": 10.876,
+      "error": null
+    },
+    {
+      "site": "MMP02",
+      "published_days": 0.0,
+      "ours_days": 11.946,
+      "diff_days": 11.946,
+      "error": null
+    },
+    {
+      "site": "MMP03",
+      "published_days": 8.0,
+      "ours_days": 8.212,
+      "diff_days": 0.212,
+      "error": null
+    },
+    {
+      "site": "MMP04",
+      "published_days": 0.0,
+      "ours_days": 10.553,
+      "diff_days": 10.553,
+      "error": null
+    },
+    {
+      "site": "MMP05",
+      "published_days": 11.0,
+      "ours_days": 10.735,
+      "diff_days": -0.265,
+      "error": null
+    },
+    {
+      "site": "MMP06",
+      "published_days": 10.0,
+      "ours_days": 9.819,
+      "diff_days": -0.181,
+      "error": null
+    },
+    {
+      "site": "MMP07",
+      "published_days": 2.0,
+      "ours_days": 8.346,
+      "diff_days": 6.346,
+      "error": null
+    },
+    {
+      "site": "MMP08",
+      "published_days": 0.0,
+      "ours_days": 12.301,
+      "diff_days": 12.301,
+      "error": null
+    },
+    {
+      "site": "MMP09",
+      "published_days": 0.0,
+      "ours_days": 10.276,
+      "diff_days": 10.276,
+      "error": null
+    },
+    {
+      "site": "MMP10",
+      "published_days": 0.0,
+      "ours_days": 11.339,
+      "diff_days": 11.339,
+      "error": null
+    },
+    {
+      "site": "MMP11",
+      "published_days": 0.0,
+      "ours_days": 12.824,
+      "diff_days": 12.824,
+      "error": null
+    }
+  ],
+  "im2": {
+    "metrics": {
+      "sun_and_earth_hours": 12.75,
+      "sunlit_hours": 12.75,
+      "earth_visible_hours": 12.75,
+      "lcip_hours": 12.75,
+      "lcsp_hours": 0.0,
+      "mean_sun_fraction": 1.0
+    },
+    "events": [],
+    "sun_elevation_range_deg": [
+      2.46542884681191,
+      2.970234697899801
+    ]
+  }
+}

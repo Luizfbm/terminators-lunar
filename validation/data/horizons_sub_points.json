@@ -1,0 +1,141 @@
+{
+  "source": "JPL Horizons API, target 301 (Moon), center 500@399, quantities 14,15",
+  "query_url": "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND=%27301%27&OBJ_DATA=%27NO%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27OBSERVER%27&CENTER=%27500%40399%27&TLIST=%272025-02-03+05%3A17%27+%272025-10-02+12%3A17%27+%272026-05-31+19%3A17%27+%272027-01-28+02%3A17%27+%272027-09-26+09%3A17%27+%272028-05-24+16%3A17%27+%272029-01-20+23%3A17%27+%272029-09-19+06%3A17%27+%272030-05-18+13%3A17%27+%272031-01-14+20%3A17%27+%272031-09-13+03%3A17%27+%272032-05-11+10%3A17%27&QUANTITIES=%2714%2C15%27&TIME_TYPE=%27UT%27&ANG_FORMAT=%27DEG%27",
+  "longitude_note": [
+    " Date__(UT)__HR:MN:SC.fff     ObsSub-LON ObsSub-LAT  SunSub-LON SunSub-LAT"
+  ],
+  "points": [
+    {
+      "t": "2025-02-03T05:17:00Z",
+      "earth": {
+        "longitude_deg": 0.412141,
+        "latitude_deg": -2.090675
+      },
+      "sun": {
+        "longitude_deg": 118.185549,
+        "latitude_deg": -1.08987
+      }
+    },
+    {
+      "t": "2025-10-02T12:17:00Z",
+      "earth": {
+        "longitude_deg": 353.290129,
+        "latitude_deg": 4.319219
+      },
+      "sun": {
+        "longitude_deg": 53.787687,
+        "latitude_deg": -0.551343
+      }
+    },
+    {
+      "t": "2026-05-31T19:17:00Z",
+      "earth": {
+        "longitude_deg": 0.128244,
+        "latitude_deg": 6.4453
+      },
+      "sun": {
+        "longitude_deg": 355.324738,
+        "latitude_deg": 1.584716
+      }
+    },
+    {
+      "t": "2027-01-28T02:17:00Z",
+      "earth": {
+        "longitude_deg": 7.40431,
+        "latitude_deg": 5.995864
+      },
+      "sun": {
+        "longitude_deg": 293.667519,
+        "latitude_deg": -0.31967
+      }
+    },
+    {
+      "t": "2027-09-26T09:17:00Z",
+      "earth": {
+        "longitude_deg": 358.497796,
+        "latitude_deg": 0.266749
+      },
+      "sun": {
+        "longitude_deg": 229.454786,
+        "latitude_deg": -1.234205
+      }
+    },
+    {
+      "t": "2028-05-24T16:17:00Z",
+      "earth": {
+        "longitude_deg": 355.116134,
+        "latitude_deg": -4.854572
+      },
+      "sun": {
+        "longitude_deg": 170.904656,
+        "latitude_deg": 1.228999
+      }
+    },
+    {
+      "t": "2029-01-20T23:17:00Z",
+      "earth": {
+        "longitude_deg": 358.743471,
+        "latitude_deg": -6.827511
+      },
+      "sun": {
+        "longitude_deg": 108.596354,
+        "latitude_deg": 0.466446
+      }
+    },
+    {
+      "t": "2029-09-19T06:17:00Z",
+      "earth": {
+        "longitude_deg": 5.746668,
+        "latitude_deg": -4.816542
+      },
+      "sun": {
+        "longitude_deg": 44.7396,
+        "latitude_deg": -1.561966
+      }
+    },
+    {
+      "t": "2030-05-18T13:17:00Z",
+      "earth": {
+        "longitude_deg": 1.892901,
+        "latitude_deg": 0.416246
+      },
+      "sun": {
+        "longitude_deg": 346.528121,
+        "latitude_deg": 0.509054
+      }
+    },
+    {
+      "t": "2031-01-14T20:17:00Z",
+      "earth": {
+        "longitude_deg": 353.303035,
+        "latitude_deg": 5.911465
+      },
+      "sun": {
+        "longitude_deg": 284.073795,
+        "latitude_deg": 1.172358
+      }
+    },
+    {
+      "t": "2031-09-13T03:17:00Z",
+      "earth": {
+        "longitude_deg": 359.00557,
+        "latitude_deg": 6.484371
+      },
+      "sun": {
+        "longitude_deg": 220.432747,
+        "latitude_deg": -1.372403
+      }
+    },
+    {
+      "t": "2032-05-11T10:17:00Z",
+      "earth": {
+        "longitude_deg": 4.678205,
+        "latitude_deg": 3.889012
+      },
+      "sun": {
+        "longitude_deg": 161.987419,
+        "latitude_deg": -0.349152
+      }
+    }
+  ]
+}

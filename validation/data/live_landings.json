@@ -1,0 +1,148 @@
+{
+  "api": "https://lunar-api.luizfbm.win",
+  "engine_version": "0.1.0",
+  "entries": [
+    {
+      "id": "landing-blue-ghost-1",
+      "title": {
+        "en": "Blue Ghost 1 Sunset vs end of the mission",
+        "pt": "Sunset do Blue Ghost 1 contra o fim da missão"
+      },
+      "reference": "Firefly press release 17/03/2025: final data ~23:15 UTC 16/03/2025, just over 5 h into the lunar night | live: https://lunar-api.luizfbm.win, engine 0.1.0",
+      "tolerance": {
+        "en": "our Sunset 5 to 6 h before the final data",
+        "pt": "nosso Sunset de 5 a 6 h antes dos últimos dados"
+      },
+      "result": {
+        "en": "our Sunset 2025-03-16 19:44 UTC, 3.51 h before the final data; Occluder: Mare Crisium, 0.7 km at azimuth 270.0°",
+        "pt": "nosso Sunset 2025-03-16 19:44 UTC, 3,51 h antes dos últimos dados; Occluder: Mare Crisium, 0,7 km at azimuth 270,0°"
+      },
+      "status": "failed",
+      "not_covered": {
+        "en": "The 17:15-18:15 UTC band is inferred from the press release phrase 'just over 5 hours into the lunar night', not from a published sunset instant; no primary source with the local sunset time was found yet. Our Sunset is when the last edge of the Sun's disc goes behind the terrain, which need not be what a mission release calls the start of night. The deploy's SLDEM2015 crop resampled the terrain on a grid shifted by a fraction of a pixel and made a false wall. The corrected crop gives 19:44:27 UTC. Landing point from the CLPS SPICE archive, terrain from SLDEM2015 (~59 m). Compared after the numbers were known, so not a check: JPL Horizons puts the Sun's centre on the geometric horizon (no terrain) at 20:10:39 UTC on 16/03/2025 (docs/validation/sources-wueller-blue-ghost.md), 26 min after our terrain Sunset; the rule's band sits about 2 h before that. The check stays failed against the original rule.",
+        "pt": "A faixa de 17:15 a 18:15 UTC vem da frase 'just over 5 hours into the lunar night' do comunicado, não de um instante de pôr do Sol publicado; ainda não achamos fonte primária com a hora do pôr do Sol no local. Nosso Sunset é quando a última borda do disco do Sol some atrás do relevo, o que pode não ser o que um comunicado chama de início da noite. O recorte do SLDEM2015 no deploy reamostrava o relevo numa grade deslocada de fração de pixel e criava uma parede falsa. O recorte corrigido dá 19h44m27 UTC. Ponto de pouso do arquivo SPICE do CLPS, relevo do SLDEM2015 (~59 m). Comparado depois de conhecer os números, então não é checagem: o JPL Horizons põe o centro do Sol no horizonte geométrico (sem relevo) às 20:10:39 UTC de 16/03/2025 (docs/validation/sources-wueller-blue-ghost.md), 26 min depois do nosso Sunset com relevo; a faixa da regra fica umas 2 h antes disso. A checagem continua failed contra a regra original."
+      },
+      "script_path": "validation/live_landings.py",
+    "run_at": "2026-11-15T13:02:11Z"
+    },
+    {
+      "id": "landing-chandrayaan-3",
+      "title": {
+        "en": "Chandrayaan-3 Sunset vs ISRO sleep date",
+        "pt": "Sunset do Chandrayaan-3 contra a data em que a ISRO o pôs para dormir"
+      },
+      "reference": "ISRO Chandrayaan-3 updates: lander and rover in sleep mode on 04/09/2023, awakening expected around 22/09/2023 | live: https://lunar-api.luizfbm.win, engine 0.1.0",
+      "tolerance": {
+        "en": "our Sunset after 04/09/2023 (ISRO slept them before sunset)",
+        "pt": "nosso Sunset depois de 04/09/2023 (a ISRO os pôs para dormir antes do pôr do Sol)"
+      },
+      "result": {
+        "en": "our first Sunset 2023-09-04 07:12 UTC; Occluder: 6.9 km at azimuth 277.5°",
+        "pt": "nosso primeiro Sunset 2023-09-04 07:12 UTC; Occluder: 6,9 km at azimuth 277,5°"
+      },
+      "status": "passed",
+      "not_covered": {
+        "en": "ISRO put the lander and rover to sleep before the local sunset, as an operations decision, and its updates page gives the date (04/09/2023) but no time for the sleep or for the expected sunset. So this only checks that our first Sunset in the Window does not come before that date; it is not a comparison with a measured instant. The awakening expected around 22/09/2023 is not checked. Terrain from the PGDA 60°S DEMs.",
+        "pt": "A ISRO pôs o módulo e o rover para dormir antes do pôr do Sol local, por decisão de operação, e a página de atualizações dá a data (04/09/2023), mas não a hora do repouso nem a do pôr do Sol esperado. Então isto só confere que o nosso primeiro Sunset na Window não vem antes dessa data; não é comparação com um instante medido. O despertar esperado por volta de 22/09/2023 não é conferido. Relevo dos DEMs PGDA de 60°S."
+      },
+      "script_path": "validation/live_landings.py",
+    "run_at": "2026-11-15T13:02:11Z"
+    },
+    {
+      "id": "example-sun-height-apollo11",
+      "title": {
+        "en": "Example: how high the Sun gets, Apollo 11 vs the pole",
+        "pt": "Exemplo: até onde o Sol sobe, Apollo 11 contra o polo"
+      },
+      "reference": "Engine output only, Window from 2026-11-06T00:00:00Z, one synodic month | live: https://lunar-api.luizfbm.win, engine 0.1.0",
+      "tolerance": {
+        "en": "none: an example, not a check",
+        "pt": "nenhuma: é um exemplo, não uma checagem"
+      },
+      "result": {
+        "en": "highest Sun: 87.8° at Apollo 11, 2.0° at Site 001",
+        "pt": "Sol mais alto: 87,8° no Apollo 11, 2,0° no Site 001"
+      },
+      "status": "pending",
+      "not_covered": {
+        "en": "Nothing is compared to a reference here.",
+        "pt": "Nada é comparado com uma referência aqui."
+      },
+      "script_path": "validation/live_landings.py",
+    "run_at": "2026-11-15T13:02:11Z"
+    }
+  ],
+  "raw": {
+    "bg1": {
+      "sunset": {
+        "type": "sunset",
+        "t": "2025-03-16T19:44:27Z",
+        "azimuth_deg": 269.9145495668863,
+        "occluder": {
+          "azimuth_deg": 270.0,
+          "distance_m": 685.7763916015625,
+          "latitude_deg": 18.56212180121079,
+          "longitude_deg": 61.78613280709402,
+          "terrain_height_m": -3642.383289246092,
+          "feature": {
+            "name": "Mare Crisium",
+            "type": "mare",
+            "relation": "inside"
+          }
+        }
+      },
+      "hours_before_final_data": 3.5091666666666668,
+      "events": [
+        {
+          "type": "sunset",
+          "t": "2025-03-16T19:44:27Z",
+          "azimuth_deg": 269.9145495668863,
+          "occluder": {
+            "azimuth_deg": 270.0,
+            "distance_m": 685.7763916015625,
+            "latitude_deg": 18.56212180121079,
+            "longitude_deg": 61.78613280709402,
+            "terrain_height_m": -3642.383289246092,
+            "feature": {
+              "name": "Mare Crisium",
+              "type": "mare",
+              "relation": "inside"
+            }
+          }
+        }
+      ]
+    },
+    "ch3": [
+      {
+        "type": "sunset",
+        "t": "2023-09-04T07:12:01Z",
+        "azimuth_deg": 277.2655800567074,
+        "occluder": {
+          "azimuth_deg": 277.5,
+          "distance_m": 6929.724426269531,
+          "latitude_deg": -69.34198277208705,
+          "longitude_deg": 31.67675627864307,
+          "terrain_height_m": 768.7588023281304,
+          "feature": null
+        }
+      },
+      {
+        "type": "sunrise",
+        "t": "2023-09-19T23:18:33Z",
+        "azimuth_deg": 85.84553755678867,
+        "occluder": {
+          "azimuth_deg": 86.0,
+          "distance_m": 801.5460205078125,
+          "latitude_deg": -69.3711399880479,
+          "longitude_deg": 32.393845102053376,
+          "terrain_height_m": 545.2238869873775,
+          "feature": null
+        }
+      }
+    ],
+    "contrast": {
+      "apollo11_max_sun_deg": 87.79118362628742,
+      "site001_max_sun_deg": 2.0461711263718736
+    }
+  }
+}
