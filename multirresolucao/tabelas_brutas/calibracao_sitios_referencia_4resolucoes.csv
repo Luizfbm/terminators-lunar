@@ -1,5 +1,5 @@
 sitio,nome_oficial,lat_deg,lon_deg,inclinacao_60m_deg,ilum_240m_pct,ilum_60m_pct,ilum_20m_pct,ilum_5m_p01_pct,ilum_5m_p50_pct,barker_a_interp,barker_b_interp,barker_c_interp,barker_a_slope,barker_b_slope,barker_c_slope,fonte_240m,fonte_60m,fonte_20m,fonte_5m
 001,Connecting Ridge,-89.4505,-137.16,4.5,89.0,82.4,76.0,68.0,71.1,0.0210,0.0051,-0.022,0.0260,0.0091,1.387,Mazarico 2011,Wueller 2026,Glaser 2018,Barker 2021 Table 1/2
 004,Shackleton Rim,-89.7849,-156.03,6.8,86.5,80.1,81.0,69.5,72.4,0.0137,0.0074,-0.006,0.0080,0.0149,1.194,Mazarico 2011,Wueller 2026,Glaser 2018,Barker 2021 Table 1
-007,Peak Near Shackleton,-89.0610,128.44,5.2,84.2,78.5,74.1,65.2,68.9,0.0209,0.0042,-0.040,0.0235,0.0070,1.373,Mazarico 2011,Wueller 2026,Glaser 2018,Barker 2021 Table 1
-011,de Gerlache Rim 1,-88.7100,-68.44,4.8,83.0,76.8,72.0,63.8,67.5,0.0186,0.0054,-0.036,0.0174,0.0081,1.308,Mazarico 2011,Wueller 2026,Glaser 2018,Barker 2021 Table 1
+007,Peak Near Shackleton,-88.8113,123.554,5.2,84.2,78.5,74.1,65.2,68.9,0.0209,0.0042,-0.040,0.0235,0.0070,1.373,Mazarico 2011,Wueller 2026,Glaser 2018,Barker 2021 Table 1
+011,de Gerlache Rim 1,-88.6744,-68.228,4.8,83.0,76.8,72.0,63.8,67.5,0.0186,0.0054,-0.036,0.0174,0.0081,1.308,Mazarico 2011,Wueller 2026,Glaser 2018,Barker 2021 Table 1

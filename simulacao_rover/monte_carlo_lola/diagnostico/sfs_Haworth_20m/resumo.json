@@ -1,0 +1,72 @@
+{
+ "COM disparo (checagem: SfS × LOLA medido)": {
+  "Grade 20 m": {
+   "erro_mediano": 0.9050540924072266,
+   "perigo_nao_vetado_%": 48.75751587268217,
+   "falso_alarme_%": 0.9144883414400858
+  },
+  "Mapa LOLA 5 m oficial": {
+   "erro_mediano": 1.2490825653076172,
+   "perigo_nao_vetado_%": 45.86048858428289,
+   "falso_alarme_%": 2.7096382872006624
+  },
+  "Tese (sem margem)": {
+   "erro_mediano": 1.1521646976470947,
+   "perigo_nao_vetado_%": 46.35243661438843,
+   "falso_alarme_%": 2.1396383260819696
+  },
+  "Tese P90 (margem por densidade)": {
+   "erro_mediano": 1.1521646976470947,
+   "perigo_nao_vetado_%": 20.304419122902914,
+   "falso_alarme_%": 7.336319417713546
+  }
+ },
+ "SEM disparo (a pergunta: células interpoladas)": {
+  "Grade 20 m": {
+   "erro_mediano": 0.9286623001098633,
+   "perigo_nao_vetado_%": 46.61282157485388,
+   "falso_alarme_%": 1.1192712145067851
+  },
+  "Mapa LOLA 5 m oficial": {
+   "erro_mediano": 1.1954522132873535,
+   "perigo_nao_vetado_%": 42.38114961572093,
+   "falso_alarme_%": 2.7755186799252303
+  },
+  "Tese (sem margem)": {
+   "erro_mediano": 1.2155351638793945,
+   "perigo_nao_vetado_%": 41.20415113442864,
+   "falso_alarme_%": 2.931925044868997
+  },
+  "Tese P90 (margem por densidade)": {
+   "erro_mediano": 1.2155351638793945,
+   "perigo_nao_vetado_%": 13.10978415941829,
+   "falso_alarme_%": 13.284631496694669
+  }
+ },
+ "curvas_sem_disparo": {
+  "Grade 20 m, margem uniforme": {
+   "5": 18.757190850936535,
+   "10": 10.131046067467441,
+   "15": 7.103410189148141,
+   "20": 5.654309908417321,
+   "25": 4.759192783837262,
+   "30": 4.086704404252384
+  },
+  "Mapa LOLA 5 m oficial, margem uniforme": {
+   "5": 28.82783377053707,
+   "10": 15.672603433199871,
+   "15": 10.203529844907722,
+   "20": 7.49516774817065,
+   "25": 5.83782042431773,
+   "30": 4.706268120944356
+  },
+  "Tese, margem por densidade": {
+   "5": 29.25353214598002,
+   "10": 16.8306180680197,
+   "15": 11.702678448156846,
+   "20": 8.971880896497764,
+   "25": 7.3220120576188545,
+   "30": 6.045492199364899
+  }
+ }
+}

@@ -1,0 +1,72 @@
+{
+ "COM disparo (checagem: SfS × LOLA medido)": {
+  "Grade 20 m": {
+   "erro_mediano": 1.2663326263427734,
+   "perigo_nao_vetado_%": 12.381704534715753,
+   "falso_alarme_%": 8.506981740064447
+  },
+  "Mapa LOLA 5 m oficial": {
+   "erro_mediano": 1.5750999450683594,
+   "perigo_nao_vetado_%": 14.325057713336843,
+   "falso_alarme_%": 11.935553168635876
+  },
+  "Tese (sem margem)": {
+   "erro_mediano": 1.4546699523925781,
+   "perigo_nao_vetado_%": 13.39219418681571,
+   "falso_alarme_%": 10.714746048795458
+  },
+  "Tese P90 (margem por densidade)": {
+   "erro_mediano": 1.4546699523925781,
+   "perigo_nao_vetado_%": 4.062883911816721,
+   "falso_alarme_%": 29.15145005370569
+  }
+ },
+ "SEM disparo (a pergunta: células interpoladas)": {
+  "Grade 20 m": {
+   "erro_mediano": 1.2846012115478516,
+   "perigo_nao_vetado_%": 10.826523018699472,
+   "falso_alarme_%": 9.458177511950396
+  },
+  "Mapa LOLA 5 m oficial": {
+   "erro_mediano": 1.523848056793213,
+   "perigo_nao_vetado_%": 12.05623772343796,
+   "falso_alarme_%": 12.130885919982724
+  },
+  "Tese (sem margem)": {
+   "erro_mediano": 1.5054278373718262,
+   "perigo_nao_vetado_%": 11.792490692728236,
+   "falso_alarme_%": 11.98630908149249
+  },
+  "Tese P90 (margem por densidade)": {
+   "erro_mediano": 1.5054278373718262,
+   "perigo_nao_vetado_%": 2.5814894431276367,
+   "falso_alarme_%": 38.41563647008489
+  }
+ },
+ "curvas_sem_disparo": {
+  "Grade 20 m, margem uniforme": {
+   "5": 17.465149193404304,
+   "10": 10.294057483699003,
+   "15": 6.756232596605827,
+   "20": 4.665935100519569,
+   "25": 3.3046317044334694,
+   "30": 2.403396759324228
+  },
+  "Mapa LOLA 5 m oficial, margem uniforme": {
+   "5": 23.348525673259225,
+   "10": 14.310749206247275,
+   "15": 9.740152468880392,
+   "20": 6.929198448278806,
+   "25": 5.090322871315999,
+   "30": 3.804161226959679
+  },
+  "Tese, margem por densidade": {
+   "5": 23.54267207383467,
+   "10": 13.911477734271626,
+   "15": 9.385676045317048,
+   "20": 6.764363027358122,
+   "25": 5.0604422436467456,
+   "30": 3.8925084553890543
+  }
+ }
+}

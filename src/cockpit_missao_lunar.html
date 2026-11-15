@@ -2152,6 +2152,58 @@
     .funnel-hud.final .fh-stage { color: #c9ffe0; }
     .funnel-hud.final .fh-cut { color: #c9d6e8; font-size: 16px; }
     @media (max-width: 1450px) { .funnel-hud { top: 124px; padding: 8px 16px 10px; } .fh-num { font-size: 58px; } .fh-lbl { font-size: 15px; } .fh-cut { font-size: 16px; } .fh-stage { font-size: 12px; } }
+
+    /* ---- INTEGRAÇÃO TESE: INSPETOR CORTINA 10x10KM & MODO CAMINHAR TELA 3 ---- */
+    .tese-modal { position: fixed; inset: 0; z-index: 6000; background: rgba(4, 9, 18, 0.84); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .tese-modal[hidden] { display: none; }
+    .tese-modal-box { width: min(820px, 96vw); background: rgba(8, 16, 30, 0.96); border: 1.5px solid rgba(0, 229, 255, 0.45); border-radius: 16px; padding: 16px 20px; color: #e8f2ff; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7); }
+    .tese-modal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .tese-modal-head h2 { margin: 0; font-size: 18px; color: #ffd166; }
+    .tese-modal-meta { font-size: 12px; color: #9fc2e6; margin-top: 2px; font-family: 'JetBrains Mono', Consolas, monospace; }
+    .insp-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 10px 0; font-size: 12px; }
+    .insp-pill-grp { display: inline-flex; gap: 4px; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 8px; }
+    .insp-pill-grp button { border: 0; background: transparent; color: #b7cde4; padding: 4px 9px; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 11px; }
+    .insp-pill-grp button.active { background: #00e5ff; color: #04101a; }
+    .insp-canvas-wrap { display: flex; justify-content: center; background: #030710; border: 1px solid rgba(255,255,255,0.14); border-radius: 10px; overflow: hidden; }
+    #insp-canvas { width: 100%; max-width: 520px; height: auto; aspect-ratio: 1 / 1; display: block; }
+    .insp-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 8px; margin-top: 10px; }
+    .insp-kpi { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 6px 9px; font-size: 11px; }
+    .insp-kpi span { display: block; color: #9fb6d6; }
+    .insp-kpi b { font-size: 14px; color: #e8f2ff; }
+    .insp-kpi.good b { color: #5dff9b; }
+    .insp-kpi.warn b { color: #ffb36b; }
+    .insp-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; gap: 10px; flex-wrap: wrap; }
+
+    .tese-walk-panel { position: fixed; left: 16px; top: 158px; z-index: 420; width: 268px; background: rgba(6, 13, 26, 0.90); border: 1.5px solid rgba(0, 229, 255, 0.45); border-radius: 14px; padding: 10px; color: #e6f2ff; backdrop-filter: blur(8px); box-shadow: 0 14px 36px rgba(0,0,0,0.6); }
+    .tese-walk-panel[hidden] { display: none; }
+    #surface-3d-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 12; pointer-events: none; }
+    .tese-walk-h { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 900; color: #00e5ff; letter-spacing: 0.6px; margin-bottom: 8px; }
+    .degrau-list { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 8px; }
+    .degrau-btn { border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.05); color: #cde2fa; border-radius: 6px; padding: 5px 2px; font-size: 10px; font-weight: 800; cursor: pointer; text-align: center; }
+    .degrau-btn.active { background: #00e5ff; color: #04101a; border-color: #00e5ff; }
+    #tese-minimap { width: 100%; height: auto; aspect-ratio: 1/1; border-radius: 8px; border: 1px solid rgba(255,255,255,0.18); cursor: crosshair; display: block; }
+    .tese-walk-telemetry { font-size: 11px; line-height: 1.45; margin-top: 8px; color: #cde2fa; }
+    .tese-walk-telemetry .tese-dec { margin-top: 4px; padding: 4px 6px; border-radius: 6px; background: rgba(0,229,255,0.12); color: #8ff4ff; font-weight: 700; }
+    .tese-nudge { display: flex; gap: 4px; justify-content: center; margin-top: 8px; }
+    .tese-nudge button { border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: #fff; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-weight: 800; }
+    .surface-action-btn.walk.active { background: #00e5ff; color: #04101a; border-color: #00e5ff; }
+    .cmp-stat { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 13px; }
+    .cmp-mc-box { grid-column: 1 / -1; background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.35); border-radius: 10px; padding: 8px 12px; font-size: 12px; color: #d8f6ff; }
+    #v18-sim-modal .tese-modal-box { max-width: 980px; }
+    .v18-dual { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 760px) { .v18-dual { grid-template-columns: 1fr; } }
+    .v18-pane { background: rgba(6, 12, 24, 0.85); border: 1px solid rgba(148,163,184,0.2); border-radius: 10px; padding: 6px; }
+    .v18-pane-head { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 700; padding: 2px 4px 6px; color: #cbd5e1; }
+    .v18-pane-head .tag-base { color: #f59e0b; }
+    .v18-pane-head .tag-tese { color: #10b981; }
+    .v18-dual canvas { width: 100%; height: auto; aspect-ratio: 440 / 340; display: block; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); }
+    .v18-gen-pill { font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 999px; background: rgba(16,185,129,0.16); border: 1px solid rgba(16,185,129,0.45); color: #6ee7b7; }
+    .v18-prog { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 99px; overflow: hidden; margin: 8px 0; }
+    .v18-prog > i { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, #f59e0b, #10b981); transition: width 0.08s linear; }
+    .v18-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+    .v18-card { background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(148,163,184,0.2); border-radius: 10px; padding: 8px 10px; }
+    .v18-card span { display: block; font-size: 11px; color: #94a3b8; }
+    .v18-card b { font-size: 16px; color: #f8fafc; }
   </style>
 </head>
 <body class="mode-hangar">
@@ -2250,6 +2302,7 @@
         <section class="or-card">
           <p class="or-h">Camadas do mapa</p>
           <div id="layer-list"></div>
+          <button type="button" id="btn-open-inspector" class="or-primary" style="margin-top:8px;width:100%;" onclick="TeseUI.openInspector('Site20v2')">🔬 Inspetor 10×10 km (PGDA 78)</button>
         </section>
         <section class="or-card">
           <p class="or-h">Plotar coordenada</p>
@@ -2348,6 +2401,7 @@
          ================================================================= -->
     <section id="screen-3" aria-label="Superfície Lunar no Local de Pouso">
       <canvas id="surface-canvas"></canvas>
+      <canvas id="surface-3d-canvas"></canvas>
 
       <div class="surface-hud-top">
         <div class="surf-left">
@@ -2453,7 +2507,8 @@
           <button type="button" class="tb-btn speed-btn" onclick="Surface.setSpeed(2)">1 dia/s</button>
           <button type="button" class="tb-btn speed-btn" onclick="Surface.setSpeed(3)">3 dias/s</button>
           <div class="surface-hud-bottom">
-            <button type="button" class="surface-action-btn cmp" onclick="compareAdd()" title="Guardar este pouso (local + data) para comparar">⚖️ Comparar</button>
+            <button type="button" id="btn-walk-mode" class="surface-action-btn walk" onclick="TeseUI.toggleWalkMode()" title="Pilotar rover sobre terreno 5 m real e testar os 5 Degraus">🚗 Caminhar / Explorar PSR</button>
+            <button type="button" class="surface-action-btn cmp" onclick="TeseUI.state.walkMode ? TeseUI.openTeseCompare() : compareAdd()" title="Comparar Sem Tese × Com Tese ou Plano A × Plano B">⚖️ Comparar</button>
             <button type="button" class="surface-action-btn primary" onclick="goToScreen(2)">🗺️ Outro local</button>
             <button type="button" class="surface-action-btn secondary" onclick="goToScreen(1)">🛸 Trocar rover</button>
           </div>
@@ -2463,6 +2518,42 @@
           <canvas id="pano-strip"></canvas>
         </div>
       </div>
+
+      <!-- PAINEL TÁTICO 5 DEGRAUS & MINI-MAPA 5m (TELA 3) -->
+      <aside id="tese-walk-panel" class="tese-walk-panel" hidden aria-label="Exploração tática 5 m">
+        <div class="tese-walk-h">
+          <span>🚗 EXPLORAÇÃO TÁTICA (5 m)</span>
+          <div class="insp-pill-grp">
+            <button type="button" class="tese-shield-btn" data-s="P50" onclick="TeseUI.setShieldLevel('P50')">P50</button>
+            <button type="button" class="tese-shield-btn active" data-s="P90" onclick="TeseUI.setShieldLevel('P90')">P90</button>
+            <button type="button" class="tese-shield-btn" data-s="P99" onclick="TeseUI.setShieldLevel('P99')">P99</button>
+          </div>
+        </div>
+        <div class="insp-pill-grp" style="width:100%;display:grid;grid-template-columns:1fr 1fr;margin-bottom:6px;" role="group" aria-label="Modo de controle da missão">
+          <button type="button" id="btn-ctrl-manual" class="active" onclick="TeseUI.setControlMode('manual')" title="Controle manual pelo teclado (WASD / Setas)">🎮 Manual (Teclado)</button>
+          <button type="button" id="btn-ctrl-auto" onclick="TeseUI.setControlMode('auto')" title="Piloto automático traçado pelo planejamento (Degraus 0–4)">🤖 Automático (Rota)</button>
+        </div>
+        <div class="degrau-list" role="group" aria-label="Seletor dos 5 Degraus">
+          <button type="button" class="degrau-btn" data-d="0" onclick="TeseUI.setDegrau(0)" title="Base 60/20m">0: Base</button>
+          <button type="button" class="degrau-btn" data-d="1" onclick="TeseUI.setDegrau(1)" title="+ Marcato KKT">1: Marcato</button>
+          <button type="button" class="degrau-btn" data-d="2" onclick="TeseUI.setDegrau(2)" title="+ Multirresolução 5m">2: Multi 5m</button>
+          <button type="button" class="degrau-btn" data-d="3" onclick="TeseUI.setDegrau(3)" title="+ Monte Carlo Robusto P90">3: MC P90</button>
+          <button type="button" class="degrau-btn active" data-d="4" onclick="TeseUI.setDegrau(4)" title="+ IA (MLP) sob Escudo P90/P99">4: IA+Escudo</button>
+        </div>
+        <canvas id="tese-minimap" width="200" height="200" onclick="TeseUI.onMiniMapClick(event)" title="Clique no mini-mapa 10×10 km para definir destino (ou use WASD / setas)"></canvas>
+        <div class="tese-nudge">
+          <button type="button" onpointerdown="TeseUI.holdKey('ArrowLeft',true)" onpointerup="TeseUI.holdKey('ArrowLeft',false)" onpointerleave="TeseUI.holdKey('ArrowLeft',false)">◀</button>
+          <button type="button" onpointerdown="TeseUI.holdKey('ArrowUp',true)" onpointerup="TeseUI.holdKey('ArrowUp',false)" onpointerleave="TeseUI.holdKey('ArrowUp',false)">▲ Avançar</button>
+          <button type="button" onpointerdown="TeseUI.holdKey('ArrowDown',true)" onpointerup="TeseUI.holdKey('ArrowDown',false)" onpointerleave="TeseUI.holdKey('ArrowDown',false)">▼</button>
+          <button type="button" onpointerdown="TeseUI.holdKey('ArrowRight',true)" onpointerup="TeseUI.holdKey('ArrowRight',false)" onpointerleave="TeseUI.holdKey('ArrowRight',false)">▶</button>
+          <button type="button" onclick="TeseUI.openTeseCompare()" style="background:rgba(0,229,255,0.2);border-color:#00e5ff">⚖️ 0×4</button>
+        </div>
+        <div class="tese-nudge" style="margin-top:4px;">
+          <button type="button" id="btn-tactical-zoom" onclick="TeseUI.toggleTacticalZoom()" style="flex:1;background:rgba(16,185,129,0.2);border-color:#10b981;color:#a7f3d0;">🛰️ Visão IA (v18)</button>
+          <button type="button" id="btn-point-sun" onclick="TeseUI.pointToSun()" title="Apontar a frente e o painel solar para o Sol (tecla F)" style="background:rgba(255,209,71,0.18);border-color:#ffd147;color:#ffe799;">☀️ Sol</button>
+        </div>
+        <div id="tese-walk-telemetry" class="tese-walk-telemetry"></div>
+      </aside>
     </section>
   </main>
 
@@ -2503,12 +2594,101 @@
     </span>
   </button>
 
+  <!-- INSPETOR LOCAL 10x10 KM EM CORTINA (ANTES vs. DEPOIS) -->
+  <div id="tese-inspector-modal" class="tese-modal" role="dialog" aria-modal="true" aria-labelledby="insp-title" hidden>
+    <div class="tese-modal-box">
+      <div class="tese-modal-head">
+        <div>
+          <h2 id="insp-title">🔬 Inspetor 10×10 km · PGDA 78</h2>
+          <div id="insp-meta" class="tese-modal-meta">—</div>
+        </div>
+        <button type="button" class="cmp-x" onclick="TeseUI.closeInspector()" aria-label="Fechar">✕</button>
+      </div>
+      <div class="insp-controls">
+        <div class="insp-pill-grp" role="group" aria-label="Grade grossa">
+          <button type="button" class="insp-coarse-btn active" data-m="60m" onclick="TeseUI.setInspectorCoarse('60m')">Grade 60 m</button>
+          <button type="button" class="insp-coarse-btn" data-m="20m" onclick="TeseUI.setInspectorCoarse('20m')">Grade 20 m</button>
+        </div>
+        <div class="insp-pill-grp" role="group" aria-label="Nível do Escudo">
+          <button type="button" class="insp-shield-btn" data-s="P50" onclick="TeseUI.setInspectorShield('P50')">P50</button>
+          <button type="button" class="insp-shield-btn active" data-s="P90" onclick="TeseUI.setInspectorShield('P90')">P90</button>
+          <button type="button" class="insp-shield-btn" data-s="P99" onclick="TeseUI.setInspectorShield('P99')">P99</button>
+        </div>
+        <label style="display:inline-flex;align-items:center;gap:6px;">
+          Cortina: <input type="range" id="insp-curtain" min="0" max="100" value="50" oninput="TeseUI.setInspectorCurtain(this.value)">
+        </label>
+        <label style="display:inline-flex;align-items:center;gap:6px;">
+          Falso Alarme: <input type="range" id="insp-fa" min="5" max="30" step="5" value="15" oninput="TeseUI.setInspectorFA(this.value)"> <b id="insp-fa-val" style="color:#00e5ff">15%</b>
+        </label>
+      </div>
+      <div class="insp-canvas-wrap">
+        <canvas id="insp-canvas" width="400" height="400"></canvas>
+      </div>
+      <div id="insp-metrics" class="insp-metrics"></div>
+      <div class="insp-foot">
+        <span style="font-size:11px;color:#9fb6d6;">Vermelho vivo = perigos 5 m ocultos na grade grossa · Ciano = disparos LOLA reais (LDEC &gt; 0)</span>
+        <button type="button" class="or-primary" onclick="TeseUI.landOnInspectorSite()">🚀 Pousar neste sítio PGDA 78 (Tela 3)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANIMAÇÃO DA SIMULAÇÃO DO PERCURSO LADO A LADO (ESTILO v18.html) -->
+  <div id="v18-sim-modal" class="tese-modal" role="dialog" aria-modal="true" aria-label="Simulação lado a lado Sem Tese vs Com Tese" hidden>
+    <div class="tese-modal-box">
+      <div class="tese-modal-head">
+        <div>
+          <h2>🛰️ Zoom-Out LOLA &amp; Neuroevolução (Sem Tese × Com Tese)</h2>
+          <div class="tese-modal-meta" id="v18-sub-meta">Mapa LOLA sob o rover · Enxame evolutivo em 5 gerações sobre terreno real PGDA 5 m</div>
+        </div>
+        <button type="button" class="cmp-x" onclick="RouteSimV18.close()" aria-label="Fechar">✕</button>
+      </div>
+      <div class="insp-controls">
+        <button type="button" id="v18-play-btn" class="or-pill" onclick="RouteSimV18.togglePlay()">⏸</button>
+        <button type="button" class="or-pill" onclick="RouteSimV18.replay()">🔁 Repetir</button>
+        <div class="insp-pill-grp" title="Resolução da grade obtida pelo LOLA">
+          <button type="button" class="v18-grid-btn active" data-g="60m" onclick="RouteSimV18.setCoarseMode('60m')">LOLA 60 m</button>
+          <button type="button" class="v18-grid-btn" data-g="20m" onclick="RouteSimV18.setCoarseMode('20m')">LOLA 20 m</button>
+          <button type="button" class="v18-grid-btn" data-g="5m" onclick="RouteSimV18.setCoarseMode('5m')">LOLA 5 m</button>
+        </div>
+        <div class="insp-pill-grp">
+          <button type="button" class="v18-spd-btn active" data-s="1" onclick="RouteSimV18.setSpeed(1)">1×</button>
+          <button type="button" class="v18-spd-btn" data-s="2" onclick="RouteSimV18.setSpeed(2)">2×</button>
+          <button type="button" class="v18-spd-btn" data-s="4" onclick="RouteSimV18.setSpeed(4)">4×</button>
+        </div>
+        <span id="v18-gen-pill" class="v18-gen-pill">🧬 Geração 1/5</span>
+        <button type="button" class="or-primary" style="margin-left:auto;" onclick="RouteSimV18.close()">🎥 Acompanhar no 3D</button>
+      </div>
+      <div class="v18-prog"><i id="v18-prog-fill"></i></div>
+      <div class="v18-dual">
+        <div class="v18-pane">
+          <div class="v18-pane-head">
+            <span class="tag-base">⚠️ SEM TESE (Degrau 0 · Grade <span id="v18-lbl-grid">60 m</span>)</span>
+            <span id="v18-stat-base">Perigos: 0 · 0 m</span>
+          </div>
+          <canvas id="v18-canvas-base" width="440" height="340"></canvas>
+        </div>
+        <div class="v18-pane">
+          <div class="v18-pane-head">
+            <span class="tag-tese">🛡️ COM TESE (5 m + Escudo <span id="v18-lbl-shield">P90</span> + IA)</span>
+            <span id="v18-stat-tese">Perigos: 0 · Vetos: 0</span>
+          </div>
+          <canvas id="v18-canvas-tese" width="440" height="340"></canvas>
+        </div>
+      </div>
+      <div id="v18-cards" class="v18-cards"></div>
+    </div>
+  </div>
+
   <!-- Rover em trânsito entre as telas -->
   <canvas id="rover-fly" class="rover-3d" aria-hidden="true"></canvas>
   <div id="toast" role="status" aria-live="polite"></div>
 
-  <!-- Motor 3D local (Three.js r128) -->
+  <!-- Motor 3D local (Three.js r128) e Motor Tático da Tese -->
   <script src="js/three.min.js"></script>
+  <script src="js/surface_3d_terrain.js"></script>
+  <script src="js/rover_tese_engine.js"></script>
+  <script src="js/route_sim_v18.js"></script>
+  <script src="js/tese_ui.js"></script>
 
   <!-- DADOS REAIS EMBUTIDOS
        LOLA_CORE_B64 : DEM LOLA LDEM_875S_20M (87,5–90°S) reamostrado a 400 m, Int16 em metros,
@@ -4060,7 +4240,17 @@
           screenHits.push({ s, rect: { x: bx, y: by, w: bw, h: bh } });
         }
         octx.textAlign = "left";
-        if (!compact && !focus) drawTerrainExtras();
+        if (!compact && !focus) {
+          drawTerrainExtras();
+          if (window.TeseUI && window.TeseUI.drawMapOverlay) {
+            const projTerrain = (lat, lon) => {
+              const p = Terrain.llToPlane(lat, lon);
+              if (Math.hypot(p.x, p.z) > Terrain.EXT) return null;
+              return project(worldPos(p.x, p.z, Terrain.sample(p.x, p.z)));
+            };
+            window.TeseUI.drawMapOverlay(octx, mode, projTerrain, screenHits, compact);
+          }
+        }
       }
 
       function hitAny(mx, my) {
@@ -4501,6 +4691,15 @@
             screenHits.push({ kind: "pin", s: pin, x: q.x, y: q.y - 19 });
           }
         }
+        if (!compact && window.TeseUI && window.TeseUI.drawMapOverlay) {
+          const projGlobe = (lat, lon) => {
+            llToG(lat, lon, 1.005, P);
+            if (!gVisible(P)) return null;
+            const q = gProject(P);
+            return { x: q.x, y: q.y, front: true };
+          };
+          window.TeseUI.drawMapOverlay(octx, mode, projGlobe, screenHits, compact);
+        }
       }
 
       // raio → esfera (lat/lon sob o cursor)
@@ -4531,7 +4730,7 @@
       }
 
       // camadas e pontos do usuário
-      const layers = { viable: true, blocked: true, landings: true, craters: true, pins: true, sunEarth: true, light: true, colors: true, grid: true };
+      const layers = { viable: true, blocked: true, landings: true, craters: true, pins: true, sunEarth: true, light: true, colors: false, grid: true, ldec: false, shield: false, pgda: true };
       const pins = [];
       let mode = "globe", modeBusy = false;
       function setMode(m, opts = {}) {
@@ -4925,7 +5124,7 @@
         $("sim-play").textContent = "⏸";
         document.querySelectorAll(".speed-btn").forEach((b, k) => b.classList.toggle("active", k === sim.speedIdx));
         computeSky();
-        sim.heading = wrap(sim.sun.az - 18);
+        sim.heading = wrap(sim.sun.az);
         sim.fc = SiteSky.forecast(skyCtx, sim.t0, state.days * 24);
         Object.assign(sim.fc, { bat: SiteEnergy.overTrack(sim.fc.track, rover, 0.5) });
         showForecast();
@@ -5200,21 +5399,27 @@
         silhouette(sim.mask.far, `rgb(${L(78)},${L(84)},${L(96)})`, `rgb(${L(40)},${L(44)},${L(52)})`, "rgba(255,226,160,A)");
         silhouette(sim.mask.near, `rgb(${L(92)},${L(96)},${L(104)})`, `rgb(${L(52)},${L(55)},${L(62)})`, "rgba(255,236,190,A)");
 
-        // solo em primeiro plano
-        const groundTop = Math.max(toY(maskAt(sim.mask.near, sim.heading)) + 20, h * 0.6);
-        const gg = ctx.createLinearGradient(0, groundTop, 0, h);
-        gg.addColorStop(0, `rgb(${L(88)},${L(92)},${L(100)})`);
-        gg.addColorStop(1, `rgb(${L(46)},${L(50)},${L(58)})`);
-        ctx.fillStyle = gg;
-        ctx.beginPath();
-        ctx.moveTo(0, groundTop + 30);
-        ctx.quadraticCurveTo(w * 0.5, groundTop - 20, w, groundTop + 30);
-        ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
-        if (lunarPhotoImg.complete && lunarPhotoImg.naturalWidth > 0) {
-          ctx.save(); ctx.clip();
-          ctx.globalAlpha = 0.22 * light + 0.05;
-          ctx.drawImage(lunarPhotoImg, 0, groundTop - 20, w, h - groundTop + 20);
-          ctx.restore();
+        const has3DGround = !!(window.Surface3DTerrain && window.TeseUI && window.TeseUI.state.activeGrid);
+        if (has3DGround) {
+          window.Surface3DTerrain.init(document.getElementById("surface-3d-canvas"));
+          window.Surface3DTerrain.render(sim, window.TeseUI.state);
+        } else {
+          // solo em primeiro plano (fallback 2D)
+          const groundTop = Math.max(toY(maskAt(sim.mask.near, sim.heading)) + 20, h * 0.6);
+          const gg = ctx.createLinearGradient(0, groundTop, 0, h);
+          gg.addColorStop(0, `rgb(${L(88)},${L(92)},${L(100)})`);
+          gg.addColorStop(1, `rgb(${L(46)},${L(50)},${L(58)})`);
+          ctx.fillStyle = gg;
+          ctx.beginPath();
+          ctx.moveTo(0, groundTop + 30);
+          ctx.quadraticCurveTo(w * 0.5, groundTop - 20, w, groundTop + 30);
+          ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
+          if (lunarPhotoImg.complete && lunarPhotoImg.naturalWidth > 0) {
+            ctx.save(); ctx.clip();
+            ctx.globalAlpha = 0.22 * light + 0.05;
+            ctx.drawImage(lunarPhotoImg, 0, groundTop - 20, w, h - groundTop + 20);
+            ctx.restore();
+          }
         }
 
         // sombra longa do rover (Sol rasante → sombra comprida para o lado oposto)
@@ -5283,6 +5488,9 @@
           v.light = 0.18 + 0.82 * sim.sunFrac;
           v.keyX = angDiff(sim.sun.az, sim.heading) < 0 ? -1 : 1;
         }
+        if (window.TeseUI && window.TeseUI.drawSurfaceShield) {
+          window.TeseUI.drawSurfaceShield(ctx, w, h, sim);
+        }
         drawStrip(toX);
       }
 
@@ -5326,6 +5534,7 @@
         const dtReal = sim.prevNow == null ? 0 : Math.min(0.1, (now - sim.prevNow) / 1000);
         sim.prevNow = now;
         if (sim.playing) step(dtReal * SPEEDS[sim.speedIdx]);
+        if (window.TeseUI && window.TeseUI.stepRover) window.TeseUI.stepRover(dtReal);
         state.clockH = sim.t;
         draw(now);
         updateHud(false);
@@ -5365,7 +5574,7 @@
         model: "lrv", line: "Lua", short: "LRV · APOLLO 15–17",
         name: "Lunar Roving Vehicle (Apollo)",
         shortDesc: "1971–72 · 2 astronautas · rodas de tela de aço de 81,8 cm",
-        massKg: 210, batteryWh: 8712, solarW: 0, rtgW: 0, powerShadowW: 350, mastHeightM: 1.14,
+        massKg: 210, batteryWh: 8712, solarW: 0, rtgW: 0, powerShadowW: 350, mastHeightM: 1.14, slopeLimitDeg: 15,
         est: ["powerShadowW"],
         src: "NSSDC: 210 kg, 3,10 m, 2× baterias 36 V · 121 Ah (prata-zinco, não recarregáveis). Consumo médio estimado."
       },
@@ -5373,7 +5582,7 @@
         model: "viper", line: "Lua", short: "VIPER",
         name: "VIPER (NASA)",
         shortDesc: "Caçador de gelo do polo sul · broca de 1 m · 3 painéis solares verticais",
-        massKg: 430, batteryWh: 5420, solarW: 450, rtgW: 0, powerShadowW: 95, mastHeightM: 2.45,
+        massKg: 430, batteryWh: 5420, solarW: 450, rtgW: 0, powerShadowW: 95, mastHeightM: 2.45, slopeLimitDeg: 15,
         est: [],
         src: "NASA/NTRS (LSIC 2024): bateria 5.420 Wh, painéis 320–450 W; 57 h só na bateria em teste → ~95 W."
       },
@@ -5381,7 +5590,7 @@
         model: "ltv", line: "Lua", short: "LTV · ARTEMIS",
         name: "Lunar Terrain Vehicle (Artemis)",
         shortDesc: "Em desenvolvimento · 2 astronautas · desenho ainda não congelado",
-        massKg: 500, batteryWh: 6650, solarW: 650, rtgW: 0, powerShadowW: 110, mastHeightM: 2.0,
+        massKg: 500, batteryWh: 6650, solarW: 650, rtgW: 0, powerShadowW: 110, mastHeightM: 2.0, slopeLimitDeg: 18,
         est: ["massKg", "batteryWh", "solarW", "powerShadowW", "mastHeightM"],
         src: "NASA não publicou massa nem dimensões; valores são estimativas de classe (~500 kg)."
       },
@@ -5389,7 +5598,7 @@
         model: "mapp", line: "Lua", short: "MAPP · LUNAR OUTPOST",
         name: "Lunar Outpost MAPP",
         shortDesc: "Rover comercial compacto · parede solar lateral e torre de câmeras",
-        massKg: 10, batteryWh: 420, solarW: 180, rtgW: 0, powerShadowW: 120, mastHeightM: 0.6,
+        massKg: 10, batteryWh: 420, solarW: 180, rtgW: 0, powerShadowW: 120, mastHeightM: 0.6, slopeLimitDeg: 14,
         est: ["massKg", "batteryWh", "solarW", "powerShadowW", "mastHeightM"],
         src: "Valores ilustrativos (fabricante não publicou ficha completa)."
       },
@@ -5397,7 +5606,7 @@
         model: "sojourner", line: "Marte", short: "SOJOURNER · 1997",
         name: "Sojourner (Mars Pathfinder)",
         shortDesc: "E se fosse à Lua? · 10,6 kg · 6 rodas de 13 cm",
-        massKg: 10.6, batteryWh: 150, solarW: 16, rtgW: 0, powerShadowW: 10, mastHeightM: 0.30,
+        massKg: 10.6, batteryWh: 150, solarW: 16, rtgW: 0, powerShadowW: 10, mastHeightM: 0.30, slopeLimitDeg: 12,
         est: ["batteryWh", "powerShadowW"],
         src: "NASA: 10,6 kg, 30 cm de altura, painel de 0,22 m² com ~16 W; bateria Li-SOCl2 não recarregável (capacidade estimada)."
       },
@@ -5405,7 +5614,7 @@
         model: "mer", line: "Marte", short: "SPIRIT / OPPORTUNITY",
         name: "Mars Exploration Rover",
         shortDesc: "E se fosse à Lua? · modelo 3D oficial da NASA (simplificado)",
-        massKg: 180, batteryWh: 450, solarW: 140, rtgW: 0, powerShadowW: 100, mastHeightM: 1.4,
+        massKg: 180, batteryWh: 450, solarW: 140, rtgW: 0, powerShadowW: 100, mastHeightM: 1.4, slopeLimitDeg: 15,
         est: ["batteryWh"],
         src: "Painéis ~140 W, ~100 W para dirigir; 2 baterias Li-íon de 8 Ah (energia estimada). Modelo: NASA-3D-Resources."
       },
@@ -5413,7 +5622,7 @@
         model: "curiosity", line: "Marte", short: "CURIOSITY · MSL",
         name: "Curiosity (Mars Science Laboratory)",
         shortDesc: "E se fosse à Lua? · nuclear (MMRTG) · 899 kg",
-        massKg: 899, batteryWh: 2350, solarW: 0, rtgW: 110, powerShadowW: 100, mastHeightM: 2.2,
+        massKg: 899, batteryWh: 2350, solarW: 0, rtgW: 110, powerShadowW: 100, mastHeightM: 2.2, slopeLimitDeg: 20,
         est: ["batteryWh", "powerShadowW"],
         src: "science.nasa.gov: 899 kg, 3,0 × 2,7 × 2,2 m; MMRTG ~110 W; 2 baterias Li-íon de 42 Ah (energia estimada)."
       },
@@ -5421,7 +5630,7 @@
         model: "perse", line: "Marte", short: "PERSEVERANCE · M2020",
         name: "Perseverance (Mars 2020)",
         shortDesc: "E se fosse à Lua? · modelo 3D oficial da NASA (simplificado)",
-        massKg: 1025, batteryWh: 2400, solarW: 0, rtgW: 110, powerShadowW: 100, mastHeightM: 2.2,
+        massKg: 1025, batteryWh: 2400, solarW: 0, rtgW: 110, powerShadowW: 100, mastHeightM: 2.2, slopeLimitDeg: 20,
         est: ["batteryWh", "powerShadowW"],
         src: "NSSDC: ~1.025 kg, 3,0 × 2,7 × 2,2 m; MMRTG ~110 W; 2 baterias Li-íon de 43 Ah (energia estimada). Modelo: NASA-3D-Resources."
       }
@@ -5448,7 +5657,8 @@
         f4: true, // Perto do Polo Sul (Lat <= -84)
         f5: true, // 9 Regiões oficiais NASA Out/2024
         f6: true, // Seguro se foguete atrasar +1 ano
-        f7: true  // Perto de muito gelo (PSR >= 50.000 m²)
+        f7: true, // Perto de muito gelo (PSR >= 50.000 m²)
+        f_tese: true // Filtro Multirresolução P90/P99 (Escudo da Tese)
       },
       evaluatedSites: [],
       viableSites: [],
@@ -5524,7 +5734,7 @@
         const landCanvas = document.createElement("canvas");
         landCanvas.className = "rover-3d";
         document.getElementById("landed-rover-holder").appendChild(landCanvas);
-        Rover3D.attach("landed", landCanvas, state.selectedRoverIdx, { speed: 0.18, pitch: 0.16, margin: 0.86, baseYaw: 0.5 });
+        Rover3D.attach("landed", landCanvas, state.selectedRoverIdx, { speed: 0, pitch: 0.2, margin: 0.86, baseYaw: Math.PI });
         Rover3D.attach("fly", document.getElementById("rover-fly"), state.selectedRoverIdx, {});
         buildRoverList();
       }
@@ -5830,7 +6040,8 @@
       { key: "f2", label: "🌑 Eclipses reais", short: "eclipse" },
       { key: "f3", label: "🪨 Margem p/ relevo 5 m", short: "relevo" },
       { key: "f6", label: "⏳ Se atrasar 1 ano", short: "atraso" },
-      { key: "f7", label: "🧊 Perto de gelo (água)", short: "gelo" }
+      { key: "f7", label: "🧊 Perto de gelo (água)", short: "gelo" },
+      { key: "f_tese", label: "🛡️ Filtro Multirresolução P90/P99", short: "Escudo P90/P99" }
     ];
     state.funnelStage = null;      // null = resultado final; k = mostrando o funil até a etapa k
     let funnelTimer = null;
@@ -5872,8 +6083,9 @@
         </button>`;
       }).join("");
       const st = document.getElementById("funnel-status");
+      const fpCount = (state.evaluatedSites || []).filter(s => s.pass_60m && !s.pass_p90).length;
       if (st) st.textContent = k === null
-        ? `${total} sítios → ${state.viableSites.length} viáveis`
+        ? `${total} sítios → ${state.viableSites.length} viáveis · ${fpCount} falsos positivos (60m✅→P90✖)`
         : `Etapa ${k + 1}/${FUNNEL.length} · ${FUNNEL[k].short}: ${state.funnelCounts[k]} seguem${state.filters[FUNNEL[k].key] ? "" : " (desligada)"}`;
       const nNow = k === null ? state.viableSites.length : state.funnelCounts[k];
       document.getElementById("score-viable").textContent = nNow;
@@ -6012,12 +6224,22 @@
           },
           f2: () => { const r = enB(); return r.ok ? null : why(r, `um eclipse real em ${ddmm(r.eclAt ?? r.tH)}/${Y} (${r.eclH} h de sombra da Terra) estraga a melhor janela: `); },
           f3: () => {
-            if (s.slope > 15) return `chão inclinado demais (${fm(s.slope)}° > 15°)`;
+            const slopeLim = rover.slopeLimitDeg || 15;
+            if (s.slope > slopeLim) return `chão inclinado demais (${fm(s.slope)}° > ${slopeLim}°)`;
             const r = enC();
             return r.ok ? null : why(r, `com a margem de ${marginBarker} dias para o erro do relevo de 5 m (${state.days + marginBarker} dias), `);
           },
           f6: () => { const r = enD(); return r.ok ? null : why(r, `se atrasar para ${Y + 1}: `); },
-          f7: () => s.psr_area >= 50000 ? null : `pouco gelo por perto (${s.psr_area.toLocaleString("pt-BR")} m² < 50.000 m²)`
+          f7: () => s.psr_area >= 50000 ? null : `pouco gelo por perto (${s.psr_area.toLocaleString("pt-BR")} m² < 50.000 m²)`,
+          f_tese: () => {
+            const slopeLim = rover.slopeLimitDeg || 15;
+            const sig = s.sigma_slope_deg ?? (1.8 * s.eps_barker);
+            const p90Slope = s.slope + 1.282 * sig;
+            if (s.pass_p90 === false || p90Slope > slopeLim) {
+              return `falso positivo em 60 m: Escudo 5 m P90 (${fm(p90Slope.toFixed(1))}° > ${slopeLim}°) veta o sítio`;
+            }
+            return null;
+          }
         };
         let failStage = -1, failReason = "";
         FUNNEL.forEach((f, k) => {
@@ -6055,9 +6277,9 @@
       document.getElementById("docked-rover-title").textContent = rover.name;
       document.getElementById("docked-rover-specs").innerHTML = `
         <span>🔋 Bateria: ${capWh.toLocaleString('pt-BR')} Wh · massa ${rover.massKg.toLocaleString('pt-BR')} kg</span>
-        <span>🌑 Aguenta no escuro: ${fmtDark(darkHours)} horas</span>
+        <span>🌑 Aguenta no escuro: ${fmtDark(darkHours)} horas · limite ${rover.slopeLimitDeg || 15}°</span>
         <span>${rover.rtgW ? `☢️ RTG: ${rover.rtgW} W` : `☀️ Painel solar: ${rover.solarW} W`} · consumo ${rover.powerShadowW} W</span>
-        <span>📅 Missão: ${state.days} dias em ${state.year}</span>
+        <span>📅 Missão: ${state.days} dias em ${state.year} · mastro ${rover.mastHeightM} m</span>
       `;
 
       document.getElementById("score-viable").textContent = state.viableSites.length;
@@ -6127,6 +6349,7 @@
       const surfCanvas = document.getElementById("surface-canvas");
       surfCanvas.width = Math.round(VIEW.w * VIEW.dpr);
       surfCanvas.height = Math.round(VIEW.h * VIEW.dpr);
+      if (window.Surface3DTerrain) window.Surface3DTerrain.resize();
       if (Map3D) {
         shiftFor(2);   // atualiza a variável CSS do centro do mapa
         Map3D.resize(VIEW.w, VIEW.h, shiftFor(state.screen));
@@ -6252,8 +6475,17 @@
         return;
       }
       hideHoverCard();
+      if (h.kind === "pgda78") {
+        if (window.TeseUI) window.TeseUI.openInspector(h.s);
+        return;
+      }
       if (h.kind === "site") {
-        if (!h.s.viable) { showToast(`❌ ${h.s.code} está bloqueado pelos filtros. Escolha um local verde ou desligue algum filtro.`); return; }
+        if (h.s.pgda78_match && e.shiftKey && window.TeseUI) { window.TeseUI.openInspector(h.s.pgda78_match); return; }
+        if (!h.s.viable) {
+          if (h.s.pgda78_match && window.TeseUI) { window.TeseUI.openInspector(h.s.pgda78_match); return; }
+          showToast(`❌ ${h.s.code} está bloqueado pelos filtros. Escolha um local verde ou desligue algum filtro.`);
+          return;
+        }
         if (globe) { Map3D.setMode("terrain", { focus: h.s }); showToast(`🎯 ${h.s.code}: clique de novo no alfinete para enviar o módulo.`); return; }
         flyRoverAndLand(h.s);
         return;
@@ -6413,6 +6645,9 @@
     const LAYER_DEFS = [
       { key: "viable", label: "Sítios viáveis", dot: "#5dff9b", count: () => state.viableSites.length },
       { key: "blocked", label: "Sítios descartados", dot: "#ff7a7a", count: () => SITES.length - state.viableSites.length },
+      { key: "pgda", label: "Auditado PGDA 78 / LROC NAC / SfS", dot: "#ffd166", count: () => (window.TeseUI && TeseUI.state.master) ? TeseUI.state.master.total_pgda78 : 26 },
+      { key: "shield", label: "Escudo Tese (60/20m → 5m P90/P99)", dot: "#ff4d6d", count: () => (state.evaluatedSites || []).filter(s => s.pass_60m && !s.pass_p90).length },
+      { key: "ldec", label: "Medição LOLA (LDEC > 0 vs. Interpolado)", dot: "#00e5ff" },
       { key: "landings", label: "Pousos reais", dot: "#5fe6ff", count: () => Map3D.LANDINGS.length },
       { key: "pins", label: "Meus pontos", dot: "#ffd166", count: () => Map3D.pins.length },
       { key: "craters", label: "Crateras do polo", dot: "#ffffff", count: () => Terrain.CRATERS.length },
@@ -6803,6 +7038,7 @@
       holder.classList.add("descending");
 
       Surface.start(site, rover);
+      if (window.TeseUI && window.TeseUI.onLanded) window.TeseUI.onLanded(site);
       {
         const p = Terrain.llToPlane(site.lat, site.lon);
         const src = Surface.maskSource;

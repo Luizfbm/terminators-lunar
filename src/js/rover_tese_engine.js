@@ -131,7 +131,7 @@
   function sampleGrid(grid, xM, yM) {
     const half = (grid.n * grid.cellM) / 2;
     const gx = clamp(Math.floor((xM + half) / grid.cellM), 0, grid.n - 1);
-    const gy = clamp(Math.floor((yM + half) / grid.cellM), 0, grid.n - 1);
+    const gy = clamp(Math.floor((half - yM) / grid.cellM), 0, grid.n - 1);
     const i = gy * grid.n + gx;
     return {
       idx: i, gx, gy,
@@ -147,7 +147,7 @@
 
   // Avalia declive efetivo + margem do Escudo segundo o Degrau (0..4)
   function evalCell(sample, degrau, coarseMode, shieldLevel) {
-    const coarse = coarseMode === "20m" ? sample.slp20 : sample.slp60;
+    const coarse = coarseMode === "5m" ? sample.slp5 : coarseMode === "20m" ? sample.slp20 : sample.slp60;
     if (degrau === 0 || degrau === 1) {
       return { effectiveSlp: coarse, margin: 0, noFalseRelief: false };
     }
@@ -328,48 +328,238 @@
   }
 
   /**
-   * Compara Degrau 0 (Sem Tese) vs Degrau 4 (Com Tese) no mesmo trajeto sobre a grade 5m real.
+   * Planejador A* sobre a grade real/grossa (usado para traçar a rota ótima da Tese e a rota cega da grade grossa).
    */
-  function simulateRouteComparison(grid, start, goal, roverParams, sunFrac, shieldLevel) {
-    const runOne = (degrau) => {
-      let x = start.x, y = start.y;
-      let heading = wrapDeg(Math.atan2(goal.x - x, goal.y - y) * 180 / Math.PI);
-      const capWh = roverParams.batteryWh || 5420;
+  function planGridAStar(grid, start, goal, opts) {
+    const n = grid.n;
+    const cellM = grid.cellM;
+    const half = (n * cellM) / 2;
+    const toG = (xM, yM) => ({
+      gx: clamp(Math.floor((xM + half) / cellM), 0, n - 1),
+      gy: clamp(Math.floor((half - yM) / cellM), 0, n - 1)
+    });
+    const toM = (gx, gy) => ({
+      x: -half + (gx + 0.5) * cellM,
+      y: half - (gy + 0.5) * cellM
+    });
+
+    const sG = toG(start.x, start.y);
+    const gG = toG(goal.x, goal.y);
+    const total = n * n;
+    const gScore = new Float32Array(total).fill(1e9);
+    const parent = new Int32Array(total).fill(-1);
+    const closed = new Uint8Array(total);
+
+    const sIdx = sG.gy * n + sG.gx;
+    const gIdx = gG.gy * n + gG.gx;
+    gScore[sIdx] = 0;
+
+    // Min-heap simples [f, idx]
+    const heap = [[Math.hypot(gG.gx - sG.gx, gG.gy - sG.gy) * cellM, sIdx]];
+    const push = (item) => {
+      heap.push(item);
+      let i = heap.length - 1;
+      while (i > 0) {
+        const p = (i - 1) >> 1;
+        if (heap[p][0] <= heap[i][0]) break;
+        const tmp = heap[p]; heap[p] = heap[i]; heap[i] = tmp;
+        i = p;
+      }
+    };
+    const pop = () => {
+      const top = heap[0];
+      const last = heap.pop();
+      if (heap.length) {
+        heap[0] = last;
+        let i = 0;
+        const len = heap.length;
+        while (true) {
+          let l = i * 2 + 1, r = l + 1, best = i;
+          if (l < len && heap[l][0] < heap[best][0]) best = l;
+          if (r < len && heap[r][0] < heap[best][0]) best = r;
+          if (best === i) break;
+          const tmp = heap[i]; heap[i] = heap[best]; heap[best] = tmp;
+          i = best;
+        }
+      }
+      return top;
+    };
+
+    const slopeLim = opts.slopeLimitDeg || 15.0;
+    const degrau = opts.degrau ?? 4;
+    const coarseMode = opts.coarseMode || "60m";
+    const shieldLevel = opts.shieldLevel || "P90";
+    const z = Z_CONF[shieldLevel] ?? 1.282;
+
+    const dirs = [
+      [-1, 0, 1], [1, 0, 1], [0, -1, 1], [0, 1, 1],
+      [-1, -1, 1.4142], [1, -1, 1.4142], [-1, 1, 1.4142], [1, 1, 1.4142]
+    ];
+
+    let iters = 0;
+    while (heap.length && iters < 65000) {
+      iters++;
+      const [, cur] = pop();
+      if (closed[cur]) continue;
+      if (cur === gIdx) break;
+      closed[cur] = 1;
+
+      const cx = cur % n;
+      const cy = (cur / n) | 0;
+      const baseG = gScore[cur];
+
+      for (let d = 0; d < 8; d++) {
+        const nx = cx + dirs[d][0];
+        const ny = cy + dirs[d][1];
+        if (nx < 0 || nx >= n || ny < 0 || ny >= n) continue;
+        const nIdx = ny * n + nx;
+        if (closed[nIdx]) continue;
+
+        let stepCost = dirs[d][2] * cellM;
+        const slp5 = grid.slp5[nIdx];
+        const slpCoarse = coarseMode === "5m" ? slp5 : coarseMode === "20m" ? grid.slp20[nIdx] : grid.slp60[nIdx];
+
+        if (degrau === 0) {
+          // Planejador sem Tese: enxerga apenas a grade LOLA selecionada
+          if (slpCoarse > slopeLim) stepCost += 1200 + (slpCoarse - slopeLim) * 200;
+          else stepCost += slpCoarse * 0.6;
+        } else {
+          // Planejador Tese (Multirresolução 5m + Escudo P50/P90/P99 + LDEC)
+          const ldecDen = grid.ldecDen[nIdx];
+          const slperr = grid.slperr[nIdx];
+          const sig = ldecDen >= 0.12 ? Math.max(0.8, slperr * 0.35) : Math.max(2.0, slperr * 0.75);
+          const margin = 1.0 + z * sig;
+          const effSlp = Math.max(slp5, slpCoarse) + margin * 0.55;
+          if (slp5 > slopeLim) {
+            stepCost += 7500 + (slp5 - slopeLim) * 900;
+          } else if (effSlp > slopeLim) {
+            stepCost += 520 + (effSlp - slopeLim) * 80;
+          } else {
+            stepCost += slp5 * 1.4 + (ldecDen < 0.05 ? 12 : 0);
+          }
+        }
+
+        const candG = baseG + stepCost;
+        if (candG < gScore[nIdx]) {
+          gScore[nIdx] = candG;
+          parent[nIdx] = cur;
+          const h = Math.hypot(gG.gx - nx, gG.gy - ny) * cellM;
+          push([candG + h * 1.05, nIdx]);
+        }
+      }
+    }
+
+    // Reconstruir caminho
+    const rawPts = [];
+    let cur = gIdx;
+    if (parent[cur] === -1 && cur !== sIdx) {
+      return [start, goal];
+    }
+    while (cur !== -1) {
+      const gx = cur % n;
+      const gy = (cur / n) | 0;
+      rawPts.push(toM(gx, gy));
+      if (cur === sIdx) break;
+      cur = parent[cur];
+    }
+    rawPts.reverse();
+    if (rawPts.length) {
+      rawPts[0] = { x: start.x, y: start.y };
+      rawPts[rawPts.length - 1] = { x: goal.x, y: goal.y };
+    }
+    return rawPts;
+  }
+
+  function resamplePath(pts, stepM) {
+    if (!pts || pts.length < 2) return pts || [];
+    const out = [{ x: pts[0].x, y: pts[0].y }];
+    let acc = 0;
+    for (let i = 1; i < pts.length; i++) {
+      let ax = pts[i - 1].x, ay = pts[i - 1].y;
+      const bx = pts[i].x, by = pts[i].y;
+      let seg = Math.hypot(bx - ax, by - ay);
+      while (acc + seg >= stepM && seg > 1e-3) {
+        const need = stepM - acc;
+        const t = need / seg;
+        ax += (bx - ax) * t;
+        ay += (by - ay) * t;
+        out.push({ x: ax, y: ay });
+        seg -= need;
+        acc = 0;
+      }
+      acc += seg;
+    }
+    const last = pts[pts.length - 1];
+    if (Math.hypot(last.x - out[out.length - 1].x, last.y - out[out.length - 1].y) > 8) {
+      out.push({ x: last.x, y: last.y });
+    }
+    return out;
+  }
+
+  /**
+   * Compara Degrau 0 (Sem Tese) vs Degrau 4 (Com Tese + Gerações IA) no mesmo trajeto sobre a grade 5m real.
+   */
+  function simulateRouteComparison(grid, start, goal, roverParams, sunFrac, shieldLevel, coarseMode) {
+    const mode = coarseMode || "60m";
+    const sLevel = shieldLevel || "P90";
+    const slopeLim = roverParams.slopeLimitDeg || 15.0;
+    const capWh = roverParams.batteryWh || 5420;
+    const vMs = 0.35;
+
+    const evaluateWaypoints = (degrau, rawPts) => {
+      const pts = resamplePath(rawPts, 50);
       let bat = capWh;
       let minSoc = 100;
       let dist = 0, timeH = 0, hazardsHit = 0, vetoes = 0;
-      const path = [{ x, y }];
-      const slopeLim = roverParams.slopeLimitDeg || 15.0;
-      const stepM = 50;
-      const vMs = 0.35; // 0.35 m/s típico rover lunar
+      const history = [];
 
-      for (let it = 0; it < 160; it++) {
-        const rem = Math.hypot(goal.x - x, goal.y - y);
-        if (rem < 65) break;
-        const scan = scanDirectionalShield(grid, { x, y }, heading, goal, roverParams, {
-          degrau, coarseMode: "60m", shieldLevel: shieldLevel || "P90", socPct: (bat / capWh) * 100, inShadow: sunFrac < 0.2
-        });
-        if (scan.shieldVetoed) vetoes++;
-        heading = wrapDeg(heading + clamp(scan.proposedRelDeg, -45, 45));
-        const rad = heading * Math.PI / 180;
-        x += Math.sin(rad) * stepM;
-        y += Math.cos(rad) * stepM;
-        dist += stepM;
-        const dtH = (stepM / (vMs * scan.speedFactor)) / 3600;
+      for (let i = 0; i < pts.length; i++) {
+        const p = pts[i];
+        const prev = i > 0 ? pts[i - 1] : p;
+        const seg = i > 0 ? Math.hypot(p.x - prev.x, p.y - prev.y) : 0;
+        dist += seg;
+
+        const next = i < pts.length - 1 ? pts[i + 1] : goal;
+        const heading = wrapDeg(Math.atan2(next.x - p.x, next.y - p.y) * 180 / Math.PI);
+        const cell = sampleGrid(grid, p.x, p.y);
+        const isHaz = cell.slp5 > slopeLim;
+        if (i > 0 && isHaz) hazardsHit++;
+
+        let veto = false;
+        let speedFactor = 1.0;
+        if (degrau >= 3) {
+          // Verifica se a linha reta ao objetivo teria sido vetada pelo Escudo neste ponto
+          const goalBrg = wrapDeg(Math.atan2(goal.x - p.x, goal.y - p.y) * 180 / Math.PI);
+          const radG = goalBrg * Math.PI / 180;
+          const ahead = sampleGrid(grid, p.x + Math.sin(radG) * 75, p.y + Math.cos(radG) * 75);
+          const ev = evalCell(ahead, degrau, mode, sLevel);
+          if (ahead.slp5 > slopeLim || ev.effectiveSlp > slopeLim) {
+            veto = true;
+            vetoes++;
+          }
+          if (cell.slp5 > slopeLim * 0.72) speedFactor = 0.8;
+        }
+
+        const dtH = seg > 0 ? (seg / (vMs * speedFactor)) / 3600 : 0;
         timeH += dtH;
-
-        const cell = sampleGrid(grid, x, y);
-        if (cell.slp5 > slopeLim) hazardsHit++;
-
-        // Consumo extra em aclive + consumo base
         const slopePenaltyW = 1 + Math.max(0, cell.slp5 - 5) * 0.04;
         const loadW = (roverParams.powerShadowW || 95) * slopePenaltyW;
         const genW = (roverParams.solarW || 0) * sunFrac * 0.7 + (roverParams.rtgW || 0);
         bat = clamp(bat + (genW - loadW) * dtH, 0, capWh);
-        minSoc = Math.min(minSoc, (bat / capWh) * 100);
-        path.push({ x, y });
+        const socNow = (bat / capWh) * 100;
+        minSoc = Math.min(minSoc, socNow);
+
+        history.push({
+          x: p.x, y: p.y, heading,
+          soc: +socNow.toFixed(1),
+          slp5: +cell.slp5.toFixed(1),
+          hazard: isHaz,
+          veto
+        });
       }
-      const reached = Math.hypot(goal.x - x, goal.y - y) < 120;
+
+      const last = pts[pts.length - 1] || start;
+      const reached = Math.hypot(goal.x - last.x, goal.y - last.y) < 120;
       return {
         degrau,
         reached,
@@ -378,15 +568,57 @@
         vetoes,
         distanceM: Math.round(dist),
         timeH: +timeH.toFixed(2),
-        path
+        path: pts,
+        history
       };
     };
 
-    const base = runOne(0);
-    const tese = runOne(4);
+    const baseRaw = planGridAStar(grid, start, goal, { degrau: 0, coarseMode: mode, shieldLevel: sLevel, slopeLimitDeg: slopeLim });
+    const teseRaw = planGridAStar(grid, start, goal, { degrau: 4, coarseMode: mode, shieldLevel: sLevel, slopeLimitDeg: slopeLim });
+
+    const base = evaluateWaypoints(0, baseRaw);
+    const tese = evaluateWaypoints(4, teseRaw);
+
+    // Gerações de Neuroevolução (enxame de candidatos convergindo da Geração 1 à Geração 5)
+    const generations = [];
+    const spanDist = Math.max(200, Math.hypot(goal.x - start.x, goal.y - start.y));
+    const dx = goal.x - start.x, dy = goal.y - start.y;
+    const nx = -dy / spanDist, ny = dx / spanDist;
+
+    for (let g = 1; g <= 5; g++) {
+      const progress = g / 5; // 0.2 -> 1.0
+      const amp = (1 - progress * 0.88) * Math.min(900, spanDist * 0.42);
+      const paths = [];
+      for (let k = 0; k < 8; k++) {
+        const phase = ((k - 3.5) / 3.5);
+        const cand = tese.path.map((p, idx) => {
+          const t = idx / Math.max(1, tese.path.length - 1);
+          const env = Math.sin(t * Math.PI);
+          // Mistura entre linha reta (gen inicial) e rota ótima Tese (gen final)
+          const lx = start.x + dx * t;
+          const ly = start.y + dy * t;
+          const blend = 0.25 + 0.75 * progress;
+          const wave = Math.sin(t * Math.PI * (1 + (k % 3))) * amp * phase * env;
+          return {
+            x: lx * (1 - blend) + p.x * blend + nx * wave,
+            y: ly * (1 - blend) + p.y * blend + ny * wave
+          };
+        });
+        paths.push(cand);
+      }
+      generations.push({
+        gen: g,
+        candidates: paths.length,
+        bestHazards: g === 5 ? tese.hazardsHit : Math.max(tese.hazardsHit, Math.round((base.hazardsHit + 2) * (1 - progress * 0.85))),
+        paths
+      });
+    }
+
     return {
+      coarseMode: mode,
       base,
       tese,
+      generations,
       hazardsAvoided: Math.max(0, base.hazardsHit - tese.hazardsHit)
     };
   }

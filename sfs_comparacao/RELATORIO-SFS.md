@@ -53,28 +53,26 @@ Limites: o SfS é uma estimativa restrita ao LOLA, não verdade de campo; 3 regi
 
 **Tabela de calibração (`tabelas_brutas/calibracao_sitios_referencia_4resolucoes.csv`)**: nas coordenadas dos sítios 007 (−89,061°, 128,44°E) e 011 (−88,71°, −68,44°), o terreno real (LOLA 20 m, LOLA 5 m e SfS, 2 m de mastro) dá 43–44% e 18–20% de iluminação (centro do disco), contra 74,1% e 72,0% na coluna "Gläser 20 m". Os melhores pontos de cada patch (72–77%) estão na faixa publicada, então os valores da tabela parecem ser de outro lugar (cume), não destes pontos. Os scripts da bancada (`build_bancada.py` etc.) não usam o `engine.py` com o bug dos 111.320 m/grau.
 
-## Verificação com as fotos LROC NAC (15/11, três regiões)
-Cada pacote SfS traz as fotos ortorretificadas (`LROC-NAC-maps`: 120 / 194 / 172 em Leibnitz / de Gerlache / Peak). Teste: prever sombra/luz de cada pixel por ray-tracing em cada DEM, com o Sol do instante da foto, e comparar com o pixel real (iluminado = DN > 0,001). Dados por foto em `fotos_todas.csv`; código em `photo2.py`, `eph.py`, `ray.c`.
+## Verificação com as fotos LROC NAC (15/11, três regiões — 486 fotos)
+Cada pacote SfS traz as fotos ortorretificadas (`LROC-NAC-maps`: 120 / 194 / 172 em Leibnitz / de Gerlache / Peak). Teste: prever sombra/luz de cada pixel por ray-tracing em cada DEM, com o Sol do instante da foto, e comparar com o pixel real (iluminado = DN > 0,001). Dados por foto em `fotos_todas.csv` (486 linhas); código em `photo2.py`, `photo3.py`, `eph.py`, `ray.c`.
 
-- **Fotos usadas: 183 de 486** (50 de 120, 83 de 194, 50 de 172), escolhidas espaçadas ao longo da lista; 3,09 milhões de pixels (1 a cada 40 m). Não rodei as 303 restantes: a ponte de arquivos traz 50 por chamada.
-- **Sol**: só de Gerlache tem os JSON de câmera. Para as três regiões calculei o Sol direto de `de440s.bsp` + `moon_pa_de440_200625.bpc` (leitor próprio, sem SPICE), com a hora tirada do número da foto. Conferido contra os 33 JSON: erro angular máximo 0,006°.
+- **Fotos usadas: 486 de 486** (120 de 120 em Leibnitz Beta, 194 de 194 em de Gerlache Rim, 172 de 172 em Peak Near Shackleton).
+- **Sol**: só de Gerlache tem os JSON de câmera. Para as três regiões o Sol foi calculado direto de `de440s.bsp` + `moon_pa_de440_200625.bpc` (leitor próprio, sem SPICE), com a hora tirada do número da foto. Conferido contra os 33 JSON: erro angular máximo 0,006°.
 
 Disco solar pelo centro. "Luz falsa" = modelo prevê luz e a foto está escura (erro perigoso). "Sombra falsa" = o contrário.
 
-| DEM | Leibnitz: acerto / luz falsa / sombra falsa | de Gerlache | Peak N. Shackleton |
-|---|---|---|---|
-| SfS 5 m | 94,0% / 7,9% / 4,1% | 96,1% / 1,7% / 6,1% | 95,5% / 2,3% / 6,1% |
-| LOLA 5 m (ref.) | 93,6% / 8,9% / 4,1% | 95,6% / 2,5% / 6,4% | 94,9% / 4,2% / 5,8% |
-| LOLA 20 m | 93,5% / 9,6% / 3,5% | 95,0% / 2,4% / 7,7% | 93,7% / 4,1% / 7,9% |
-| LOLA 60 m | 92,5% / 11,1% / 4,1% | 95,5% / 3,8% / 5,3% | 94,1% / 7,1% / 5,0% |
-| LOLA 240 m | 89,9% / 13,7% / 6,7% | 94,9% / 5,9% / 4,3% | 92,7% / 11,9% / 4,0% |
-
-Duas regiões polares juntas (133 fotos, 2,29 M px): acerto 95,9 / 95,3 / 94,4 / 94,9 / 93,9% e luz falsa 1,9 / 3,2 / 3,1 / 5,1 / 8,3% (SfS, 5, 20, 60, 240 m). SfS acerta mais que o LOLA 20 m em 121 das 133 fotos; LOLA 5 m, em 127.
+| DEM | Leibnitz (120): acerto / luz falsa / sombra falsa | de Gerlache (194) | Peak N. Shackleton (172) | Duas polares (366) |
+|---|---|---|---|---|
+| SfS 5 m | 94,3% / 7,7% / 3,8% | 95,8% / 2,1% / 5,9% | 95,7% / 2,2% / 6,1% | 95,7% / 2,1% / 6,0% |
+| LOLA 5 m (ref.) | 93,8% / 8,8% / 3,8% | 95,3% / 3,0% / 6,0% | 94,9% / 4,1% / 5,9% | 95,1% / 3,6% / 6,0% |
+| LOLA 20 m | 93,8% / 9,5% / 3,3% | 94,7% / 2,9% / 7,1% | 93,7% / 4,0% / 8,3% | 94,2% / 3,4% / 7,7% |
+| LOLA 60 m | 92,8% / 11,0% / 3,8% | 95,3% / 4,2% / 5,1% | 94,0% / 7,0% / 5,1% | 94,7% / 5,7% / 5,1% |
+| LOLA 240 m | 90,2% / 13,8% / 6,1% | 94,8% / 6,5% / 4,2% | 92,5% / 11,5% / 4,1% | 93,6% / 9,1% / 4,2% |
 
 Leitura:
-1. O cálculo de sombras confere com fotos reais em 94–96% dos pixels nas três regiões.
-2. A luz falsa cresce com a grade nas três regiões: de 2–8% (SfS) a 6–14% (240 m).
-3. De 20 m para 5 m o ganho é pequeno (0,6–1,2 ponto de acerto nas polares; nenhum em Leibnitz); o SfS acrescenta mais ~0,5 ponto.
+1. O cálculo de sombras confere com fotos reais em 94–96% dos pixels nas três regiões (todas as 486 fotos confirmam o padrão das 183 iniciais).
+2. A luz falsa cresce com a grade nas três regiões: de 2,1% (SfS) e 3,4% (LOLA 20 m) para 9,1% (LOLA 240 m) nas duas regiões polares juntas.
+3. De 20 m para 5 m o ganho é pequeno (~0,9 ponto de acerto nas polares; nenhum em Leibnitz); o SfS acrescenta mais ~0,6 ponto.
 4. Nas regiões polares o LOLA 60 m tem acerto global igual ou maior que o 20 m (troca sombra falsa por luz falsa); em Leibnitz não. Causa não investigada.
 
 Ressalvas: o SfS foi ajustado a estas mesmas fotos (vantagem em amostra); Leibnitz não tem terreno além do patch de 16 km (sombras vindas de fora não entram, daí a luz falsa mais alta) e ali 20/60/240 m são médias do LOLA 5 m de referência; nas polares 60/240 m são médias do LDEM 20 m, não os produtos oficiais; limiar de DN único; não há fotos com o Sol de 2026+.

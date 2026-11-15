@@ -45,37 +45,49 @@ def sample_dem(dem, row, col):
     return dem[ri, ci]
 
 
-def build_horizon(dem, lat, lon, obs_m=2.0, az_step=0.5, d_step=100.0, d_max=75000.0):
-    """Devolve (azimutes, horizonte_em_graus, altura_do_sitio)."""
-    h0 = float(sample_dem(dem, *latlon_to_pix(lat, lon)))
+def sample_dem_bilinear(dem, row, col):
+    """Amostragem bilinear no DEM; retorna (altura, mascara_valida)."""
+    ny, nx = dem.shape
+    r0 = np.floor(row).astype(np.int32)
+    c0 = np.floor(col).astype(np.int32)
+    inside = (r0 >= 0) & (c0 >= 0) & (r0 < ny - 1) & (c0 < nx - 1)
+    r0c = np.clip(r0, 0, ny - 2)
+    c0c = np.clip(c0, 0, nx - 2)
+    fr = row - r0c
+    fc = col - c0c
+    h = ((dem[r0c, c0c] * (1.0 - fc) + dem[r0c, c0c + 1] * fc) * (1.0 - fr) +
+         (dem[r0c + 1, c0c] * (1.0 - fc) + dem[r0c + 1, c0c + 1] * fc) * fr)
+    return h, inside
+
+
+def build_horizon(dem, lat, lon, obs_m=2.0, az_step=0.5, d_step=20.0, d_max=75000.0):
+    """Devolve (azimutes, horizonte_em_graus, altura_do_sitio) com geometria estereografica exata e curvatura lunar."""
+    delta = np.radians(90.0 + float(lat))
+    r_site = 2.0 * R_M * np.tan(delta / 2.0)
+    lam = np.radians(float(lon))
+    sx = r_site * np.sin(lam)
+    sy = r_site * np.cos(lam)
+
+    row0 = L0 - sy / SCALE_M
+    col0 = sx / SCALE_M + S0
+    h0_arr, ok0 = sample_dem_bilinear(dem, np.array([row0]), np.array([col0]))
+    h0 = float(h0_arr[0]) if ok0[0] else float(sample_dem(dem, row0, col0))
+
     az = np.arange(0.0, 360.0, az_step)
     ds = np.arange(d_step, d_max + d_step, d_step)
-    horizon = np.full(az.size, -90.0)
 
-    # deslocamento local por metro (aprox. esferica)
-    latr = np.radians(lat)
-    m_per_deg_lat = 111320.0
-    m_per_deg_lon = 111320.0 * np.cos(latr)
+    ang_rad = lam + np.radians(az)[:, None]
+    x = sx + np.sin(ang_rad) * ds[None, :]
+    y = sy + np.cos(ang_rad) * ds[None, :]
+    row = L0 - y / SCALE_M
+    col = x / SCALE_M + S0
 
-    for i, a in enumerate(az):
-        ar = np.radians(a)
-        dlat = ds * np.cos(ar) / m_per_deg_lat
-        dlon = ds * np.sin(ar) / max(m_per_deg_lon, 1e-6)
-        la = lat + dlat
-        lo = lon + dlon
-        # descarta o que cai fora da cobertura do DEM (fora do circulo de 87.5S)
-        inside = la >= -90.0
-        r = np.hypot(*(np.array([0.0, 0.0])))
-        delta = np.radians(90.0 + la)
-        rp = 2.0 * R_M * np.tan(delta / 2.0)
-        inside &= rp <= (L0 * SCALE_M)
-        if not inside.any():
-            continue
-        la, lo, dd = la[inside], lo[inside], ds[inside]
-        row, col = latlon_to_pix(la, lo)
-        h = sample_dem(dem, row, col)
-        ang = np.degrees(np.arctan2(h - (h0 + obs_m), dd))
-        horizon[i] = ang.max()
+    h, inside = sample_dem_bilinear(dem, row, col)
+    th = ds[None, :] / R_M
+    t = ((R_M + h) * np.cos(th) - (R_M + h0 + obs_m)) / ((R_M + h) * np.sin(th))
+    t = np.where(inside, t, -1e30)
+    best = t.max(axis=1)
+    horizon = np.where(best < -1e29, -90.0, np.degrees(np.arctan(best)))
     return az, horizon, h0
 
 

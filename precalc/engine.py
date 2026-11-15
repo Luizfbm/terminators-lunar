@@ -32,27 +32,50 @@ def sample_dem(dem, row, col):
     return dem[ri, ci]
 
 
-def horizon(dem, lat, lon, obs_m=2.0, az_step=1.0, d_step=200.0, d_max=70000.0):
-    """Perfil de horizonte 360 graus, vetorizado."""
-    h0 = float(sample_dem(dem, *latlon_to_pix(lat, lon)))
+def sample_dem_bilinear(dem, row, col):
+    """Amostragem bilinear no DEM; retorna (altura, mascara_valida)."""
+    ny, nx = dem.shape
+    r0 = np.floor(row).astype(np.int32)
+    c0 = np.floor(col).astype(np.int32)
+    inside = (r0 >= 0) & (c0 >= 0) & (r0 < ny - 1) & (c0 < nx - 1)
+    r0c = np.clip(r0, 0, ny - 2)
+    c0c = np.clip(c0, 0, nx - 2)
+    fr = row - r0c
+    fc = col - c0c
+    h = ((dem[r0c, c0c] * (1.0 - fc) + dem[r0c, c0c + 1] * fc) * (1.0 - fr) +
+         (dem[r0c + 1, c0c] * (1.0 - fc) + dem[r0c + 1, c0c + 1] * fc) * fr)
+    return h, inside
+
+
+def horizon(dem, lat, lon, obs_m=2.0, az_step=1.0, d_step=20.0, d_max=75000.0):
+    """Perfil de horizonte 360 graus no plano estereografico polar com curvatura lunar."""
+    delta = np.radians(90.0 + float(lat))
+    r_site = 2.0 * R_M * np.tan(delta / 2.0)
+    lam = np.radians(float(lon))
+    sx = r_site * np.sin(lam)
+    sy = r_site * np.cos(lam)
+
+    row0 = L0 - sy / SCALE_M
+    col0 = sx / SCALE_M + S0
+    h0_arr, ok0 = sample_dem_bilinear(dem, np.array([row0]), np.array([col0]))
+    h0 = float(h0_arr[0]) if ok0[0] else float(sample_dem(dem, row0, col0))
+
     az = np.arange(0.0, 360.0, az_step)
     ds = np.arange(d_step, d_max + d_step, d_step)
-    latr = np.radians(lat)
-    m_lat = 111320.0
-    m_lon = 111320.0 * abs(np.cos(latr))
 
-    A = np.radians(az)[:, None]
-    D = ds[None, :]
-    la = lat + D * np.cos(A) / m_lat
-    lo = lon + D * np.sin(A) / m_lon
-    inside = (2.0 * R_M * np.tan(np.radians(90.0 + la) / 2.0)) <= DEM_EDGE_M
-    la = np.where(inside, la, lat)
-    lo = np.where(inside, lo, lon)
-    row, col = latlon_to_pix(la, lo)
-    h = sample_dem(dem, row, col)
-    ang = np.degrees(np.arctan2(h - (h0 + obs_m), D))
-    ang = np.where(inside, ang, -90.0)
-    return az, ang.max(axis=1), h0
+    ang_rad = lam + np.radians(az)[:, None]
+    x = sx + np.sin(ang_rad) * ds[None, :]
+    y = sy + np.cos(ang_rad) * ds[None, :]
+    row = L0 - y / SCALE_M
+    col = x / SCALE_M + S0
+
+    h, inside = sample_dem_bilinear(dem, row, col)
+    th = ds[None, :] / R_M
+    t = ((R_M + h) * np.cos(th) - (R_M + h0 + obs_m)) / ((R_M + h) * np.sin(th))
+    t = np.where(inside, t, -1e30)
+    best = t.max(axis=1)
+    hor = np.where(best < -1e29, -90.0, np.degrees(np.arctan(best)))
+    return az, hor, h0
 
 
 def load_ephem():

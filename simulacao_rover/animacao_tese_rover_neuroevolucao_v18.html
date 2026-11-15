@@ -948,6 +948,7 @@ const NUCLEO = (() => {
         slope20[i] = Math.atan(Math.hypot(x2, y2)) * 180 / Math.PI;
       }
     }
+    const slopeLOLA5 = new Float32Array(slope);   // declive 5 m oficial (LOLA pré-MC; em terrenoLOLA preserva o mapa antes do sorteio de erro)
     // ---- MAPA ESTIMADO (o que o rover B leva a bordo — SEM vazamento de dem[i]) ----
     // Só 7,29% das células são medidas (LDEC > 0). Uma microcratera só é conhecida no mapa
     // pré-pouso se ao menos um tiro real LOLA caiu dentro de seu raio efetivo (c.tirosLola > 0).
@@ -990,7 +991,7 @@ const NUCLEO = (() => {
       }
     }
     const demMapa = new Float32Array(N), slopeMapa = new Float32Array(N), noGoMapa = new Uint8Array(N);
-    const demT20 = new Float32Array(N);   // tese aplicada sobre 20 m (perde menos detalhe que a de 60 m)
+    const demT20 = new Float32Array(N), slopeT20 = new Float32Array(N);   // tese aplicada sobre 20 m (perde menos detalhe que a de 60 m)
     for (let gy = 0; gy < GH; gy++) {
       for (let gx = 0; gx < GW; gx++) {
         const i = gy * GW + gx, x = (gx + 0.5) * CELL, y = (gy + 0.5) * CELL;
@@ -1009,22 +1010,24 @@ const NUCLEO = (() => {
       for (let gx = 0; gx < GW; gx++) {
         const i = gy * GW + gx;
         const xa = Math.max(0, gx - 1), xb = Math.min(GW - 1, gx + 1), ya = Math.max(0, gy - 1), yb = Math.min(GH - 1, gy + 1);
-        const gxv = (demMapa[gy * GW + xb] - demMapa[gy * GW + xa]) / ((xb - xa) * CELL);
-        const gyv = (demMapa[yb * GW + gx] - demMapa[ya * GW + gx]) / ((yb - ya) * CELL);
-        slopeMapa[i] = Math.atan(Math.hypot(gxv, gyv)) * 180 / Math.PI;
+        const dxm = (xb - xa) * CELL, dym = (yb - ya) * CELL;
+        slopeMapa[i] = Math.atan(Math.hypot((demMapa[gy * GW + xb] - demMapa[gy * GW + xa]) / dxm, (demMapa[yb * GW + gx] - demMapa[ya * GW + gx]) / dym)) * 180 / Math.PI;
+        slopeT20[i] = Math.atan(Math.hypot((demT20[gy * GW + xb] - demT20[gy * GW + xa]) / dxm, (demT20[yb * GW + gx] - demT20[ya * GW + gx]) / dym)) * 180 / Math.PI;
         if ((medido[i] && noGo[i]) || detNoGo[i]) noGoMapa[i] = 1;
       }
     }
     // FONTES DE RELEVO para calcular sombras. 'real' é o mundo (energia, tela, física).
     // As outras são o que o rover B poderia saber; ele PREVÊ sombras com a fonte escolhida.
     const maxDe = (d) => d.reduce((m, v) => (v > m ? v : m), -Infinity);
+    const zMax20 = maxDe(dem20);
     const fontes = {
       real: { dem, zMax }, b60: { dem: dem60, zMax: maxDe(dem60) }, t60: { dem: demMapa, zMax: maxDe(demMapa) },
-      b20: { dem: dem20, zMax: maxDe(dem20) }, t20: { dem: demT20, zMax: maxDe(demT20) }
+      b20: { dem: dem20, zMax: zMax20 }, b20m: { dem: dem20, zMax: zMax20 }, t20: { dem: demT20, zMax: maxDe(demT20) },
+      lola5: { dem, zMax }, lola5m: { dem, zMax }
     };
     const sombras = Object.fromEntries(Object.keys(fontes).map((k) => [k, new Array(N_AZ).fill(null)]));
-    return { seed, cena: cena ? cena.nome : null, semSombra: !!(cena && cena.semSombra), goalX: cena ? cena.goalX : null, routeY, routeAng, rotas, peaks, craters, psr, dem, dem60, dem20, slope, slope60, slope20, noGo, medido, descobertoB, zMax,
-             demMapa, demT20, slopeMapa, noGoMapa, fontes, sombras };
+    return { seed, cena: cena ? cena.nome : null, semSombra: !!(cena && cena.semSombra), goalX: cena ? cena.goalX : null, routeY, routeAng, rotas, peaks, craters, psr, dem, dem60, dem20, slope, slopeLOLA5, slope60, slope20, noGo, medido, descobertoB, zMax,
+             demMapa, demT20, slopeMapa, slopeT20, noGoMapa, fontes, sombras };
   }
 
   // ------------------------------------------------- TERRENO REAL: faixas do LOLA (PGDA #78)
@@ -1092,6 +1095,7 @@ const NUCLEO = (() => {
     }
     const zP90 = CONF.P90.z, rG = planejarCena(T, 'grade', SLOPE_LIMIT, 0), rT = planejarCena(T, 'tese', SLOPE_LIMIT, zP90), base = T.rotas[0];
     T.rotas = [{ k: 0, nome: 'Planejada na grade de 60 m', y: (rG || base).y, ang: (rG || base).ang }, { k: 1, nome: 'Planejada com a tese', y: (rT || rG || base).y, ang: (rT || rG || base).ang }];
+    T._rotasPorFonte = { b60: 0, t60: 1 };
     T.lola = { k, sitio: f.sitio, faixa: f.faixa, teste: f.teste };
     return T;
   }
@@ -1133,19 +1137,44 @@ const NUCLEO = (() => {
       return { routeY, routeAng, rotas, peaks: [], craters, psr: { x: -9999, y: -9999, r: 1, d: 0 } };
     },
   };
+  /** Declive, margem e noGo segundo a fonte de previsão escolhida (evita cair por engano em t60). */
+  function normFonte(mapa) { return mapa === 'grade' ? 'b60' : mapa === 'tese' ? 't60' : (mapa || 't60'); }
+  function fonteDecl(T, fonte, i) {
+    const f = normFonte(fonte);
+    if (f === 'b60') return T.slope60[i];
+    if (f === 'b20' || f === 'b20m') return T.slope20[i];
+    if (f === 't20') return T.slopeT20[i];
+    if (f === 'lola5' || f === 'lola5m') return T.slopeLOLA5[i];
+    if (f === 'real') return T.slope[i];
+    return T.slopeMapa[i];
+  }
+  function fonteMargem(T, fonte, i, z) {
+    const f = normFonte(fonte);
+    if (f === 'b60' || f === 'b20' || f === 'lola5' || f === 'real') return 0;
+    if (f === 'b20m') return margemCel(0, z);
+    return margemCel(T.medido[i], z);
+  }
+  function fonteNoGo(T, fonte, i) {
+    const f = normFonte(fonte);
+    if (f === 'real') return T.noGo[i] === 1;
+    if (f === 'b60' || f === 'b20' || f === 'b20m') return false;
+    if (f === 'lola5' || f === 'lola5m') return !!(T.medido[i] && T.noGo[i]);
+    return T.noGoMapa[i] === 1;
+  }
   /**
    * Planejamento em solo na cena (como os operadores do Pragyan e a página de validação): caminho de custo mínimo
    * (8 vizinhos) da largada à meta, com custo = comprimento × (1 + 2·declive/limite), no mapa de quem planeja:
-   * 'grade' = declive da grade de 60 m; 'tese' = mapa estimado de 5 m + margem por célula + crateras detectadas.
+   * 'grade'/'b60', 'b20', 'b20m', 'tese'/'t60', 't20', 'lola5', 'lola5m', 'real'.
    * Devolve uma rota { y(x), ang(x) } seguível pelo rover (y médio do caminho em cada coluna, suavizado).
    */
   function planejarCena(T, mapa, limite, z) {
     const xs = START_X, gx0 = 0, gx1 = Math.min(GW - 1, Math.ceil((T.goalX + 30) / CELL));
     const s0 = celula(xs, T.routeY(xs)), g0 = celula(T.goalX, T.routeY(T.goalX));
-    const custo = (i) => mapa === 'grade' ? T.slope60[i] : T.slopeMapa[i];
+    const fp = normFonte(mapa);
+    const custo = (i) => fonteDecl(T, fp, i);
     // Relevo real: barreira CONTÍNUA (nunca devolve "sem rota" e não cai para a rota da grade); cena do Pragyan: bloqueio binário como antes.
-    const suave = !!T.lola, mg = (i) => mapa === 'grade' ? 0 : margemCel(T.medido[i], z);
-    const bloq = (i) => suave ? T.noGoMapa[i] === 1 : (mapa === 'grade' ? T.slope60[i] > limite : (T.slopeMapa[i] + margemCel(T.medido[i], z) > limite || T.noGoMapa[i] === 1));
+    const suave = !!T.lola, mg = (i) => fonteMargem(T, fp, i, z);
+    const bloq = (i) => suave ? fonteNoGo(T, fp, i) : (custo(i) + mg(i) > limite || fonteNoGo(T, fp, i));
     const peso = (i) => { const sv = custo(i); return suave ? 1 + 2 * (sv / limite) ** 2 + 18 * Math.max(0, sv + mg(i) - limite) ** 2 + 80 * Math.max(0, sv - limite) ** 2 : 1 + 2 * sv / limite; };
     const dist = new Float64Array(GW * GH).fill(Infinity), prev = new Int32Array(GW * GH).fill(-1), H = [];
     const push = (d, v) => { H.push([d, v]); let k = H.length - 1; while (k) { const p = (k - 1) >> 1; if (H[p][0] <= H[k][0]) break; [H[p], H[k]] = [H[k], H[p]]; k = p; } };
@@ -1179,7 +1208,7 @@ const NUCLEO = (() => {
    */
   function replanejar(S, r) {
     const T = S.T, lim = r.mod.limite, z = CONF[S.conf].z, timeB = r.time === 'B';
-    const tese = timeB ? S.fontePrev !== 'b60' : !!(S.cfgA && S.cfgA.prev !== 'b60');
+    const fp = normFonte(timeB ? S.fontePrev : (S.cfgA ? S.cfgA.prev : 'b60'));
     const s0 = celula(r.x, r.y); if (s0 < 0) return false;
     // Antes de replanejar, o rover para e faz uma panorâmica com a câmera (360°, alcance da câmera): o que vê passa a ser conhecido.
     if (!T.descobertoA) T.descobertoA = new Uint8Array(GW * GH);
@@ -1187,9 +1216,9 @@ const NUCLEO = (() => {
     for (let k = 0; k < 32; k++) { const a = k * Math.PI / 16; for (let d = 1.25; d <= alc; d += 1.25) { const i = celula(r.x + Math.cos(a) * d, r.y + Math.sin(a) * d); if (i < 0) break; visT[i] = 1; if (T.slope[i] > lim || T.noGo[i]) { r.memo.add(i); break; } } }
     const gx0 = s0 % GW, gGoal = Math.min(GW - 1, Math.floor(GOAL_X / CELL)), xMin = Math.max(0, gx0 - 60);
     const vis = timeB ? T.descobertoB : T.descobertoA;
-    const decl = (i) => (vis && vis[i]) ? T.slope[i] : tese ? T.slopeMapa[i] : T.slope60[i];
+    const decl = (i) => (vis && vis[i]) ? T.slope[i] : fonteDecl(T, fp, i);
     const tentar = (zz, duro) => {
-      const bloq = (i) => r.memo.has(i) || ((vis && vis[i]) ? T.slope[i] > lim : tese ? (duro && (T.slopeMapa[i] + margemCel(T.medido[i], zz) > lim || T.noGoMapa[i] === 1)) : (duro && T.slope60[i] > lim));
+      const bloq = (i) => r.memo.has(i) || ((vis && vis[i]) ? T.slope[i] > lim : (duro && (fonteDecl(T, fp, i) + fonteMargem(T, fp, i, zz) > lim || fonteNoGo(T, fp, i))));
       const dist = new Float64Array(GW * GH).fill(Infinity), prev = new Int32Array(GW * GH).fill(-1), Hh = [];
       const push = (d, v) => { Hh.push([d, v]); let k = Hh.length - 1; while (k) { const q = (k - 1) >> 1; if (Hh[q][0] <= Hh[k][0]) break; [Hh[q], Hh[k]] = [Hh[k], Hh[q]]; k = q; } };
       const pop = () => { const t = Hh[0], l = Hh.pop(); if (Hh.length) { Hh[0] = l; let k = 0; for (;;) { const a = 2 * k + 1, b = a + 1; let m = k; if (a < Hh.length && Hh[a][0] < Hh[m][0]) m = a; if (b < Hh.length && Hh[b][0] < Hh[m][0]) m = b; if (m === k) break; [Hh[m], Hh[k]] = [Hh[k], Hh[m]]; k = m; } } return t; };
@@ -1412,12 +1441,7 @@ const NUCLEO = (() => {
       for (const dy of [-5, 0, 5]) {
         const i = celula(x, y + dy); if (i < 0) continue;
         const ruim = quem === 'a' ? T.slope60[i] > m.limite
-          : quem === 'b' ? (
-              fonte === 'b60' ? T.slope60[i] > m.limite
-            : fonte === 'b20' ? T.slope20[i] > m.limite
-            : fonte === 'real' ? (T.slope[i] > m.limite || T.noGo[i] === 1)
-            : (T.slopeMapa[i] + margemCel(T.medido[i], z) > m.limite || T.noGoMapa[i] === 1)
-          )
+          : quem === 'b' ? (fonteDecl(T, fonte, i) + fonteMargem(T, fonte, i, z) > m.limite || fonteNoGo(T, fonte, i))
           : T.slope[i] > m.limite || T.noGo[i] === 1;
         if (ruim) { perigo++; break; }
       }
@@ -1467,7 +1491,22 @@ const NUCLEO = (() => {
     S.plano = { A: kA, B: kB, melhorReal: melhor(real), a, b, real, simplex: escB ? escB.simplex : null };
     if (S.rotaForcada !== undefined && S.rotaForcada !== null) S.plano.A = S.plano.B = S.rotaForcada;   // só em testes
     if (S.rotaCena !== undefined && S.rotaCena !== null) { S.plano.A = 0; S.plano.B = S.rotaCena; }
-    if (T.lola) { S.plano.A = 0; S.plano.B = S.fontePrev === 'b60' ? 0 : 1; }   // relevo real: cada time segue a rota planejada no SEU mapa        // cena do Pragyan: A sempre na grade; B no mapa do seu degrau
+    if (T.lola) {
+      S.plano.A = 0;
+      if (S.rotaForcada !== undefined && S.rotaForcada !== null) {
+        S.plano.B = S.rotaForcada;
+      } else {
+        const fp = normFonte(S.fontePrev);
+        if (!T._rotasPorFonte) T._rotasPorFonte = { b60: 0, t60: 1 };
+        if (T._rotasPorFonte[fp] === undefined) {
+          const base = T.rotas[0], rF = planejarCena(T, fp, SLOPE_LIMIT, CONF[S.conf].z);
+          const kNew = T.rotas.length;
+          T.rotas.push({ k: kNew, nome: `Planejada (${fp})`, y: (rF || base).y, ang: (rF || base).ang });
+          T._rotasPorFonte[fp] = kNew;
+        }
+        S.plano.B = T._rotasPorFonte[fp];
+      }
+    }   // relevo real: cada time segue a rota planejada no SEU mapa        // cena do Pragyan: A sempre na grade; B no mapa do seu degrau
   }
 
   function celula(x, y) {
@@ -1667,8 +1706,6 @@ const NUCLEO = (() => {
 
   function raio(S, x, y, ang, grosso, passos, z, memo, limite) {
     const T = S.T, fonte = S.fontePrev;
-    const bruta = !grosso && (fonte === 'b60' || fonte === 'b20');
-    const oraculo = !grosso && fonte === 'real';
     const pertoPassos = Math.min(3, passos);
     let livre = passos * 5, sombra = passos * 5, maxDecl = 0, interp = 0, interpPerto = 0;
     for (let s = 1; s <= passos; s++) {
@@ -1676,15 +1713,10 @@ const NUCLEO = (() => {
       const i = celula(px, py);
       if (i < 0 || py < 15 || py > H - 15) { if (d < livre) livre = d; continue; }
       const descoberto = !grosso && T.descobertoB[i] === 1;
-      const decl = grosso ? T.slope60[i]
-        : fonte === 'b60' ? T.slope60[i]
-        : fonte === 'b20' ? T.slope20[i]
-        : oraculo ? T.slope[i]
-        : descoberto ? T.slope[i] : T.slopeMapa[i];                  // B: mapa estimado + telemetria local descoberta
-      // Margem por célula (quantil): só aplica na tese (60->5 m / 20->5 m); mapas brutos e oráculo não têm margem.
-      const margem = (grosso || bruta || oraculo || descoberto) ? 0 : margemCel(T.medido[i], z);   // célula já vista: declive medido, sem margem de mapa
-      const noGoConhecido = oraculo ? T.noGo[i] === 1
-        : (!grosso && !bruta && (T.noGoMapa[i] === 1 || (descoberto && T.noGo[i] === 1)));
+      const decl = grosso ? T.slope60[i] : descoberto ? T.slope[i] : fonteDecl(T, fonte, i);
+      // Margem por célula (quantil): só aplica onde a fonte tem margem; mapas brutos e oráculo têm margem 0.
+      const margem = (grosso || descoberto) ? 0 : fonteMargem(T, fonte, i, z);   // célula já vista: declive medido, sem margem de mapa
+      const noGoConhecido = !grosso && (descoberto ? T.noGo[i] === 1 : fonteNoGo(T, fonte, i));
       const perigo = decl + margem > limite || noGoConhecido || memo.has(i);
       if (perigo && d < livre) livre = d;
       if (decl > maxDecl) maxDecl = decl;
@@ -1698,11 +1730,7 @@ const NUCLEO = (() => {
   function sentir(S, r, grosso) {
     const T = S.T, z = CONF[S.conf].z, fonte = S.fontePrev;
     const i = celula(r.x, r.y);
-    const declAqui = i < 0 ? 0 : (grosso ? T.slope60[i]
-      : fonte === 'b60' ? T.slope60[i]
-      : fonte === 'b20' ? T.slope20[i]
-      : fonte === 'real' ? T.slope[i]
-      : T.descobertoB[i] ? T.slope[i] : T.slopeMapa[i]);
+    const declAqui = i < 0 ? 0 : (grosso ? T.slope60[i] : T.descobertoB[i] ? T.slope[i] : fonteDecl(T, fonte, i));
     const luzAqui = i < 0 ? 0 : luz(T, i, S.sunAz);
     const yAlvo = r.ry(r.x) + r.offset;
     const tx = r.x + 22, ty = r.ry(tx) + r.offset;
@@ -2487,11 +2515,8 @@ const NUCLEO = (() => {
       const scoreLado = (idx, camD) => {
         if (idx < 0) return 99;
         let est = r.time === 'A' ? T.slope60[idx]
-          : S.fontePrev === 'b60' ? T.slope60[idx]
-          : S.fontePrev === 'b20' ? T.slope20[idx]
-          : S.fontePrev === 'real' ? T.slope[idx] + T.noGo[idx] * 99
           : T.descobertoB[idx] ? T.slope[idx] + T.noGo[idx] * 99
-          : T.slopeMapa[idx] + T.noGoMapa[idx] * 99;
+          : fonteDecl(T, S.fontePrev, idx) + fonteMargem(T, S.fontePrev, idx, CONF[S.conf].z) + (fonteNoGo(T, S.fontePrev, idx) ? 99 : 0);
         if (r.memo.has(idx)) est += 99;
         if (camD < 9) est += (10 - camD) * 12;
         return est;
@@ -2547,6 +2572,9 @@ const NUCLEO = (() => {
     // Energia: só gera com Sol visível na célula (consulta O(1) à tabela).
     const i = celula(r.x, r.y);
     if (i < 0 || r.y < 15 || r.y > H - 15) { r.vivo = false; r.motivo = 'FORA DO MAPA'; return; }
+    r.nPassos = (r.nPassos || 0) + 1;
+    if (T.slope[i] > r.mod.limite) r.nPerigo = (r.nPerigo || 0) + 1;
+    if (T.slope[i] > (r.maxSlope || 0)) r.maxSlope = T.slope[i];
     const lz = luz(T, i, S.sunAz);
     const ganho = lz * (r.acao === 3 ? r.mod.gParado : r.mod.gAndando);
     // Hibernação (≈ 4 W do modelo de energia do app): só mantém o aquecimento vivo.
@@ -2618,8 +2646,9 @@ const NUCLEO = (() => {
     let algum = false;
     for (const r of S.A) { if (r.vivo) { algum = true; moverRover(S, r); } else if (r.fade > 0) r.fade = Math.max(0, r.fade - DT * 0.5); }
     for (const r of S.B) { if (r.vivo) { algum = true; moverRover(S, r); } else if (r.fade > 0) r.fade = Math.max(0, r.fade - DT * 0.5); }
-    if (S.t >= T_MAX) for (const r of [...S.A, ...S.B]) if (r.vivo) { r.vivo = false; r.motivo = 'TEMPO ESGOTADO'; }
-    if (!algum || S.t >= T_MAX) { fimDeGeracao(S); return true; }
+    const tMax = S.tMax || T_MAX;
+    if (S.t >= tMax) for (const r of [...S.A, ...S.B]) if (r.vivo) { r.vivo = false; r.motivo = 'TEMPO ESGOTADO'; }
+    if (!algum || S.t >= tMax) { fimDeGeracao(S); return true; }
     return false;
   }
 

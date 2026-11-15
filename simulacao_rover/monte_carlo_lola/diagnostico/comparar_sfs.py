@@ -80,7 +80,8 @@ def main():
         alvo, fa, pnv = curva(est, forma, ver, a.limite); CV[nome] = (alvo, fa, pnv)
         L.append(f'   {nome:40s} ' + ' · '.join(f'FA {k}% → {v:4.1f}%' for k, v in alvo.items()))
     R['curvas_sem_disparo'] = {k: v[0] for k, v in CV.items()}
-    out = os.path.join(AQUI, f'sfs_{a.sitio}'); os.makedirs(out, exist_ok=True)
+    suf = '' if a.grossa == 60 else f'_{a.grossa}m'
+    out = os.path.join(AQUI, f'sfs_{a.sitio}{suf}'); os.makedirs(out, exist_ok=True)
     open(os.path.join(out, 'relatorio.txt'), 'w', encoding='utf-8').write('\n'.join(L)); print('\n'.join(L))
     json.dump(R, open(os.path.join(out, 'resumo.json'), 'w', encoding='utf-8'), indent=1, ensure_ascii=False)
     import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
