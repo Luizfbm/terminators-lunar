@@ -53,8 +53,10 @@ test('Planets does not touch the Sun, the Earth or the dots of the Sites', async
   const dots = await page.locator('.globe canvas').getAttribute('data-dots')
   await press(page, 'Planets')
   await expect(page.locator('.globe canvas')).toHaveAttribute('data-dots', dots ?? '')
+  // The two switches of the dots stay as they opened: Sites pressed, Lunar Missions released (Larissa's layer
+  // rules, domain/siteLayers.ts), and pressing Planets moves neither.
   await expect(page.getByRole('button', { name: 'Sites', exact: true })).toHaveAttribute('aria-pressed', 'true')
-  await expect(page.getByRole('button', { name: 'Lunar Missions', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('button', { name: 'Lunar Missions', exact: true })).toHaveAttribute('aria-pressed', 'false')
 })
 
 test('a planet\'s name never covers the menu, the Site\'s name or the view buttons', async ({ page }) => {

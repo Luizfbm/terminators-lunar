@@ -1,6 +1,8 @@
 import * as THREE from 'three'
 import { capLatLon, capPoint, isCapProjection, type CapProjection } from '../domain/cap'
+import { lunarLambert } from '../domain/regolith'
 import { toVector } from '../domain/sky'
+import { regolithMaterial } from './regolith'
 
 /** Where the globe's images are served. In production they sit beside the page, at /moon/. */
 const MOON_URL = (import.meta.env.VITE_MOON_URL || `${import.meta.env.BASE_URL}moon/`).replace(/\/?$/, '/')
@@ -20,6 +22,26 @@ const FINE_LIFT = 1.0009
 const CAP_SEGMENTS = 160
 /** The cap fades into the sphere over its outer fifth, so its square edge never shows. */
 const FADE_FROM = 0.8
+
+/**
+ * How strong the Sun's light was on the globe before it had the regolith law (plain Lambert, which
+ * returns the full light at the sub-solar point).
+ */
+const SUN_STRENGTH_LAMBERT = 3.2
+
+/**
+ * The Sun's light strength on the globe under the Lunar-Lambert law (`domain/regolith.ts`), the same
+ * law the ground view uses. Seen from orbit the eye is near the normal (μ about 1), where the law
+ * returns about 72% of Lambert's light, so the light is raised by that much and the sub-solar
+ * point keeps the brightness it had; what changes is how the light falls off towards the limb and
+ * the terminator.
+ */
+export const MOON_SUN_STRENGTH = SUN_STRENGTH_LAMBERT / lunarLambert(1, 1)
+
+/** The grey sphere of the globe, as dry regolith returns the Sun (Lunar-Lambert), ready for `dressMoon` to put colour and relief on. */
+export function moonMaterial(): THREE.MeshLambertMaterial {
+  return regolithMaterial({ color: 0x9a9891 })
+}
 
 function capGeometry(cap: CapProjection, lift: number): THREE.BufferGeometry {
   const n = CAP_SEGMENTS
@@ -66,7 +88,7 @@ function capGeometry(cap: CapProjection, lift: number): THREE.BufferGeometry {
  */
 export function dressMoon(
   scene: THREE.Scene,
-  material: THREE.MeshStandardMaterial,
+  material: THREE.MeshLambertMaterial,
   anisotropy: number,
   /** Whether this device can take the 8192 px image of the fine level; a phone gets the 4096 px one. */
   large: boolean,
@@ -153,12 +175,10 @@ export function dressMoon(
         const [normal, albedo] = await Promise.all([image(names.normal, false), image(names.albedo, true)])
         if (gone || !normal) return
         const geometry = capGeometry(cap, lift)
-        const skin = new THREE.MeshStandardMaterial({
+        const skin = regolithMaterial({
           map: albedo,
           normalMap: normal,
           normalScale: new THREE.Vector2(CAP_RELIEF, CAP_RELIEF),
-          roughness: 1,
-          metalness: 0,
           vertexColors: true,
           transparent: true,
           depthWrite: false,

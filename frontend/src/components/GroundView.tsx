@@ -40,21 +40,25 @@ export function prepareGround(): Promise<void> {
 export const groundPrepared = () => skyModule !== null
 
 /**
- * The view from the ground (the requirement): the sky in 3D, to turn in, and under it the horizon
- * unrolled, to see the Sun's whole path at once. A browser that cannot draw 3D gets the unrolled
- * horizon alone, as before.
+ * The view from the ground (the requirement): the sky in 3D, to turn in. In the classic layout the
+ * horizon unrolled sits under it, to see the Sun's whole path at once; Larissa's layout (the default)
+ * leaves it out (Luiz, 15/11/2026) and the arrows in the sky point to the Sun and the Earth until they
+ * are in view. A browser that cannot draw 3D gets the unrolled horizon alone, as before.
  */
 export function GroundView({
   result,
   cursorMs,
   mark = null,
   pose = 'stay',
+  classic = false,
 }: {
   result: VisibilityResult
   cursorMs: number
   mark?: GroundMark | null
   /** How the sky moves on its way in from the globe, or out to it. */
   pose?: 'arrive' | 'leave' | 'stay'
+  /** `layout=classic`: the unrolled horizon stays under the sky, as before Larissa's layout. */
+  classic?: boolean
 }) {
   const { t, formatNumber } = useI18n()
   const [supported, setSupported] = useState(canDraw)
@@ -81,7 +85,7 @@ export function GroundView({
     .filter(Boolean)
     .join(' ')
   return (
-    <div className="ground-view">
+    <div className={classic ? 'ground-view' : 'ground-view ground-view--bare'}>
       <div className="ground-view__sky">
         {ready ? (
           <ready.Sky result={result} cursorMs={cursorMs} stretch={stretch} mark={mark} pose={pose} onGround={setGroundStep} onFailed={() => setSupported(false)} />
@@ -112,9 +116,11 @@ export function GroundView({
         </div>
         <SafetyCircle result={result} />
       </div>
-      <div className="ground-view__strip">
-        <Ground result={result} cursorMs={cursorMs} mark={mark} compact />
-      </div>
+      {classic && (
+        <div className="ground-view__strip">
+          <Ground result={result} cursorMs={cursorMs} mark={mark} compact />
+        </div>
+      )}
     </div>
   )
 }

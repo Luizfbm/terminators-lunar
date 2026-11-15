@@ -47,7 +47,7 @@ import { fill } from './globeMap/strings'
 import { STRINGS as LAND_STRINGS } from './stageStatus/strings'
 import './globeMap/globeMap.css'
 import './globeLand.css'
-import { dressMoon } from './moonSurface'
+import { dressMoon, MOON_SUN_STRENGTH, moonMaterial } from './moonSurface'
 import { planetBackdrop, planetWay } from './planetBackdrop'
 import { earthMaterial as makeEarthMaterial, EARTH, glowTexture, loadEarthMap, SUN } from './spaceBodies'
 import { StageLoading } from './StageLoading'
@@ -330,7 +330,7 @@ export function Globe(props: GlobeProps) {
       new THREE.PointsMaterial({ color: 0xcfd3dc, size: 1.3, sizeAttenuation: false, transparent: true, opacity: 0.7 }),
     )
     scene.add(stars)
-    const material = new THREE.MeshStandardMaterial({ color: 0x9a9891, roughness: 1, metalness: 0 })
+    const material = moonMaterial()
     const moon = new THREE.Mesh(new THREE.SphereGeometry(1, 192, 96), material)
     scene.add(moon)
     const large = renderer.capabilities.maxTextureSize >= 8192 && !window.matchMedia('(pointer: coarse)').matches
@@ -342,7 +342,7 @@ export function Globe(props: GlobeProps) {
     })
     // Earthshine and a little more: the night side stays dark, and its relief can still be read.
     scene.add(new THREE.AmbientLight(0xffffff, 0.085))
-    const sunlight = new THREE.DirectionalLight(0xfff4e0, 3.2)
+    const sunlight = new THREE.DirectionalLight(0xfff4e0, MOON_SUN_STRENGTH)
     scene.add(sunlight)
 
     // The Sun and the Earth are in the sky behind the Moon: a backdrop scene of their own, drawn before
