@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { classic } from './classic'
 
 // the requirement: from the ground the picture is free. Over it sit only the one-line hint, the compass
 // (the implementation) and the turn arrows; the rest of the caption waits behind "About this view", and under
@@ -48,6 +49,24 @@ for (const viewport of [
 
     test('the hill link and the view buttons cover neither the picture nor each other', async ({ page }) => {
       await open(page)
+      const sky = await box(page, '.sky canvas')
+      // Larissa's layout has no strip under the sky.
+      await expect(page.locator('.ground-view__strip')).toHaveCount(0)
+      const views = await box(page, '.views')
+      const hill = await box(page, '.classroom-open')
+      expect(overlaps(views, hill)).toBe(false)
+      for (const control of [views, hill]) {
+        expect(control.x).toBeGreaterThanOrEqual(0)
+        expect(control.x + control.width).toBeLessThanOrEqual(viewport.width)
+        expect(overlaps(control, sky)).toBe(false)
+        // Below 900 px they go below the picture.
+        if (viewport.width < 900) expect(control.y).toBeGreaterThanOrEqual(sky.y + sky.height - 0.5)
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(viewport.width)
+    })
+
+    test('in the classic layout the hill link and the view buttons cover neither the picture nor each other', async ({ page }) => {
+      await open(page, classic('/?view=ground'))
       const sky = await box(page, '.sky canvas')
       const strip = await box(page, '.ground-view__strip')
       const views = await box(page, '.views')

@@ -11,8 +11,8 @@
 #
 # Two groups run at the same time, each writing its own log in a temp dir:
 #   backend   uv sync, ruff, ruff format, mypy, pytest, validation
-#   frontend  npm ci, eslint, tsc, vitest, generated types, Playwright e2e
-# The e2e runs every test but the ones tagged @timing with $LUNAR_E2E_WORKERS workers (3 unless
+#   frontend  npm ci, eslint, tsc, vitest, generated types
+# Then, alone, the Playwright e2e: every test but the ones tagged @timing with $LUNAR_E2E_WORKERS workers (3 unless
 # set). The @timing tests assert how long something took, so they must not share the machine:
 # they run alone, with one worker, once both groups are done. Nothing is ever re-run until it passes.
 #
@@ -137,6 +137,12 @@ frontend_group() {
   run "vitest" npm --prefix frontend test --silent -- --run
   run "generated types" bash -c 'npm --prefix frontend run --silent generate:types && git diff --exit-code -- frontend/src/api/schema.ts'
   run "playwright browser" bash -c 'cd frontend && npx playwright install chromium'
+}
+
+# The e2e runs after both groups, never beside pytest and the validation suite: on 15/11/2026, with
+# the two overlapping, the backend's timed tests (test_http's 2 s, test_catalog's 60 s warm-up) and
+# 32 e2e tests timed out on load alone, even at 3 workers.
+e2e_main() {
   run "e2e" e2e --grep-invert @timing --workers="$E2E_WORKERS"
 }
 
@@ -178,6 +184,17 @@ for name in backend frontend; do
     tail -n 60 "$LOGS/$name.log" >&2
   fi
 done
+
+if [ "$RUN_FRONTEND" = 1 ] && [ "$frontend_rc" = 0 ]; then
+  step="e2e"
+  e2e_rc=0
+  group e2e e2e_main || e2e_rc=$?
+  if [ "$e2e_rc" != 0 ]; then
+    failed+=("frontend: e2e")
+    echo "---- e2e failed, the end of its log:" >&2
+    tail -n 60 "$LOGS/e2e.log" >&2
+  fi
+fi
 
 if [ ${#failed[@]} -eq 0 ] && [ "$RUN_FRONTEND" = 1 ]; then
   step="e2e @timing"
