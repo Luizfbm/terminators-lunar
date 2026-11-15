@@ -1566,6 +1566,129 @@ button.site {
   }
 }
 
+/* Proof summaries: "Where a number can be wrong" and "What we have not checked yet", above the checks. */
+.proof > .proof-summary {
+  max-width: 64rem;
+  margin-bottom: 48px;
+}
+
+.proof-summary__title {
+  margin-bottom: 8px;
+  font-size: var(--body);
+  font-weight: 500;
+}
+
+.proof-summary .proof__note {
+  margin-bottom: 16px;
+  max-width: 44rem;
+}
+
+.proof-summary__table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: var(--small);
+  text-align: left;
+}
+
+.proof-summary__table th,
+.proof-summary__table td {
+  padding: 10px 16px 10px 0;
+  border-top: 1px solid var(--line);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.proof-summary__table thead th:nth-child(1) {
+  width: 17%;
+}
+
+.proof-summary__table thead th:nth-child(2) {
+  width: 27%;
+}
+
+.proof-summary__table thead th:nth-child(3) {
+  width: 32%;
+}
+
+.proof-summary__table thead th:nth-child(4) {
+  width: 24%;
+}
+
+.proof-summary__table thead th {
+  border-top: 0;
+  color: var(--dim);
+  font-weight: 400;
+}
+
+.proof-summary__table tbody th {
+  font-weight: 500;
+}
+
+.proof-summary__refs {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--dim);
+  overflow-wrap: anywhere;
+}
+
+.proof-summary__todo {
+  padding: 0;
+  list-style: none;
+  font-size: var(--small);
+}
+
+.proof-summary__todo > li {
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.proof-summary__todo .proof-summary__refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 16px;
+}
+
+.proof-summary__todo p {
+  margin-bottom: 4px;
+}
+
+@media (max-width: 760px) {
+  .proof-summary__table,
+  .proof-summary__table tbody,
+  .proof-summary__table tr,
+  .proof-summary__table th,
+  .proof-summary__table td {
+    display: block;
+  }
+
+  .proof-summary__table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .proof-summary__table tr {
+    padding: 10px 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .proof-summary__table th,
+  .proof-summary__table td {
+    padding: 2px 0;
+    border-top: 0;
+  }
+
+  .proof-summary__table td::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--dim);
+  }
+}
+
 /* The answer stays mounted behind the Proof page, so coming back is instant. */
 .screen > [hidden] {
   display: none;
@@ -1640,4 +1763,20 @@ button.site {
   font-size: 12px;
   white-space: nowrap;
   pointer-events: none;
+}
+
+/* ---- Cursor Sun fraction readout (src/components/cursorSun) ---- */
+.cursor-sun {
+  font-variant-numeric: tabular-nums;
+}
+
+.strip__now .cursor-sun {
+  margin-left: 0.75em;
+  font-family: inherit;
+  color: var(--fg);
+}
+
+.cursor-sun--ground {
+  color: var(--fg);
+  font-weight: 500;
 }
