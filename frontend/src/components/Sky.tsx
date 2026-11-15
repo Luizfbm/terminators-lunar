@@ -5,7 +5,7 @@ import { DIAL_LETTERS, DIAL_TICKS, facingEighth, onDial } from '../domain/compas
 import { earthAttitude, earthNorthAt, earthRoll, subLunarPoint } from '../domain/earthFace'
 import { maskElevationAt, sampleAt } from '../domain/sky'
 import { blendRim, canTakeFinest, eyeOnMap, GRAIN_DEPTH, GRAIN_PX, grainRepeat, grainTexels } from '../domain/nearGround'
-import { direction, EARTH_RADIUS_DEG, groundPositions, groundSpacing, horizonFaceShade, stretched, sunOnGround, turnBetween, wrapAzimuth, type GroundSpacing } from '../domain/skyScene'
+import { ballScale, bodyRadiusDeg, direction, discScale, EARTH_RADIUS_DEG, groundPositions, groundSpacing, horizonFaceShade, stretched, sunOnGround, turnBetween, wrapAzimuth, type GroundSpacing } from '../domain/skyScene'
 import {
   beyondHorizon,
   covers,
@@ -73,13 +73,18 @@ const DIAL_TICK_IN_MINOR = 38
 /** Below this change of yaw, in degrees, the dial is not redrawn. */
 const DIAL_STEP_DEG = 0.05
 const PATH_POINTS = 320
+/** The Sun's mean angular radius, in degrees, for an answer that does not carry its own. */
+const SUN_RADIUS_DEG = 0.27
+
 const vector = (azimuthDeg: number, elevationDeg: number, radius: number) =>
   new THREE.Vector3(...direction(azimuthDeg, elevationDeg)).multiplyScalar(radius)
 
-/** A disc that always faces the Observer, `radiusDeg` wide as seen from there. */
-function disc(radiusDeg: number, colour: number): THREE.Mesh {
-  const radius = BODIES * Math.tan((radiusDeg * Math.PI) / 180)
-  return new THREE.Mesh(new THREE.CircleGeometry(radius, 48), new THREE.MeshBasicMaterial({ color: colour }))
+/**
+ * A disc of unit radius that faces the Observer; scaled each frame to `BODIES · tan(r)`, it subtends
+ * exactly the angular radius r of that sample.
+ */
+function disc(colour: number): THREE.Mesh {
+  return new THREE.Mesh(new THREE.CircleGeometry(1, 96), new THREE.MeshBasicMaterial({ color: colour }))
 }
 
 /** The same stars on every visit: a small generator with a fixed seed. */
@@ -184,7 +189,7 @@ export function Sky({
     )
     scene.add(stars)
 
-    const sun = disc(1, SUN)
+    const sun = disc(SUN)
     const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), depthWrite: false, transparent: true }))
     // The Earth is a ball lit from where the Sun is, so it shows the phase it has from here.
     const earthMaterial = makeEarthMaterial()
@@ -544,10 +549,9 @@ export function Sky({
       path.geometry.dispose()
       path.geometry = new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(dots, 3))
 
-      const sunRadius = (data.timeline.sun_radius_deg ?? 0.27) * by
-      sun.scale.setScalar(sunRadius)
+      // The halo keeps the size it had, from the answer's mean radius; the discs are sized per sample, at the Cursor.
+      const sunRadius = (data.timeline.sun_radius_deg ?? SUN_RADIUS_DEG) * by
       glow.scale.setScalar(BODIES * Math.tan((sunRadius * Math.PI) / 180) * 9)
-      earth.scale.setScalar(BODIES * Math.tan((EARTH_RADIUS_DEG * by * Math.PI) / 180))
       builtFor = { result: data, stretch: by }
       litFor = null
     }
@@ -632,6 +636,10 @@ export function Sky({
       if (now) {
         const sunAt = vector(now.sun.azimuth_deg, stretched(now.sun.elevation_deg, state.stretch), BODIES)
         sun.position.copy(sunAt)
+        // Both discs at the angular radius the answer gives for this sample, or at the mean radius
+        // when it gives none: a body is never hidden for lack of a radius. The stretch grows them as before.
+        sun.scale.setScalar(discScale(bodyRadiusDeg(now.sun.angular_radius_deg, state.result.timeline.sun_radius_deg ?? SUN_RADIUS_DEG, state.stretch), BODIES))
+        earth.scale.setScalar(ballScale(bodyRadiusDeg(now.earth.angular_radius_deg, EARTH_RADIUS_DEG, state.stretch), BODIES))
         // The halo sits a little behind the disc, so the two never fight for the same depth.
         glow.position.copy(sunAt).multiplyScalar(1.02)
         earth.position.copy(vector(now.earth.azimuth_deg, stretched(now.earth.elevation_deg, state.stretch), BODIES))

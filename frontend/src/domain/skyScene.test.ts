@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { createI18n } from '../i18n/i18n'
-import { direction, groundPositions, HORIZON_CLEARANCE_DEG, horizonFaceShade, MAX_STRETCH, stretched, stretchFor, groundCaption, groundSpacing, sunlitShare, sunOnGround, turnBetween, wrapAzimuth } from './skyScene'
+import { ballScale, bodyRadiusDeg, direction, discScale, EARTH_RADIUS_DEG, groundPositions, HORIZON_CLEARANCE_DEG, horizonFaceShade, MAX_STRETCH, stretched, stretchFor, groundCaption, groundSpacing, sunlitShare, sunOnGround, turnBetween, wrapAzimuth } from './skyScene'
 
 const close = (a: number[], b: number[]) => a.forEach((value, index) => expect(value).toBeCloseTo(b[index], 9))
 
@@ -246,5 +246,41 @@ describe('the caption’s sentences about the ground', () => {
     expect(groundCaption(grid, en)).toEqual([en.t('sky.caption.ground', { metres: '237' }), en.t('sky.caption.product', { product: 'LDEM_128' })])
     const [, , desenhado] = groundCaption({ ...groundSpacing(59.2, 2), product: 'SLDEM2015_512' }, pt)
     expect(desenhado).toBe('Desenhado a cada 118 m neste aparelho.')
+  })
+})
+
+describe('the true angular size of the Sun and the Earth (15/11/2026)', () => {
+  const rad = (degrees: number) => (degrees * Math.PI) / 180
+
+  it('scales a flat disc so its edge is the angular radius away from its centre', () => {
+    const distance = 20_000
+    const radius = discScale(0.267, distance)
+    expect(Math.atan(radius / distance)).toBeCloseTo(rad(0.267), 12)
+  })
+
+  it('scales a ball so its silhouette is the angular radius: tangent lines, asin', () => {
+    const distance = 20_000
+    const radius = ballScale(0.95, distance)
+    expect(Math.asin(radius / distance)).toBeCloseTo(rad(0.95), 12)
+    // A disc of the same angular radius is a little larger than the ball: tan > sin.
+    expect(discScale(0.95, distance)).toBeGreaterThan(radius)
+  })
+
+  it('uses the radius the answer gives for the sample', () => {
+    expect(bodyRadiusDeg(0.2712, 0.27, 1)).toBe(0.2712)
+    expect(bodyRadiusDeg(0.9731, EARTH_RADIUS_DEG, 1)).toBe(0.9731)
+  })
+
+  it('falls back to the mean radius, and never to nothing, when the answer has none', () => {
+    expect(bodyRadiusDeg(undefined, 0.27, 1)).toBe(0.27)
+    expect(bodyRadiusDeg(undefined, EARTH_RADIUS_DEG, 1)).toBe(EARTH_RADIUS_DEG)
+    // A radius that cannot be drawn counts as missing too.
+    expect(bodyRadiusDeg(Number.NaN, 0.27, 1)).toBe(0.27)
+    expect(bodyRadiusDeg(0, 0.27, 1)).toBe(0.27)
+  })
+
+  it('keeps the disc growing with the stretch, as it did before', () => {
+    expect(bodyRadiusDeg(0.2712, 0.27, 4)).toBeCloseTo(0.2712 * 4, 12)
+    expect(bodyRadiusDeg(undefined, EARTH_RADIUS_DEG, 4)).toBeCloseTo(EARTH_RADIUS_DEG * 4, 12)
   })
 })

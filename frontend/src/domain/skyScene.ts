@@ -19,6 +19,29 @@ const LIMIT_DEG = 85
 export const EARTH_RADIUS_DEG = 0.95
 
 /**
+ * The scale of a flat unit disc, facing the Observer `distance` away, that subtends the angular
+ * radius `radiusDeg`: its edge is at atan(r / D), so r = D · tan. Used for the Sun.
+ */
+export const discScale = (radiusDeg: number, distance: number): number => distance * Math.tan((radiusDeg * Math.PI) / 180)
+
+/**
+ * The scale of a unit ball `distance` away whose silhouette subtends `radiusDeg`: the tangent lines
+ * to a sphere make asin(ρ / D), so ρ = D · sin. Used for the Earth.
+ */
+export const ballScale = (radiusDeg: number, distance: number): number => distance * Math.sin((radiusDeg * Math.PI) / 180)
+
+/**
+ * The angular radius a body is drawn at: the one the answer gives for that sample, or, when the
+ * answer has none (older answers, the mock), the mean radius we already have for it. A body is
+ * never left out for lack of a radius. `stretch` is the same factor the heights get, so the disc
+ * keeps the rule it had before: it is drawn `stretch` times its radius.
+ */
+export function bodyRadiusDeg(answered: number | undefined, meanDeg: number, stretch: number): number {
+  const radius = answered !== undefined && Number.isFinite(answered) && answered > 0 ? answered : meanDeg
+  return radius * stretch
+}
+
+/**
  * How many times the heights are stretched: enough to bring the highest ridge or the highest Sun
  * of the Window up to a readable height, never more than MAX_STRETCH, and never less than 1, so a
  * Site far from the pole, where the Sun climbs high, is drawn as it is.
