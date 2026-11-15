@@ -68,6 +68,12 @@ export const en = {
   'miss.psr': 'The nearest permanently shadowed region is {distance} to the {direction} ({product}).',
 
   'miss.degrees': '{value}°',
+
+  'miss.knifeSun': 'the Sun',
+  'miss.knifeEarth': 'the Earth',
+  'miss.knifeLoses': 'This Site is sensitive: {distance} to the {direction}, {body} is hidden for {span} more than at the Site.',
+  'miss.knifeGains': 'This Site is sensitive: {distance} to the {direction}, {body} is in view for {span} more than at the Site.',
+  'miss.knifeSee': 'See what happens if the lander misses',
 }
 
 export const pt: Record<keyof typeof en, string> = {
@@ -135,4 +141,10 @@ export const pt: Record<keyof typeof en, string> = {
   'miss.psr': 'A região em sombra permanente mais próxima fica a {distance} a {direction} ({product}).',
 
   'miss.degrees': '{value}°',
+
+  'miss.knifeSun': 'o Sol',
+  'miss.knifeEarth': 'a Terra',
+  'miss.knifeLoses': 'Este Local é sensível: a {distance} a {direction}, {body} some por {span} a mais que no Local.',
+  'miss.knifeGains': 'Este Local é sensível: a {distance} a {direction}, {body} aparece por {span} a mais que no Local.',
+  'miss.knifeSee': 'Ver o que acontece se o módulo errar',
 }
