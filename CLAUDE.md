@@ -69,25 +69,26 @@ Large data (full DEMs, SPICE kernels) lives on the VPS only.
 The agent Luiz is talking to is the coordinator. It does not implement the issues itself.
 
 - The coordinator splits the work into GitHub issues that are well separated and can run at the same time: each one touches its own files, needs no other open issue's result, and says what done looks like.
-- Each issue goes to its own agent, Claude Sonnet 5.5 at high effort, on its own branch. The agent opens a pull request that closes the issue and reports back what it changed and the commands it ran with their output.
+- Each issue goes to its own agent, Claude Sonnet 5.5 at high effort, on its own branch. The agent runs only the Mac checks listed under "CI gates", opens a pull request that closes the issue, and reports back what it changed, the commands it ran with their output, and the CI run of its pull request.
 - An agent never starts the app, never deploys and never touches the VPS.
-- The coordinator checks the report against the diff, runs every gate below on the result and merges the pull request (squash) when all of them are green.
+- The coordinator checks the report against the diff, runs `scripts/ci-mac.sh` on the head, waits for both halves of CI to be green and merges the pull request (squash).
 - With everything green on `main`, the coordinator deploys to the VPS straight away, without asking Luiz first. Anything red stops the deploy.
 - Work that cannot be split (one step needs the previous one's result) stays with the coordinator.
 
 ## CI gates
 
-Every change merges only with every check green.
+Every change merges only with every check green, and the checks are split in two halves (decided by Luiz on 15/11/2026: the Mac was too loaded to run everything and the VPS alone was too slow):
 
-- Backend: ruff, mypy, pytest (unit, integration and regression tests together), the validation suite, schemathesis against the contract.
-- Frontend: eslint, tsc, vitest, Playwright end to end against the mock.
-- Both: generated types match the contract.
+- **On the VPS**, `.github/workflows/ci.yml` on our two runners (`deploy/runner/`, label `lunar-vps`, each allowed every core at a CPU weight far below production's, capped at 3 GB): Playwright end to end against the mock, in two shards, schemathesis against the contract, and the contract lint.
+- **On Luiz's Mac**, `scripts/ci-mac.sh`: ruff, mypy, pytest (unit, integration and regression tests together, in parallel), the validation suite, eslint, tsc, vitest and the generated-types check. Run it on a clean checkout of the pull request's head; it reports the commit status `mac-gates` on GitHub. Only the coordinator runs it, before merging.
 
-No check is skipped, retried until it passes or marked as allowed to fail. Mutation testing is not one of these gates: it runs by hand. The frontend gets regression tests with its first change, and mutation testing (Stryker) the same way as the backend.
+Agents never run Playwright, schemathesis, the validation suite or a whole suite. Before a push they run only lint, typecheck and the unit tests of what they touched (`npx vitest run <files>`, `uv run pytest <one file>`).
+
+A pull request merges with the VPS run and `mac-gates` both green on its head. No check is skipped, retried until it passes or marked as allowed to fail. Mutation testing is not one of these gates: it runs by hand. The frontend gets regression tests with its first change, and mutation testing (Stryker) the same way as the backend.
 
 ## Deploy
 
-Docker Compose on the VPS behind a Cloudflare Tunnel and an internal Caddy. `lunar.luizfbm.win` serves the frontend, `lunar-api.luizfbm.win` the backend (one subdomain level, so the free Cloudflare certificate covers it). GitHub Actions deploys on every merge to `main`. VPS details stay out of this repo. The `ai-memory` tunnel on the same machine is not ours to touch.
+Docker Compose on the VPS behind a Cloudflare Tunnel and an internal Caddy. `lunar.luizfbm.win` serves the frontend, `lunar-api.luizfbm.win` the backend (one subdomain level, so the free Cloudflare certificate covers it). Deploys are manual: after both halves of CI are green on `main`, the coordinator deploys by SSH (`deploy/compose.yaml` on the VPS), with the same steps and smoke test as `.github/workflows/deploy.yml`, which only runs by hand. VPS details stay out of this repo. The `ai-memory` tunnel on the same machine is not ours to touch.
 
 ## When to ask Luiz
 
