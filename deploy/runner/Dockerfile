@@ -24,4 +24,6 @@ COPY entrypoint.sh /entrypoint.sh
 # The jobs install Playwright's system packages with apt, so the runner runs as root
 # inside its own container.
 ENV RUNNER_ALLOW_RUNASROOT=1
+# npm keeps its cache under /root/.cache too, so the shared cache volume keeps it.
+ENV npm_config_cache=/root/.cache/npm
 ENTRYPOINT ["/entrypoint.sh"]

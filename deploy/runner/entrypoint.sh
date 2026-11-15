@@ -8,7 +8,7 @@ if [ ! -f .runner ]; then
   ./config.sh --unattended --replace \
     --url https://github.com/Luizfbm/terminators-lunar \
     --token "$RUNNER_TOKEN" \
-    --name lunar-vps --labels lunar-vps \
+    --name "${RUNNER_NAME:-lunar-vps}" --labels lunar-vps \
     --work /runner/_work
 fi
 exec ./run.sh

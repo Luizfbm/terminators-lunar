@@ -1,24 +1,48 @@
-# The CI runner, apart from the app stack (deploy/compose.yaml) so a test never shares a
+# The CI runners, apart from the app stack (deploy/compose.yaml) so a test never shares a
 # container or a network with production. Run from this folder on the VPS:
 #   RUNNER_TOKEN=<registration token> docker compose up -d --build
-# The token is only read on the first start; afterwards the registration lives in the volume.
+# The token is only read on a runner's first start; afterwards its registration lives in
+# its volume.
 #
-# Caps: the VPS has 5 cores and 7.9 GB. The app may take up to 4.5 GB (deploy/compose.yaml)
-# and ai-memory about 0.5 GB, so the runner gets 3 cores and 3 GB. One job at a time.
-name: lunar-runner
+# Two runners, so two CI jobs run at once. The VPS has 5 cores and 7.9 GB and production
+# mostly idles (backend about 0.6 GB, ai-memory about 0.5 GB), so each runner may use every
+# core, but with a CPU weight far below production's: when the app or ai-memory needs the
+# CPU, the kernel gives it to them first and the tests wait. Memory is capped per runner,
+# and a runner is the first thing the kernel kills if memory runs out, never the site.
+x-runner: &runner
+  build: .
+  restart: unless-stopped
+  environment:
+    RUNNER_TOKEN: ${RUNNER_TOKEN:-}
+  cpus: 5
+  # docker's default is 1024; 128 is an eighth of the app's weight and far below
+  # ai-memory's systemd default.
+  cpu_shares: 128
+  mem_limit: 2560m
+  oom_score_adj: 900
+  # Playwright's Chromium needs more shared memory than Docker's 64 MB default.
+  shm_size: 1g
 
 services:
   runner:
-    build: .
-    restart: unless-stopped
+    <<: *runner
     environment:
       RUNNER_TOKEN: ${RUNNER_TOKEN:-}
+      RUNNER_NAME: lunar-vps
     volumes:
       - runner:/runner
-    cpus: 3
-    mem_limit: 3g
-    # Playwright's Chromium needs more shared memory than Docker's 64 MB default.
-    shm_size: 1g
+      - cache:/root/.cache
+  runner-2:
+    <<: *runner
+    environment:
+      RUNNER_TOKEN: ${RUNNER_TOKEN:-}
+      RUNNER_NAME: lunar-vps-2
+    volumes:
+      - runner-2:/runner
+      - cache:/root/.cache
 
 volumes:
   runner:
+  runner-2:
+  # uv, npm and Playwright caches, shared by both runners and kept across jobs.
+  cache:

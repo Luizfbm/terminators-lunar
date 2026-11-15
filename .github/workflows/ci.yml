@@ -9,7 +9,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# Every job runs on our own runner on the VPS (deploy/runner/), one at a time.
+# Every job runs on our own runners on the VPS (deploy/runner/), two at a time.
 # Each side's jobs skip until its folder exists. Conventions the workers follow:
 # - backend/ is a uv project exposing the FastAPI app at app.main:app
 # - frontend/ has npm scripts lint, typecheck, test, e2e and generate:types
@@ -23,6 +23,10 @@ jobs:
       validation: ${{ steps.d.outputs.validation }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Our runners keep their workspace: the DEM fixtures, the venv and node_modules
+          # stay from the last job instead of being fetched again.
+          clean: false
       - id: d
         run: |
           echo "contract=$([ -f contract/openapi.yaml ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
@@ -36,6 +40,10 @@ jobs:
     runs-on: [self-hosted, lunar-vps]
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Our runners keep their workspace: the DEM fixtures, the venv and node_modules
+          # stay from the last job instead of being fetched again.
+          clean: false
       - run: npx --yes @redocly/cli@2.77.0 lint contract/openapi.yaml
 
   backend:
@@ -47,14 +55,11 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.3.3
-      - name: DEM fixtures
-        uses: actions/cache@v6
         with:
-          path: |
-            fixtures/dem/LDEM_*.TIF
-            fixtures/dem/offpole
-          key: dem-${{ hashFiles('fixtures/dem/SHA256SUMS') }}
+          # Our runners keep their workspace: the DEM fixtures, the venv and node_modules
+          # stay from the last job instead of being fetched again.
+          clean: false
+      - uses: astral-sh/setup-uv@v10.3.3
       - run: "$GITHUB_WORKSPACE/fixtures/dem/fetch.sh"
         env:
           GH_TOKEN: ${{ github.token }}
@@ -62,7 +67,7 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run mypy .
-      - run: uv run pytest
+      - run: uv run pytest -n 4 --dist loadfile
 
   validation:
     needs: detect
@@ -70,19 +75,16 @@ jobs:
     runs-on: [self-hosted, lunar-vps]
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.3.3
-      - name: DEM fixtures
-        uses: actions/cache@v6
         with:
-          path: |
-            fixtures/dem/LDEM_*.TIF
-            fixtures/dem/offpole
-          key: dem-${{ hashFiles('fixtures/dem/SHA256SUMS') }}
+          # Our runners keep their workspace: the DEM fixtures, the venv and node_modules
+          # stay from the last job instead of being fetched again.
+          clean: false
+      - uses: astral-sh/setup-uv@v10.3.3
       - run: "$GITHUB_WORKSPACE/fixtures/dem/fetch.sh"
         env:
           GH_TOKEN: ${{ github.token }}
       - run: uv sync --locked --project backend
-      - run: uv run --project backend pytest validation
+      - run: uv run --project backend pytest validation -n 4 --dist loadfile
 
   schemathesis:
     needs: detect
@@ -90,14 +92,11 @@ jobs:
     runs-on: [self-hosted, lunar-vps]
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.3.3
-      - name: DEM fixtures
-        uses: actions/cache@v6
         with:
-          path: |
-            fixtures/dem/LDEM_*.TIF
-            fixtures/dem/offpole
-          key: dem-${{ hashFiles('fixtures/dem/SHA256SUMS') }}
+          # Our runners keep their workspace: the DEM fixtures, the venv and node_modules
+          # stay from the last job instead of being fetched again.
+          clean: false
+      - uses: astral-sh/setup-uv@v10.3.3
       - run: "$GITHUB_WORKSPACE/fixtures/dem/fetch.sh"
         env:
           GH_TOKEN: ${{ github.token }}
@@ -123,6 +122,10 @@ jobs:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Our runners keep their workspace: the DEM fixtures, the venv and node_modules
+          # stay from the last job instead of being fetched again.
+          clean: false
       - uses: actions/setup-node@v7
         with:
           node-version: 22
