@@ -226,7 +226,11 @@ class CloneSource:
     @property
     def uncovered_products(self) -> list[str]:
         have = set(self.covered_products)
-        return [band.product for band in self.coverage.bands if band.product not in have]
+        # One entry per product, in the order the bands first name it: a DEM walked as two
+        # bands (the global map's near and far one) is one DEM.
+        return list(
+            dict.fromkeys(band.product for band in self.coverage.bands if band.product not in have)
+        )
 
     def _key(self, index: int) -> tuple[Any, ...]:
         return (

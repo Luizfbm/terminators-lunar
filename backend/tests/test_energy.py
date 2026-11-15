@@ -198,6 +198,7 @@ def test_the_api_does_not_invent_a_lander(missing: str) -> None:
     assert missing in response.json()["detail"]
 
 
+@pytest.mark.usefixtures("without_global_dem")
 def test_the_site_rules_are_the_ones_of_visibility() -> None:
     both = {**ALWAYS_SUN, "latitude_deg": -89.5, "longitude_deg": 0, **LANDER}
     assert client.get("/visibility/energy", params=both).json()["code"] == "ambiguous_site"
