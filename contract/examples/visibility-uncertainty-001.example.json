@@ -1,0 +1,73 @@
+{
+  "summary": "Site 001 over the default Window from 2026-11-14 (illustrative bands; the engine writes the real example once the route exists)",
+  "value": {
+    "query": {
+      "site": {
+        "id": "001",
+        "name": "Connecting Ridge (NASA site 001)",
+        "latitude_deg": -89.4661,
+        "longitude_deg": -136.949,
+        "source": "wueller2026",
+        "source_reference": "Wueller et al. 2026, JGR Planets 131(3), e2025JE009434, doi:10.1029/2025JE009434; data Zenodo 17084058 (CC-BY 4.0)",
+        "region_id": "CR",
+        "curated": true,
+        "has_5m_dem": true
+      },
+      "start": "2026-11-14T00:00:00Z",
+      "end": "2026-12-13T12:43:48Z",
+      "duration_hours": 708.73,
+      "observer_height_m": 2.0,
+      "step_minutes": 15
+    },
+    "clones": 32,
+    "method": "dem_error_clones",
+    "error_products": [
+      {
+        "dem": "LDEM_80S_20MPP_ADJ",
+        "error": "LDEM_80S_20MPP_ADJ_ERR"
+      }
+    ],
+    "uncovered": [
+      "LDEM_80S_80MPP_ADJ",
+      "LDEM_60S_240MPP_ADJ"
+    ],
+    "events": [
+      {
+        "type": "earthrise",
+        "t": "2026-11-16T13:04:37Z",
+        "earliest": "2026-11-16T11:28:37Z",
+        "latest": "2026-11-16T14:22:37Z",
+        "clones_with_event": 32
+      },
+      {
+        "type": "earthset",
+        "t": "2026-11-30T06:08:29Z",
+        "earliest": "2026-11-30T04:56:29Z",
+        "latest": "2026-11-30T07:32:29Z",
+        "clones_with_event": 32
+      }
+    ],
+    "metrics": {
+      "sunlit_hours": {
+        "low": 705.23,
+        "high": 708.73
+      },
+      "earth_visible_hours": {
+        "low": 324.81,
+        "high": 332.81
+      },
+      "sun_and_earth_hours": {
+        "low": 324.06,
+        "high": 332.56
+      },
+      "lcsp_hours": {
+        "low": 0.0,
+        "high": 2.25
+      },
+      "mean_sun_fraction": {
+        "low": 0.996,
+        "high": 1.0
+      }
+    }
+  }
+}

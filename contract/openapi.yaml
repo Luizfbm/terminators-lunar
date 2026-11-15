@@ -583,6 +583,62 @@ paths:
         "503":
           $ref: "#/components/responses/Busy"
 
+  /visibility/uncertainty:
+    get:
+      tags: [visibility]
+      operationId: getVisibilityUncertainty
+      summary: How far the answer can move with the map's own height error
+      description: |
+        DEM Uncertainty band (ADR 0003): the Query recomputed over `clones` versions of the
+        terrain, each one the DEM raised and lowered by the height error NASA publishes for
+        every pixel, with the error correlated in space as the method in the ADR states. Each
+        Event of the `/visibility` answer gets the time range that 90 % of the clones put it
+        in (5th to 95th percentile), and how many clones have it at all. The metrics get the
+        same 5th to 95th percentile range.
+        This is map error, not landing error (`/visibility/scatter`) and not resolution
+        (`/visibility/ladder`).
+        It is heavy, so it runs in the background. The first request starts it and answers
+        202 with the progress; ask again after `Retry-After` and get 200 once it is done.
+        The Curated Sites over the default Window are computed ahead and answer 200 at once.
+        Pass either `site_id` or both coordinates, never both, as in `/visibility`.
+      parameters:
+        - $ref: "#/components/parameters/QuerySiteId"
+        - $ref: "#/components/parameters/QueryLatitude"
+        - $ref: "#/components/parameters/QueryLongitude"
+        - $ref: "#/components/parameters/QueryStart"
+        - $ref: "#/components/parameters/QueryDuration"
+        - $ref: "#/components/parameters/QueryObserverHeight"
+      responses:
+        "200":
+          description: The band of every Event and metric.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UncertaintyResult"
+              examples:
+                connecting-ridge-001:
+                  $ref: ./examples/visibility-uncertainty-001.example.json
+        "202":
+          description: Started or still running; ask again after `Retry-After` seconds.
+          headers:
+            Retry-After:
+              description: Seconds to wait before asking again.
+              schema: { type: integer, minimum: 1 }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UncertaintyPending"
+              example:
+                status: computing
+                clones_done: 12
+                clones: 32
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/Unprocessable"
+        "503":
+          $ref: "#/components/responses/Busy"
+
   /visibility/energy:
     get:
       tags: [visibility]
@@ -1618,6 +1674,86 @@ components:
             lcip_hours: { $ref: "#/components/schemas/ScatterRange" }
             lcsp_hours: { $ref: "#/components/schemas/ScatterRange" }
             mean_sun_fraction: { $ref: "#/components/schemas/ScatterRange" }
+
+    UncertaintyPending:
+      type: object
+      required: [status, clones_done, clones]
+      properties:
+        status: { type: string, const: computing }
+        clones_done: { type: integer, minimum: 0 }
+        clones: { type: integer, minimum: 1 }
+
+    UncertaintyResult:
+      type: object
+      required: [query, clones, method, error_products, events, metrics]
+      properties:
+        query:
+          $ref: "#/components/schemas/Query"
+        clones:
+          type: integer
+          minimum: 1
+          description: How many versions of the terrain were computed.
+        method:
+          type: string
+          const: dem_error_clones
+        error_products:
+          type: array
+          description: The per-pixel height error products used, by PGDA name, with the DEM each one belongs to.
+          items:
+            type: object
+            required: [dem, error]
+            properties:
+              dem: { type: string }
+              error: { type: string }
+        uncovered:
+          type: array
+          description: DEM products in the Query with no published per-pixel error; their heights are not varied.
+          items: { type: string }
+        events:
+          type: array
+          description: One per Event of the `/visibility` answer, in the same order.
+          items:
+            $ref: "#/components/schemas/EventBand"
+        metrics:
+          type: object
+          required: [sunlit_hours, earth_visible_hours, sun_and_earth_hours, lcsp_hours, mean_sun_fraction]
+          properties:
+            sunlit_hours: { $ref: "#/components/schemas/MetricBand" }
+            earth_visible_hours: { $ref: "#/components/schemas/MetricBand" }
+            sun_and_earth_hours: { $ref: "#/components/schemas/MetricBand" }
+            lcsp_hours: { $ref: "#/components/schemas/MetricBand" }
+            mean_sun_fraction: { $ref: "#/components/schemas/MetricBand" }
+
+    EventBand:
+      type: object
+      required: [type, t, clones_with_event]
+      properties:
+        type:
+          type: string
+          enum: [sunrise, sunset, earthrise, earthset]
+        t:
+          type: string
+          format: date-time
+          description: The Event as `/visibility` gives it, on the DEM itself.
+        earliest:
+          type: string
+          format: date-time
+          description: 5th percentile of the clones' time for this Event. Absent when fewer than half the clones have it.
+        latest:
+          type: string
+          format: date-time
+          description: 95th percentile of the clones' time for this Event. Absent when fewer than half the clones have it.
+        clones_with_event:
+          type: integer
+          minimum: 0
+          description: Clones where this Event happens within the Window at all.
+
+    MetricBand:
+      type: object
+      required: [low, high]
+      properties:
+        low: { type: number, description: 5th percentile across the clones. }
+        high: { type: number, description: 95th percentile across the clones. }
 
     Lander:
       type: object

@@ -251,6 +251,37 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/visibility/uncertainty": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * How far the answer can move with the map's own height error
+         * @description DEM Uncertainty band (ADR 0003): the Query recomputed over `clones` versions of the
+         *     terrain, each one the DEM raised and lowered by the height error NASA publishes for
+         *     every pixel, with the error correlated in space as the method in the ADR states. Each
+         *     Event of the `/visibility` answer gets the time range that 90 % of the clones put it
+         *     in (5th to 95th percentile), and how many clones have it at all. The metrics get the
+         *     same 5th to 95th percentile range.
+         *     This is map error, not landing error (`/visibility/scatter`) and not resolution
+         *     (`/visibility/ladder`).
+         *     It is heavy, so it runs in the background. The first request starts it and answers
+         *     202 with the progress; ask again after `Retry-After` and get 200 once it is done.
+         *     The Curated Sites over the default Window are computed ahead and answer 200 at once.
+         *     Pass either `site_id` or both coordinates, never both, as in `/visibility`.
+         */
+        get: operations["getVisibilityUncertainty"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/visibility/energy": {
         parameters: {
             query?: never;
@@ -790,6 +821,62 @@ export interface components {
                 lcsp_hours: components["schemas"]["ScatterRange"];
                 mean_sun_fraction: components["schemas"]["ScatterRange"];
             };
+        };
+        UncertaintyPending: {
+            /** @constant */
+            status: "computing";
+            clones_done: number;
+            clones: number;
+        };
+        UncertaintyResult: {
+            query: components["schemas"]["Query"];
+            /** @description How many versions of the terrain were computed. */
+            clones: number;
+            /** @constant */
+            method: "dem_error_clones";
+            /** @description The per-pixel height error products used, by PGDA name, with the DEM each one belongs to. */
+            error_products: {
+                dem: string;
+                error: string;
+            }[];
+            /** @description DEM products in the Query with no published per-pixel error; their heights are not varied. */
+            uncovered?: string[];
+            /** @description One per Event of the `/visibility` answer, in the same order. */
+            events: components["schemas"]["EventBand"][];
+            metrics: {
+                sunlit_hours: components["schemas"]["MetricBand"];
+                earth_visible_hours: components["schemas"]["MetricBand"];
+                sun_and_earth_hours: components["schemas"]["MetricBand"];
+                lcsp_hours: components["schemas"]["MetricBand"];
+                mean_sun_fraction: components["schemas"]["MetricBand"];
+            };
+        };
+        EventBand: {
+            /** @enum {string} */
+            type: "sunrise" | "sunset" | "earthrise" | "earthset";
+            /**
+             * Format: date-time
+             * @description The Event as `/visibility` gives it, on the DEM itself.
+             */
+            t: string;
+            /**
+             * Format: date-time
+             * @description 5th percentile of the clones' time for this Event. Absent when fewer than half the clones have it.
+             */
+            earliest?: string;
+            /**
+             * Format: date-time
+             * @description 95th percentile of the clones' time for this Event. Absent when fewer than half the clones have it.
+             */
+            latest?: string;
+            /** @description Clones where this Event happens within the Window at all. */
+            clones_with_event: number;
+        };
+        MetricBand: {
+            /** @description 5th percentile across the clones. */
+            low: number;
+            /** @description 95th percentile across the clones. */
+            high: number;
         };
         /** @description The numbers the Charge is followed from, as they were sent. The pointing and the azimuth are there only when they were sent. */
         Lander: {
@@ -1528,6 +1615,60 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScatterResult"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Unprocessable"];
+            503: components["responses"]["Busy"];
+        };
+    };
+    getVisibilityUncertainty: {
+        parameters: {
+            query: {
+                /** @description A Curated Site. Pass this or both custom coordinates, never both. */
+                site_id?: components["parameters"]["QuerySiteId"];
+                /** @description Custom Site latitude. Must be at or south of `coverage.custom_max_latitude_deg`. */
+                latitude_deg?: components["parameters"]["QueryLatitude"];
+                /** @description Custom Site longitude. */
+                longitude_deg?: components["parameters"]["QueryLongitude"];
+                /** @description Window start. */
+                start: components["parameters"]["QueryStart"];
+                /** @description Window duration. Defaults to one synodic month. */
+                duration_hours?: components["parameters"]["QueryDuration"];
+                /** @description Observer height above the ground. */
+                observer_height_m?: components["parameters"]["QueryObserverHeight"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The band of every Event and metric. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UncertaintyResult"];
+                };
+            };
+            /** @description Started or still running; ask again after `Retry-After` seconds. */
+            202: {
+                headers: {
+                    /** @description Seconds to wait before asking again. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "status": "computing",
+                     *       "clones_done": 12,
+                     *       "clones": 32
+                     *     }
+                     */
+                    "application/json": components["schemas"]["UncertaintyPending"];
                 };
             };
             404: components["responses"]["NotFound"];
