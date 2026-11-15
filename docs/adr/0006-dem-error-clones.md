@@ -1,6 +1,6 @@
 # The Uncertainty band comes from DEM clones raised and lowered by NASA's per-pixel height error
 
-Status: proposed
+Status: accepted (Luiz, 15/11/2026)
 
 ADR 0003 promises an Uncertainty band made by perturbing the DEM. This ADR fixes how, so the number and the way it is made can be checked by someone who was not here. `GET /visibility/uncertainty` is the route; the contract is in `contract/openapi.yaml`.
 
