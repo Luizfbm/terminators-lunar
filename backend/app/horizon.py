@@ -224,12 +224,22 @@ def _mask(
     height_m: float,
     finest_m: float,
 ) -> Mask:
-    bands = rung(finest_m, ladder)
+    return _compute(folder, rung(finest_m, ladder), latitude_deg, longitude_deg, height_m, {})
+
+
+def _compute(
+    folder: str,
+    bands: tuple[Band, ...],
+    latitude_deg: float,
+    longitude_deg: float,
+    height_m: float,
+    reads: Reads,
+) -> Mask:
+    """The Horizon mask over `bands`. `reads` may already hold a band's pixels (the clones')."""
     azimuths: Array = np.arange(HORIZON_SAMPLES, dtype=np.float64) * AZIMUTH_STEP_DEG
     first = bands[0]
     site_x, site_y = _project(first, np.array([latitude_deg]), np.array([longitude_deg]))
-    site_height = float(_heights(Path(folder), first, site_x, site_y)[0])
-    reads: Reads = {}
+    site_height = float(_heights(Path(folder), first, site_x, site_y, reads)[0])
     observer_radius = MOON_RADIUS_M + site_height + height_m
 
     best = np.full(HORIZON_SAMPLES, -math.inf)
@@ -329,6 +339,9 @@ class _Read:
     col0: int = 0
     row0: int = 0
     grid: npt.NDArray[np.float64] | None = None
+    # A clone's heights live in memory only: asking for pixels beyond them must not fall
+    # back to reading the file, which would hand back the unperturbed DEM.
+    fixed: bool = False
 
 
 Reads = dict[str, _Read]
@@ -366,6 +379,8 @@ def _heights(folder: Path, band: Band, x: Array, y: Array, reads: Reads | None =
         or col1 > read.col0 + held.shape[1]
         or row1 > read.row0 + held.shape[0]
     ):
+        if read.fixed:
+            raise DemUnavailable(band.product, "the rays leave the pixels read for the clones")
         with _LOCK, rasterio.open(path) as dataset:
             window = Window(col0, row0, col1 - col0, row1 - row0)
             held = dataset.read(1, window=window).astype(np.float64)
@@ -431,3 +446,20 @@ def _destination(
     )
     longitude = (np.degrees(lon2) + 180.0) % 360.0 - 180.0
     return np.degrees(lat2), longitude
+
+
+def site_height_m(latitude_deg: float, longitude_deg: float, site_id: str | None = None) -> float:
+    """The DEM height under a Site: what `mask()` puts the Observer on, without the mask."""
+    folder, ladder = ladder_for(site_id)
+    latitude_deg = max(latitude_deg, POLE_LATITUDE_DEG)
+    first = rung(20.0, ladder)[0]
+    x, y = _project(first, np.array([round(latitude_deg, 7)]), np.array([round(longitude_deg, 7)]))
+    return float(_heights(folder, first, x, y)[0])
+
+
+ERROR_SUFFIX = "_ERR"
+
+
+def error_path(folder: Path, band: Band) -> Path:
+    """The PGDA per-pixel height error raster that goes with a DEM product, if it is there."""
+    return folder / f"{band.product}{ERROR_SUFFIX}.TIF"
