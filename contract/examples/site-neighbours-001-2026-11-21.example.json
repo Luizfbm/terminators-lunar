@@ -23,6 +23,7 @@
       "sun_and_earth_hours": 386.78055555555557,
       "sunlit_hours": 708.73,
       "earth_visible_hours": 386.78055555555557,
+      "earth_visible_hours_any_part": 416.0825,
       "lcip_hours": 708.73,
       "lcsp_hours": 0.0,
       "mean_sun_fraction": 1.0
@@ -45,6 +46,7 @@
           "sun_and_earth_hours": 387.12388888888887,
           "sunlit_hours": 708.73,
           "earth_visible_hours": 387.12388888888887,
+          "earth_visible_hours_any_part": 416.5758333333333,
           "lcip_hours": 708.73,
           "lcsp_hours": 0.0,
           "mean_sun_fraction": 1.0
@@ -67,6 +69,7 @@
           "sun_and_earth_hours": 385.89972222222224,
           "sunlit_hours": 708.73,
           "earth_visible_hours": 385.89972222222224,
+          "earth_visible_hours_any_part": 415.37333333333333,
           "lcip_hours": 708.73,
           "lcsp_hours": 0.0,
           "mean_sun_fraction": 0.9980727395658789
@@ -89,6 +92,7 @@
           "sun_and_earth_hours": 359.24083333333334,
           "sunlit_hours": 546.6766666666667,
           "earth_visible_hours": 380.4336111111111,
+          "earth_visible_hours_any_part": 412.6913888888889,
           "lcip_hours": 273.22083333333336,
           "lcsp_hours": 95.33305555555556,
           "mean_sun_fraction": 0.710557805870889
@@ -111,6 +115,7 @@
           "sun_and_earth_hours": 299.62305555555554,
           "sunlit_hours": 573.8283333333334,
           "earth_visible_hours": 347.37055555555554,
+          "earth_visible_hours_any_part": 379.7966666666666,
           "lcip_hours": 401.49305555555554,
           "lcsp_hours": 134.90166666666667,
           "mean_sun_fraction": 0.7671572608103115
@@ -133,6 +138,7 @@
           "sun_and_earth_hours": 229.28972222222222,
           "sunlit_hours": 265.8805555555556,
           "earth_visible_hours": 372.145,
+          "earth_visible_hours_any_part": 400.94666666666666,
           "lcip_hours": 251.6952777777778,
           "lcsp_hours": 442.84944444444443,
           "mean_sun_fraction": 0.3692250973066135
@@ -155,6 +161,7 @@
           "sun_and_earth_hours": 207.75805555555556,
           "sunlit_hours": 474.1691666666667,
           "earth_visible_hours": 340.0730555555556,
+          "earth_visible_hours_any_part": 373.07444444444445,
           "lcip_hours": 266.4111111111111,
           "lcsp_hours": 146.62666666666667,
           "mean_sun_fraction": 0.6446212006926724
@@ -177,6 +184,7 @@
           "sun_and_earth_hours": 205.02666666666667,
           "sunlit_hours": 483.82,
           "earth_visible_hours": 350.64694444444444,
+          "earth_visible_hours_any_part": 385.6405555555556,
           "lcip_hours": 400.5516666666667,
           "lcsp_hours": 193.34527777777777,
           "mean_sun_fraction": 0.6410811005753598
@@ -199,6 +207,7 @@
           "sun_and_earth_hours": 34.3275,
           "sunlit_hours": 432.9997222222222,
           "earth_visible_hours": 164.54972222222221,
+          "earth_visible_hours_any_part": 222.38194444444446,
           "lcip_hours": 432.0758333333333,
           "lcsp_hours": 272.63444444444445,
           "mean_sun_fraction": 0.5971795904548971

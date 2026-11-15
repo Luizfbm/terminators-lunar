@@ -120,7 +120,12 @@ def same(before: Any, after: Any, where: str = "") -> None:
 
 
 # Fields added since (the requirement). They are the only difference allowed.
-ADDED_SINCE = (("sub_points",), ("timeline", "sun_radius_deg"), ("provenance", "synthetic"))
+ADDED_SINCE = (
+    ("sub_points",),
+    ("timeline", "sun_radius_deg"),
+    ("provenance", "synthetic"),
+    ("metrics", "earth_visible_hours_any_part"),
+)
 
 
 def without_added_fields(answer: dict[str, Any]) -> dict[str, Any]:

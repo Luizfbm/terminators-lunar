@@ -1237,14 +1237,26 @@ components:
 
     Metrics:
       type: object
-      required: [sun_and_earth_hours, sunlit_hours, earth_visible_hours, lcip_hours, lcsp_hours, mean_sun_fraction]
+      required: [sun_and_earth_hours, sunlit_hours, earth_visible_hours, earth_visible_hours_any_part, lcip_hours, lcsp_hours, mean_sun_fraction]
       properties:
         sun_and_earth_hours: { type: number, minimum: 0 }
         sunlit_hours:
           type: number
           minimum: 0
           description: Hours with any part of the Sun's disc visible.
-        earth_visible_hours: { type: number, minimum: 0 }
+        earth_visible_hours:
+          type: number
+          minimum: 0
+          description: Hours with the Earth's centre above the Horizon mask (Earth visible).
+        earth_visible_hours_any_part:
+          type: number
+          minimum: 0
+          description: >-
+            Hours with any part of the Earth's disc above the Horizon mask, the rule the Sun
+            already uses. Never less than `earth_visible_hours`, and equal to it when the Earth
+            is wholly up or wholly down for the Window. Shown next to `earth_visible_hours` so a
+            reader comparing with a tool that counts the whole disc sees where the difference
+            comes from; no other metric uses it.
         lcip_hours: { type: number, minimum: 0 }
         lcsp_hours: { type: number, minimum: 0 }
         mean_sun_fraction: { type: number, minimum: 0, maximum: 1 }

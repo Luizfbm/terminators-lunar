@@ -38,7 +38,7 @@ Sunrise is the instant the first edge of the Sun's disc rises above the horizon 
 A shadow period short enough to be an outage rather than a night, such as the Sun passing behind a single peak. It still starts with a Sunset.
 
 **Earth visible**:
-The Earth's centre is above the horizon mask, so direct-to-Earth communication is geometrically possible.
+The Earth's centre is above the horizon mask, so direct-to-Earth communication is geometrically possible. Stats for nerds also gives the hours with any part of the Earth's disc above the horizon mask (the rule the Sun uses), to compare with tools that count the whole disc; every other number keeps the centre.
 
 **DSN link**:
 The Earth is visible from the Site and at least one 70 m Deep Space Network antenna (DSS-14, DSS-43 or DSS-63) has the Moon above its minimum elevation, 6° in DSN 810-005. Narrower than Earth visible. Geometry only: no antenna schedule and no link budget.

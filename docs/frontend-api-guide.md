@@ -29,7 +29,7 @@ Base URL: `https://lunar-api.luizfbm.win`. Locally, the Prism mock: `npx @stopli
 
 ## Metrics
 
-`metrics`: `sun_and_earth_hours`, `lcip_hours`, `lcsp_hours`, `sunlit_hours`, `earth_visible_hours`, `mean_sun_fraction` (0 to 1). They cover the Window only. A period that started before the Window counts from `query.start`.
+`metrics`: `sun_and_earth_hours`, `lcip_hours`, `lcsp_hours`, `sunlit_hours`, `earth_visible_hours` (Earth's centre above the Horizon mask), `earth_visible_hours_any_part` (any part of the Earth's disc above it, never less than the centre's; Stats for nerds shows both), `mean_sun_fraction` (0 to 1). They cover the Window only. A period that started before the Window counts from `query.start`.
 
 ## Countdown with Occluder
 

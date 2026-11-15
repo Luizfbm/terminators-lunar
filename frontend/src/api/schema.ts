@@ -567,7 +567,10 @@ export interface components {
             sun_and_earth_hours: number;
             /** @description Hours with any part of the Sun's disc visible. */
             sunlit_hours: number;
+            /** @description Hours with the Earth's centre above the Horizon mask (Earth visible). */
             earth_visible_hours: number;
+            /** @description Hours with any part of the Earth's disc above the Horizon mask, the rule the Sun already uses. Never less than `earth_visible_hours`, and equal to it when the Earth is wholly up or wholly down for the Window. Shown next to `earth_visible_hours` so a reader comparing with a tool that counts the whole disc sees where the difference comes from; no other metric uses it. */
+            earth_visible_hours_any_part: number;
             lcip_hours: number;
             lcsp_hours: number;
             mean_sun_fraction: number;
