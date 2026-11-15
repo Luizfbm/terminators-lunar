@@ -109,7 +109,9 @@ test.describe('in English', () => {
     await expect(numbers.getByRole('row', { name: /Longest night \(LCSP\)/ })).toContainText('with the map’s height error: 0 min to 2 h 15 min')
     await expect(numbers.getByRole('row', { name: /Mean Sun fraction/ })).toContainText('with the map’s height error: 99.6% to 100%')
     // Low and high the same: no range, just that the error does not move the number.
-    await expect(numbers.getByRole('row', { name: /Earth visible/ })).toContainText('the map’s height error does not change this number')
+    await expect(numbers.getByRole('row', { name: /^Earth visible, by its centre/ })).toContainText('the map’s height error does not change this number')
+    // The band covers the Earth by its centre only: the contract has no band for "with any part".
+    await expect(numbers.getByRole('row', { name: /^Earth visible, with any part of its disc/ })).not.toContainText('map’s height error')
     // The LCIP is not in the band.
     await expect(numbers.getByRole('row', { name: /Longest sunlight/ })).not.toContainText('with the map’s height error')
   })
@@ -159,7 +161,9 @@ test.describe('in Portuguese', () => {
     await page.goto('/?stats=1')
     const numbers = page.getByRole('table', { name: 'Os números desta Janela' })
     await expect(numbers.getByRole('row', { name: /Fração média do Sol/ })).toContainText('com o erro de altura do mapa: 99,6% a 100%')
-    await expect(numbers.getByRole('row', { name: /Terra visível/ })).toContainText('o erro de altura do mapa não muda este número')
+    await expect(numbers.getByRole('row', { name: /^Terra visível, pelo centro/ })).toContainText('o erro de altura do mapa não muda este número')
+    // A faixa cobre a Terra pelo centro; o contrato não tem faixa para "com qualquer pedaço".
+    await expect(numbers.getByRole('row', { name: /^Terra visível, com qualquer pedaço do disco/ })).not.toContainText('erro de altura do mapa')
   })
 
   test('diz que o erro não muda o horário quando a janela é mais estreita que um minuto', async ({ page }) => {
