@@ -59,7 +59,8 @@ export function occluderLabel(i18n: I18n, occluder: Occluder): string {
   return occluder.feature ? `${occluder.feature.name}, ${distance}` : distance
 }
 
-function BodyStatement({
+/** The sentence about one body, with the Occluder of its next Sunset or Earthset and the DEM Uncertainty band under it. */
+export function BodyStatement({
   body,
   result,
   cursorMs,
@@ -115,17 +116,8 @@ function summaryKey(metrics: VisibilityResult['metrics']): MessageKey {
   return 'summary'
 }
 
-export function Answer({
-  result,
-  cursorMs,
-  where,
-  onWindow,
-  marked = null,
-  onMark,
-  landing,
-  stats = false,
-  onStats,
-}: {
+/** What the answer column takes: the Query line, the statements and the panels under them. */
+export interface AnswerProps {
   result: VisibilityResult
   cursorMs: number
   /** The Query line, built by the App, which owns the Query. */
@@ -140,7 +132,32 @@ export function Answer({
   /** Whether "Stats for nerds" is open, and the way to open or close it. */
   stats?: boolean
   onStats?: (open: boolean) => void
-}) {
+}
+
+/** The whole column (the classic layout). It asks for the DEM Uncertainty band itself. */
+export function Answer(props: AnswerProps) {
+  // The DEM Uncertainty band, asked once the answer is here; the answer never waits on it.
+  const uncertainty = useUncertainty(props.result)
+  return <AnswerBody {...props} uncertainty={uncertainty} part="all" />
+}
+
+/**
+ * The column, or only what goes under the card in the default layout (`details`): the Sun and Earth
+ * statements are the card's then. The band is asked by whoever draws both, once, and handed in.
+ */
+export function AnswerBody({
+  result,
+  cursorMs,
+  where,
+  onWindow,
+  marked = null,
+  onMark,
+  landing,
+  stats = false,
+  onStats,
+  uncertainty,
+  part,
+}: AnswerProps & { uncertainty: UncertaintyState; part: 'all' | 'details' }) {
   const i18n = useI18n()
   const { t, formatSpan } = i18n
   const { metrics } = result
@@ -148,14 +165,12 @@ export function Answer({
   // The Landing scatter is asked here so the knife-edge warning and the miss panel read the same answer.
   const radius = useRadius()
   const scatter = useScatter(result, radius[0])
-  // The DEM Uncertainty band, asked once the answer is here; the answer never waits on it.
-  const uncertainty = useUncertainty(result)
   return (
     <>
       {where}
-      <BodyStatement body="sun" result={result} cursorMs={cursorMs} heading="h1" marked={marked === 'sun'} onMark={onMark} uncertainty={uncertainty} />
+      {part === 'all' && <BodyStatement body="sun" result={result} cursorMs={cursorMs} heading="h1" marked={marked === 'sun'} onMark={onMark} uncertainty={uncertainty} />}
       <FlatLine result={result} cursorMs={cursorMs} />
-      <BodyStatement body="earth" result={result} cursorMs={cursorMs} heading="h2" marked={marked === 'earth'} onMark={onMark} uncertainty={uncertainty} />
+      {part === 'all' && <BodyStatement body="earth" result={result} cursorMs={cursorMs} heading="h2" marked={marked === 'earth'} onMark={onMark} uncertainty={uncertainty} />}
       {/* The engine sees this point sunlit, and the mission still ended: say why, here. */}
       {atLanding && <p className="landing-note">{t('landing.im2.note')}</p>}
       <KnifeEdgeWarning scatter={scatter.state} />

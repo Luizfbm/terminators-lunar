@@ -253,3 +253,40 @@ describe('the layout in the link', () => {
     expect(linkWithoutLayout('?layout=classic&site=001')).toBe('?site=001')
   })
 })
+
+describe('the details drawer in the link', () => {
+  const plain = { site: null, cursorMs: null, language: null, view: 'orbit', startDay: null, hours: null, heightM: null, page: 'answer', stats: false } as const
+
+  it('is closed without the parameter, and the plain link stays plain', () => {
+    expect(readLink('')).not.toHaveProperty('details')
+    expect(readLink('?site=CR05&stats=1')).not.toHaveProperty('details')
+    expect(writeLink(plain)).toBe('')
+    expect(writeLink({ ...plain, details: undefined })).toBe('')
+  })
+
+  it('goes in the link when open, and comes back', () => {
+    expect(writeLink({ ...plain, details: true })).toBe('?details=1')
+    expect(readLink('?details=1')).toEqual({ ...plain, details: true })
+    expect(readLink(writeLink({ ...plain, details: true, site: 'CR05', view: 'ground', stats: true }))).toEqual({
+      ...plain,
+      details: true,
+      site: 'CR05',
+      view: 'ground',
+      stats: true,
+    })
+  })
+
+  it('is closed for any other value', () => {
+    for (const value of ['', '0', 'yes', 'true']) expect(readLink(`?details=${value}`)).not.toHaveProperty('details')
+  })
+
+  it('is dropped when the state says closed, so closing the drawer cleans the link', () => {
+    const open = '?site=CR05&details=1'
+    expect(writeLink({ ...readLink(open), details: undefined }, open)).toBe('?site=CR05')
+    expect(writeLink({ ...readLink(open), site: 'CR07' }, open)).toBe('?site=CR07&details=1')
+  })
+
+  it('is read in either layout', () => {
+    expect(readLink('?layout=classic&details=1')).toMatchObject({ classic: true, details: true })
+  })
+})

@@ -146,6 +146,11 @@ export interface LinkState extends Choice {
    * when the link has it, so a link without it reads back exactly as before and gets her layout.
    */
   classic?: true
+  /**
+   * `details=1`: the drawer with the rest of the answer is open (the default layout). Only present when the
+   * link has it, so a link without it reads back exactly as before.
+   */
+  details?: true
 }
 
 export function readLink(search: string): LinkState {
@@ -184,6 +189,7 @@ export function readLink(search: string): LinkState {
     ...(Number.isFinite(radius) && radius >= RADIUS_MIN_M && radius <= RADIUS_MAX_M ? { radiusM: radius } : {}),
     ...(planB ? { planB } : {}),
     ...(params.get('layout') === 'classic' ? { classic: true as const } : {}),
+    ...(params.get('details') === '1' ? { details: true as const } : {}),
   }
 }
 
@@ -211,7 +217,7 @@ function readPlanB(params: URLSearchParams, numberParam: (name: string) => numbe
 const LINK_KEYS = new Set([
   'lat', 'lon', 'site', 't', 'lang', 'view', 'start', 'hours', 'height', 'stats', 'page', 'radius',
   // Plan B of the comparison, carried by `planB` in the state.
-  'layout',
+  'layout', 'details',
   'compare', 'bsite', 'blat', 'blon', 'bstart', 'bhours', 'bheight',
 ])
 
@@ -240,6 +246,7 @@ export function writeLink(state: LinkState, keep = ''): string {
   if (state.radiusM != null) params.set('radius', String(state.radiusM))
   if (state.page !== 'answer') params.set('page', state.page)
   if (state.classic) params.set('layout', 'classic')
+  if (state.details) params.set('details', '1')
   if (state.planB) {
     const b = state.planB
     params.set('compare', '1')
