@@ -1,0 +1,78 @@
+/* === Plan A x Plan B (comparison panel) ===
+   Everything below belongs to the comparison panel and starts with .plan-compare. Tokens from :root. */
+
+.plan-compare__title {
+  font-family: var(--serif);
+  font-size: 1.4rem;
+  line-height: 1.15;
+}
+
+.plan-compare__fields {
+  margin-bottom: 0;
+}
+
+.plan-compare__b {
+  color: var(--fg);
+  font-weight: 400;
+}
+
+.plan-compare__say {
+  max-width: 44ch;
+}
+
+/* The two plans side by side: the table keeps to the answer's column, whatever a Site is called. */
+.plan-compare__table thead th {
+  padding: 0 0 6px 12px;
+  border-top: 0;
+  text-align: right;
+  vertical-align: bottom;
+  color: var(--fg);
+  font-size: var(--small);
+}
+
+.plan-compare__table thead th:first-child {
+  padding-left: 0;
+}
+
+.plan-compare__where {
+  display: block;
+  color: var(--dim);
+  font-size: 0.85em;
+  overflow-wrap: anywhere;
+}
+
+.plan-compare__table tbody td {
+  padding-left: 12px;
+  vertical-align: top;
+}
+
+.plan-compare__table tbody td > span {
+  display: block;
+}
+
+/* The better value reads at once: full colour and weight against the dimmer other one. */
+.plan-compare__table tbody td:not(.plan-compare__best) {
+  color: var(--dim);
+}
+
+.plan-compare__best {
+  font-weight: 600;
+}
+
+.plan-compare__mark {
+  color: var(--sun);
+}
+
+.plan-compare__share {
+  display: block;
+  color: var(--dim);
+  font-size: 0.85em;
+  font-weight: 400;
+}
+
+@media (max-width: 480px) {
+  .plan-compare__table thead th,
+  .plan-compare__table tbody td {
+    padding-left: 8px;
+  }
+}

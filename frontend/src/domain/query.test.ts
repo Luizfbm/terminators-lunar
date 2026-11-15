@@ -169,3 +169,46 @@ describe('the link and the panels', () => {
   })
 })
 
+describe('the link of Plan B', () => {
+  const base = { site: 'CR05', cursorMs: null, language: null, view: 'orbit', startDay: null, hours: null, heightM: null, page: 'answer', stats: false } as const
+
+  it('leaves the comparison out of a link that has none, so the old links read back exactly as before', () => {
+    expect(readLink('?site=CR05')).not.toHaveProperty('planB')
+    expect(readLink('?bsite=HW03&bstart=2027-03-01')).not.toHaveProperty('planB')
+    expect(writeLink(base)).toBe('?site=CR05')
+  })
+
+  it('writes and reads a Plan B that changes everything', () => {
+    const state = { ...base, planB: { site: 'HW03', startDay: '2027-03-01', hours: 240, heightM: 10 } }
+    expect(writeLink(state)).toBe('?site=CR05&compare=1&bsite=HW03&bstart=2027-03-01&bhours=240&bheight=10')
+    expect(readLink(writeLink(state))).toEqual(state)
+  })
+
+  it('writes only what Plan B changes: an open comparison alone is compare=1', () => {
+    const state = { ...base, planB: { site: null, startDay: null, hours: null, heightM: null } }
+    expect(writeLink(state)).toBe('?site=CR05&compare=1')
+    expect(readLink(writeLink(state))).toEqual(state)
+  })
+
+  it('carries a typed coordinate as blat and blon', () => {
+    const state = { ...base, planB: { site: { latitudeDeg: -89.5, longitudeDeg: 12.25 }, startDay: null, hours: null, heightM: null } }
+    expect(writeLink(state)).toBe('?site=CR05&compare=1&blat=-89.5&blon=12.25')
+    expect(readLink(writeLink(state))).toEqual(state)
+  })
+
+  it('ignores Plan B values it does not know, as it does for Plan A', () => {
+    const read = readLink('?compare=1&bstart=tomorrow&bhours=-3&bheight=500&blat=-89')
+    expect(read.planB).toEqual({ site: null, startDay: null, hours: null, heightM: null })
+  })
+
+  it('does not change a single parameter of Plan A', () => {
+    const plain = { ...base, startDay: '2027-03-01', hours: 240, heightM: 10, radiusM: 100 }
+    const withB = { ...plain, planB: { site: 'HW03', startDay: null, hours: null, heightM: null } }
+    expect(writeLink(withB).replace('&compare=1&bsite=HW03', '')).toBe(writeLink(plain))
+  })
+
+  it('does not carry Plan B over from the current link by itself: the state decides', () => {
+    expect(writeLink(base, '?compare=1&bsite=HW03')).toBe('?site=CR05')
+  })
+})
+
