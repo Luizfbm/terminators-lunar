@@ -16,7 +16,7 @@ test('the plain address opens on the cover: the question and two ways in', async
   await expect(cover(page).getByRole('button', { name: 'Start' })).toBeFocused()
   await expect(cover(page).getByRole('button', { name: 'See a real landing' })).toBeVisible()
   // The app waits behind it, out of reach of the mouse and the keyboard.
-  for (const part of ['.stage', 'main.answer', 'footer.strip']) {
+  for (const part of ['.stage', 'footer.strip']) {
     expect(await page.locator(part).evaluate((el) => (el as HTMLElement).inert)).toBe(true)
   }
   // The language can still be changed from here.
@@ -28,17 +28,17 @@ test('Start closes the cover and walks through three tips, each with a ring arou
   await page.goto('/')
   await cover(page).getByRole('button', { name: 'Start' }).click()
   await expect(cover(page)).toHaveCount(0)
-  expect(await page.locator('main.answer').evaluate((el) => (el as HTMLElement).inert)).toBe(false)
+  expect(await page.locator('.stage').evaluate((el) => (el as HTMLElement).inert)).toBe(false)
 
   await expect(guide(page)).toContainText('1 of 3')
-  await expect(guide(page)).toContainText('This is the Site.')
-  await expect(page.locator('.where button.site')).toHaveAttribute('data-guide', 'true')
+  await expect(guide(page)).toContainText('The Site is in Details.')
+  await expect(page.locator('.card__details')).toHaveAttribute('data-guide', 'true')
 
   await guide(page).getByRole('button', { name: 'Next' }).click()
   await expect(guide(page)).toContainText('2 of 3')
   await expect(guide(page)).toContainText('Drag the Cursor or press play')
   await expect(page.locator('footer.strip')).toHaveAttribute('data-guide', 'true')
-  await expect(page.locator('.where button.site')).not.toHaveAttribute('data-guide', 'true')
+  await expect(page.locator('.card__details')).not.toHaveAttribute('data-guide', 'true')
 
   await guide(page).getByRole('button', { name: 'Next' }).click()
   await expect(guide(page)).toContainText('3 of 3')
@@ -96,7 +96,7 @@ test.describe('in a Portuguese browser', () => {
     await capa.getByRole('button', { name: 'Começar' }).click()
     const guia = page.getByRole('dialog', { name: 'Guia' })
     await expect(guia).toContainText('1 de 3')
-    await expect(guia).toContainText('Este é o Local.')
+    await expect(guia).toContainText('O Local está em Detalhes.')
   })
 })
 

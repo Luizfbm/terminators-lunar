@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Request } from '@playwright/test'
+import { withDetails } from './details'
 
 // The Prism mock always answers with the contract's example (CR01, 20/11/2026 12:00 UTC for 10 days,
 // 2 m), so these tests check what the app asks for and what the link says, not the numbers.
@@ -8,10 +9,12 @@ test.use({ locale: 'en-GB' })
 const visibility = (request: Request) => request.url().includes('/visibility?')
 const param = (request: Request, name: string) => new URL(request.url()).searchParams.get(name)
 
+// The Query line (Site, Window start, length, height) is in the drawer of details, so the page opens with it open.
 async function open(page: Page, path = '/') {
   const first = page.waitForRequest(visibility)
-  await page.goto(path)
-  await expect(page.getByRole('slider', { name: 'Cursor' })).toBeVisible()
+  await page.goto(withDetails(path))
+  // By CSS, not by role: the strip is inert behind the open drawer.
+  await expect(page.locator('footer.strip [role="slider"]')).toBeVisible()
   return first
 }
 

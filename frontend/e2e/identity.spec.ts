@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { closeDetails, openDetails } from './details'
 
 // the requirement, step 1 of the identity pass: a loading state for the Moon, controls that look like
 // controls, and a serif for the statements.
@@ -43,6 +44,8 @@ test('the Query line and the views look like controls, not like text', async ({ 
   // Luiz: "it is not clear where to click". They were dotted or plain text.
   await page.goto('/')
   await expect(page.getByRole('slider', { name: 'Cursor' })).toBeVisible()
+  // The Query line is in the drawer of details.
+  await openDetails(page)
   const boxed = async (name: string | RegExp, role: 'button' | 'textbox' | 'spinbutton') => {
     const control = page.getByRole(role, { name }).first()
     await expect(control).toHaveCSS('border-top-style', 'solid')
@@ -52,6 +55,8 @@ test('the Query line and the views look like controls, not like text', async ({ 
   await boxed(/^Site:/, 'button')
   await boxed('Window length in days', 'spinbutton')
   await boxed('Observer height in metres', 'spinbutton')
+
+  await closeDetails(page)
 
   // The three views are one control, and the chosen one is filled in.
   const views = page.locator('.views')

@@ -1,4 +1,5 @@
 import { expect, test, type Route } from '@playwright/test'
+import { card, closeDetails, openDetails } from './details'
 
 const problem = (status: number, code: string) => ({
   status,
@@ -21,12 +22,13 @@ test.describe('loading state', () => {
 
     await page.goto('/')
 
-    await expect(page.getByRole('status')).toHaveText('Loading the answer…')
-    await expect(page.getByText('Lunar Landing Site Navigator')).toBeVisible()
+    // The app's name and the status are on the card over the globe.
+    await expect(card(page).getByRole('status')).toHaveText('Loading the answer…')
+    await expect(card(page).getByText('Lunar Landing Site Navigator')).toBeVisible()
 
     release()
 
-    await expect(page.getByRole('status')).toHaveCount(0)
+    await expect(card(page).getByRole('status')).toHaveCount(0)
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('The Sun sets in 4 h 21 min.')
   })
 })
@@ -102,8 +104,11 @@ test.describe('error states', () => {
 
     await page.goto('/')
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('The Sun sets in 4 h 21 min.')
+    // The Site picker is in the drawer of details; the error lands on the card, so the drawer is closed to see it.
+    await openDetails(page)
     await page.getByRole('button', { name: /^Site: / }).click()
     await page.getByRole('option', { name: /Haworth HW01/ }).click()
+    await closeDetails(page)
 
     await expect(page.getByRole('alert').getByText('This Query has no Site, or the Site it names does not exist.')).toBeVisible()
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('The Sun sets in 4 h 21 min.')

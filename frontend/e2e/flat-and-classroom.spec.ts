@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Route } from '@playwright/test'
+import { card, details, withDetails } from './details'
 
 // the requirement. The mock answers /visibility with CR01 (20/11/2026 12:00 UTC for 10 days, first Sunset
 // at 16:21) and /visibility/flat with Site 001 (first Sunset without terrain on 13/02/2027 02:11), so
@@ -14,7 +15,16 @@ const problem = (status: number, code: string): Parameters<Route['fulfill']>[0] 
   body: JSON.stringify({ type: `https://lunar-api.luizfbm.win/problems/${code}`, title: code, status, code }),
 })
 
+// The flat line and the panel without terrain live in the drawer of details, so the tests about them open
+// the page with the drawer open. The Classroom figure is a sheet on the view from the ground, which is
+// inert while the drawer is open, so those tests open the page without it (`openStage`).
 async function open(page: Page, path = '/') {
+  await page.goto(withDetails(path))
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  await expect(details(page)).toBeVisible()
+}
+
+async function openStage(page: Page, path = '/') {
   await page.goto(path)
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 }
@@ -170,7 +180,7 @@ test.describe('the Classroom figure', () => {
   test.use({ locale: 'en-GB' })
 
   test('opens from the view from the ground, labelled as a model, and keeps its latitude in the link', async ({ page }) => {
-    await open(page, '/?view=ground')
+    await openStage(page, '/?view=ground')
     await page.getByRole('button', { name: 'Why does one small hill matter so much?' }).click()
     const sheet = page.getByRole('dialog', { name: 'Why does one small hill matter so much?' })
     await expect(sheet).toBeVisible()
@@ -196,7 +206,7 @@ test.describe('the Classroom figure', () => {
   })
 
   test('is not offered from orbit', async ({ page }) => {
-    await open(page)
+    await openStage(page)
     await expect(page.getByRole('button', { name: 'Why does one small hill matter so much?' })).toHaveCount(0)
   })
 
@@ -204,7 +214,7 @@ test.describe('the Classroom figure', () => {
     test.use({ locale: 'pt-BR' })
 
     test('says it in Portuguese', async ({ page }) => {
-      await open(page, '/?view=ground&classroom=88')
+      await openStage(page, '/?view=ground&classroom=88')
       const sheet = page.getByRole('dialog', { name: 'Por que um morro pequeno pesa tanto?' })
       await expect(sheet).toContainText('No polo, o Sol nunca sobe mais que cerca de 1,5°.')
       await expect(sheet).toContainText('Modelo de aula')
@@ -224,8 +234,9 @@ test.describe('at 390 px wide', () => {
     await expect(page.getByRole('table', { name: 'This Window with and without terrain' })).toBeVisible()
     const wide = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
     expect(await wide()).toBeLessThanOrEqual(0)
-    const answer = page.locator('main.answer')
-    expect(await answer.evaluate((node) => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(0)
+    // The answer is now the card over the globe and the drawer's body (the drawer is open here).
+    expect(await page.locator('.drawer__body').evaluate((node) => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(0)
+    expect(await card(page).evaluate((node) => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(0)
 
     await page.goto('/?view=ground&classroom=88')
     const sheet = page.getByRole('dialog')

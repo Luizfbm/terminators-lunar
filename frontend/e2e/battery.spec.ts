@@ -1,5 +1,6 @@
 import { expect, test, type Page, type Route } from '@playwright/test'
 import { readFileSync } from 'node:fs'
+import { card, details, withDetails } from './details'
 
 // the requirement. The mock answers /visibility with CR01 (longest night 5 d 2 h) and /visibility/energy
 // with its example: a battery that runs empty for 89 h, first at 26/03/2025 06:27 UTC. States the
@@ -13,9 +14,13 @@ const busy = {
   body: JSON.stringify({ type: 'https://lunar-api.luizfbm.win/problems/busy', title: 'Busy', status: 503, code: 'busy' }),
 }
 
+// The battery panel lives in the drawer of details, so every test opens the page with the drawer open.
+// Nothing here drives the stage or the strip, which are inert while the drawer is open; the Charge row on
+// the strip is only read.
 async function open(page: Page, path = '/') {
-  await page.goto(path)
+  await page.goto(withDetails(path))
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  await expect(details(page)).toBeVisible()
 }
 
 const section = (page: Page) => page.locator('section.battery')
@@ -174,7 +179,9 @@ test.describe('at 390 px wide', () => {
     await expect(chargeRow(page)).toBeVisible()
     await section(page).scrollIntoViewIfNeeded()
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0)
-    expect(await page.locator('main.answer').evaluate((node) => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(0)
+    // The answer is now the card over the globe and the drawer's body (the drawer is open here).
+    expect(await page.locator('.drawer__body').evaluate((node) => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(0)
+    expect(await card(page).evaluate((node) => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(0)
   })
 })
 

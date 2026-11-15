@@ -1,7 +1,9 @@
 import { expect, test, type Page } from '@playwright/test'
+import { openDetails, withDetails } from './details'
 
 // the requirement: "Stats for nerds". The plain sentences are the default screen; the numbers, the panels
-// and where the answer comes from are one click away, and the link remembers the click.
+// and where the answer comes from are one click away, and the link remembers the click. They are in the
+// drawer of details, so a test opens it first.
 
 test.use({ locale: 'en-US' })
 
@@ -13,6 +15,7 @@ const fact = (page: Page, name: string) => facts(page).getByRole('row', { name }
 test('the default screen has the sentences only; the button opens the numbers in place and the link remembers it', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  await openDetails(page)
   await expect(toggle(page)).toHaveAttribute('aria-expanded', 'false')
   await expect(numbers(page)).toHaveCount(0)
   await expect(page.getByRole('button', { name: /map’s detail/ })).toHaveCount(0)
@@ -35,13 +38,14 @@ test('the default screen has the sentences only; the button opens the numbers in
 
 test('a link with stats=1 opens with the panel open', async ({ page }) => {
   await page.goto('/?stats=1')
+  await openDetails(page)
   await expect(toggle(page)).toHaveAttribute('aria-expanded', 'true')
   await expect(numbers(page)).toBeVisible()
 })
 
 test('the panel says where the Sun and the Earth are at the Cursor, as the API gave them, and what the answer came from', async ({ page }) => {
   const answered = page.waitForResponse((response) => new URL(response.url()).pathname === '/visibility')
-  await page.goto('/?stats=1')
+  await page.goto(withDetails('/?stats=1'))
   const body = await (await answered).json()
   await expect(facts(page)).toBeVisible()
 
@@ -71,7 +75,7 @@ test('the panel says where the Sun and the Earth are at the Cursor, as the API g
 })
 
 test('in Portuguese the button and the rows are in Portuguese', async ({ page }) => {
-  await page.goto('/?lang=pt')
+  await page.goto(withDetails('/?lang=pt'))
   await page.getByRole('button', { name: 'Estatísticas para nerds' }).click()
   const tabela = page.getByRole('table', { name: /Onde o Sol e a Terra estão no Cursor/ })
   await expect(tabela.getByRole('rowheader', { name: 'Coordenadas do Local' })).toBeVisible()
@@ -82,7 +86,7 @@ test.describe('on a phone, 390 px wide', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
   test('the open panel fits the screen: long kernel names wrap', async ({ page }) => {
-    await page.goto('/?stats=1')
+    await page.goto(withDetails('/?stats=1'))
     await expect(facts(page)).toBeVisible()
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390)
     const box = (await facts(page).boundingBox())!

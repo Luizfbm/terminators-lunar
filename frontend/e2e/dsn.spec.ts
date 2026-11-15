@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
+import { withDetails } from './details'
 
 // Read at run time, not imported: the web image has only frontend/ and its build type-checks
 // this file (the requirement).
@@ -27,8 +28,10 @@ const GAP = {
   earth_without_station_hours: 24,
 }
 
+// The panel lives in "Stats for nerds", inside the drawer of details, so the page opens with the drawer open.
+// The Cursor and the DSN row on the strip are only read, never driven (the strip is inert while the drawer is open).
 async function openPanel(page: Page, path = '/?stats=1', name = 'Can a dish on Earth hear this Site?') {
-  await page.goto(path)
+  await page.goto(withDetails(path))
   await expect(page.getByRole('slider', { name: 'Cursor' })).toBeVisible()
   const open = page.getByRole('button', { name })
   await expect(open).toHaveAttribute('aria-expanded', 'false')
@@ -50,7 +53,7 @@ test.describe('DSN link, English', () => {
     page.on('request', (request) => {
       if (request.url().includes('/visibility/dsn')) asked += 1
     })
-    await page.goto('/?stats=1')
+    await page.goto(withDetails('/?stats=1'))
     await expect(page.getByRole('slider', { name: 'Cursor' })).toBeVisible()
     expect(asked).toBe(0)
     await page.getByRole('button', { name: 'Can a dish on Earth hear this Site?' }).click()

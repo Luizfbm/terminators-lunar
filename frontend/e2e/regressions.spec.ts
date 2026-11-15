@@ -1,10 +1,15 @@
 import { expect, test, type Page } from '@playwright/test'
+import { details, openDetails, withDetails } from './details'
 
 // One test per defect we have shipped or nearly shipped. Each says what broke and when.
 
-async function open(page: Page) {
-  await page.goto('/')
+// `withDrawer` opens the page with the drawer of details open, for the tests that read what lives in it (the
+// Query line, the summary, "Stats for nerds"). The rest of the page is inert while it is open, so the tests
+// that drive the stage or the strip leave it closed.
+async function open(page: Page, withDrawer = false) {
+  await page.goto(withDrawer ? withDetails('/') : '/')
   await expect(page.getByRole('slider', { name: 'Cursor' })).toBeVisible()
+  if (withDrawer) await expect(details(page)).toBeVisible()
 }
 
 test.use({ locale: 'en-US' })
@@ -82,6 +87,7 @@ test.describe('on a phone, 390 px wide', () => {
     // Seen on the list inherited the one-line rule of the Site name that opens it, so
     // "Haworth, in NASA’s list of nine Artemis III regions (October 2024)" was cut at "(October 20".
     await open(page)
+    await openDetails(page)
     await page.getByRole('button', { name: /^Site:/ }).click()
     const options = page.getByRole('listbox', { name: 'Sites' })
     await expect(options).toBeVisible()
@@ -113,10 +119,11 @@ test.describe('on a 1366x768 laptop', () => {
 test.describe('on a 1366x768 laptop, with a panel open', () => {
   test.use({ viewport: { width: 1366, height: 768 } })
 
-  test('a long answer scrolls inside its column and the page itself stays put', async ({ page }) => {
+  test('a long answer scrolls inside the drawer and the page itself stays put', async ({ page }) => {
     // Integration of the panels, with the ladder open, a hidden table caption far down the
     // column stretched the document to 967 px, and the Moon and the time strip scrolled off screen.
     await open(page)
+    await openDetails(page)
     // The panels are inside "Stats for nerds" since the requirement.
     await page.getByRole('button', { name: 'Stats for nerds' }).click()
     await page.getByRole('button', { name: /change this answer/ }).click()
@@ -129,6 +136,8 @@ test.describe('on a 1366x768 laptop, with a panel open', () => {
     }))
     expect(scrollHeight).toBe(768)
     expect(scrollTop).toBe(0)
+    // The long answer is what the drawer's body scrolls, not the page.
+    expect(await page.locator('.drawer__body').evaluate((body) => body.scrollHeight > body.clientHeight)).toBe(true)
     const strip = await page.locator('.strip').boundingBox()
     expect(strip!.y + strip!.height).toBeLessThanOrEqual(768)
   })
@@ -160,7 +169,7 @@ test.describe('default Query', () => {
       body.metrics.sun_and_earth_hours = 0
       await route.fulfill({ response, json: body })
     })
-    await open(page)
+    await open(page, true)
     await expect(page.getByText(/Across this Window the lander never has the Sun and the Earth at the same time/)).toBeVisible()
     await expect(page.getByText(/together for 0/)).toHaveCount(0)
   })
@@ -173,7 +182,7 @@ test.describe('default Query', () => {
       body.metrics.lcsp_hours = 0
       await route.fulfill({ response, json: body })
     })
-    await open(page)
+    await open(page, true)
     await expect(page.getByText('The Sun never sets in it.')).toBeVisible()
     await expect(page.getByText(/longest night is/)).toHaveCount(0)
   })
@@ -183,6 +192,7 @@ test('the open Site list sits in valid HTML, with no paragraph inside a paragrap
   // Found in the running app, the Query line was a <p> and the Site list inside it holds
   // <p> and <div>, so React logged "<p> cannot be a descendant of <p>" as soon as the list opened.
   await open(page)
+  await openDetails(page)
   await page.locator('.site-pick button').first().click()
   await expect(page.getByRole('listbox')).toBeVisible()
   expect(await page.locator('p p, p div').count()).toBe(0)

@@ -1,4 +1,5 @@
 import { expect, test, type Route } from '@playwright/test'
+import { withDetails } from './details'
 
 // The mock answers with the contract's examples: the ladder of CR05 (Sunset 5 h 44 min later at
 // 240 m than at 20 m) and the year 2027 at Site 001.
@@ -11,9 +12,10 @@ const busy = {
 
 test.use({ locale: 'en-GB' })
 
-// The panels live inside "Stats for nerds" (the requirement), so every test here starts with it open.
+// The panels live inside "Stats for nerds" (the requirement), in the drawer of details, so every test here
+// starts with both open.
 test.beforeEach(async ({ page }) => {
-  await page.goto('/?stats=1')
+  await page.goto(withDetails('/?stats=1'))
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 })
 

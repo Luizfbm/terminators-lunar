@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Route } from '@playwright/test'
+import { card, details, openDetails } from './details'
 
 // the requirement: the dive to the ground and back, nothing fetched in the middle of the move, and no
 // blank answer on a Site change. The globe's canvas says where its camera is in `data-dive`
@@ -159,6 +160,9 @@ test('a click on another Site moves the ring at once and keeps the last answer, 
   })
   await openOnGlobe(page)
   const heading = await page.getByRole('heading', { level: 1 }).textContent()
+  // The Site picker is in the Query line, inside the drawer of details; it stays open through the change,
+  // so the card and the drawer can both be seen going stale.
+  await openDetails(page)
   // The ring marks the Site of the answer on screen.
   const trigger = await page.getByRole('button', { name: /^Site: / }).textContent()
   await expect(page.locator('.globe__pin')).toHaveText(trigger ?? '')
@@ -172,11 +176,14 @@ test('a click on another Site moves the ring at once and keeps the last answer, 
   // The ring and its name move before the server answers.
   await expect(page.locator('.globe__pin')).not.toHaveText(before ?? '')
   // The last answer stays, dimmed: the same first line, never a blank column.
-  const answer = page.locator('main.answer')
-  await expect(answer).toHaveAttribute('data-stale', 'true')
+  // The answer is now the card over the globe and the drawer's body: both keep the last answer, dimmed.
+  const drawer = details(page)
+  await expect(card(page)).toHaveAttribute('data-stale', 'true')
+  await expect(drawer).toHaveAttribute('data-stale', 'true')
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(heading ?? '')
   release()
-  await expect(answer).toHaveAttribute('data-stale', 'false')
+  await expect(card(page)).toHaveAttribute('data-stale', 'false')
+  await expect(drawer).toHaveAttribute('data-stale', 'false')
   expect(otherName.length).toBeGreaterThan(0)
 })
 

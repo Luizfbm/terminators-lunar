@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Route } from '@playwright/test'
+import { withDetails } from './details'
 
 // the requirement: on a phone the Site list had no backdrop and no way
 // to close it but Escape, it opened about 4,110 px away from the chosen Site, its citation covered
@@ -48,6 +49,9 @@ async function serve(page: Page, options: { holdRegions?: Promise<void> } = {}) 
 }
 
 const trigger = (page: Page) => page.getByRole('button', { name: /^(Site|Local): / })
+// The Site list is a dialog of its own, opened from the drawer of details (a dialog too): name it, so the
+// drawer is never the one a query finds.
+const list = (page: Page, name: string | RegExp = /^(Choose a Site|Escolha o Local)$/) => page.getByRole('dialog', { name })
 const chosen = (page: Page) => page.getByRole('option', { name: /Connecting Ridge CR02/ })
 
 /** The chosen Site is in view, selected, highlighted, and drawn with its check mark. */
@@ -73,9 +77,9 @@ test.describe('on a phone, 390×844', () => {
 
       test(`the list is a full-screen, opaque sheet that closes with its “${close}” button`, async ({ page }) => {
         await serve(page)
-        await page.goto('/?site=CR02')
+        await page.goto(withDetails('/?site=CR02'))
         await trigger(page).click()
-        const sheet = page.getByRole('dialog', { name: title })
+        const sheet = list(page, title)
         await expect(sheet).toBeVisible()
         expect(await sheet.boundingBox()).toEqual({ x: 0, y: 0, width: 390, height: 844 })
         const background = await sheet.evaluate((element) => getComputedStyle(element).backgroundColor)
@@ -85,7 +89,7 @@ test.describe('on a phone, 390×844', () => {
         const button = sheet.getByRole('button', { name: close, exact: true })
         await expect(button).toBeInViewport()
         await button.click()
-        await expect(page.getByRole('dialog')).toHaveCount(0)
+        await expect(sheet).toHaveCount(0)
         await expect(trigger(page)).toBeFocused()
       })
     })
@@ -93,7 +97,7 @@ test.describe('on a phone, 390×844', () => {
 
   test('opens on the chosen Site and marks it', async ({ page }) => {
     await serve(page)
-    await page.goto('/?site=CR02')
+    await page.goto(withDetails('/?site=CR02'))
     await trigger(page).click()
     await expectChosenInView(page)
   })
@@ -104,9 +108,9 @@ test.describe('on a 1920×1080 desktop', () => {
 
   test('opens on the chosen Site and marks it, over a backdrop', async ({ page }) => {
     await serve(page)
-    await page.goto('/?site=CR02')
+    await page.goto(withDetails('/?site=CR02'))
     await trigger(page).click()
-    const dialog = page.getByRole('dialog', { name: 'Choose a Site' })
+    const dialog = list(page, 'Choose a Site')
     await expect(dialog).toBeVisible()
     await expectChosenInView(page)
     expect(await dialog.evaluate((element) => getComputedStyle(element).boxShadow)).not.toBe('none')
@@ -123,31 +127,33 @@ test.describe('on a desktop at the default size', () => {
   // a click on the page no longer closed it (sites.spec.ts, "a click outside closes the list").
   test('Escape, the Close button and a click outside each close it and give the focus back', async ({ page }) => {
     await serve(page)
-    await page.goto('/?site=CR02')
+    await page.goto(withDetails('/?site=CR02'))
 
     await trigger(page).click()
     await expect(page.getByRole('combobox')).toBeFocused()
     await page.keyboard.press('Escape')
-    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(list(page)).toHaveCount(0)
     await expect(trigger(page)).toBeFocused()
 
     await trigger(page).click()
-    await page.getByRole('dialog').getByRole('button', { name: 'Close', exact: true }).click()
-    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await list(page).getByRole('button', { name: 'Close', exact: true }).click()
+    await expect(list(page)).toHaveCount(0)
     await expect(trigger(page)).toBeFocused()
 
+    // A click outside the list but inside the drawer: the bar at the top of the drawer, which is no
+    // control. (A click on the dimmed globe would close the drawer too.)
     await trigger(page).click()
-    await expect(page.getByRole('dialog')).toBeVisible()
-    await page.getByRole('heading', { level: 1 }).click()
-    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(list(page)).toBeVisible()
+    await page.locator('.drawer__bar').click({ position: { x: 5, y: 5 } })
+    await expect(list(page)).toHaveCount(0)
     await expect(trigger(page)).toBeFocused()
   })
 
   test('keeps the Tab key inside the open list', async ({ page }) => {
     await serve(page)
-    await page.goto('/?site=CR02')
+    await page.goto(withDetails('/?site=CR02'))
     await trigger(page).click()
-    const dialog = page.getByRole('dialog')
+    const dialog = list(page)
     await expect(page.getByRole('combobox')).toBeFocused()
     await page.keyboard.press('Shift+Tab')
     await expect(dialog.getByRole('button', { name: 'Close', exact: true })).toBeFocused()
@@ -164,7 +170,7 @@ test.describe('on a desktop at the default size', () => {
 test('the list scroller is reachable by keyboard, so a long list can be scrolled without a mouse', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 600 })
   await serve(page)
-  await page.goto('/?site=CR02')
+  await page.goto(withDetails('/?site=CR02'))
   await trigger(page).click()
   await expect(page.getByRole('combobox')).toBeFocused()
   await page.keyboard.press('Tab')
@@ -176,7 +182,7 @@ test.describe('on a 1920×1080 desktop, the list', () => {
 
   test('keeps its citation at the foot, not over its first row', async ({ page }) => {
     await serve(page)
-    await page.goto('/?site=CR02')
+    await page.goto(withDetails('/?site=CR02'))
     await trigger(page).click()
     const search = (await page.getByRole('combobox').boundingBox())!
     const options = page.getByRole('option')
@@ -199,12 +205,12 @@ test.describe('on a 1920×1080 desktop, the list', () => {
       release = resolve
     })
     await serve(page, { holdRegions })
-    await page.goto('/?site=CR02')
+    await page.goto(withDetails('/?site=CR02'))
     await trigger(page).click()
     await expectChosenInView(page)
     release()
     // The first group of the list, not of the page: at 1920 the form's "Window length" group comes first.
-    await expect(page.getByRole('dialog').getByRole('group').first()).toHaveAccessibleName(/^Haworth/)
+    await expect(list(page).getByRole('group').first()).toHaveAccessibleName(/^Haworth/)
     await expectChosenInView(page)
   })
 })
@@ -217,9 +223,9 @@ test.describe('a bad custom point says its cause and marks its field', () => {
     test(locale, async ({ page }) => {
       await page.setViewportSize({ width: 390, height: 844 })
       await serve(page)
-      await page.goto(`/?lang=${locale.slice(0, 2)}`)
+      await page.goto(withDetails(`/?lang=${locale.slice(0, 2)}`))
       await trigger(page).click()
-      const form = page.getByRole('dialog').locator('form')
+      const form = list(page).locator('form')
       const latitudeField = form.getByRole('textbox', { name: latitude })
       const longitudeField = form.getByRole('textbox', { name: longitude })
       await expect(latitudeField).toHaveAttribute('placeholder', latitudeExample)

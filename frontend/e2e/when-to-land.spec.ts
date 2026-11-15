@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { expect, test, type Page, type Request, type Route } from '@playwright/test'
+import { openDetails, withDetails } from './details'
 
 // the requirement: the day to land and the launch slip, both read from GET /sites/{site_id}/windows.
 // The mock serves one slip answer for every request (Site 001 from the regression fixture, -30 to +150 days),
@@ -95,7 +96,7 @@ test.describe('in English', () => {
   test('the day to land says the best, typical and worst day of the year, as the route ranked them', async ({ page }) => {
     await echoQuery(page)
     const asked = await serveWindows(page)
-    await page.goto('/?site=001&start=2027-03-12&hours=336')
+    await page.goto(withDetails('/?site=001&start=2027-03-12&hours=336'))
 
     const panel = dayPanel(page)
     await expect(panel.getByRole('heading', { name: 'When to land in 2027' })).toBeVisible()
@@ -132,7 +133,7 @@ test.describe('in English', () => {
   test('the slip draws the Query Window started 30 days early to 150 late, and names the best and worst start', async ({ page }) => {
     await echoQuery(page)
     const asked = await serveWindows(page)
-    await page.goto('/?site=001&start=2026-11-14&hours=708.73')
+    await page.goto(withDetails('/?site=001&start=2026-11-14&hours=708.73'))
 
     const panel = slipPanel(page)
     await expect(panel.getByRole('slider', { name: /Start of the Window/ })).toBeVisible()
@@ -148,7 +149,7 @@ test.describe('in English', () => {
     await serveWindows(page)
     // The App writes the link once after it opens, from its own state, which has no tolerance yet:
     // a default the App leaves out tells when that write is done.
-    await page.goto('/?view=orbit')
+    await page.goto(withDetails('/?view=orbit'))
     await expect(page).not.toHaveURL(/view=/)
     const panel = slipPanel(page)
     await expect(panel.getByRole('slider')).toBeVisible()
@@ -170,7 +171,7 @@ test.describe('in English', () => {
   test('clicking a slip makes that Window the Query, and the link keeps it through a reload', async ({ page }) => {
     await echoQuery(page)
     await serveWindows(page)
-    await page.goto('/?site=001&start=2026-11-14&hours=708.73')
+    await page.goto(withDetails('/?site=001&start=2026-11-14&hours=708.73'))
     const best = SLIP.best.start.slice(0, 10)
     await expect(slipPanel(page).getByRole('slider')).toBeVisible()
 
@@ -189,7 +190,7 @@ test.describe('in English', () => {
   test('a day of the calendar and a Window length shortcut change the Query, and the link keeps both', async ({ page }) => {
     await echoQuery(page)
     await serveWindows(page)
-    await page.goto('/?site=001&start=2027-03-12&hours=336')
+    await page.goto(withDetails('/?site=001&start=2027-03-12&hours=336'))
     const panel = dayPanel(page)
     await expect(panel.getByRole('group', { name: /Calendar of 2027/ })).toBeVisible()
 
@@ -223,6 +224,8 @@ test.describe('in English', () => {
     await page.goto('/')
 
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+    // The panels are in the drawer; the headline above them is in the card, closed or not.
+    await openDetails(page)
     await expect(dayPanel(page).getByRole('status')).toHaveText(/^Working out every day of \d{4}\. This can take a minute…$/)
     await expect(slipPanel(page).getByRole('status')).toHaveText('Working out the same Window on 181 start days. This can take a minute…')
 
@@ -240,7 +243,7 @@ test.describe('in English', () => {
       const windows = slip.windows.map(none)
       return route.fulfill({ json: { ...slip, windows, best: windows[0], typical: windows[0], worst: windows[0] } })
     })
-    await page.goto('/')
+    await page.goto(withDetails('/'))
 
     await expect(dayPanel(page).getByText(/^In \d{4} no Window of .+ here has the Sun and the Earth up together/)).toBeVisible()
     await expect(slipPanel(page).getByText(/^From 30 days early to 150 days late, no start day gives this Window/)).toBeVisible()
@@ -255,7 +258,7 @@ test.describe('in English', () => {
       const url = new URL(route.request().url())
       return isYear(url) ? route.fulfill({ json: year(url) }) : route.fallback()
     })
-    await page.goto('/')
+    await page.goto(withDetails('/'))
 
     for (const panel of [dayPanel(page), slipPanel(page)]) {
       await expect(panel.getByRole('alert')).toContainText('The server is busy right now. Try again in a few seconds.')
@@ -290,7 +293,7 @@ test.describe('in English', () => {
       }
       await route.fulfill({ json: body })
     })
-    await page.goto('/?lat=-89.3&lon=120')
+    await page.goto(withDetails('/?lat=-89.3&lon=120'))
 
     for (const panel of [dayPanel(page), slipPanel(page)]) {
       await expect(panel.getByText('Curated Sites only')).toBeVisible()
@@ -303,7 +306,7 @@ test.describe('in English', () => {
   test('at 390 px the calendar turns on its side, and nothing scrolls sideways', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     await serveWindows(page)
-    await page.goto('/')
+    await page.goto(withDetails('/'))
     const grid = dayPanel(page).getByRole('group', { name: /Calendar of/ })
     await expect(grid.getByRole('button').first()).toBeVisible()
     // Months become the columns: a label column plus twelve.
@@ -332,7 +335,7 @@ test.describe('in English', () => {
       seen.observe(document, { childList: true, subtree: true })
     })
     await serveWindows(page)
-    await page.goto('/')
+    await page.goto(withDetails('/'))
     await expect(slipPanel(page).getByRole('slider')).toBeVisible()
     const right = await page.evaluate(() => (window as unknown as { firstReadoutRight: number }).firstReadoutRight)
     expect(right).toBeLessThanOrEqual(390)
@@ -345,7 +348,7 @@ test.describe('in Portuguese', () => {
   test('both panels speak Portuguese, with the glossary terms', async ({ page }) => {
     await echoQuery(page)
     await serveWindows(page)
-    await page.goto('/?site=001&start=2027-03-12&hours=336&lang=pt')
+    await page.goto(withDetails('/?site=001&start=2027-03-12&hours=336&lang=pt'))
 
     await expect(dayPanel(page).getByRole('heading', { name: 'Quando pousar em 2027' })).toBeVisible()
     await expect(dayPanel(page).getByRole('button', { name: /O melhor dia para pousar em 2027/ })).toBeVisible()

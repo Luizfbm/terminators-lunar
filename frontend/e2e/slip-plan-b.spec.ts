@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Route } from '@playwright/test'
+import { withDetails } from './details'
 
 // the requirement: plan B for a launch that slips, read from GET /sites/{site_id}/neighbours.
 // The mock serves one slip answer (Site 001 from the regression fixture) and one neighbours answer (Site 001
@@ -59,7 +60,7 @@ test.describe('in English', () => {
 
   test('a slip that costs nothing says so and asks for no nearby Site', async ({ page }) => {
     const { slip, asked } = await watch(page)
-    await page.goto('/?site=001&start=2026-11-14&hours=708.73')
+    await page.goto(withDetails('/?site=001&start=2026-11-14&hours=708.73'))
     const panel = planB(page)
     await expect(panel).toBeVisible()
     const week = slip.windows.find((w) => w.shift_days === 7)!
@@ -74,7 +75,7 @@ test.describe('in English', () => {
 
   test('the worst late start lists the top three nearby Sites in the route order, with their numbers', async ({ page }) => {
     const { slip, asked, answers } = await watch(page)
-    await page.goto('/?site=001&start=2026-11-14&hours=708.73')
+    await page.goto(withDetails('/?site=001&start=2026-11-14&hours=708.73'))
     const panel = planB(page)
     await expect(panel).toBeVisible()
     const worst = worstLate(slip.windows)
@@ -103,7 +104,7 @@ test.describe('in English', () => {
 
   test('a click makes the nearby Site the chosen Site on the slipped date, and the link keeps it', async ({ page }) => {
     const { slip, answers } = await watch(page)
-    await page.goto('/?site=001&start=2026-11-14&hours=708.73&height=2')
+    await page.goto(withDetails('/?site=001&start=2026-11-14&hours=708.73&height=2'))
     const panel = planB(page)
     await expect(panel).toBeVisible()
     await panel.getByRole('button', { name: `Worst late start (${worstLate(slip.windows).shift_days} days)` }).click()
@@ -134,7 +135,7 @@ test.describe('in English', () => {
         ? route.fulfill({ status: 503, json: { code: 'busy', title: 'Busy', status: 503, type: 'about:blank' } })
         : route.fallback()
     })
-    await page.goto('/?site=001&start=2026-11-14&hours=708.73')
+    await page.goto(withDetails('/?site=001&start=2026-11-14&hours=708.73'))
     const panel = planB(page)
     await expect(panel).toBeVisible()
     await panel.getByRole('button', { name: `Worst late start (${worstLate(slip.windows).shift_days} days)` }).click()
@@ -150,7 +151,7 @@ test.describe('em português', () => {
 
   test('o título e o atraso padrão vêm em português', async ({ page }) => {
     await watch(page)
-    await page.goto('/?site=001&start=2026-11-14&hours=708.73')
+    await page.goto(withDetails('/?site=001&start=2026-11-14&hours=708.73'))
     const panel = planB(page)
     await expect(panel.getByRole('heading', { name: 'Se atrasar, estes Locais vizinhos ainda servem' })).toBeVisible()
     await expect(panel.getByRole('button', { name: '7 dias de atraso' })).toHaveAttribute('aria-pressed', 'true')

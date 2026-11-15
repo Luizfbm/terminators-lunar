@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { EARTH_ANGULAR_RADIUS_DEG, projectedRadiusPx, SUN_ANGULAR_RADIUS_DEG } from '../src/domain/spaceScale'
+import { openDetails, withDetails } from './details'
 import { findOnStage, readGlobe, settle, tipTo, turn, zoomAllTheWay } from './orbit'
 
 // The Prism mock answers every Query with the contract's example: Connecting Ridge CR01, a Window from
@@ -8,7 +9,8 @@ import { findOnStage, readGlobe, settle, tipTo, turn, zoomAllTheWay } from './or
 
 async function open(page: Page, path = '/') {
   await page.goto(path)
-  await expect(page.getByRole('slider', { name: 'Cursor' })).toBeVisible()
+  // By CSS, not by role: a link with details=1 opens with the drawer, and the strip is inert behind it.
+  await expect(page.locator('footer.strip [role="slider"]')).toBeVisible()
 }
 
 test.describe('default Query, English browser', () => {
@@ -24,8 +26,8 @@ test.describe('default Query, English browser', () => {
   })
 
   test('names the Site and the Window, and gives the numbers', async ({ page }) => {
-    // The numbers are inside "Stats for nerds" (the requirement).
-    await open(page, '/?stats=1')
+    // The Query line and the numbers are in the drawer of details, the numbers inside "Stats for nerds" (the requirement).
+    await open(page, withDetails('/?stats=1'))
 
     await expect(page.getByRole('button', { name: /^Site: / })).toHaveText(/CR01/)
     await expect(page.getByLabel('Window start (UTC)')).toHaveValue('2026-11-20')
@@ -76,7 +78,7 @@ test.describe('default Query, English browser', () => {
     await strip.focus()
     await strip.press('Shift+ArrowRight')
     await page.getByRole('button', { name: 'From the ground' }).click()
-    await page.getByRole('button', { name: 'Português' }).click()
+    await page.getByRole('button', { name: 'PT Português' }).click()
     await expect(page).toHaveURL(/t=2026-11-21T12%3A00%3A00Z/)
     await expect(page).toHaveURL(/lang=pt/)
     await expect(page).toHaveURL(/view=ground/)
@@ -109,12 +111,14 @@ test.describe('default Query, Portuguese browser', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('O Sol se põe em 4 h 21 min.')
     await expect(page.getByText(/^20 de nov\., 16:21 UTC, atrás da borda de Shackleton, a 4,6\skm a [a-z]+\.$/)).toBeVisible()
     await expect(page.getByRole('heading', { level: 2 })).toHaveText('A Terra some em 9 d 15 h.')
+    // The note about the time zone belongs to the Query line, which is in the drawer of details.
+    await openDetails(page)
     await expect(page.getByText('horários em UTC')).toBeVisible()
   })
 
   test('the switch changes every string on screen', async ({ page }) => {
     await open(page)
-    await page.getByRole('button', { name: 'English' }).click()
+    await page.getByRole('button', { name: 'EN English' }).click()
 
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('The Sun sets in 4 h 21 min.')
     await expect(page.getByRole('button', { name: 'From orbit' })).toBeVisible()

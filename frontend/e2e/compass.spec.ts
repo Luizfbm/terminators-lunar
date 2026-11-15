@@ -64,7 +64,7 @@ for (const viewport of [
       expect(compass.y).toBeGreaterThan(stage.y + stage.height / 2)
       expect(compass.y + compass.height).toBeLessThanOrEqual(stage.y + stage.height + 0.5)
       expect(compass.width).toBeCloseTo(viewport.width <= 480 ? 60 : 72, 0)
-      for (const other of [page.locator('.sky__turn'), page.locator('.stage__caption'), page.locator('.ground-view__strip'), page.locator('.views'), page.locator('.classroom-open')]) {
+      for (const other of [page.locator('.sky__turn'), page.locator('.stage__caption'), page.locator('.ground-view__strip'), page.locator('.views'), page.locator('.classroom-open'), page.locator('.card')]) {
         if (await other.isVisible()) expect(overlaps(compass, await box(other))).toBe(false)
       }
     })

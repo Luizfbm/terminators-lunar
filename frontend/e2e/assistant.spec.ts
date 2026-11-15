@@ -61,7 +61,7 @@ test.describe('the assistant, English', () => {
 
   test('opens empty with example questions, and the box takes the focus', async ({ page }) => {
     await open(page)
-    const button = page.getByRole('button', { name: 'Ask the assistant' })
+    const button = page.getByRole('button', { name: 'Ask', exact: true })
     await expect(button).toHaveAttribute('aria-expanded', 'false')
     await button.click()
 
@@ -80,7 +80,7 @@ test.describe('the assistant, English', () => {
     page.on('request', (request) => {
       if (request.url().endsWith('/assistant')) bodies.push(request.postDataJSON())
     })
-    await page.getByRole('button', { name: 'Ask the assistant' }).click()
+    await page.getByRole('button', { name: 'Ask', exact: true }).click()
     const dialog = page.getByRole('dialog')
     await dialog.getByRole('button', { name: 'When does the Sun set next here, and what hides it?' }).click()
 
@@ -110,7 +110,7 @@ test.describe('the assistant, English', () => {
   test('waits without looking broken, and says a long answer is normal', async ({ page }) => {
     await open(page)
     const release = await hold(page, { status: 200, contentType: 'application/json', body: JSON.stringify(MODEL_REPLY) })
-    await page.getByRole('button', { name: 'Ask the assistant' }).click()
+    await page.getByRole('button', { name: 'Ask', exact: true }).click()
     const dialog = page.getByRole('dialog')
     await dialog.getByRole('textbox', { name: 'Your question' }).fill('Would March be better?')
     await dialog.getByRole('button', { name: 'Ask', exact: true }).click()
@@ -129,7 +129,7 @@ test.describe('the assistant, English', () => {
   test('flags an untraced number in the text and links each source to its view', async ({ page }) => {
     await open(page)
     await page.route('**/assistant', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MODEL_REPLY) }))
-    await page.getByRole('button', { name: 'Ask the assistant' }).click()
+    await page.getByRole('button', { name: 'Ask', exact: true }).click()
     const dialog = page.getByRole('dialog')
     await dialog.getByRole('textbox', { name: 'Your question' }).fill('Would March be better?')
     await dialog.getByRole('textbox', { name: 'Your question' }).press('Enter')
@@ -150,7 +150,7 @@ test.describe('the assistant, English', () => {
     await expect(page.getByRole('button', { name: 'Stats for nerds' })).toBeFocused()
 
     // The conversation stays while the sheet is closed, and the year's link opens the year panel.
-    await page.getByRole('button', { name: 'Ask the assistant' }).click()
+    await page.getByRole('button', { name: 'Ask', exact: true }).click()
     await dialog.getByRole('link', { name: 'The year at this Site' }).click()
     await expect(page.getByRole('button', { name: 'The year 2026 at this Site' })).toHaveAttribute('aria-expanded', 'true')
   })
@@ -163,7 +163,7 @@ test.describe('the assistant, English', () => {
       if (calls === 1) await route.fulfill(busy(2))
       else await route.continue()
     })
-    await page.getByRole('button', { name: 'Ask the assistant' }).click()
+    await page.getByRole('button', { name: 'Ask', exact: true }).click()
     const dialog = page.getByRole('dialog')
     await dialog.getByRole('textbox', { name: 'Your question' }).fill('When is the next sunset?')
     await dialog.getByRole('textbox', { name: 'Your question' }).press('Enter')
@@ -188,7 +188,7 @@ test.describe('the assistant, English', () => {
       if (calls === 1) await route.abort('connectionrefused')
       else await route.continue()
     })
-    await page.getByRole('button', { name: 'Ask the assistant' }).click()
+    await page.getByRole('button', { name: 'Ask', exact: true }).click()
     const dialog = page.getByRole('dialog')
     await dialog.getByRole('textbox', { name: 'Your question' }).fill('When is the next sunset?')
     await dialog.getByRole('textbox', { name: 'Your question' }).press('Enter')
@@ -202,7 +202,7 @@ test.describe('the assistant, English', () => {
 
   test('keeps the conversation out of the link and out of storage', async ({ page }) => {
     await open(page)
-    await page.getByRole('button', { name: 'Ask the assistant' }).click()
+    await page.getByRole('button', { name: 'Ask', exact: true }).click()
     const dialog = page.getByRole('dialog')
     await dialog.getByRole('textbox', { name: 'Your question' }).fill('A question nobody keeps')
     await dialog.getByRole('textbox', { name: 'Your question' }).press('Enter')
@@ -216,8 +216,8 @@ test.describe('the assistant, English', () => {
 
   test('works with the keyboard alone', async ({ page }) => {
     await open(page)
-    const button = page.getByRole('button', { name: 'Ask the assistant' })
-    for (let presses = 0; presses < 12 && !(await button.evaluate((element) => element === document.activeElement)); presses += 1) {
+    const button = page.getByRole('button', { name: 'Ask', exact: true })
+    for (let presses = 0; presses < 40 && !(await button.evaluate((element) => element === document.activeElement)); presses += 1) {
       await page.keyboard.press('Tab')
     }
     await expect(button).toBeFocused()
@@ -240,7 +240,7 @@ test.describe('the assistant, English', () => {
   test('is on the Proof page too', async ({ page }) => {
     await page.goto('/?page=proof')
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-    await page.getByRole('button', { name: 'Ask the assistant' }).click()
+    await page.getByRole('button', { name: 'Ask', exact: true }).click()
     await expect(page.getByRole('dialog')).toBeVisible()
   })
 })
@@ -261,7 +261,7 @@ test.describe('the assistant, Portuguese', () => {
         body: JSON.stringify({ ...MODEL_REPLY, answer: 'Em março de 2027 este Local tem 412 horas com o Sol e a Terra juntos, contra 310 nesta Janela.' }),
       }),
     )
-    await page.getByRole('button', { name: 'Perguntar ao assistente' }).click()
+    await page.getByRole('button', { name: 'Ask', exact: true }).click()
     const dialog = page.getByRole('dialog', { name: 'Pergunte sobre esta Consulta' })
     await expect(dialog.getByRole('list', { name: 'Experimente uma destas' }).getByRole('button')).toHaveCount(4)
     await dialog.getByRole('button', { name: 'Qual mês do ano é o melhor neste Local?' }).click()
@@ -276,7 +276,7 @@ test.describe('the assistant, Portuguese', () => {
   test('busy in Portuguese', async ({ page }) => {
     await open(page)
     await page.route('**/assistant', (route) => route.fulfill(busy(9)))
-    await page.getByRole('button', { name: 'Perguntar ao assistente' }).click()
+    await page.getByRole('button', { name: 'Ask', exact: true }).click()
     const dialog = page.getByRole('dialog')
     await dialog.getByRole('textbox', { name: 'Sua pergunta' }).fill('Quando é o próximo pôr do Sol?')
     await dialog.getByRole('textbox', { name: 'Sua pergunta' }).press('Enter')
@@ -288,17 +288,15 @@ test.describe('the assistant on a phone', () => {
   test.use({ locale: 'en-GB', viewport: { width: 390, height: 844 } })
 
   // the requirement: it floated over the answer before, and covered the headline and the custom point's Check.
-  test('the button sits in the timeline, and the sheet takes the whole screen', async ({ page }) => {
+  // It is an item of the globe's menu now, which folds behind a button on a phone.
+  test('the button is in the folded menu, and the sheet takes the whole screen', async ({ page }) => {
     await open(page)
-    const button = page.locator('footer.strip').getByRole('button', { name: 'Ask the assistant' })
+    const toggle = page.getByRole('button', { name: 'Menu', exact: true })
+    await toggle.click()
+    const button = page.getByRole('button', { name: 'Ask', exact: true })
     await expect(button).toBeInViewport()
     const box = await button.boundingBox()
-    const strip = await page.locator('footer.strip').boundingBox()
-    expect(box && strip && box.y >= strip.y && box.y + box.height <= strip.y + strip.height).toBe(true)
-    expect(box && box.x + box.width <= 390).toBe(true)
-    // The timeline is pinned, so the button stays at hand while the answer scrolls.
-    await page.mouse.wheel(0, 600)
-    await expect(button).toBeInViewport()
+    expect(box && box.x >= 0 && box.x + box.width <= 390).toBe(true)
 
     await button.click()
     const dialog = page.getByRole('dialog')

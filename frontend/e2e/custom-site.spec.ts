@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Route } from '@playwright/test'
+import { openDetails, withDetails } from './details'
 
 // the requirement: a custom Site is a latitude and a longitude typed at the foot of the Site list. The mock
 // always answers for one Curated Site; these tests put the asked coordinate into the answer, the way
@@ -60,7 +61,8 @@ test.describe('in English', () => {
 
   test('a typed coordinate is asked, named on screen and carried by the link', async ({ page }) => {
     const asked = await serve(page)
-    await page.goto('/')
+    // The Site list is in the drawer of details, so the page opens with it open.
+    await page.goto(withDetails('/'))
     await expect(trigger(page)).toHaveAccessibleName(/^Site: Connecting Ridge/)
 
     // From the keyboard: the search, then Tab on to the coordinate fields; the list stays open.
@@ -80,7 +82,8 @@ test.describe('in English', () => {
 
     await expect(trigger(page)).toHaveAccessibleName('Site: Your Site at 89.5° S, 10.25° E')
     await expect(trigger(page)).toBeFocused()
-    await expect(page).toHaveURL(/\?lat=-89\.5&lon=10\.25$/)
+    // The drawer is open, so the link carries details=1 after the Site.
+    await expect(page).toHaveURL(/\?lat=-89\.5&lon=10\.25&details=1$/)
     expect(asked.at(-1)).toEqual({ site_id: null, latitude_deg: '-89.5', longitude_deg: '10.25' })
 
     // Open again: the fields hold the point, and the list no longer marks a Curated Site as chosen.
@@ -98,14 +101,14 @@ test.describe('in English', () => {
 
   test('a copied link reopens the same custom Site', async ({ page }) => {
     const asked = await serve(page)
-    await page.goto('/?lat=-88.125&lon=-120.5')
+    await page.goto(withDetails('/?lat=-88.125&lon=-120.5'))
     await expect(trigger(page)).toHaveAccessibleName('Site: Your Site at 88.13° S, 120.5° W')
     expect(asked[0]).toEqual({ site_id: null, latitude_deg: '-88.125', longitude_deg: '-120.5' })
   })
 
   test('a point north of 80° S is refused in the list, before anything is asked', async ({ page }) => {
     const asked = await serve(page)
-    await page.goto('/')
+    await page.goto(withDetails('/'))
     await trigger(page).click()
     await form(page).getByRole('textbox', { name: 'Latitude' }).fill('-75')
     await form(page).getByRole('textbox', { name: 'Longitude' }).fill('10')
@@ -128,7 +131,7 @@ test.describe('in English', () => {
       return route.fallback()
     })
     // The ladder is inside "Stats for nerds" (the requirement).
-    await page.goto('/?lat=-89.5&lon=10&stats=1')
+    await page.goto(withDetails('/?lat=-89.5&lon=10&stats=1'))
     await expect(trigger(page)).toHaveAccessibleName('Site: Your Site at 89.5° S, 10° E')
     await page.getByRole('button', { name: 'How much does the map’s detail change this answer?' }).click()
     await expect.poll(() => ladder.length).toBe(1)
@@ -146,6 +149,8 @@ test.describe('in English', () => {
     await page.goto('/?lat=-89.5&lon=10')
     await expect(page.getByRole('status').filter({ hasText: 'Computing the horizon at this point' })).toBeVisible()
     release()
+    // The Site's name is in the drawer, which has nothing in it until the answer arrives.
+    await openDetails(page)
     await expect(trigger(page)).toHaveAccessibleName('Site: Your Site at 89.5° S, 10° E')
   })
 })
@@ -159,6 +164,7 @@ test.describe('em português', () => {
     const alert = page.getByRole('alert')
     await expect(alert).toContainText('Esse ponto fica ao norte de 80° S')
     await alert.getByRole('button', { name: 'Voltar ao Local padrão' }).click()
+    await openDetails(page)
     await expect(trigger(page)).toHaveAccessibleName(/^Local: Connecting Ridge/)
     await expect(page).not.toHaveURL(/lat=/)
   })
@@ -170,7 +176,7 @@ test.describe('on a phone', () => {
   test('the coordinate fields fit on the screen', async ({ page }) => {
     // the requirement: the list is now a full-screen sheet over the time strip, so the fields only need the screen.
     await serve(page)
-    await page.goto('/')
+    await page.goto(withDetails('/'))
     await trigger(page).click()
     const ask = await form(page).getByRole('button', { name: 'Check' }).boundingBox()
     expect(ask).not.toBeNull()

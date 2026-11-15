@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { expect, test, type Page, type Route } from '@playwright/test'
+import { closeDetails, openDetails, withDetails } from './details'
 
 const example = (name: string) => JSON.parse(readFileSync(new URL(`../../contract/examples/${name}`, import.meta.url), 'utf8'))
 const scatterExample = example('visibility-scatter-001.example.json')
@@ -20,8 +21,9 @@ const json = (value: unknown) => ({ status: 200, contentType: 'application/json'
 
 const panel = (page: Page) => page.getByRole('region', { name: /^(If the lander misses|Se o módulo errar o alvo)$/ })
 
+// The panel is in the drawer of details, so the page opens with it open; the headline is in the card.
 async function open(page: Page, path = '/') {
-  await page.goto(path)
+  await page.goto(withDetails(path))
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 }
 
@@ -184,12 +186,15 @@ test.describe('in English', () => {
     await expect.poll(() => radii.at(-1)).toBe('500')
     await expect(miss.getByText(/500\sm is twice the IM-2 miss\./)).toBeVisible()
 
-    // The App rewrites the link when its own state changes; the radius stays.
+    // The App rewrites the link when its own state changes; the radius stays. The view buttons are
+    // outside the drawer, which is modal while open, so it closes first (and the link drops details).
+    await closeDetails(page)
     await page.getByRole('button', { name: 'Map', exact: true }).click()
     await expect(page).toHaveURL(/view=map/)
     await expect(page).toHaveURL(/[?&]radius=500(&|$)/)
 
     await page.reload()
+    await openDetails(page)
     await expect(panel(page).getByRole('button', { name: '500 m' })).toHaveAttribute('aria-pressed', 'true')
     await expect.poll(() => radii.at(-1)).toBe('500')
 

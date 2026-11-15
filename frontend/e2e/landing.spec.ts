@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { withDetails } from './details'
 
 // the requirement: a way in to the IM-2 Athena landing, and a note at that Site saying what the map
 // cannot see. The mock always answers for its example Site, so the Site that was asked is put
@@ -21,7 +22,8 @@ const note = (page: Page) => page.locator('.landing-note')
 
 test('the line under the numbers opens the IM-2 landing, where a note says what the map cannot see', async ({ page }) => {
   await serve(page)
-  await page.goto('/?lang=en')
+  // The line, the note and the numbers are in the drawer of details.
+  await page.goto(withDetails('/?lang=en'))
   const link = entry(page, 'A real landing: IM-2 Athena, March 2025')
   await expect(link).toBeVisible()
   await expect(note(page)).toHaveCount(0)
@@ -30,6 +32,8 @@ test('the line under the numbers opens the IM-2 landing, where a note says what 
   expect(Object.fromEntries(href.searchParams)).toEqual({ site: 'IM2', lang: 'en', start: '2025-03-06', hours: '48' })
 
   const asked = page.waitForRequest((request) => new URL(request.url()).searchParams.get('site_id') === 'IM2')
+  // Scrolled away from the top of the drawer, as a visitor reaches it.
+  await link.scrollIntoViewIfNeeded()
   await link.click()
   const query = new URL((await asked).url()).searchParams
   expect(query.get('start')).toBe('2025-03-06T00:00:00Z')
@@ -38,8 +42,11 @@ test('the line under the numbers opens the IM-2 landing, where a note says what 
   await expect(note(page)).toHaveText(
     'A real landing. Athena came down here on 6 March 2025 and the mission ended 12 h 45 min later. The Sun was up the whole time: the lander tipped over inside a crater about 20 m across, smaller than this map can see, with its panels facing away from the Sun. Source: NASA, LROC.',
   )
-  // The link sits under the numbers, and the new answer is read from its first line.
+  // The link sits under the numbers, and the new answer is read from its first line: the headline on the
+  // card, and the top of the drawer, which scrolls back up to the Query line.
   await expect(page.getByRole('heading', { level: 1 })).toBeInViewport()
+  await expect(page.locator('.drawer .where')).toBeInViewport()
+  expect(await page.locator('.drawer__body').evaluate((body) => body.scrollTop)).toBe(0)
   // At the landing itself there is nowhere else to send the visitor.
   await expect(link).toHaveCount(0)
   await expect(page).toHaveURL(/site=IM2/)
@@ -49,7 +56,7 @@ test('the line under the numbers opens the IM-2 landing, where a note says what 
 
 test('in Portuguese the line and the note are in Portuguese', async ({ page }) => {
   await serve(page)
-  await page.goto('/?lang=pt')
+  await page.goto(withDetails('/?lang=pt'))
   await entry(page, 'Um pouso real: IM-2 Athena, março de 2025').click()
   await expect(note(page)).toHaveText(
     'Um pouso real. O Athena desceu aqui em 6 de março de 2025 e a missão acabou 12 h 45 min depois. O Sol ficou visível o tempo todo: o módulo tombou numa cratera de uns 20 m, menor do que este mapa enxerga, com os painéis de costas para o Sol. Fonte: NASA, LROC.',
@@ -58,7 +65,7 @@ test('in Portuguese the line and the note are in Portuguese', async ({ page }) =
 
 test('a link straight to the landing shows the note', async ({ page }) => {
   await serve(page)
-  await page.goto('/?site=IM2&start=2025-03-06&hours=48&lang=en')
+  await page.goto(withDetails('/?site=IM2&start=2025-03-06&hours=48&lang=en'))
   await expect(note(page)).toBeVisible()
   await expect(entry(page, 'A real landing: IM-2 Athena, March 2025')).toHaveCount(0)
 })

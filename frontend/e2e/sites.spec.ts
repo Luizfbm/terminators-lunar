@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Route } from '@playwright/test'
+import { withDetails } from './details'
 
 // the requirement: the Site picker is a searchable list grouped by Region. The mock only has a couple
 // of Sites, so these tests serve their own list, and answer /visibility for whichever Site was asked.
@@ -52,7 +53,7 @@ test.use({ locale: 'en-GB' })
 
 test('groups the Sites by Region, marks NASA’s nine, and keeps off-pole landers apart', async ({ page }) => {
   await serve(page)
-  await page.goto('/')
+  await page.goto(withDetails('/'))
   await trigger(page).click()
 
   const groups = list(page).getByRole('group')
@@ -67,7 +68,7 @@ test('groups the Sites by Region, marks NASA’s nine, and keeps off-pole lander
 
 test('search filters by name or code, and says so when nothing matches', async ({ page }) => {
   await serve(page)
-  await page.goto('/')
+  await page.goto(withDetails('/'))
   await trigger(page).click()
 
   await search(page).fill('hw01')
@@ -80,7 +81,7 @@ test('search filters by name or code, and says so when nothing matches', async (
 
 test('works from the keyboard: arrow opens, arrows move, Enter picks, Escape closes', async ({ page }) => {
   await serve(page)
-  await page.goto('/')
+  await page.goto(withDetails('/'))
   await expect(trigger(page)).toHaveAccessibleName('Site: Connecting Ridge CR01')
 
   await trigger(page).focus()
@@ -106,10 +107,11 @@ test('works from the keyboard: arrow opens, arrows move, Enter picks, Escape clo
 
 test('a click outside closes the list', async ({ page }) => {
   await serve(page)
-  await page.goto('/')
+  await page.goto(withDetails('/'))
   await trigger(page).click()
   await expect(list(page)).toBeVisible()
-  await page.getByRole('heading', { level: 1 }).click()
+  // Outside the list, inside the drawer: its bar, which is no control. (A click on the dimmed globe would close the drawer too.)
+  await page.locator('.drawer__bar').click({ position: { x: 5, y: 5 } })
   await expect(list(page)).toHaveCount(0)
 })
 
@@ -119,7 +121,7 @@ test('shows the chosen Site while the list of Sites is still on its way', async 
     release = resolve
   })
   await serve(page, { holdSites })
-  await page.goto('/')
+  await page.goto(withDetails('/'))
   await trigger(page).click()
   await expect(list(page).getByRole('option')).toHaveText([/^Connecting Ridge CR01/])
   await expect(page.getByText('Loading the other Sites…')).toBeVisible()
@@ -130,7 +132,7 @@ test('shows the chosen Site while the list of Sites is still on its way', async 
 test('follows a Site chosen elsewhere, as the globe and the link do', async ({ page }) => {
   // The globe calls the same setter as the link; a click on the 3D canvas has no stable target.
   await serve(page)
-  await page.goto('/?site=CH3')
+  await page.goto(withDetails('/?site=CH3'))
   await expect(trigger(page)).toHaveAccessibleName('Site: Chandrayaan-3 (Shiv Shakti)')
   await trigger(page).click()
   await expect(list(page).getByRole('option', { selected: true })).toHaveText(/^Chandrayaan-3/)
@@ -143,7 +145,7 @@ test.describe('on a phone', () => {
   test('the open list covers the whole screen, with no sideways scroll', async ({ page }) => {
     // the requirement: it used to be a box above the time strip, with the page showing around it.
     await serve(page)
-    await page.goto('/')
+    await page.goto(withDetails('/'))
     await trigger(page).click()
     const box = await page.locator('.site-list').boundingBox()
     expect(box).toEqual({ x: 0, y: 0, width: 390, height: 844 })
