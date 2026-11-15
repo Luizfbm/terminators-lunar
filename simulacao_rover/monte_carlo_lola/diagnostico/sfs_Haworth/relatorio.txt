@@ -1,0 +1,20 @@
+Sítio Haworth × SfS (Bertone et al., PGDA #104) — recorte central 10 × 10 km, partida 60 m
+Células com SfS confiável (incerteza de altura < 0.5 m): 97.0%; com disparo LOLA: 13.9%
+Diferença de altura SfS − LOLA: mediana -0.02 m, |dif.| mediano 0.37 m
+
+--- COM disparo (checagem: SfS × LOLA medido): 534,162 células; perigo pelo SfS (> 15°): 4.4%
+   Grade 60 m                         |erro| mediano  1.12° · perigo NÃO vetado  63.9% · falso alarme   0.6%
+   Mapa LOLA 5 m oficial              |erro| mediano  1.25° · perigo NÃO vetado  46.1% · falso alarme   2.7%
+   Tese (sem margem)                  |erro| mediano  1.14° · perigo NÃO vetado  52.8% · falso alarme   1.7%
+   Tese P90 (margem por densidade)    |erro| mediano  1.14° · perigo NÃO vetado  23.8% · falso alarme   6.5%
+
+--- SEM disparo (a pergunta: células interpoladas): 3,315,163 células; perigo pelo SfS (> 15°): 5.1%
+   Grade 60 m                         |erro| mediano  1.14° · perigo NÃO vetado  63.6% · falso alarme   0.7%
+   Mapa LOLA 5 m oficial              |erro| mediano  1.19° · perigo NÃO vetado  42.7% · falso alarme   2.8%
+   Tese (sem margem)                  |erro| mediano  1.27° · perigo NÃO vetado  44.8% · falso alarme   3.0%
+   Tese P90 (margem por densidade)    |erro| mediano  1.27° · perigo NÃO vetado  15.0% · falso alarme  13.2%
+
+--- Curvas de troca nas células SEM disparo (perigo não vetado com o falso alarme fixado):
+   Grade 60 m, margem uniforme              FA 5% → 27.1% · FA 10% → 16.8% · FA 15% → 12.5% · FA 20% → 10.3% · FA 25% →  8.9% · FA 30% →  7.8%
+   Mapa LOLA 5 m oficial, margem uniforme   FA 5% → 29.0% · FA 10% → 15.8% · FA 15% → 10.3% · FA 20% →  7.6% · FA 25% →  6.0% · FA 30% →  4.8%
+   Tese, margem por densidade               FA 5% → 32.3% · FA 10% → 19.1% · FA 15% → 13.4% · FA 20% → 10.4% · FA 25% →  8.4% · FA 30% →  7.0%

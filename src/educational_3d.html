@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador Educativo 3D — Lunar Lander Polo Sul (NASA Space Apps)</title>
+  <style>
+    :root {
+      --bg: #07090E;
+      --panel-bg: rgba(18, 24, 38, 0.90);
+      --border: #2D3748;
+      --text: #F7FAFC;
+      --text-muted: #94A3B8;
+      --primary: #0070F3;
+      --accent-sun: #FFB020;
+      --accent-earth: #00D2FF;
+      --danger: #EF4444;
+      --warning: #F59E0B;
+      --success: #10B981;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); }
+
+    /* Container 3D em Tela Cheia */
+    #webgl-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+
+    /* Painel de Controles Flutuante à Esquerda */
+    .controls-panel {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 340px;
+      max-height: calc(100vh - 40px);
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      z-index: 10;
+      overflow-y: auto;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+    }
+
+    /* Painel de Métricas Flutuante no Topo à Direita */
+    .telemetry-panel {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 290px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      z-index: 10;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+    }
+
+    h1 { font-size: 1.15rem; color: #fff; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    .subtitle { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+
+    .control-item { margin-bottom: 14px; }
+    .control-item label { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; font-weight: 500; }
+    .control-item label span.val { color: #fff; font-weight: 700; }
+
+    input[type="range"] {
+      width: 100%; height: 5px; border-radius: 4px; background: #2D3748; outline: none; -webkit-appearance: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); cursor: pointer;
+    }
+
+    select {
+      width: 100%; padding: 8px 10px; background: #0F172A; border: 1px solid var(--border); color: #fff; border-radius: 6px; font-size: 0.82rem; outline: none; cursor: pointer;
+    }
+
+    /* Botoes de Cenarios Educativos */
+    .scenario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .btn-scenario {
+      background: #1E293B; border: 1px solid #334155; color: #E2E8F0; padding: 7px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: 0.2s; text-align: center;
+    }
+    .btn-scenario:hover { background: #334155; border-color: var(--primary); }
+
+    /* Cards de Telemetria */
+    .metric-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 0.8rem; }
+    .metric-row .lbl { color: var(--text-muted); }
+    .metric-row .val { font-weight: 700; font-size: 0.95rem; }
+
+    /* Botao de Passagem Rapida do Tempo */
+    .btn-timewarp {
+      width: 100%;
+      background: linear-gradient(135deg, #0070F3, #10B981);
+      color: #fff;
+      padding: 9px 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: 0.2s;
+    }
+    .btn-timewarp:hover { filter: brightness(1.15); transform: translateY(-1px); }
+    .btn-timewarp.active { background: linear-gradient(135deg, #EF4444, #F59E0B); }
+
+    /* Barra de Irradiância */
+    .irradiance-track { width: 100%; height: 10px; background: #1E293B; border-radius: 5px; overflow: hidden; margin-top: 4px; }
+    .irradiance-fill { height: 100%; width: 95%; background: linear-gradient(90deg, #F59E0B, #FFD700); transition: width 0.15s; }
+
+    /* Barra de Bateria */
+    .battery-track { width: 100%; height: 12px; background: #1E293B; border-radius: 6px; overflow: hidden; margin-top: 4px; }
+    .battery-fill { height: 100%; width: 85%; background: var(--success); transition: width 0.3s; }
+
+    /* Alerta de Tombamento */
+    #toppleWarning {
+      display: none;
+      background: rgba(239, 68, 68, 0.25);
+      border: 1px solid var(--danger);
+      color: #FCA5A5;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-align: center;
+      margin-top: 10px;
+      animation: pulse 1s infinite alternate;
+    }
+
+    /* Dica de Navegacao 3D */
+    .nav-hint {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.75);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      z-index: 10;
+      pointer-events: none;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    @keyframes pulse { from { opacity: 0.7; } to { opacity: 1; } }
+  </style>
+
+  <!-- Bibliotecas Three.js e OrbitControls (com Fallback local e CDN) -->
+  <script src="js/three.min.js"></script>
+  <script>
+    if (typeof THREE === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
+    }
+  </script>
+  <script src="js/OrbitControls.js"></script>
+  <script>
+    if (typeof THREE !== 'undefined' && typeof THREE.OrbitControls === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"><\/script>');
+    }
+  </script>
+</head>
+<body>
+
+  <div id="webgl-container"></div>
+
+  <!-- PAINEL DE CONTROLES ESQUERDA -->
+  <div class="controls-panel">
+    <h1>🚀 Lander Lunar 3D</h1>
+    <div class="subtitle">Laboratório Didático Interativo — Polo Sul</div>
+
+    <!-- 1. DECLIVIDADE -->
+    <div class="control-item">
+      <label>
+        <span>Declividade do Solo (Slope):</span>
+        <span class="val" id="slopeVal">4.0°</span>
+      </label>
+      <input type="range" id="slopeSlider" min="0" max="25" step="0.5" value="4" oninput="atualizarSlope(this.value)">
+      <div id="toppleWarning">⚠️ ALERTA: RISCO CRÍTICO DE TOMBAMENTO (&gt;10°)</div>
+    </div>
+
+    <!-- 2. GEOMETRIA DO PAINEL -->
+    <div class="control-item">
+      <label><span>Geometria do Painel Solar:</span></label>
+      <select id="solarSelect" onchange="atualizarPainel()">
+        <option value="horizontal">Horizontal (Deitado no Teto - Ineficiente)</option>
+        <option value="vertical_fixed">Vertical Fixo (Na Lateral)</option>
+        <option value="vertical_tracking" selected>Vertical com Rastreador 360° (Ideal)</option>
+      </select>
+    </div>
+
+    <!-- 3. ALTURA DO MASTRO -->
+    <div class="control-item">
+      <label>
+        <span>Altura do Mastro / Painel:</span>
+        <span class="val" id="mastVal">2.0 m</span>
+      </label>
+      <input type="range" id="mastSlider" min="0" max="6" step="0.2" value="2" oninput="atualizarMastro(this.value)">
+    </div>
+
+    <!-- 4. CONSUMO BASE DA NAVE (AVIÔNICA + AQUECIMENTO) -->
+    <div class="control-item">
+      <label>
+        <span>Consumo Base da Nave (Carga):</span>
+        <span class="val" id="consumoVal">150 W</span>
+      </label>
+      <input type="range" id="consumoSlider" min="50" max="400" step="10" value="150" oninput="atualizarConsumo(this.value)">
+      <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted); margin-top:2px;">
+        <span>50W (Modo Hibernação)</span>
+        <span>150W (Nominal)</span>
+        <span>400W (Ciência Total)</span>
+      </div>
+    </div>
+
+    <!-- 5. AZIMUTE SOLAR -->
+    <div class="control-item">
+      <label>
+        <span>Posição do Sol (Azimute 360°):</span>
+        <span class="val" id="sunAzVal">120°</span>
+      </label>
+      <input type="range" id="sunAzSlider" min="0" max="360" value="120" oninput="atualizarSol(this.value)">
+    </div>
+
+    <!-- 5. ELEVACAO SOLAR -->
+    <div class="control-item">
+      <label>
+        <span>Elevação Solar (Polo: 0° a 2°):</span>
+        <span class="val" id="sunElVal">1.5°</span>
+      </label>
+      <input type="range" id="sunElSlider" min="-1" max="5" step="0.1" value="1.5" oninput="atualizarElevacao(this.value)">
+    </div>
+
+    <!-- BOTÃO DE PASSAGEM RÁPIDA DO TEMPO (SIMULAÇÃO DINÂMICA) -->
+    <div style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 12px;">
+      <button id="btnTimeWarp" class="btn-timewarp" onclick="alternarPassagemTempo()">
+        <span id="warpIcon">▶️</span> <span id="warpText">Iniciar Passagem Rápida do Tempo (24h)</span>
+      </button>
+      <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 5px; text-align: center;">
+        Simula a rotação solar de 360°, a oscilação da Terra e o rastreamento automático do painel.
+      </div>
+    </div>
+
+    <!-- CENARIOS DE AULA -->
+    <div style="margin-top: 15px;">
+      <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Cenários de Sala de Aula</span>
+      <div class="scenario-grid">
+        <button class="btn-scenario" onclick="carregarCenario('athena')">💥 IM-2 Athena (Tombamento)</button>
+        <button class="btn-scenario" onclick="carregarCenario('artemis')">🌟 Artemis III (Sucesso)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAINEL DE TELEMETRIA DIREITA -->
+  <div class="telemetry-panel">
+    <div style="font-size: 0.85rem; font-weight: 700; color: #fff; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 6px;">
+      📊 Telemetria Instantânea
+    </div>
+
+    <div class="metric-row">
+      <span class="lbl">Geração Fotovoltaica:</span>
+      <span class="val" id="potenciaVal" style="color:var(--accent-sun);">816 W</span>
+    </div>
+
+    <div class="metric-row">
+      <span class="lbl">Fator de Incidência:</span>
+      <span class="val" id="fatorVal">99.8%</span>
+    </div>
+
+    <div class="metric-row">
+      <span class="lbl">Link com a Terra (DTE):</span>
+      <span class="val" id="commsVal" style="color:var(--accent-earth);">● 100 Mbps (Ativo)</span>
+    </div>
+
+    <div class="metric-row">
+      <span class="lbl">Estabilidade Estrutural:</span>
+      <span class="val" id="estabilidadeVal" style="color:var(--success);">Estável</span>
+    </div>
+
+    <!-- BARRA DO NÍVEL DE IRRADIÂNCIA SOLAR -->
+    <div style="margin-top: 10px;">
+      <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+        <span class="lbl">Nível de Irradiância (Fluxo):</span>
+        <span id="irradianceVal" style="font-weight:700; color:var(--accent-sun);">1358 W/m² (100%)</span>
+      </div>
+      <div class="irradiance-track">
+        <div class="irradiance-fill" id="irradianceFill"></div>
+      </div>
+    </div>
+
+    <!-- BARRA DA TAXA DE CARREGAMENTO LÍQUIDO DA BATERIA -->
+    <div style="margin-top: 10px;">
+      <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+        <span class="lbl">Taxa Líquida (Geração - Consumo):</span>
+        <span id="taxaBateriaVal" style="font-weight:700; color:var(--success);">+666 W (Carregando)</span>
+      </div>
+      <div class="battery-track">
+        <div class="battery-fill" id="taxaFill" style="width: 80%; background: var(--success);"></div>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:0.68rem; color:var(--text-muted); margin-top:2px;">
+        <span>-400W (Drenando)</span>
+        <span>0W (Neutro)</span>
+        <span>+800W (Carga Máx)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-hint">🖱️ Clique com botão esquerdo e arraste para girar em 360° | Scroll para zoom</div>
+
+  <script>
+    // -------------------------------------------------------------
+    // MOTOR THREE.JS (CENA, CAMERA, RENDERIZADOR)
+    // -------------------------------------------------------------
+    const container = document.getElementById('webgl-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x05070B);
+    scene.fog = new THREE.FogExp2(0x05070B, 0.015);
+
+    // Campo de visão amplo e câmera elevada para visualização panorâmica do relevo
+    const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(18, 9, 22);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxPolarAngle = Math.PI / 2 - 0.02; // Impede a câmera de ir abaixo do chão
+    controls.target.set(0, 1.5, 0);
+
+    // -------------------------------------------------------------
+    // ILUMINACAO CIENTIFICA DO POLO SUL
+    // -------------------------------------------------------------
+    // Luz ambiente fria fraca (luz estelar e earthshine)
+    const ambientLight = new THREE.AmbientLight(0x223344, 0.4);
+    scene.add(ambientLight);
+
+    const dist = 32; // Distância ideal no campo de visão da câmera
+    const sunLight = new THREE.DirectionalLight(0xFFE8B0, 2.5);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.camera.near = 0.5;
+    sunLight.shadow.camera.far = 100;
+    const d = 20;
+    sunLight.shadow.camera.left = -d;
+    sunLight.shadow.camera.right = d;
+    sunLight.shadow.camera.top = d;
+    sunLight.shadow.camera.bottom = -d;
+    scene.add(sunLight);
+
+    // Linha Visual do Feixe Solar (Guia Amarelo)
+    const sunBeamMat = new THREE.LineBasicMaterial({ color: 0xF59E0B, transparent: true, opacity: 0.35 });
+    const sunBeamGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(30, 1, 0)]);
+    const sunBeam = new THREE.Line(sunBeamGeo, sunBeamMat);
+    scene.add(sunBeam);
+
+    // DISCO VISÍVEL DO SOL NO CÉU (BRILHO DOURADO REAL)
+    const sunDiscGeo = new THREE.SphereGeometry(1.6, 32, 32);
+    const sunDiscMat = new THREE.MeshBasicMaterial({ color: 0xFFD700 });
+    const sunMesh = new THREE.Mesh(sunDiscGeo, sunDiscMat);
+    scene.add(sunMesh);
+
+    // Halo / Brilho Externo ao redor do Sol
+    const sunGlowGeo = new THREE.SphereGeometry(2.8, 32, 32);
+    const sunGlowMat = new THREE.MeshBasicMaterial({ color: 0xF59E0B, transparent: true, opacity: 0.35 });
+    const sunGlow = new THREE.Mesh(sunGlowGeo, sunGlowMat);
+    sunMesh.add(sunGlow);
+
+    // Representação Visual da Terra no Céu
+    const earthGeo = new THREE.SphereGeometry(1.5, 32, 32);
+    const earthMat = new THREE.MeshBasicMaterial({ color: 0x00A8FF });
+    const earthMesh = new THREE.Mesh(earthGeo, earthMat);
+    earthMesh.position.set(-25, 4.0, 15);
+    scene.add(earthMesh);
+
+    // Feixe de Comunicação Rádio (Azul para a Terra)
+    const commsMat = new THREE.LineDashedMaterial({ color: 0x00D2FF, dashSize: 0.8, gapSize: 0.4 });
+    const commsGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 3, 0), earthMesh.position]);
+    const commsLine = new THREE.Line(commsGeo, commsMat);
+    commsLine.computeLineDistances();
+    scene.add(commsLine);
+
+    // -------------------------------------------------------------
+    // CRIAÇÃO DO TERRENO LUNAR TOPOGRÁFICO REALISTA (COM CRATERAS E MONTANHAS)
+    // -------------------------------------------------------------
+    const groundGroup = new THREE.Group();
+    scene.add(groundGroup);
+
+    // Malha de alta resolução para modelar crateras e bordas montanhosas do Polo Sul
+    const terrainGeo = new THREE.PlaneGeometry(120, 120, 128, 128);
+    const pos = terrainGeo.attributes.position;
+
+    // Definição procedural de crateras de impacto e cordilheiras montanhosas ao fundo
+    const crateras = [
+      { x: -15, y: 12, r: 10, prof: 2.8, borda: 1.1 },   // Cratera grande próxima (estilo Shackleton)
+      { x: 18, y: -16, r: 7, prof: 1.8, borda: 0.7 },    // Cratera média lateral
+      { x: 5, y: -22, r: 5, prof: 1.4, borda: 0.5 },     // Cratera menor
+      { x: -25, y: -20, r: 8, prof: 2.2, borda: 0.8 }
+    ];
+
+    for (let i = 0; i < pos.count; i++) {
+      let vx = pos.getX(i);
+      let vy = pos.getY(i);
+      let distCentro = Math.sqrt(vx*vx + vy*vy);
+
+      let h = 0.0;
+
+      // 1. Zona plana segura para o trem de pouso do lander (raio de 3.5m)
+      if (distCentro > 3.5) {
+        // Esculpir as crateras
+        for (let c of crateras) {
+          let dx = vx - c.x;
+          let dy = vy - c.y;
+          let d = Math.sqrt(dx*dx + dy*dy);
+          if (d < c.r) {
+            // Interior da cratera: depressão parabólica profunda
+            let normD = d / c.r;
+            h -= c.prof * (1.0 - normD * normD);
+          } else if (d < c.r * 1.35) {
+            // Borda elevada da cratera (Rim)
+            let bordaNorm = (d - c.r) / (c.r * 0.35);
+            h += c.borda * Math.sin(bordaNorm * Math.PI);
+          }
+        }
+
+        // 2. Grandes maciços e montanhas no horizonte distante (relevo polar acidentado)
+        if (distCentro > 25) {
+          let ang = Math.atan2(vy, vx);
+          h += 2.2 * Math.sin(ang * 3.0) + 1.8 * Math.cos(ang * 5.0) + 1.2 * Math.sin(ang * 2.0);
+        }
+
+        // 3. Rugosidade natural do regolito lunar (poeira e micro-relevo)
+        h += 0.15 * Math.sin(vx * 1.5) * Math.cos(vy * 1.5);
+        h += 0.08 * Math.sin(vx * 4.0 + vy * 3.0);
+      }
+
+      pos.setZ(i, h);
+    }
+    terrainGeo.computeVertexNormals();
+
+    const terrainMat = new THREE.MeshStandardMaterial({
+      color: 0x6E7785,
+      roughness: 0.96,
+      metalness: 0.04,
+      flatShading: false
+    });
+    const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
+    terrainMesh.rotation.x = -Math.PI / 2;
+    terrainMesh.receiveShadow = true;
+    groundGroup.add(terrainMesh);
+
+    // Rochas lunares espalhadas pelo cenário
+    const rockGeo = new THREE.DodecahedronGeometry(0.35, 1);
+    const rockMat = new THREE.MeshStandardMaterial({ color: 0x4B5563, roughness: 0.9 });
+    const posRochas = [
+      { x: 3.2, z: 2.1, s: 1.2 }, { x: -2.8, z: 3.5, s: 0.9 },
+      { x: -4.5, z: -2.2, s: 1.5 }, { x: 5.1, z: -3.8, s: 1.1 },
+      { x: -8.0, z: 6.0, s: 2.2 }, { x: 12.0, z: 8.0, s: 3.0 }
+    ];
+    for (let r of posRochas) {
+      let rock = new THREE.Mesh(rockGeo, rockMat);
+      rock.position.set(r.x, 0.2 * r.s, r.z);
+      rock.scale.set(r.s, r.s * 0.8, r.s);
+      rock.rotation.set(Math.random(), Math.random(), Math.random());
+      rock.castShadow = true;
+      rock.receiveShadow = true;
+      groundGroup.add(rock);
+    }
+
+    // -------------------------------------------------------------
+    // MODELAGEM 3D DO LANDER LUNAR ARTEMIS / CLPS
+    // -------------------------------------------------------------
+    const landerGroup = new THREE.Group();
+    groundGroup.add(landerGroup);
+
+    // 1. Corpo Central / Chassi (Octogonal Dourado MLI)
+    const bodyGeo = new THREE.CylinderGeometry(1.4, 1.6, 1.8, 8);
+    const goldMat = new THREE.MeshStandardMaterial({
+      color: 0xD4AF37,
+      metalness: 0.85,
+      roughness: 0.25
+    });
+    const bodyMesh = new THREE.Mesh(bodyGeo, goldMat);
+    bodyMesh.position.y = 1.6;
+    bodyMesh.castShadow = true;
+    bodyMesh.receiveShadow = true;
+    landerGroup.add(bodyMesh);
+
+    // 2. Tanques Esféricos de Propelente
+    const tankGeo = new THREE.SphereGeometry(0.45, 16, 16);
+    const tankMat = new THREE.MeshStandardMaterial({ color: 0xE2E8F0, metalness: 0.6, roughness: 0.3 });
+    for (let i = 0; i < 4; i++) {
+      let angle = (i * Math.PI) / 2 + Math.PI / 4;
+      let tm = new THREE.Mesh(tankGeo, tankMat);
+      tm.position.set(Math.cos(angle) * 1.35, 1.6, Math.sin(angle) * 1.35);
+      tm.castShadow = true;
+      landerGroup.add(tm);
+    }
+
+    // 3. Quatro Patas de Pouso (Pernas com Amortecedores e Sapatas)
+    const legMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.5, roughness: 0.5 });
+    const footMat = new THREE.MeshStandardMaterial({ color: 0xD4AF37, metalness: 0.7, roughness: 0.3 });
+
+    for (let i = 0; i < 4; i++) {
+      let angle = (i * Math.PI) / 2;
+      let legPivot = new THREE.Group();
+      legPivot.rotation.y = angle;
+
+      // Haste primária oblíqua
+      let strutGeo = new THREE.CylinderGeometry(0.06, 0.06, 2.2);
+      let strut = new THREE.Mesh(strutGeo, legMat);
+      strut.position.set(1.4, 0.8, 0);
+      strut.rotation.z = -Math.PI / 4;
+      strut.castShadow = true;
+      legPivot.add(strut);
+
+      // Sapata plana
+      let footGeo = new THREE.CylinderGeometry(0.35, 0.4, 0.1, 12);
+      let foot = new THREE.Mesh(footGeo, footMat);
+      foot.position.set(2.2, 0.05, 0);
+      foot.castShadow = true;
+      foot.receiveShadow = true;
+      legPivot.add(foot);
+
+      landerGroup.add(legPivot);
+    }
+
+    // 4. Mastro Central Elevável e Painel Solar
+    const mastGroup = new THREE.Group();
+    mastGroup.position.set(0, 2.5, 0);
+    landerGroup.add(mastGroup);
+
+    // Barra telescópica do mastro
+    const mastGeo = new THREE.CylinderGeometry(0.07, 0.07, 2.0);
+    const mastMesh = new THREE.Mesh(mastGeo, legMat);
+    mastMesh.position.y = 1.0;
+    mastGroup.add(mastMesh);
+
+    // Conjunto do Painel Solar (com rotação independente)
+    const solarAssembly = new THREE.Group();
+    solarAssembly.position.y = 2.0;
+    mastGroup.add(solarAssembly);
+
+    const panelGeo = new THREE.BoxGeometry(0.06, 1.6, 1.2);
+    const panelMat = new THREE.MeshStandardMaterial({
+      color: 0x0A2540,
+      roughness: 0.2,
+      metalness: 0.8
+    });
+    const panelMesh = new THREE.Mesh(panelGeo, panelMat);
+    panelMesh.castShadow = true;
+    solarAssembly.add(panelMesh);
+
+    // -------------------------------------------------------------
+    // CONTROLE DE ESTADO E ATUALIZACAO EM TEMPO REAL
+    // -------------------------------------------------------------
+    let estado = {
+      slopeDeg: 4.0,
+      mastHeight: 2.0,
+      sunAz: 120.0,
+      sunEl: 1.5,
+      solarGeometry: "vertical_tracking"
+    };
+
+    function atualizarSlope(val) {
+      estado.slopeDeg = parseFloat(val);
+      document.getElementById('slopeVal').innerText = `${estado.slopeDeg.toFixed(1)}°`;
+      
+      // Inclina o terreno inteiro no eixo Z
+      groundGroup.rotation.z = THREE.MathUtils.degToRad(estado.slopeDeg);
+
+      // Verificacao de Seguranca / Risco de Tombamento
+      const warn = document.getElementById('toppleWarning');
+      const estab = document.getElementById('estabilidadeVal');
+      if (estado.slopeDeg > 10.0) {
+        warn.style.display = 'block';
+        estab.innerText = '⚠️ CRÍTICO (Tombamento)';
+        estab.style.color = 'var(--danger)';
+      } else {
+        warn.style.display = 'none';
+        estab.innerText = 'Estável';
+        estab.style.color = 'var(--success)';
+      }
+      recalcularFisica();
+    }
+
+    function atualizarMastro(val) {
+      estado.mastHeight = parseFloat(val);
+      document.getElementById('mastVal').innerText = `${estado.mastHeight.toFixed(1)} m`;
+
+      // Escala e desloca o mastro visualmente
+      mastMesh.scale.y = estado.mastHeight / 2.0;
+      mastMesh.position.y = estado.mastHeight / 2.0;
+      solarAssembly.position.y = estado.mastHeight;
+      recalcularFisica();
+    }
+
+    function atualizarSol(val) {
+      estado.sunAz = parseFloat(val);
+      document.getElementById('sunAzVal').innerText = `${estado.sunAz.toFixed(0)}°`;
+      atualizarLuzSolar();
+      recalcularFisica();
+    }
+
+    function atualizarElevacao(val) {
+      estado.sunEl = parseFloat(val);
+      document.getElementById('sunElVal').innerText = `${estado.sunEl.toFixed(1)}°`;
+      atualizarLuzSolar();
+      recalcularFisica();
+    }
+
+    function atualizarPainel() {
+      estado.solarGeometry = document.getElementById('solarSelect').value;
+      recalcularFisica();
+    }
+
+    function atualizarLuzSolar() {
+      // Posiciona a luz direcional com base em azimute e elevacao
+      const dist = 35;
+      const phi = THREE.MathUtils.degToRad(estado.sunAz);
+      const theta = THREE.MathUtils.degToRad(estado.sunEl);
+
+      const x = dist * Math.cos(theta) * Math.sin(phi);
+      const y = Math.max(0.2, dist * Math.sin(theta));
+      const z = dist * Math.cos(theta) * Math.cos(phi);
+
+      sunLight.position.set(x, y, z);
+      sunLight.target.position.set(0, 1.5, 0);
+      sunLight.target.updateMatrixWorld();
+
+      // Atualiza a posição da esfera física visível do Sol no horizonte
+      if (typeof sunMesh !== 'undefined') {
+        sunMesh.position.set(x, y, z);
+        // Se estiver abaixo do horizonte (<0), reduz opacidade para simular pôr do sol
+        if (estado.sunEl <= 0) {
+          sunMesh.visible = false;
+        } else {
+          sunMesh.visible = true;
+        }
+      }
+
+      // Atualiza linha guia amarela
+      const pts = [new THREE.Vector3(0, 2, 0), new THREE.Vector3(x, y, z)];
+      sunBeam.geometry.setFromPoints(pts);
+    }
+
+    // -------------------------------------------------------------
+    // FUNÇÃO CANÔNICA DE RAY-MARCHING / MÁSCARA DE HORIZONTE TOPOGRÁFICA
+    // Calcula a elevação angular real do relevo na direção do azimute solar (Gläser et al., 2018)
+    // -------------------------------------------------------------
+    function obterElevacaoHorizonteTopografico(azimuteDeg, alturaMastro) {
+      const phi = THREE.MathUtils.degToRad(azimuteDeg);
+      // Alinhamento exato com a rotação do terreno (X = sin(phi), Y_local = -cos(phi))
+      const dirX = Math.sin(phi);
+      const dirY = -Math.cos(phi);
+
+      let maxAnguloDeg = -90.0;
+      const zOrigem = 1.6 + alturaMastro; // Altura do topo do painel em relação ao solo
+
+      // Amostra o relevo ao longo do raio de visada de 2m até 52m
+      for (let dist = 2.0; dist <= 52.0; dist += 1.0) {
+        let vx = dist * dirX;
+        let vy = dist * dirY;
+        let distCentro = Math.sqrt(vx * vx + vy * vy);
+
+        let hTerreno = 0.0;
+        if (distCentro > 3.0) {
+          // Efeito das crateras e bordas elevadas
+          for (let c of crateras) {
+            let dx = vx - c.x;
+            let dy = vy - c.y;
+            let d = Math.sqrt(dx * dx + dy * dy);
+            if (d < c.r) {
+              let normD = d / c.r;
+              hTerreno -= c.prof * (1.0 - normD * normD);
+            } else if (d < c.r * 1.35) {
+              let bordaNorm = (d - c.r) / (c.r * 0.35);
+              hTerreno += c.borda * Math.sin(bordaNorm * Math.PI);
+            }
+          }
+
+          // Efeito das montanhas e maciços no horizonte distante
+          if (distCentro > 18) {
+            let ang = Math.atan2(vy, vx);
+            hTerreno += 2.2 * Math.sin(ang * 3.0) + 1.8 * Math.cos(ang * 5.0) + 1.2 * Math.sin(ang * 2.0);
+          }
+
+          // Rugosidade de regolito
+          hTerreno += 0.15 * Math.sin(vx * 1.5) * Math.cos(vy * 1.5);
+        }
+
+        // Ângulo subtendido pelo relevo em relação ao mastro do painel
+        let deltaZ = hTerreno - zOrigem;
+        let anguloDeg = THREE.MathUtils.radToDeg(Math.atan2(deltaZ, dist));
+        if (anguloDeg > maxAnguloDeg) {
+          maxAnguloDeg = anguloDeg;
+        }
+      }
+
+      return maxAnguloDeg;
+    }
+
+    function recalcularFisica() {
+      const theta = THREE.MathUtils.degToRad(estado.sunEl);
+      const phi = THREE.MathUtils.degToRad(estado.sunAz);
+
+      // CÁLCULO CRÍTICO DE OCLUSÃO PELO RELEVO (MÁSCARA DE HORIZONTE REAL)
+      const elevacaoCriticaRelevo = obterElevacaoHorizonteTopografico(estado.sunAz, estado.mastHeight);
+      const raioAngularSol = 0.27; // Raio aparente do Sol
+
+      let fracaoSolVisivel = 0.0;
+      let emSombraRelevo = false;
+
+      if (estado.sunEl >= elevacaoCriticaRelevo + raioAngularSol) {
+        // Sol 100% acima da montanha
+        fracaoSolVisivel = 1.0;
+      } else if (estado.sunEl <= elevacaoCriticaRelevo - raioAngularSol) {
+        // Sol totalmente atrás da montanha (Sombra total)
+        fracaoSolVisivel = 0.0;
+        emSombraRelevo = true;
+      } else {
+        // Penumbra / Limbo cortado pela montanha
+        fracaoSolVisivel = (estado.sunEl - (elevacaoCriticaRelevo - raioAngularSol)) / (2.0 * raioAngularSol);
+        fracaoSolVisivel = Math.max(0.0, Math.min(1.0, fracaoSolVisivel));
+        if (fracaoSolVisivel < 0.2) emSombraRelevo = true;
+      }
+
+      let fator = 0.0;
+      let rotPainelY = 0.0;
+      let rotPainelX = 0.0;
+
+      if (fracaoSolVisivel > 0.0) {
+        if (estado.solarGeometry === "horizontal") {
+          // Deitado no teto: fator e sen(elevacao)
+          fator = Math.sin(theta) * fracaoSolVisivel;
+          rotPainelX = Math.PI / 2; // Deita o painel plano
+        } else if (estado.solarGeometry === "vertical_tracking") {
+          // Gira o mastro para apontar exatamente para o azimute do Sol
+          fator = Math.cos(theta) * fracaoSolVisivel;
+          rotPainelY = phi - Math.PI / 2;
+          rotPainelX = 0;
+        } else if (estado.solarGeometry === "vertical_fixed") {
+          // Fixo a 0 deg (Norte/0° Azimute)
+          fator = Math.max(0.0, Math.cos(theta) * Math.cos(phi)) * fracaoSolVisivel;
+          rotPainelY = 0;
+          rotPainelX = 0;
+        }
+      }
+
+      solarAssembly.rotation.y = rotPainelY;
+      solarAssembly.rotation.x = rotPainelX;
+
+      // Potencia em Watts (base de 2 m² e 30% eficiencia = ~816W max)
+      const potencia = 816.0 * fator;
+      document.getElementById('potenciaVal').innerText = `${potencia.toFixed(0)} W`;
+      
+      const fatorElem = document.getElementById('fatorVal');
+      if (emSombraRelevo) {
+        fatorElem.innerText = `0.0% (Ocultado pelo Relevo a ${elevacaoCriticaRelevo.toFixed(1)}°)`;
+        fatorElem.style.color = 'var(--danger)';
+      } else {
+        fatorElem.innerText = `${(fator * 100).toFixed(1)}%`;
+        fatorElem.style.color = '#fff';
+      }
+
+      // Atualiza a Barra de Irradiância Direta (Fluxo Solar sobre o Painel)
+      const irradFill = document.getElementById('irradianceFill');
+      const irradVal = document.getElementById('irradianceVal');
+      const fluxoWm2 = 1361.0 * fator;
+      if (irradFill && irradVal) {
+        irradFill.style.width = `${(fator * 100).toFixed(0)}%`;
+        if (emSombraRelevo) {
+          irradVal.innerText = `0 W/m² (Bloqueio Topográfico)`;
+          irradVal.style.color = 'var(--danger)';
+        } else {
+          irradVal.innerText = `${fluxoWm2.toFixed(0)} W/m² (${(fator * 100).toFixed(0)}%)`;
+          irradVal.style.color = 'var(--accent-sun)';
+        }
+      }
+
+      // Link com a Terra (DTE): depende da elevação e da declividade do terreno
+      const commsVal = document.getElementById('commsVal');
+      if (commsVal) {
+        if (estado.slopeDeg > 15.0) {
+          commsVal.innerText = '⚠️ Desalinhado (Perda DTE)';
+          commsVal.style.color = 'var(--danger)';
+        } else if (estado.sunEl < -0.5) {
+          commsVal.innerText = '● 10 Mbps (Modo Baixo Ganho)';
+          commsVal.style.color = 'var(--warning)';
+        } else {
+          commsVal.innerText = '● 100 Mbps (Ativo)';
+          commsVal.style.color = 'var(--accent-earth)';
+        }
+      }
+      const taxaWatts = potencia - consumoNaveWatts;
+      estado.taxaWatts = taxaWatts;
+
+      const taxaFill = document.getElementById('taxaFill');
+      const taxaVal = document.getElementById('taxaBateriaVal');
+
+      if (taxaFill && taxaVal) {
+        if (taxaWatts >= 0) {
+          // Carregando: de 0W a 800W mapeado em 50% a 100% da barra
+          const perc = 50 + (taxaWatts / 800.0) * 50;
+          taxaFill.style.width = `${Math.min(100, perc)}%`;
+          taxaFill.style.background = 'var(--success)';
+          taxaVal.innerText = `+${taxaWatts.toFixed(0)} W (⚡ Carregando)`;
+          taxaVal.style.color = 'var(--success)';
+        } else {
+          // Drenando na sombra: de -400W a 0W mapeado em 0% a 50% da barra
+          const perc = 50 + (taxaWatts / 400.0) * 50;
+          taxaFill.style.width = `${Math.max(5, perc)}%`;
+          taxaFill.style.background = 'var(--danger)';
+          taxaVal.innerText = `${taxaWatts.toFixed(0)} W (❄️ Drenando no Frio)`;
+          taxaVal.style.color = 'var(--danger)';
+        }
+      }
+    }
+
+    let consumoNaveWatts = 150.0;
+
+    function atualizarConsumo(val) {
+      consumoNaveWatts = parseFloat(val);
+      document.getElementById('consumoVal').innerText = `${consumoNaveWatts.toFixed(0)} W`;
+      recalcularFisica();
+    }
+
+    let timeWarpAtivo = false;
+
+    function alternarPassagemTempo() {
+      timeWarpAtivo = !timeWarpAtivo;
+      const btn = document.getElementById('btnTimeWarp');
+      const icon = document.getElementById('warpIcon');
+      const txt = document.getElementById('warpText');
+
+      if (timeWarpAtivo) {
+        btn.classList.add('active');
+        icon.innerText = '⏸️';
+        txt.innerText = 'Pausar Passagem Rápida';
+      } else {
+        btn.classList.remove('active');
+        icon.innerText = '▶️';
+        txt.innerText = 'Iniciar Passagem Rápida do Tempo (24h)';
+      }
+    }
+
+    let nivelBateriaReal = 85.0;
+
+    function ajustarBateriaManual(val) {
+      nivelBateriaReal = parseFloat(val);
+      document.getElementById('batterySliderVal').innerText = `${nivelBateriaReal.toFixed(0)}%`;
+      atualizarInterfaceBateria();
+    }
+
+    function atualizarInterfaceBateria() {
+      const fill = document.getElementById('batteryFill');
+      const valBat = document.getElementById('bateriaVal');
+      const slider = document.getElementById('batterySlider');
+      const sliderVal = document.getElementById('batterySliderVal');
+
+      nivelBateriaReal = Math.max(0, Math.min(100, nivelBateriaReal));
+      fill.style.width = `${nivelBateriaReal}%`;
+      slider.value = nivelBateriaReal;
+      sliderVal.innerText = `${nivelBateriaReal.toFixed(0)}%`;
+
+      if (nivelBateriaReal > 50) {
+        fill.style.background = 'var(--success)';
+        valBat.style.color = '#fff';
+      } else if (nivelBateriaReal > 20) {
+        fill.style.background = 'var(--warning)';
+        valBat.style.color = 'var(--warning)';
+      } else {
+        fill.style.background = 'var(--danger)';
+        valBat.style.color = 'var(--danger)';
+      }
+
+      if (estado.taxaBateria > 0) {
+        valBat.innerText = `${nivelBateriaReal.toFixed(0)}% (⚡ Carregando +${estado.taxaBateria.toFixed(1)}%/s)`;
+      } else {
+        valBat.innerText = `${nivelBateriaReal.toFixed(0)}% (❄️ Drenando ${estado.taxaBateria.toFixed(1)}%/s)`;
+      }
+    }
+
+    function carregarCenario(tipo) {
+      if (tipo === 'athena') {
+        document.getElementById('slopeSlider').value = 13.5;
+        document.getElementById('solarSelect').value = 'horizontal';
+        document.getElementById('sunElSlider').value = -0.4;
+        document.getElementById('consumoSlider').value = 220;
+        atualizarConsumo(220);
+        atualizarSlope(13.5);
+        atualizarPainel();
+        atualizarElevacao(-0.4);
+      } else if (tipo === 'artemis') {
+        document.getElementById('slopeSlider').value = 3.0;
+        document.getElementById('solarSelect').value = 'vertical_tracking';
+        document.getElementById('mastSlider').value = 3.0;
+        document.getElementById('sunElSlider').value = 1.6;
+        document.getElementById('consumoSlider').value = 120;
+        atualizarConsumo(120);
+        atualizarSlope(3.0);
+        atualizarMastro(3.0);
+        atualizarPainel();
+        atualizarElevacao(1.6);
+      }
+    }
+
+    // Loop de Animacao
+    let lastTime = performance.now();
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+
+      // Atualização contínua em tempo real da bateria pela física (carga vs descarga)
+      const now = performance.now();
+      const dt = (now - lastTime) / 1000.0;
+      lastTime = now;
+
+      // PASSAGEM RÁPIDA DO TEMPO (TIME WARP DINÂMICO)
+      if (timeWarpAtivo) {
+        // O Sol gira em azimute a 15 graus por segundo no modo acelerado
+        estado.sunAz = (estado.sunAz + 14.0 * dt) % 360;
+        // O Sol oscila suavemente em elevação (efeito sazonal acelerado)
+        estado.sunEl = 1.3 + Math.sin(estado.sunAz * Math.PI / 180) * 0.8;
+
+        // Atualiza os sliders na interface para acompanhar a animação
+        document.getElementById('sunAzSlider').value = estado.sunAz;
+        document.getElementById('sunAzVal').innerText = `${estado.sunAz.toFixed(0)}°`;
+        document.getElementById('sunElSlider').value = estado.sunEl;
+        document.getElementById('sunElVal').innerText = `${estado.sunEl.toFixed(1)}°`;
+
+        // A Terra oscila em órbita de libração
+        const tempoTerra = now * 0.0015;
+        earthMesh.position.x = -25 + Math.cos(tempoTerra) * 5.0;
+        earthMesh.position.z = 15 + Math.sin(tempoTerra) * 4.0;
+        earthMesh.position.y = 4.0 + Math.sin(tempoTerra * 1.5) * 1.2;
+
+        // Atualiza a linha de visada rádio com a Terra
+        commsLine.geometry.setFromPoints([new THREE.Vector3(0, 3, 0), earthMesh.position]);
+        commsLine.computeLineDistances();
+
+        atualizarLuzSolar();
+        recalcularFisica();
+      }
+
+      if (estado.taxaBateria !== undefined) {
+        nivelBateriaReal += estado.taxaBateria * dt * 3.5; // acelerador para efeito didático
+        atualizarInterfaceBateria();
+      }
+
+      // Efeito pulsante suave na Terra e no feixe de comunicacao
+      const time = Date.now() * 0.002;
+      earthMesh.position.y = 4.0 + Math.sin(time) * 0.15; // Simula libração
+
+      renderer.render(scene, camera);
+    }
+
+    // Responsividade
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Inicializacao
+    atualizarLuzSolar();
+    recalcularFisica();
+    animate();
+  </script>
+</body>
+</html>

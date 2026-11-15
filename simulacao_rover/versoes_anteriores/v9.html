@@ -1,0 +1,1912 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tese: Sombras Dinâmicas de Relevo + Neuroevolução (60 Rovers) — Multirresolução O(1)</title>
+  <style>
+    :root {
+      --background: #0b1120; --card: #111a2e; --border: #23314d; --foreground: #e6edf7;
+      --muted: #93a3bd; --primary: #38bdf8; --primary-fg: #03131f; --secondary: #1a2540;
+      --red: #ef4444; --green: #10b981; --amber: #f59e0b; --sky: #38bdf8;
+    }
+    html.light {
+      --background: #eef2f7; --card: #ffffff; --border: #d5dde8; --foreground: #0f172a;
+      --muted: #52627a; --primary: #0284c7; --primary-fg: #ffffff; --secondary: #e8eef6;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--background); color: var(--foreground);
+      font: 13px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+    .wrap { max-width: 1320px; margin: 0 auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; box-shadow: 0 1px 2px rgba(0,0,0,.15); }
+    .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .between { justify-content: space-between; }
+    .col { display: flex; flex-direction: column; gap: 8px; }
+    h1 { font-size: 15px; margin: 0; font-weight: 700; }
+    h2 { font-size: 13.5px; margin: 0; font-weight: 700; }
+    .sub { font-size: 12px; color: var(--muted); margin: 2px 0 0; }
+    .lbl { font-size: 12px; font-weight: 600; color: var(--muted); }
+    .btn { font: inherit; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px; cursor: pointer;
+      background: var(--secondary); color: var(--foreground); border: 1px solid var(--border); white-space: nowrap; }
+    .btn:hover { filter: brightness(1.08); }
+    .btn.on, .btn.primary { background: var(--primary); color: var(--primary-fg); border-color: transparent; }
+    .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    .seg .btn { border: 0; border-radius: 0; padding: 3px 9px; }
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid; white-space: nowrap; }
+    .b-red { color: var(--red); background: rgba(239,68,68,.12); border-color: rgba(239,68,68,.35); }
+    .b-green { color: var(--green); background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.35); }
+    .b-amber { color: var(--amber); background: rgba(245,158,11,.13); border-color: rgba(245,158,11,.35); }
+    .b-sky { color: var(--sky); background: rgba(56,189,248,.12); border-color: rgba(56,189,248,.35); }
+    .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 1050px) { .grid2 { grid-template-columns: 1fr; } }
+    .cv { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    canvas { display: block; width: 100%; height: auto; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+    @media (max-width: 760px) { .kpis { grid-template-columns: repeat(3, 1fr); } .metrics { grid-template-columns: repeat(2, 1fr); } }
+    .metric { background: var(--background); border: 1px solid var(--border); border-radius: 7px; padding: 5px 8px; min-width: 0; }
+    .metric .k { font-size: 11.5px; color: var(--muted); }
+    .metric .v { font-size: 12.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .kpis .metric .v { font-size: 15px; }
+    .note { border-radius: 8px; padding: 8px 10px; font-size: 12px; }
+    .note p { margin: 3px 0 0; }
+    .note.red { background: rgba(239,68,68,.05); border: 1px solid rgba(239,68,68,.22); }
+    .note.green { background: rgba(16,185,129,.05); border: 1px solid rgba(16,185,129,.22); }
+    .note .t { font-weight: 700; }
+    code { font-size: 11.5px; background: var(--secondary); padding: 0 4px; border-radius: 4px; }
+    input[type=range] { accent-color: var(--primary); }
+    .explain { font-size: 12px; color: var(--muted); min-height: 36px; }
+    .explain strong { color: var(--foreground); }
+    .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 11.5px; color: var(--muted); }
+    .legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .sw { width: 12px; height: 10px; border-radius: 2px; display: inline-block; }
+    table.causas { width: 100%; border-collapse: collapse; font-size: 12px; }
+    table.causas td, table.causas th { padding: 3px 6px; border-bottom: 1px solid var(--border); text-align: left; }
+    table.causas th { color: var(--muted); font-weight: 600; }
+    table.causas td.n { text-align: right; font-variant-numeric: tabular-nums; }
+    .pesos { display: grid; grid-template-columns: 170px 1fr 44px 70px; gap: 4px 10px; align-items: center; font-size: 12px; }
+    .pesos .val { font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+    .pesos .elite { color: var(--muted); font-size: 11.5px; text-align: right; }
+    .pesos input[type=range] { width: 100%; }
+    .pesos input:disabled { opacity: .45; }
+    .formula { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; background: var(--secondary); padding: 6px 10px; border-radius: 6px; }
+    table.spec { width: 100%; border-collapse: collapse; font-size: 12px; }
+    table.spec td { padding: 3px 6px; border-bottom: 1px solid var(--border); }
+    table.spec td.n { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ CABEÇALHO: controles + Sol ============ -->
+  <header class="card">
+    <div class="row between">
+      <div>
+        <h1>Mesmo Terreno, Mesmo Sol (1,54°), Mesmo Equipamento: 60 Rovers com a Grade 60 m vs. 60 Rovers com a Tese</h1>
+        <p class="sub">As sombras nascem dos relevos reais conforme o Sol gira no horizonte. Os rovers consultam um mapa de sombras <strong>pré-calculado por azimute</strong> (custo O(1) por consulta) e a geração seguinte herda os melhores cérebros.</p>
+      </div>
+      <div class="row">
+        <span id="sunReadout" class="badge b-amber">☀ Az 0° · Elev 1,54°</span>
+        <button id="btnPlay" class="btn primary">⏸ Pausar</button>
+        <button id="btnNextGen" class="btn">+1 Geração</button>
+        <button id="btnTurbo" class="btn">⚡ Turbo +5</button>
+        <button id="btnReset" class="btn">↺ Reiniciar</button>
+        <button id="btnXray" class="btn">🔍 Raio-X 5 m: OFF</button>
+        <button id="btnTheme" class="btn" title="Alternar tema claro/escuro">◐</button>
+      </div>
+    </div>
+    <div class="row between" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+      <div class="row">
+        <span class="lbl">Confiança (Tese):</span>
+        <div class="seg" id="segConf">
+          <button class="btn" data-conf="P50">P50</button><button class="btn on" data-conf="P90">P90</button><button class="btn" data-conf="P99">P99</button>
+        </div>
+        <span class="lbl">Modelo do rover (A e B):</span>
+        <div class="seg" id="segModelo">
+          <button class="btn on" data-modelo="padrao">Padrão</button><button class="btn" data-modelo="leve">Leve</button><button class="btn" data-modelo="autonomia">Autonomia</button><button class="btn" data-modelo="escalador">Escalador</button><button class="btn" data-modelo="viper">VIPER calibrado</button>
+        </div>
+        <span class="lbl">Cérebro do Rover B:</span>
+        <div class="seg" id="segModo">
+          <button class="btn" data-modo="regra">Regra fixa</button><button class="btn on" data-modo="ia">IA MLP + Escudo</button><button class="btn" data-modo="merito">Mérito (Marcato) + Escudo</button>
+        </div>
+        <span class="lbl">Câmera de perigo (A e B):</span>
+        <div class="seg" id="segCam">
+          <button class="btn on" data-cam="ok">Funcionando</button><button class="btn" data-cam="degradada">Degradada</button><button class="btn" data-cam="danificada">Danificada</button>
+        </div>
+        <span class="lbl">Custo da hibernação:</span>
+        <div class="seg" id="segHib">
+          <button class="btn on" data-hib="0">Grátis (só tempo)</button><button class="btn" data-hib="1">Real (máx. 50 h no escuro)</button>
+        </div>
+        <span class="lbl">Previsão de sombra do B:</span>
+        <div class="seg" id="segPrev">
+          <button class="btn" data-prev="b60">60 m bruto</button><button class="btn on" data-prev="t60">Tese 60→5 m</button><button class="btn" data-prev="b20">20 m bruto</button><button class="btn" data-prev="t20">Tese 20→5 m</button><button class="btn" data-prev="real">Real (oráculo)</button>
+        </div>
+        <span class="lbl">Rotas:</span>
+        <div class="seg" id="segRotas">
+          <button class="btn" data-rotas="1">1 fixa</button><button class="btn on" data-rotas="4">4 candidatas (planejadas)</button>
+        </div>
+        <span class="lbl">Mapa:</span>
+        <div class="seg" id="segMapa">
+          <button class="btn" data-mapa="estatico">Fixo (demo)</button><button class="btn on" data-mapa="dinamico">Longo e aleatório</button>
+        </div>
+      </div>
+      <div class="row">
+        <span class="lbl">Mutação:</span>
+        <div class="seg" id="segMut">
+          <button class="btn" data-mut="0.12">Lenta</button><button class="btn on" data-mut="0.25">Média</button><button class="btn" data-mut="0.45">Rápida</button>
+        </div>
+        <span class="lbl">Velocidade:</span>
+        <div class="seg" id="segVel">
+          <button class="btn" data-vel="0.5">0,5×</button><button class="btn on" data-vel="1">1×</button><button class="btn" data-vel="3">3×</button><button class="btn" data-vel="6">6×</button>
+        </div>
+        <label class="lbl" for="sunSlider">Sol:</label>
+        <input id="sunSlider" type="range" min="0" max="359" step="1" value="0" style="width:110px" />
+        <button id="btnAutoSun" class="btn on">Auto</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ KPIs ============ -->
+  <section class="kpis">
+    <div class="metric"><div class="k">Geração</div><div id="kGen" class="v">1</div></div>
+    <div class="metric"><div class="k">Tempo da travessia</div><div id="kTempo" class="v">0 s</div></div>
+    <div class="metric"><div class="k">Rovers A vivos</div><div id="kAliveA" class="v" style="color:var(--red)">60 / 60</div></div>
+    <div class="metric"><div class="k">Rovers B vivos</div><div id="kAliveB" class="v" style="color:var(--green)">60 / 60</div></div>
+    <div class="metric"><div class="k">Obstáculos superados (A · B)</div><div id="kMeta" class="v">0 · 0</div></div>
+    <div class="metric"><div class="k">Vetos do Escudo</div><div id="kVetos" class="v">0</div></div>
+  </section>
+
+  <!-- ============ DOIS MAPAS DE SOMBRA LADO A LADO ============ -->
+  <div class="grid2">
+    <section class="card col">
+      <div class="row between">
+        <div class="row"><span class="dot" style="background:var(--red)"></span><h2>1. Sem a Tese: Grade 60 m + Câmera + Reflexo (60 rovers)</h2></div>
+        <span id="badgeA" class="badge b-red">Calculando...</span>
+      </div>
+      <div class="cv"><canvas id="cvA" width="1200" height="660"></canvas></div>
+      <div class="metrics">
+        <div class="metric"><div class="k">Avanço do líder</div><div id="mA1" class="v">0 m</div></div>
+        <div class="metric"><div class="k">Bateria do líder</div><div id="mA2" class="v">—</div></div>
+        <div class="metric"><div class="k">Certeza do relevo</div><div id="mA3" class="v" style="color:var(--amber)">Baixa (60 m)</div></div>
+        <div class="metric"><div class="k">Principal falha</div><div id="mA4" class="v" style="color:var(--red)">—</div></div>
+      </div>
+      <div class="note red">
+        <div class="t" style="color:var(--red)">Limitações (Deslocamento em Tempo Real &amp; Rotas):</div>
+        <p>• <strong>Mesmo equipamento do B:</strong> mesma velocidade, câmera de perigo e reflexo da IMU (para e recua quando a inclinação salta). Só falta a tese.</p>
+        <p>• <strong>Alisamento 60 m/px:</strong> o plano não vê microcrateras; a câmera só as vê a ≤ 10 m e <strong>fica cega na sombra</strong> do Sol a 1,54°.</p>
+        <p>• <strong>Sem previsão de sombra:</strong> recalcular sombras por <em>ray-tracing</em> a bordo trava o <code>RAD750</code>; o rover descobre a sombra quando já está nela.</p>
+        <p>• <strong>Lacuna 5 m:</strong> 92,71% das células são interpoladas no <code>LDEM_875S_5M</code>.</p>
+      </div>
+    </section>
+
+    <section class="card col">
+      <div class="row between">
+        <div class="row"><span class="dot" style="background:var(--green)"></span><h2 id="tituloB">2. Com a Tese: Escudo P90 + IA (60 rovers)</h2></div>
+        <span id="badgeB" class="badge b-green">Rota O(1) Segura</span>
+      </div>
+      <div class="cv"><canvas id="cvB" width="1200" height="660"></canvas></div>
+      <div class="metrics">
+        <div class="metric"><div class="k">Avanço do líder</div><div id="mB1" class="v">0 m</div></div>
+        <div class="metric"><div class="k">Bateria do líder</div><div id="mB2" class="v">—</div></div>
+        <div class="metric"><div class="k">Sombra prevista: acerto · falso claro</div><div id="mB3" class="v" style="color:var(--green)">—</div></div>
+        <div class="metric"><div class="k">Principal falha</div><div id="mB4" class="v">—</div></div>
+      </div>
+      <div class="note green">
+        <div class="t" style="color:var(--green)">Benefícios da Tese &amp; Gargalos Eliminados:</div>
+        <p>• <strong>Sombra em O(1):</strong> o mapa de iluminação é pré-calculado em terra para 48 azimutes do Sol; a bordo, o rover só interpola duas tabelas.</p>
+        <p>• <strong>Previsão × realidade:</strong> o B prevê sombras com o relevo que conhece (60 m, 20 m ou a tese); o mundo, a energia e a tela usam o relevo real. Escolha a fonte no seletor e veja o acerto.</p>
+        <p>• <strong>Certeza sobre relevo:</strong> margem <code>P50/P90/P99</code> por célula (maior onde o DEM é interpolado) veta rampas &gt; 15° e microcrateras de 5 m.</p>
+        <p>• <strong>Câmera como auditoria:</strong> a mesma câmera do A confere de perto o que o mapa (92,71% interpolado) estimou de longe.</p>
+        <p>• <strong>IA + Escudo:</strong> a rede MLP 8→7→4 propõe a manobra; o escudo determinístico só deixa passar o que é seguro e guia o retorno à rota.</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="card">
+    <div class="legend">
+      <span><span class="sw" style="background:#cbd5e1"></span>Relevo iluminado (sombreamento pelo Sol)</span>
+      <span><span class="sw" style="background:#1e293b;border:1px solid #475569"></span>Sombra projetada (1,54°)</span>
+      <span><span class="sw" style="border-top:2px dashed var(--foreground);height:0;width:16px"></span>Rota do Controle da Missão</span>
+      <span><span class="sw" style="background:rgba(239,68,68,.55)"></span>Microcratera 5 m / zona vetada</span>
+      <span><span class="sw" style="background:#f59e0b"></span>Rovers A</span>
+      <span><span class="sw" style="background:#10b981"></span>Rovers B</span>
+      <span><span class="sw" style="background:#38bdf8"></span>Líder B · raios dos sensores · retorno</span>
+    </div>
+  </div>
+
+  <!-- ============ FUNÇÃO DE MÉRITO (MARCATO) + MODELO DO ROVER ============ -->
+  <div class="grid2">
+    <section class="card col">
+      <div class="row between">
+        <h2>Função de mérito do Rover B (otimização Marcato)</h2>
+        <span id="pesosAviso" class="badge b-amber">Ativo só com o cérebro "Mérito"</span>
+      </div>
+      <div class="formula">J(a) = Σ<sub>k</sub> w<sub>k</sub> · f<sub>k</sub>(a) &nbsp;→&nbsp; escolhe max J &nbsp;·&nbsp; sujeito a: escudo P90/P99 (rampa, cratera, energia, sombra)</div>
+      <div class="row between">
+        <div class="row">
+          <span class="lbl">Pesos w<sub>k</sub>:</span>
+          <div class="seg" id="segPesos">
+            <button class="btn on" data-pesos="fixo">Fixos (você define)</button><button class="btn" data-pesos="evolutivo">Aleatórios + evolução</button>
+          </div>
+        </div>
+        <div class="row">
+          <button id="btnPesosPadrao" class="btn">Restaurar padrão</button>
+          <button id="btnPesosElite" class="btn" title="Copia a média da elite evoluída para os pesos fixos">Usar pesos da elite</button>
+        </div>
+      </div>
+      <div class="pesos" id="pesosGrid"></div>
+      <p class="sub" id="pesosNota">Fixos: todos os 60 rovers B usam estes pesos, e a mudança vale na hora. Aleatórios: cada rover nasce com pesos sorteados (0 a 2); os 8 melhores passam os pesos adiante, com mutação.</p>
+    </section>
+    <section class="card col">
+      <div class="row between">
+        <h2 id="specTitulo">Modelo do rover: Padrão</h2>
+        <span class="sub">Parâmetros fixos (iguais para A e B)</span>
+      </div>
+      <table class="spec"><tbody id="specTabela"></tbody></table>
+      <p class="sub" id="specNota">Valores ilustrativos, na escala da animação. Cada rover ainda tem uma tolerância de fabricação própria: velocidade ±8%, bateria inicial de 88 a 100%, reserva ±5 pontos.</p>
+    </section>
+  </div>
+
+  <!-- ============ REDE NEURAL + EVOLUÇÃO ============ -->
+  <div class="grid2">
+    <section class="card col">
+      <div>
+        <h2 id="nnTitulo">Decisão do Líder B (MLP 8→7→4 + Escudo P90/P99)</h2>
+        <p class="sub" id="nnSub">Entradas dos sensores à esquerda, camada oculta no meio, ações à direita. Verde = ação executada; vermelho = proposta vetada pelo escudo.</p>
+      </div>
+      <div class="cv"><canvas id="cvNN" width="1200" height="720"></canvas></div>
+      <div id="explain" class="explain">Aguardando ciclo de decisão...</div>
+    </section>
+
+    <section class="card col">
+      <div class="row between">
+        <h2>Evolução por Geração: % da rota percorrida (A vs. B)</h2>
+        <div class="row"><span id="testeOut" class="sub">Últimas 60 gerações</span><button id="btnTeste" class="btn" title="Roda os cérebros atuais, sem evolução, em 3 terrenos que nunca aparecem no treino">🧪 Testar em 3 terrenos inéditos</button></div>
+      </div>
+      <div class="cv"><canvas id="cvChart" width="1200" height="440"></canvas></div>
+      <div class="metrics">
+        <div class="metric"><div class="k">A · grade 60 m</div><div id="cmpA" class="v">—</div></div>
+        <div class="metric"><div class="k">B · regra fixa</div><div id="cmpBr" class="v">—</div></div>
+        <div class="metric"><div class="k">B · IA + escudo</div><div id="cmpBi" class="v">—</div></div>
+        <div class="metric"><div class="k">B · mérito</div><div id="cmpBm" class="v">—</div></div>
+      </div>
+      <table class="causas">
+        <thead><tr><th>Causa da falha (última geração)</th><th class="n">A</th><th class="n">B</th></tr></thead>
+        <tbody id="tbCausas"></tbody>
+      </table>
+    </section>
+  </div>
+
+  <footer class="card row between">
+    <div style="font-size:12px"><strong id="narrTitulo">Como ler:</strong> <span id="narrTexto" style="color:var(--muted)"></span></div>
+  </footer>
+</div>
+
+<script>
+/*<<NUCLEO*/
+// =============================================================================
+// NÚCLEO DA SIMULAÇÃO — sem DOM. Pode ser testado em Node (ver testes).
+// Unidades: metros, graus, segundos de simulação.
+// Convenção de tela: x → leste (direita), y → sul (para baixo). Azimute 0° = norte (topo).
+// =============================================================================
+const NUCLEO = (() => {
+  const CELL = 5;                 // m por célula do DEM fino ("5 m")
+  const GW = 600, GH = 110;       // 3000 m × 550 m (mapa LONGO: dilui a sorte do terreno dentro da geração)
+  const VIEW_W = 1000;            // largura (m) da janela mostrada na tela; a câmera segue o líder
+  const W = GW * CELL, H = GH * CELL;
+  const SUN_ELEV = 1.54;          // elevação do Sol (graus)
+  const TAN_SUN = Math.tan(SUN_ELEV * Math.PI / 180);
+  const DISK = Math.tan(0.2666 * Math.PI / 180);  // meio-diâmetro angular do Sol
+  const SLOPE_LIMIT = 15;         // limite de inclinação (VIPER)
+  const N_AZ = 48, AZ_STEP = 360 / N_AZ;           // tabelas de sombra pré-calculadas
+  const MAX_RAY = 120;            // alcance do ray-march (120 células = 600 m)
+  const COARSE = 12;              // 12 células = 60 m
+  const POP = 60, IN = 8, HID = 7, OUT = 4;
+  const START_X = 30, GOAL_X = W - 110;
+  const TESTE = [900001, 900002, 900003];   // terrenos de TESTE: nunca usados no treino
+  const DESVIO = 0.8;             // ângulo do desvio em relação à rota (rad)
+  const ALCANCE = 10;             // amostras de 5 m por raio (50 m)
+  // Equipamento IGUAL nos dois rovers (A e B): mesma velocidade, câmera e reflexo.
+  // ---------------------------------------------------------------------------
+  // MODELOS FIXOS DE ROVER: TODO parâmetro físico do rover vem daqui (nada solto no código).
+  // A e B usam SEMPRE o mesmo modelo; só a tese os diferencia. Valores ilustrativos,
+  // na escala da animação (m/s comprimidos, bateria em %).
+  //   vCruz/vDesv  velocidade de cruzeiro / em desvio      cap     capacidade relativa da bateria
+  //   painel       ganho do painel solar                    base, kVel, kDecl  consumo = base + kVel·v + kDecl·declive
+  //   hib          consumo em hibernação                    cam     alcance da câmera de perigo (m)
+  //   limite       inclinação máxima que o chassi aguenta   reflGraus/reflSalto/reflMax  gatilhos do reflexo da IMU
+  //   desvio       ângulo do desvio em relação à rota (rad)
+  // ---------------------------------------------------------------------------
+  const MODELOS = {
+    padrao:    { nome: 'Padrão (limite 15°, classe VIPER)', vCruz: 12.8, vDesv: 11, cap: 1.0, painel: 1.0, base: 1.3, kVel: 0.12, kDecl: 0.06, hib: 0.25, cam: 10, limite: 15, reflGraus: 9,  reflSalto: 3, reflMax: 13, desvio: 0.8 },
+    leve:      { nome: 'Explorador leve (rápido, bateria pequena)', vCruz: 16, vDesv: 13, cap: 0.7, painel: 0.85, base: 1.0, kVel: 0.10, kDecl: 0.06, hib: 0.2, cam: 8, limite: 13, reflGraus: 8, reflSalto: 3, reflMax: 11, desvio: 0.75 },
+    autonomia: { nome: 'Longa autonomia (lento, bateria e painel grandes)', vCruz: 9, vDesv: 8, cap: 1.6, painel: 1.3, base: 1.6, kVel: 0.12, kDecl: 0.06, hib: 0.3, cam: 12, limite: 15, reflGraus: 9, reflSalto: 3, reflMax: 13, desvio: 0.8 },
+    escalador: { nome: 'Escalador (aguenta 20°, gasta mais)', vCruz: 10, vDesv: 9, cap: 1.1, painel: 1.0, base: 1.5, kVel: 0.14, kDecl: 0.04, hib: 0.25, cam: 10, limite: 20, reflGraus: 12, reflSalto: 4, reflMax: 17, desvio: 0.9 },
+    // VIPER CALIBRADO. Escala de tempo: o Sol gira 2,4°/s na animação e 360° em ~708 h na Lua,
+    // logo 1 s de simulação ≈ 4,72 h. Bateria 5.420 Wh → 1 W durante 1 s ≈ 0,0871% da bateria.
+    //   hibernação 108 W (5.420 Wh / 50 h, NASA)  → 9,4 %/s   (100% dura 10,6 s = 50 h)
+    //   painel ~400 W com Sol pleno (NASA: 320–450 W por painel) → 34,8 %/s parado; 70% andando
+    //   ACORDADO PARADO ~150 W e ANDANDO ~250 W: ESTIMATIVAS (sem fonte pública) → 13,1 e 21,8 %/s
+    viper:     { nome: 'VIPER calibrado (5.420 Wh, 50 h no escuro)', vCruz: 12.8, vDesv: 11, cap: 1.0, painel: 1.0, gParado: 34.8, gAndando: 24.4, base: 13.1, kVel: 0.68, kDecl: 0.2, hib: 9.4, cam: 10, limite: 15, reflGraus: 9, reflSalto: 3, reflMax: 13, desvio: 0.8, calibrado: true }
+  };
+  // Ganho solar (%/s com Sol pleno) parado e andando: explícito no VIPER, derivado do painel nos ilustrativos.
+  for (const m of Object.values(MODELOS)) { if (m.gParado === undefined) { m.gParado = 16 * m.painel; m.gAndando = 5 * m.painel; } }
+  // Custo real da hibernação: o VIPER não aguenta mais de 50 h de escuridão contínua (NASA).
+  // 50 h ≈ 25,4° de giro do Sol ≈ 10,6 s de simulação. Vale para todos os modelos quando ligado.
+  const HORAS_POR_SEGUNDO = 708 / (360 / 2.4);
+  const ESCURO_MAX = 50 / HORAS_POR_SEGUNDO;
+
+  // ---------------------------------------------------------------------------
+  // FUNÇÃO DE MÉRITO (otimização no estilo Marcato): para cada ação a,
+  //     J(a) = Σ_k  w_k · f_k(a)        sujeito às restrições do escudo P90/P99
+  // f_k são as variáveis de entrada normalizadas; w_k é a importância de cada uma.
+  // Pesos FIXOS (o usuário define) ou EVOLUTIVOS (sorteados por rover e selecionados).
+  // ---------------------------------------------------------------------------
+  const TERMOS = [
+    { id: 'avanco', curto: 'avanço',    nome: 'Avanço na rota',          padrao: 1.0 },
+    { id: 'seguranca', curto: 'folga', nome: 'Folga até o perigo',      padrao: 0.8 },
+    { id: 'rota', curto: 'rota',      nome: 'Aderência à rota',        padrao: 0.4 },
+    { id: 'energia', curto: 'energia',   nome: 'Margem de energia',       padrao: 0.7 },
+    { id: 'sombra', curto: 'sombra',    nome: 'Evitar sombra',           padrao: 0.5 },
+    { id: 'incerteza', curto: 'interpolado', nome: 'Evitar terreno interpolado', padrao: 0.3 },
+    { id: 'declive', curto: 'declive',   nome: 'Evitar declive',          padrao: 0.3 }
+  ];
+  const pesosPadrao = () => Object.fromEntries(TERMOS.map((t) => [t.id, t.padrao]));
+  // IMU: dispara "parar e recuar" quando a inclinação sob as rodas SALTA (borda de cratera)
+  // ou passa de 13°. Encostas suaves de picos (até ~13°) não disparam.
+  // (gatilhos do reflexo da IMU: agora por modelo, em MODELOS)
+  const CAMERA = {   // estado da câmera: multiplica o alcance do MODELO
+    ok:         { fator: 1,   falha: 0,    nome: 'funcionando' },
+    degradada:  { fator: 0.5, falha: 0.35, nome: 'degradada (metade do alcance, 35% de leituras perdidas)' },
+    danificada: { fator: 0,   falha: 1,    nome: 'danificada (desligada)' }
+  };
+  const DT = 0.05, T_MAX = 800;   // prudência (esperar o Sol) não pode ser punida pelo relógio   // passo e duração máxima de uma travessia (s)
+  const SUN_RATE = 2.4;           // graus de azimute por segundo de simulação
+  const CONF = {
+    P50: { z: 0.0, cert: '82,4%' },
+    P90: { z: 1.282, cert: '95,1%' },
+    P99: { z: 2.326, cert: '99,1%' }
+  };
+
+  function mulberry32(a) {
+    return function () {
+      let t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  // ---------------------------------------------------------------- TERRENO
+  function gerarTerreno(seed) {
+    const rng = mulberry32(seed);
+    const y0 = 320 + rng() * 110, y1 = 110 + rng() * 90;
+    const amp = 20 + rng() * 22, freq = 0.005 + rng() * 0.004, ph = rng() * 6.283;
+    const amp2 = 25 + rng() * 30, freq2 = 0.0016 + rng() * 0.0012, ph2 = rng() * 6.283;
+    const routeY = (x) => {
+      const t = clamp(x / GOAL_X, 0, 1);
+      const s = t * t * (3 - 2 * t);
+      const y = y0 + (y1 - y0) * s + Math.min(1, x / 120) * (amp * Math.sin(freq * x + ph) + amp2 * Math.sin(freq2 * x + ph2));
+      return clamp(y, 70, H - 70);
+    };
+    const routeAng = (x) => Math.atan2(routeY(x + 2) - routeY(x - 2), 4);
+    const clampY = (y) => clamp(y, 45, H - 45);
+
+    // ROTAS CANDIDATAS: mesma largada e mesma chegada, corredores diferentes no meio.
+    // O planejamento escolhe UMA antes de sair, com o mapa que cada lado conhece.
+    const desvioRota = [0, 95 + rng() * 25, -(95 + rng() * 25), 70 + rng() * 20];
+    const formaRota = [(t) => 0, (t) => Math.sin(Math.PI * t), (t) => Math.sin(Math.PI * t), (t) => Math.sin(2 * Math.PI * t)];
+    const rotas = desvioRota.map((D, k) => {
+      const y = (x) => clamp(routeY(x) + D * formaRota[k](clamp(x / GOAL_X, 0, 1)), 70, H - 70);
+      return { k, nome: ['Central', 'Norte', 'Sul', 'Ondulada'][k], y, ang: (x) => Math.atan2(y(x + 2) - y(x - 2), 4) };
+    });
+
+    // Picos e colinas: projetam sombras longas (h / tan 1,54° ≈ 37 × h).
+    const peaks = [];
+    const nPeaks = Math.round(GOAL_X / 300);
+    for (let i = 0; i < nPeaks; i++) {
+      const px = 200 + (i + 0.15 + rng() * 0.7) * ((GOAL_X - 310) / nPeaks);
+      const side = rng() < 0.5 ? -1 : 1;
+      peaks.push({ x: px, y: clampY(routeY(px) + side * (75 + rng() * 85)), a: 9 + rng() * 6, w: 55 + rng() * 25 });
+    }
+    // Microcrateras de 5 m: invisíveis na grade de 60 m. Cada rota candidata recebe as suas
+    // (quantidade sorteada por rota: umas rotas são mais perigosas que outras).
+    const craters = [];
+    for (const rt of rotas) {
+      const nTrap = Math.round(GOAL_X / 230) + Math.floor(rng() * 8);   // ~1 a cada 150–230 m
+      for (let i = 0; i < nTrap; i++) {
+        const cx = 140 + (i + 0.2 + rng() * 0.6) * ((GOAL_X - 190) / nTrap);
+        craters.push({ x: cx, y: rt.y(cx) + (rng() - 0.5) * 10, r: 8 + rng() * 5, d: 5 + rng() * 3, naRota: true, rota: rt.k });
+      }
+    }
+    for (let i = 0; i < Math.round(GOAL_X / 100); i++) {
+      const cx = 120 + rng() * (GOAL_X - 150);
+      craters.push({ x: cx, y: clampY(routeY(cx) + (rng() < 0.5 ? -1 : 1) * (30 + rng() * 120)), r: 7 + rng() * 5, d: 4 + rng() * 3, naRota: false });
+    }
+    const psr = { x: GOAL_X + 90, y: clampY(routeY(GOAL_X)), r: 42, d: 28 };  // meta fica antes da borda íngreme
+
+    function z(x, y) {
+      let h = 1.4 * Math.sin(x * 0.011 + ph) + 1.1 * Math.cos(y * 0.017) + 0.8 * Math.sin((x + y) * 0.007);
+      for (const p of peaks) h += p.a * Math.exp(-((x - p.x) ** 2 + (y - p.y) ** 2) / (p.w * p.w));
+      for (const c of craters) {
+        const d = Math.hypot(x - c.x, y - c.y) / c.r;
+        if (d < 1) h -= c.d * (1 - d * d);
+        else if (d < 1.8) h += 2.2 * Math.exp(-(((d - 1.15) / 0.3) ** 2));
+      }
+      const dp = Math.hypot(x - psr.x, y - psr.y) / psr.r;
+      if (dp < 1) h -= psr.d * (1 - dp * dp);
+      else if (dp < 1.7) h += 8 * Math.exp(-(((dp - 1.15) / 0.22) ** 2));
+      return h;
+    }
+
+    const N = GW * GH;
+    const dem = new Float32Array(N), dem60 = new Float32Array(N);
+    const slope = new Float32Array(N), slope60 = new Float32Array(N);
+    const noGo = new Uint8Array(N), medido = new Uint8Array(N);
+    let zMax = -Infinity;
+    for (let gy = 0; gy < GH; gy++) {
+      for (let gx = 0; gx < GW; gx++) {
+        const i = gy * GW + gx, x = (gx + 0.5) * CELL, y = (gy + 0.5) * CELL;
+        dem[i] = z(x, y);
+        if (dem[i] > zMax) zMax = dem[i];
+        for (const c of craters) if (Math.hypot(x - c.x, y - c.y) < c.r) { noGo[i] = 1; break; }
+        // 7,29% das células têm medida LOLA real; o resto é interpolado.
+        let hsh = (gx * 374761393 + gy * 668265263 + seed * 1442695041) | 0;
+        hsh = Math.imul(hsh ^ (hsh >>> 13), 1274126177);
+        medido[i] = (((hsh ^ (hsh >>> 16)) >>> 0) / 4294967296) > 0.9271 ? 1 : 0;
+      }
+    }
+    // DEMs grossos: média por bloco (60 m = 12 células; 20 m = 4 células) e depois interpolação
+    // BILINEAR entre os centros dos blocos, como um DEM real reamostrado. (Blocos "em degrau"
+    // criavam encostas falsas em forma de grade — correção 23.) Microcrateras somem aqui.
+    function grosso(B) {
+      const nbx = Math.ceil(GW / B), nby = Math.ceil(GH / B), med = new Float32Array(nbx * nby);
+      for (let by = 0; by < nby; by++) for (let bx = 0; bx < nbx; bx++) {
+        let sm = 0, n = 0;
+        for (let dy = 0; dy < B && by * B + dy < GH; dy++) for (let dx = 0; dx < B && bx * B + dx < GW; dx++) { sm += dem[(by * B + dy) * GW + bx * B + dx]; n++; }
+        med[by * nbx + bx] = sm / n;
+      }
+      const out = new Float32Array(N);
+      for (let gy = 0; gy < GH; gy++) for (let gx = 0; gx < GW; gx++) {
+        const fx = clamp((gx + 0.5) / B - 0.5, 0, nbx - 1), fy = clamp((gy + 0.5) / B - 0.5, 0, nby - 1);
+        const x0 = Math.floor(fx), y0b = Math.floor(fy), x1 = Math.min(nbx - 1, x0 + 1), y1 = Math.min(nby - 1, y0b + 1);
+        const tx = fx - x0, ty = fy - y0b;
+        const a = med[y0b * nbx + x0] * (1 - tx) + med[y0b * nbx + x1] * tx;
+        const b = med[y1 * nbx + x0] * (1 - tx) + med[y1 * nbx + x1] * tx;
+        out[gy * GW + gx] = a * (1 - ty) + b * ty;
+      }
+      return out;
+    }
+    dem60.set(grosso(COARSE));
+    const dem20 = grosso(4);
+    // Declive (graus). O grosso usa diferenças de 60 m, como um planejador na grade de 60 m.
+    for (let gy = 0; gy < GH; gy++) {
+      for (let gx = 0; gx < GW; gx++) {
+        const i = gy * GW + gx;
+        const xa = Math.max(0, gx - 1), xb = Math.min(GW - 1, gx + 1);
+        const ya = Math.max(0, gy - 1), yb = Math.min(GH - 1, gy + 1);
+        const gxv = (dem[gy * GW + xb] - dem[gy * GW + xa]) / ((xb - xa) * CELL);
+        const gyv = (dem[yb * GW + gx] - dem[ya * GW + gx]) / ((yb - ya) * CELL);
+        slope[i] = Math.atan(Math.hypot(gxv, gyv)) * 180 / Math.PI;
+        const XA = Math.max(0, gx - COARSE), XB = Math.min(GW - 1, gx + COARSE);
+        const YA = Math.max(0, gy - COARSE), YB = Math.min(GH - 1, gy + COARSE);
+        const cx = (dem60[gy * GW + XB] - dem60[gy * GW + XA]) / ((XB - XA) * CELL);
+        const cy = (dem60[YB * GW + gx] - dem60[YA * GW + gx]) / ((YB - YA) * CELL);
+        slope60[i] = Math.atan(Math.hypot(cx, cy)) * 180 / Math.PI;
+      }
+    }
+    // ---- MAPA ESTIMADO (o que o rover B leva a bordo) ----------------------
+    // Só 7,29% das células são medidas. Nas interpoladas, o relevo fino é reconstruído
+    // com perda: a fidelidade k (0,3 a 1) varia no espaço e atenua as microcrateras.
+    // O B planeja com ESTE mapa; a física e a câmera usam o terreno real.
+    const kAt = (x, y) => 0.3 + 0.7 * clamp(0.5 + 0.25 * Math.sin(x * 0.013 + ph * 1.7) + 0.25 * Math.sin(y * 0.021 + ph * 2.3), 0, 1);
+    for (const c of craters) { c.k = kAt(c.x, c.y); c.detectada = c.k > 0.6; }
+    const demMapa = new Float32Array(N), slopeMapa = new Float32Array(N), noGoMapa = new Uint8Array(N);
+    const demT20 = new Float32Array(N);   // tese aplicada sobre 20 m (perde menos detalhe que a de 60 m)
+    for (let gy = 0; gy < GH; gy++) {
+      for (let gx = 0; gx < GW; gx++) {
+        const i = gy * GW + gx, x = (gx + 0.5) * CELL, y = (gy + 0.5) * CELL;
+        if (medido[i]) { demMapa[i] = dem[i]; demT20[i] = dem[i]; continue; }
+        // Erro de interpolação SUAVE (correlação de dezenas de metros), ±0,2 m.
+        // Ruído independente por célula criava micro-sombras falsas (0,2 m → 7 m de sombra a 1,54°).
+        const ruido = 0.2 * Math.sin(x * 0.047 + ph * 3.1) * Math.cos(y * 0.039 + ph * 4.7);
+        const k = kAt(x, y);
+        demMapa[i] = dem60[i] + (dem[i] - dem60[i]) * k + ruido;                 // tese 60 → 5 m
+        demT20[i] = dem20[i] + (dem[i] - dem20[i]) * (1 - (1 - k) * 0.5) + ruido; // tese 20 → 5 m
+      }
+    }
+    for (let gy = 0; gy < GH; gy++) {
+      for (let gx = 0; gx < GW; gx++) {
+        const i = gy * GW + gx;
+        const xa = Math.max(0, gx - 1), xb = Math.min(GW - 1, gx + 1), ya = Math.max(0, gy - 1), yb = Math.min(GH - 1, gy + 1);
+        const gxv = (demMapa[gy * GW + xb] - demMapa[gy * GW + xa]) / ((xb - xa) * CELL);
+        const gyv = (demMapa[yb * GW + gx] - demMapa[ya * GW + gx]) / ((yb - ya) * CELL);
+        slopeMapa[i] = Math.atan(Math.hypot(gxv, gyv)) * 180 / Math.PI;
+        if (noGo[i]) {
+          const x = (gx + 0.5) * CELL, y = (gy + 0.5) * CELL;
+          const c = craters.find((q) => Math.hypot(x - q.x, y - q.y) < q.r);
+          noGoMapa[i] = medido[i] || (c && c.detectada) ? 1 : 0;   // cratera mal reconstruída some do mapa
+        }
+      }
+    }
+    // FONTES DE RELEVO para calcular sombras. 'real' é o mundo (energia, tela, física).
+    // As outras são o que o rover B poderia saber; ele PREVÊ sombras com a fonte escolhida.
+    const maxDe = (d) => d.reduce((m, v) => (v > m ? v : m), -Infinity);
+    const fontes = {
+      real: { dem, zMax }, b60: { dem: dem60, zMax: maxDe(dem60) }, t60: { dem: demMapa, zMax: maxDe(demMapa) },
+      b20: { dem: dem20, zMax: maxDe(dem20) }, t20: { dem: demT20, zMax: maxDe(demT20) }
+    };
+    const sombras = Object.fromEntries(Object.keys(fontes).map((k) => [k, new Array(N_AZ).fill(null)]));
+    return { seed, routeY, routeAng, rotas, peaks, craters, psr, dem, dem60, dem20, slope, slope60, noGo, medido, zMax,
+             demMapa, demT20, slopeMapa, noGoMapa, fontes, sombras };
+  }
+
+  // ------------------------------------------------- SOMBRAS PRÉ-CALCULADAS
+  // Uma tabela por azimute (48 tabelas). Calculada sob demanda e guardada.
+  // É o "pré-cálculo em terra": a bordo, cada consulta é O(1).
+  function direcaoSol(azDeg) {
+    const a = azDeg * Math.PI / 180;
+    return { dx: Math.sin(a), dy: -Math.cos(a) }; // vetor (tela) que aponta PARA o Sol
+  }
+  function tabelaSombra(T, k, fonte = 'real') {
+    const cache = T.sombras[fonte];
+    if (cache[k]) return cache[k];
+    const { dx, dy } = direcaoSol(k * AZ_STEP);
+    const out = new Uint8Array(GW * GH), dem = T.fontes[fonte].dem, zMax = T.fontes[fonte].zMax;
+    const lim = TAN_SUN + DISK, limLow = TAN_SUN - DISK;
+    for (let gy = 0; gy < GH; gy++) {
+      for (let gx = 0; gx < GW; gx++) {
+        const i = gy * GW + gx, z0 = dem[i];
+        let maxA = -1;
+        for (let s = 1; s <= MAX_RAY; s++) {
+          const sx = Math.round(gx + dx * s), sy = Math.round(gy + dy * s);
+          if (sx < 0 || sx >= GW || sy < 0 || sy >= GH) break;
+          const a = (dem[sy * GW + sx] - z0) / (s * CELL);
+          if (a > maxA) { maxA = a; if (maxA > lim) break; }
+          if ((zMax - z0) / (s * CELL) < limLow) break; // nada mais à frente pode bloquear
+        }
+        let lit = 1;
+        if (maxA > lim) lit = 0;
+        else if (maxA > limLow) lit = 1 - (maxA - limLow) / (2 * DISK);
+        out[i] = Math.round(lit * 255);
+      }
+    }
+    cache[k] = out;
+    return out;
+  }
+  /**
+   * Iluminação de UMA célula por ray-march direto (sem montar tabelas do mapa inteiro).
+   * Usada no planejamento, que consulta poucas células em muitos azimutes: montar as
+   * 48 tabelas × 3 fontes travava a página ~5 s a cada geração (correção 33).
+   */
+  function luzPonto(T, i, azDeg, fonte = 'real') {
+    if (i < 0) return 0;
+    const { dx, dy } = direcaoSol(azDeg), dem = T.fontes[fonte].dem, zMax = T.fontes[fonte].zMax;
+    const gx = i % GW, gy = (i - gx) / GW, z0 = dem[i];
+    const lim = TAN_SUN + DISK, limLow = TAN_SUN - DISK;
+    let maxA = -1;
+    for (let s = 1; s <= MAX_RAY; s++) {
+      const sx = Math.round(gx + dx * s), sy = Math.round(gy + dy * s);
+      if (sx < 0 || sx >= GW || sy < 0 || sy >= GH) break;
+      const a = (dem[sy * GW + sx] - z0) / (s * CELL);
+      if (a > maxA) { maxA = a; if (maxA > lim) return 0; }
+      if ((zMax - z0) / (s * CELL) < limLow) break;
+    }
+    return maxA > limLow ? 1 - (maxA - limLow) / (2 * DISK) : 1;
+  }
+
+  /** Monta UMA tabela de sombra que ainda falta (perto do Sol atual primeiro). Para aquecer o cache em quadros com folga. */
+  function aquecer(T, fonte, azAtual) {
+    const k0 = Math.floor((((azAtual % 360) + 360) % 360) / AZ_STEP);
+    for (let d = 0; d < N_AZ; d++) { const k = (k0 + d) % N_AZ; if (!T.sombras[fonte][k]) { tabelaSombra(T, k, fonte); return true; } }
+    return false;
+  }
+
+  /** Iluminação [0,1] da célula i com o Sol em azDeg (interpola 2 tabelas). */
+  function luz(T, i, azDeg, fonte = 'real') {
+    const a = (((azDeg % 360) + 360) % 360) / AZ_STEP;
+    const k0 = Math.floor(a) % N_AZ, k1 = (k0 + 1) % N_AZ, f = a - Math.floor(a);
+    return ((1 - f) * tabelaSombra(T, k0, fonte)[i] + f * tabelaSombra(T, k1, fonte)[i]) / 255;
+  }
+  /**
+   * Comprimento (m) da próxima sombra na ROTA, a partir de x, olhando até 600 m.
+   * Usa a sombra PREVISTA: para cada ponto, o azimute do Sol no instante em que o
+   * rover chegará lá (efeméride conhecida). Lacunas iluminadas < 15 m não interrompem a sombra.
+   * Só é viável a bordo porque o mapa de sombras é pré-calculado: ~120 consultas O(1).
+   */
+  function sombraAdiante(S, x, vel, ry = S.T.routeY) {
+    const T = S.T;
+    let ate = -1, comp = 0, gap = 0;
+    for (let d = 0; d <= 600; d += 5) {
+      const xx = x + d;
+      if (xx >= GOAL_X) break;
+      const i = celula(xx, ry(xx));
+      if (i < 0) break;
+      const az = S.autoSun ? S.sunAz + SUN_RATE * (d / vel) : S.sunAz;
+      const escuro = luz(T, i, az, S.fontePrev) < 0.5;   // PREVISÃO: relevo que o B conhece
+      if (ate < 0) { if (escuro) { ate = d; comp = 5; } else if (d > 60) break; }
+      else if (escuro) { comp += 5 + gap; gap = 0; }
+      else { gap += 5; if (gap >= 15) break; }
+    }
+    return { ate, comp };
+  }
+  /** Energia (%) para atravessar `comp` metros sem Sol a 16 m/s, + reserva de 15%. */
+  const energiaNecessaria = (comp, m) => 15 + ((m.base + m.vCruz * m.kVel) / m.cap) * (comp / m.vCruz) * 1.4;
+
+  /**
+   * Compara a sombra PREVISTA (fonte do B) com a REAL no corredor da rota (±20 m), Sol atual.
+   * falsoClaro = previu Sol mas é sombra (o erro perigoso: o rover entra sem energia).
+   */
+  function acertoPrevisao(S) {
+    const T = S.T, ry = (S.B[0] && S.B[0].ry) || T.routeY; let n = 0, ok = 0, falsoClaro = 0, falsoEscuro = 0;
+    for (let x = START_X; x < GOAL_X; x += 10) for (let dy = -20; dy <= 20; dy += 10) {
+      const i = celula(x, ry(x) + dy); if (i < 0) continue;
+      const real = luz(T, i, S.sunAz) < 0.5, prev = luz(T, i, S.sunAz, S.fontePrev) < 0.5;
+      n++; if (real === prev) ok++; else if (real) falsoClaro++; else falsoEscuro++;
+    }
+    return { acerto: ok / n, falsoClaro: falsoClaro / n, falsoEscuro: falsoEscuro / n };
+  }
+
+  /**
+   * PLANEJAMENTO EM SOLO: custo de cada rota candidata segundo o que o planejador sabe.
+   *   'a'    = plano inicial: grade de 60 m (declive grosso, sombras do DEM de 60 m, sem crateras)
+   *   'b'    = tese: mapa estimado de 5 m com margem P90/P99 + sombras da fonte escolhida
+   *   'real' = verdade (só para medir o acerto do plano; nenhum rover usa)
+   * custo = 25 × amostras com perigo + 0,1 × metros previstos no escuro + 0,3 × maior trecho escuro
+   */
+  function custoRota(S, rt, quem) {
+    const T = S.T, m = MODELOS[S.modelo], z = CONF[S.conf].z;
+    const fonte = quem === 'a' ? 'b60' : quem === 'b' ? S.fontePrev : 'real';
+    let perigo = 0, escuro = 0, run = 0, pior = 0;
+    for (let x = START_X; x < GOAL_X; x += 10) {
+      const y = rt.y(x);
+      for (const dy of [-5, 0, 5]) {
+        const i = celula(x, y + dy); if (i < 0) continue;
+        const ruim = quem === 'a' ? T.slope60[i] > m.limite
+          : quem === 'b' ? T.slopeMapa[i] + 1 + z * (T.medido[i] ? 0.8 : 2) > m.limite || T.noGoMapa[i] === 1
+          : T.slope[i] > m.limite || T.noGo[i] === 1;
+        if (ruim) { perigo++; break; }
+      }
+      const az = S.sunAz + SUN_RATE * ((x - START_X) / m.vCruz);
+      if (luzPonto(T, celula(x, y), az, fonte) < 0.5) { escuro += 10; run += 10; if (run > pior) pior = run; } else run = 0;
+    }
+    return { perigo, escuro, pior, custo: 25 * perigo + 0.1 * escuro + 0.3 * pior };
+  }
+  function planejar(S) {
+    const T = S.T, rotas = S.multiRota ? T.rotas : [T.rotas[0]];
+    const av = (quem) => rotas.map((rt) => ({ k: rt.k, ...custoRota(S, rt, quem) }));
+    const melhor = (lista) => lista.reduce((a, b) => (b.custo < a.custo ? b : a)).k;
+    const a = av('a'), b = av('b'), real = av('real');
+    // S.planejadorB = 'a' só em testes: o B dirige igual, mas planeja com a grade de 60 m (isola o efeito do plano).
+    S.plano = { A: melhor(a), B: melhor(S.planejadorB === 'a' ? a : b), melhorReal: melhor(real), a, b, real };
+    if (S.rotaForcada !== undefined && S.rotaForcada !== null) S.plano.A = S.plano.B = S.rotaForcada;   // só em testes
+  }
+
+  function celula(x, y) {
+    const gx = Math.floor(x / CELL), gy = Math.floor(y / CELL);
+    if (gx < 0 || gx >= GW || gy < 0 || gy >= GH) return -1;
+    return gy * GW + gx;
+  }
+
+  // ---------------------------------------------------------- REDE MLP 8→7→4
+  function criarGenoma(rng) {
+    const w1 = Array.from({ length: HID }, () => Array.from({ length: IN + 1 }, () => (rng() * 2 - 1) * 1.25));
+    const w2 = Array.from({ length: OUT }, () => Array.from({ length: HID + 1 }, () => (rng() * 2 - 1) * 1.25));
+    return { w1, w2 };
+  }
+  const clonar = (g) => ({ w1: g.w1.map((r) => [...r]), w2: g.w2.map((r) => [...r]) });
+  function mutar(g, rng, taxa, forca) {
+    const c = clonar(g);
+    const m = (v) => (rng() < taxa ? clamp(v + (rng() * 2 - 1) * forca, -4, 4) : v);
+    c.w1 = c.w1.map((r) => r.map(m));
+    c.w2 = c.w2.map((r) => r.map(m));
+    return c;
+  }
+  function mlp(g, x) {
+    const hidden = [], outputs = [];
+    for (let h = 0; h < HID; h++) { let s = g.w1[h][IN]; for (let i = 0; i < IN; i++) s += g.w1[h][i] * x[i]; hidden.push(Math.tanh(s)); }
+    for (let o = 0; o < OUT; o++) { let s = g.w2[o][HID]; for (let h = 0; h < HID; h++) s += g.w2[o][h] * hidden[h]; outputs.push(Math.tanh(s)); }
+    return { inputs: x, hidden, outputs };
+  }
+
+  // ------------------------------------------------------------- SIMULAÇÃO
+  // Ações: 0 = seguir/voltar à rota · 1 = desvio à direita (+y) · 2 = desvio à esquerda (−y) · 3 = recarregar
+  function criarSim() {
+    const S = {
+      seedBase: 2026, seed: 2026, dinamico: true, conf: 'P90', modoB: 'ia', mut: 0.25,
+      sunAz: 0, sunAz0: 0, autoSun: true, gen: 1, t: 0, vetos: 0, camera: 'ok', rngCam: mulberry32(77),
+      modelo: 'padrao', fontePrev: 't60', multiRota: true, plano: null, custoHib: false, pesosModo: 'fixo', pesosUsuario: pesosPadrao(), pesosGenomas: null,
+      T: null, A: [], B: [], rng: mulberry32(9001), genomas: null,
+      historico: [], ultima: null,
+      acum: { A: novoAcum(), 'B-regra': novoAcum(), 'B-ia': novoAcum(), 'B-merito': novoAcum() }
+    };
+    reiniciar(S);
+    return S;
+  }
+  function novoAcum() { return { runs: 0, dist: 0, metas: 0, falhas: 0 }; }
+
+  function reiniciar(S) {
+    S.gen = 1; S.vetos = 0; S.historico = []; S.ultima = null;
+    S.rng = mulberry32(9001);
+    S.rngCam = mulberry32(77);
+    S.seed = S.seedBase;
+    S.T = gerarTerreno(S.seed);
+    S.sunAz = S.sunAz0;
+    S.genomas = Array.from({ length: POP }, () => criarGenoma(S.rng));
+    S.pesosGenomas = Array.from({ length: POP }, () => pesosAleatorios(S.rng));
+    nascer(S);
+  }
+  function zerarAcumulados(S) { S.acum = { A: novoAcum(), 'B-regra': novoAcum(), 'B-ia': novoAcum(), 'B-merito': novoAcum() }; }
+  /** Pesos sorteados para um rover (modo evolutivo): cada w_k uniforme em [0, 2]. */
+  const pesosAleatorios = (rng) => Object.fromEntries(TERMOS.map((t) => [t.id, rng() * 2]));
+
+  function nascer(S) {
+    S.t = 0;
+    planejar(S);
+    const T = S.T, y0 = T.routeY(START_X), a0 = T.routeAng(START_X);
+    // Cada rover é um pouco diferente (fabricação, calibração): sem isso, 60 rovers de
+    // regra fixa são clones e morrem ou chegam TODOS juntos.
+    const individual = (time, idx) => {
+      const rv = mulberry32((S.seed * 977 + idx * 131 + (time === 'A' ? 7 : 13)) | 0);
+      return { vel: 0.92 + rv() * 0.16, bat: 88 + rv() * 12, reserva: (rv() - 0.5) * 10, desvio: (rv() - 0.5) * 0.16 };
+    };
+    const mk = (time, idx, genoma) => ({
+      time, id: idx, genoma, x: START_X + (idx % 3) * 1.5, y: y0 + ((idx % 15) - 7) * 1.2,
+      // Rover A: cada um segue a rota com um pequeno deslocamento lateral próprio (espalha o enxame).
+      offset: time === 'A' ? ((idx % 21) - 10) * 1.3 : 0,
+      ind: individual(time, idx),
+      rk: time === 'A' ? S.plano.A : S.plano.B,                // rota escolhida no planejamento
+      ry: T.rotas[time === 'A' ? S.plano.A : S.plano.B].y,
+      ra: T.rotas[time === 'A' ? S.plano.A : S.plano.B].ang,
+      mod: MODELOS[S.modelo],                                  // modelo fixo (igual para A e B)
+      w: time === 'B' ? (S.pesosModo === 'fixo' ? { ...S.pesosUsuario } : S.pesosGenomas[idx]) : null,
+      mer: null,
+      heading: a0, vel: 0, bat: 95, vivo: true, chegou: false, motivo: '', fade: 1,
+      fitness: 0, sqErr: 0, n: 0, acao: 0, acaoBruta: 0, vetado: false, razao: '', paralelo: false,
+      nn: null, ent: new Array(8).fill(0), carga: 0, lado: 0, ladoT: 0, hiberna: false, hibernando: false, recuo: 0, nReflexos: 0, reflexosRecentes: [], nFugas: 0, tEscuro: 0, naSombra: false, sombras: 0, declAnt: 0, celVerificada: -1, xMax: START_X, tProg: 0, cam: { frente: Infinity, p: Infinity, n: Infinity }, memo: new Set(), trilha: [{ x: START_X, y: y0 }]
+    });
+    S.A = Array.from({ length: POP }, (_, i) => mk('A', i, null));
+    S.B = Array.from({ length: POP }, (_, i) => mk('B', i, S.genomas[i]));
+    for (const r of [...S.A, ...S.B]) r.bat = r.ind.bat;
+  }
+
+  /** Memória do rover: a borda que disparou o reflexo vira perigo no mapa dele (célula + a seguinte no rumo). */
+  function lembrarBorda(r, i, heading) {
+    if (i < 0) return;
+    r.memo.add(i);
+    const j = celula(r.x + Math.cos(heading) * CELL * 1.5, r.y + Math.sin(heading) * CELL * 1.5);
+    if (j >= 0) r.memo.add(j);
+  }
+
+  function raio(S, x, y, ang, grosso, passos, z, memo, limite) {
+    const T = S.T;
+    let livre = passos * 5, sombra = passos * 5, maxDecl = 0, interp = 0;
+    for (let s = 1; s <= passos; s++) {
+      const d = s * 5, px = x + Math.cos(ang) * d, py = y + Math.sin(ang) * d;
+      const i = celula(px, py);
+      if (i < 0 || py < 15 || py > H - 15) { if (d < livre) livre = d; continue; }
+      const decl = grosso ? T.slope60[i] : T.slopeMapa[i];          // B: mapa ESTIMADO, não a verdade
+      // Margem por célula (quantil): maior onde o DEM é interpolado.
+      const margem = grosso ? 0 : 1.0 + z * (T.medido[i] ? 0.8 : 2.0);
+      const perigo = decl + margem > limite || (!grosso && T.noGoMapa[i] === 1) || memo.has(i);
+      if (perigo && d < livre) livre = d;
+      if (decl > maxDecl) maxDecl = decl;
+      if (!grosso && luz(T, i, S.sunAz, S.fontePrev) < 0.5 && d < sombra) sombra = d;   // previsão
+      if (!T.medido[i]) interp++;
+    }
+    return { livre, sombra, maxDecl, interp: interp / passos };
+  }
+
+  function sentir(S, r, grosso) {
+    const T = S.T, z = CONF[S.conf].z;
+    const i = celula(r.x, r.y);
+    const declAqui = i < 0 ? 0 : (grosso ? T.slope60[i] : T.slopeMapa[i]);
+    const luzAqui = i < 0 ? 0 : luz(T, i, S.sunAz);
+    const yAlvo = r.ry(r.x) + r.offset;
+    const tx = r.x + 22, ty = r.ry(tx) + r.offset;
+    const anguloRetorno = Math.atan2(ty - r.y, tx - r.x);
+    const erro = yAlvo - r.y;
+    const ra = r.ra(r.x);
+    const rP = raio(S, r.x, r.y, ra + r.mod.desvio, grosso, ALCANCE, z, r.memo, r.mod.limite);
+    const rM = raio(S, r.x, r.y, r.heading, grosso, ALCANCE, z, r.memo, r.mod.limite);
+    const rN = raio(S, r.x, r.y, ra - r.mod.desvio, grosso, ALCANCE, z, r.memo, r.mod.limite);
+    const rR = raio(S, r.x, r.y, anguloRetorno, grosso, ALCANCE, z, r.memo, r.mod.limite);
+    const sombraAqui = luzAqui < 0.5;
+    return {
+      inputs: [rP.livre / 50, rM.livre / 50, rN.livre / 50, clamp(erro / 30, -1, 1),
+        Math.min(1, declAqui / 25), sombraAqui ? 0 : Math.min(1, rM.sombra / 50), rM.interp, r.bat / 100],
+      erro, anguloRetorno, sombraAqui, luzAqui, rP, rM, rN, rR
+    };
+  }
+
+  /**
+   * Câmera de perigo: olha o terreno FINO de perto (até 10 m), mas
+   * não enxerga dentro da sombra (sem Sol, sem imagem) e pode perder leituras se degradada.
+   * Devolve a distância (m) até o primeiro perigo visto, ou Infinity.
+   */
+  function olharCamera(S, r, ang) {
+    const T = S.T, cfg = CAMERA[S.camera], alcance = r.mod.cam * cfg.fator;
+    if (!alcance) return Infinity;
+    for (let d = 2.5; d <= alcance; d += 2.5) {
+      const i = celula(r.x + Math.cos(ang) * d, r.y + Math.sin(ang) * d);
+      if (i < 0) return d;
+      if (luz(T, i, S.sunAz) < 0.5) continue;              // na sombra a câmera não vê
+      if (cfg.falha && S.rngCam() < cfg.falha) continue;   // leitura perdida
+      if (T.slope[i] > r.mod.limite || T.noGo[i]) return d;
+    }
+    return Infinity;
+  }
+  function camera(S, r) {
+    const ra = r.ra(r.x);
+    const c = { frente: olharCamera(S, r, r.heading), p: olharCamera(S, r, ra + r.mod.desvio), n: olharCamera(S, r, ra - r.mod.desvio) };
+    return c;
+  }
+  /** Lado de desvio escolhido só com a câmera (o que o rover A tem). Mantém a escolha ~2,5 s. */
+  function ladoPorCamera(r, erro) {
+    const c = r.cam;
+    if (r.lado && r.ladoT > 0 && (r.lado === 1 ? c.p : c.n) > 5) return r.lado;
+    if (c.p === c.n) r.lado = erro >= 0 ? 1 : 2;
+    else r.lado = c.p > c.n ? 1 : 2;
+    r.ladoT = 2.5;
+    return r.lado;
+  }
+
+  /** Escolhe o lado do desvio e MANTÉM a escolha por ~2,5 s (evita ziguezague para dentro da cratera). */
+  function escolherLado(r, s) {
+    if (r.lado && r.ladoT > 0) {
+      const raioLado = r.lado === 1 ? s.rP : s.rN;
+      if (raioLado.livre >= 12) return r.lado;      // lado escolhido ainda está aberto
+    }
+    const p = s.rP.livre + (s.erro > 0 ? 3 : 0), n = s.rN.livre + (s.erro < 0 ? 3 : 0);
+    r.lado = p >= n ? 1 : 2;
+    r.ladoT = 2.5;
+    return r.lado;
+  }
+
+  function decidir(S, r) {
+    // ---- Rover A: segue a rota na grade de 60 m, sem escudo e sem margem.
+    if (r.time === 'A') {
+      const s = sentir(S, r, true);
+      r.nn = null;
+      let a = 0, razao = 'Seguindo a rota confiando na grade de 60 m';
+      if (r.cam.frente < Infinity || (r.ladoT > 0 && r.lado)) {
+        a = ladoPorCamera(r, s.erro);
+        razao = r.cam.frente < Infinity
+          ? `Câmera: obstáculo a ${r.cam.frente.toFixed(1)} m — desvio de emergência à ${a === 1 ? 'DIREITA' : 'ESQUERDA'}`
+          : 'Mantendo o desvio escolhido após o reflexo/câmera';
+      } else if (s.rM.livre < 16) { a = s.rP.livre >= s.rN.livre ? 1 : 2; razao = 'Desvio tardio: só vê declive na grade de 60 m'; }
+      else if (!s.sombraAqui && r.bat < 18 + r.ind.reserva) { a = 3; razao = 'Recarga tardia, sem reserva'; }
+      return { bruta: a, final: a, vetado: false, paralelo: false, razao, s };
+    }
+    const s = sentir(S, r, false);
+    const retornoLivre = s.rR.livre >= 30;
+    const perigoFrente = s.rM.livre <= 30 || r.cam.frente < Infinity;
+
+    // ---- Rover B, regra fixa (Tese base): desvio determinístico + retorno.
+    if (S.modoB === 'regra') {
+      r.nn = null;
+      let a = 0;
+      let razao = Math.abs(s.erro) > 3.5 ? 'Tese: corredor de retorno livre — voltando à rota' : 'Tese: seguindo a rota com margem ' + S.conf;
+      const sa = sombraAdiante(S, r.x, r.mod.vCruz, r.ry);
+      if (!s.sombraAqui) r.hibernando = false;
+      if (s.sombraAqui && sa.ate === 0 && (r.hibernando || r.bat < energiaNecessaria(sa.comp, r.mod) - 10)) {
+        r.hiberna = true; r.hibernando = true;   // só sai quando o Sol voltar
+        return { bruta: 3, final: 3, vetado: false, paralelo: false, s,
+          razao: `Tese: presa numa sombra de ${sa.comp} m sem energia para atravessar — hibernando até o Sol voltar` };
+      }
+      const precisa = sa.ate >= 0 && sa.ate <= 40 ? energiaNecessaria(sa.comp, r.mod) : 25;
+      const reserva = r.ind.reserva;
+      if (!s.sombraAqui && (r.bat < 25 + reserva || r.bat < precisa + reserva) && (r.acao === 3 ? (precisa > 98 || r.bat < precisa + 5 + reserva) : true)) {
+        a = 3;
+        razao = precisa > 98 ? `Tese: sombra prevista de ${sa.comp} m > autonomia — aguardando o Sol girar`
+          : sa.ate >= 0 && sa.ate <= 40 ? `Tese: sombra prevista de ${sa.comp} m — recarregando até ${Math.round(precisa)}%` : 'Tese: recarga preventiva';
+      }
+      else if (s.rM.livre <= 32 || r.ladoT > 0 || r.cam.frente < Infinity) {
+        a = escolherLado(r, s);
+        razao = a === 1 ? 'Tese: desviando à DIREITA da zona vetada' : 'Tese: desviando à ESQUERDA da zona vetada';
+      } else if (Math.abs(s.erro) > 4.5 && !retornoLivre) {
+        return { bruta: 0, final: 0, vetado: true, paralelo: true, razao: 'Tese: paralelo à rota até passar a zona vetada', s };
+      }
+      return { bruta: a, final: a, vetado: false, paralelo: false, razao, s };
+    }
+
+    // ---- Rover B, IA ou Mérito: um PROPÕE a ação, o escudo (as restrições) decide.
+    let bruta = 0, razao;
+    if (S.modoB === 'merito') {
+      r.nn = null;
+      bruta = merito(S, r, s);
+      razao = `Mérito: maior J = ${r.mer.J[bruta].toFixed(2)} (${['seguir/voltar', 'desvio à direita', 'desvio à esquerda', 'recarregar'][bruta]})`;
+    } else {
+      r.mer = null;
+      const nn = mlp(r.genoma, s.inputs);
+      r.nn = nn;
+      for (let k = 1; k < OUT; k++) if (nn.outputs[k] > nn.outputs[bruta]) bruta = k;
+      razao = Math.abs(s.erro) > 4 ? 'IA voltando suavemente à rota' : 'IA na rota nominal, validada pelo escudo ' + S.conf;
+    }
+    return { ...escudo(S, r, s, bruta, razao, retornoLivre, perigoFrente), bruta, s };
+  }
+
+  /**
+   * Função de mérito (Marcato): calcula f_k(a) para as 4 ações e escolhe a de maior J(a) = Σ w_k·f_k(a).
+   * Guarda em r.mer os termos e os J para o painel. As RESTRIÇÕES ficam no escudo, não aqui.
+   */
+  function merito(S, r, s) {
+    const m = r.mod, w = r.w, T = S.T;
+    const sa = sombraAdiante(S, r.x, m.vCruz, r.ry);
+    const precisa = sa.ate >= 0 && sa.ate <= 40 ? energiaNecessaria(sa.comp, m) : 25;
+    const i = celula(r.x, r.y), declAqui = i < 0 ? 0 : T.slopeMapa[i];
+    const ra = r.ra(r.x), H5 = 5;   // horizonte de 5 s para prever a bateria
+    const raios = [s.rR, s.rP, s.rN];
+    const custoMov = (v) => (m.base + v * m.kVel) / m.cap;
+    const f = [0, 1, 2, 3].map((a) => {
+      if (a === 3) {
+        const bat = r.bat + ((s.luzAqui * m.gParado - m.base) / m.cap) * H5;
+        return { avanco: 0, seguranca: 0.5, rota: -Math.abs(s.erro) / 30, energia: clamp((bat - precisa) / 50, -1, 1),
+                 // parar não diminui a incerteza do terreno: mesmo valor do caminho à frente
+                 sombra: s.sombraAqui ? -1 : 0, incerteza: -s.rM.interp, declive: -declAqui / 25 };
+      }
+      const ray = raios[a];
+      const v = a === 0 ? m.vCruz : m.vDesv;
+      const bat = r.bat + ((s.luzAqui * m.gAndando) / m.cap - custoMov(v)) * H5;
+      const erroDepois = a === 0 ? s.erro * 0.5 : a === 1 ? s.erro - 8 : s.erro + 8;
+      return {
+        avanco: a === 0 ? Math.max(0, Math.cos(s.anguloRetorno - ra)) : Math.cos(m.desvio),
+        seguranca: ray.livre / (ALCANCE * 5),
+        rota: -Math.abs(erroDepois) / 30,
+        energia: clamp((bat - precisa) / 50, -1, 1),
+        sombra: -(1 - ray.sombra / (ALCANCE * 5)),
+        incerteza: -ray.interp,
+        declive: -ray.maxDecl / 25
+      };
+    });
+    const J = f.map((fa) => TERMOS.reduce((acc, t) => acc + w[t.id] * fa[t.id], 0));
+    let melhor = 0;
+    for (let a = 1; a < 4; a++) if (J[a] > J[melhor]) melhor = a;
+    r.mer = { f, J };
+    return melhor;
+  }
+
+  /**
+   * ESCUDO = as restrições do problema (energia, sombra, rampa > limite, microcratera).
+   * Recebe a ação proposta (pela rede ou pela função de mérito) e devolve a ação permitida.
+   */
+  function escudo(S, r, s, bruta, razao, retornoLivre, perigoFrente) {
+    let final = bruta, vetado = false, paralelo = false, sa = null;
+    const saAqui = s.sombraAqui ? sombraAdiante(S, r.x, r.mod.vCruz, r.ry) : null;
+    if (!s.sombraAqui) r.hibernando = false;
+    if (saAqui && saAqui.ate === 0 && (r.hibernando || r.bat < energiaNecessaria(saAqui.comp, r.mod) - 10)) {
+      final = 3; vetado = bruta !== 3; r.hiberna = true; r.hibernando = true;
+      razao = `VETO ENERGIA: sombra de ${saAqui.comp} m maior que a bateria — hibernando até o Sol voltar`;
+    } else if (!s.sombraAqui && r.bat < 26 + r.ind.reserva && bruta !== 3) {
+      final = 3; vetado = true; razao = 'VETO ENERGIA: recarga obrigatória ao Sol antes de seguir';
+    } else if (!s.sombraAqui && bruta !== 3 && (sa = sombraAdiante(S, r.x, r.mod.vCruz, r.ry)).ate >= 0 && sa.ate <= 40 && r.bat < energiaNecessaria(sa.comp, r.mod) + r.ind.reserva) {
+      const req = energiaNecessaria(sa.comp, r.mod);
+      final = 3; vetado = true;
+      razao = req > 98 ? `VETO SOL 1,54°: sombra prevista de ${sa.comp} m excede a autonomia — esperar o Sol girar`
+        : `VETO SOL 1,54°: sombra prevista de ${sa.comp} m exige ${Math.round(req)}% de bateria`;
+    } else if (s.sombraAqui && bruta === 3) {
+      final = retornoLivre ? 0 : (s.rP.livre >= s.rN.livre ? 1 : 2); vetado = true; razao = 'VETO SOMBRA: proibido estacionar sem Sol';
+    } else if (bruta !== 3 && (perigoFrente || (r.ladoT > 0 && bruta !== r.lado))) {
+      const lado = escolherLado(r, s);
+      if ((lado === 1 ? s.rP : s.rN).livre > 12) {
+        final = lado; vetado = final !== bruta;
+        razao = 'VETO ' + S.conf + ': zona vetada à frente — contornando à ' + (lado === 1 ? 'DIREITA' : 'ESQUERDA');
+      } else {
+        // Corredor estreito: parar de frente para o obstáculo trava o rover para sempre.
+        // Em vez disso, recua um pouco e troca de lado.
+        final = 3; vetado = true;
+        if (r.recuo <= 0) { r.recuo = 0.6; r.lado = lado === 1 ? 2 : 1; r.ladoT = 3; }
+        razao = 'VETO ' + S.conf + ': corredor estreito — recuando para tentar o outro lado';
+      }
+    } else if (bruta === 0 && Math.abs(s.erro) > 5 && !retornoLivre) {
+      final = 0; vetado = true; paralelo = true; razao = 'VETO ' + S.conf + ': corte prematuro bloqueado — paralelo até a zona liberar';
+    } else if ((bruta === 1 && s.rP.livre < 20) || (bruta === 2 && s.rN.livre < 20)) {
+      if (retornoLivre) { final = 0; vetado = true; razao = 'VETO LATERAL: borda fechada — retornando pelo corredor livre'; }
+      else { final = s.rP.livre >= s.rN.livre ? 1 : 2; vetado = true; razao = 'VETO LATERAL: desvio redirecionado para o lado mais seguro'; }
+    } else if (Math.abs(s.erro) > 12 && retornoLivre && (bruta === 1 || bruta === 2)) {
+      final = 0; vetado = true; razao = 'RETORNO: zona segura reaberta — escudo guia a volta à rota';
+    }
+    return { final, vetado, paralelo, razao };
+  }
+
+  function moverRover(S, r) {
+    const T = S.T;
+    r.cam = camera(S, r);
+    r.hiberna = false;
+    const dec = decidir(S, r);
+    if (dec.vetado && !r.vetado) S.vetos++;   // conta EVENTOS de veto, não passos
+    r.ent = dec.s.inputs; r.acaoBruta = dec.bruta; r.acao = dec.final; r.vetado = dec.vetado; r.razao = dec.razao; r.paralelo = dec.paralelo;
+
+    const ra = r.ra(r.x + 8);
+    let alvo = ra, vAlvo = 16;
+    if (r.acao === 0) {
+      alvo = dec.paralelo ? ra : ra + clamp(dec.s.anguloRetorno - ra, -0.95, 0.95);
+      vAlvo = r.mod.vCruz * r.ind.vel;
+    } else if (r.acao === 1) { alvo = ra + r.mod.desvio + r.ind.desvio; vAlvo = r.mod.vDesv * r.ind.vel; }
+    else if (r.acao === 2) { alvo = ra - r.mod.desvio - r.ind.desvio; vAlvo = r.mod.vDesv * r.ind.vel; }
+    else if (r.hiberna) { alvo = r.heading; vAlvo = 0; }          // hibernação: não conta como "carga"
+    else { alvo = r.heading; vAlvo = 0.6; r.carga += DT; }
+    // B: o mapa de 5 m avisa de longe → freia com antecedência.
+    if (r.time === 'B' && dec.s.rM.livre <= 15) vAlvo = Math.min(vAlvo, 6);
+    // A e B: a câmera vê o perigo a poucos metros → freada forte.
+    if (r.cam.frente <= 7.5) vAlvo = Math.min(vAlvo, 4);
+    // A e B: reflexo da IMU — inclinação sob as rodas > 9° → para, recua e tenta outro lado.
+    const iAqui = celula(r.x, r.y);
+    if (r.recuo > 0) {
+      r.recuo -= DT; vAlvo = -3; alvo = r.heading;
+      r.razao = 'REFLEXO IMU: inclinação subiu de repente — recuando';
+    } else if (iAqui >= 0 && r.vel > 0.5 &&
+               ((T.slope[iAqui] > r.mod.reflGraus && T.slope[iAqui] - r.declAnt > r.mod.reflSalto && iAqui !== r.celVerificada) ||
+                T.slope[iAqui] > r.mod.reflMax)) {
+      // Na 2ª passagem por uma célula ≤ 13° já verificada, o rover aceita a rampa (é segura).
+      if (T.slope[iAqui] <= r.mod.reflMax) r.celVerificada = iAqui;
+      else lembrarBorda(r, iAqui, r.heading);   // borda real > 13°: não tentar de novo por aqui
+      r.recuo = 0.8; r.nReflexos++;
+      vAlvo = -3; alvo = r.heading;
+      // Depois de recuar, tenta o lado com terreno mais suave a ~8 m.
+      const iP = celula(r.x + Math.cos(ra + r.mod.desvio) * 8, r.y + Math.sin(ra + r.mod.desvio) * 8);
+      const iN = celula(r.x + Math.cos(ra - r.mod.desvio) * 8, r.y + Math.sin(ra - r.mod.desvio) * 8);
+      const sp = iP < 0 ? 99 : T.slope[iP] + T.noGo[iP] * 99, sn = iN < 0 ? 99 : T.slope[iN] + T.noGo[iN] * 99;
+      r.lado = sp <= sn ? 1 : 2; r.ladoT = 3;
+      r.razao = `REFLEXO IMU: inclinação de ${T.slope[iAqui].toFixed(0)}° — parando e recuando`;
+      // MANOBRA DE FUGA (A e B): 3 reflexos em 8 s = o rover entrou num bolsão sem saída.
+      // Recua pela própria trilha por ~25 m, marca a entrada do bolsão como perigo e troca de lado.
+      r.reflexosRecentes = r.reflexosRecentes.filter((t) => S.t - t < 8);
+      r.reflexosRecentes.push(S.t);
+      if (r.reflexosRecentes.length >= 3) {
+        for (let d = 0; d <= 15; d += CELL) lembrarBorda(r, celula(r.x + Math.cos(r.heading) * d, r.y + Math.sin(r.heading) * d), r.heading);
+        r.recuo = 2.5; r.nFugas++;
+        r.lado = r.lado === 1 ? 2 : 1; r.ladoT = 6;
+        r.reflexosRecentes = [];
+        r.razao = 'FUGA: bolsão sem saída — recuando pela trilha e tentando o outro lado';
+      }
+    }
+    if (r.y < 30) alvo = Math.max(alvo, 0.35);
+    if (r.y > H - 30) alvo = Math.min(alvo, -0.35);
+
+    if (iAqui >= 0) r.declAnt = T.slope[iAqui];
+    if (r.ladoT > 0) r.ladoT -= DT;
+    r.heading += (alvo - r.heading) * Math.min(1, DT * 5.8);
+    r.vel += (vAlvo - r.vel) * Math.min(1, DT * (vAlvo < r.vel ? 11 : 6.5));
+    r.x += Math.cos(r.heading) * r.vel * DT;
+    r.y += Math.sin(r.heading) * r.vel * DT;
+
+    const err = r.y - r.ry(r.x);
+    r.sqErr += err * err; r.n++;
+    const ult = r.trilha[r.trilha.length - 1];
+    if (Math.hypot(r.x - ult.x, r.y - ult.y) > 6) { r.trilha.push({ x: r.x, y: r.y }); if (r.trilha.length > 60) r.trilha.shift(); }
+
+    // Energia: só gera com Sol visível na célula (consulta O(1) à tabela).
+    const i = celula(r.x, r.y);
+    if (i < 0) { r.vivo = false; r.motivo = 'FORA DO MAPA'; return; }
+    const lz = luz(T, i, S.sunAz);
+    const ganho = lz * (r.acao === 3 ? r.mod.gParado : r.mod.gAndando);
+    // Hibernação (≈ 4 W do modelo de energia do app): só mantém o aquecimento vivo.
+    const custo = r.hiberna ? r.mod.hib : r.mod.base + Math.abs(r.vel) * r.mod.kVel + T.slope[i] * r.mod.kDecl;
+    r.bat = clamp(r.bat + ((ganho - custo) / r.mod.cap) * DT, 0, 100);   // bateria maior = cada W pesa menos em %
+    if (r.x > r.xMax + 1 || r.acao === 3) { r.xMax = Math.max(r.xMax, r.x); r.tProg = S.t; }  // esperar/recarregar não é "estar preso"
+    r.fitness = r.x - Math.abs(err) * 0.35 + r.bat * 0.25 - r.carga * 1.5;
+
+    // Relógio de escuridão (sombra REAL): zera quando o rover volta ao Sol.
+    r.tEscuro = lz < 0.5 ? r.tEscuro + DT : 0;
+    // Nota densa: sombras REAIS atravessadas (entrou e saiu vivo).
+    if (lz < 0.3) r.naSombra = true; else if (lz > 0.7 && r.naSombra) { r.naSombra = false; r.sombras++; }   // histerese: penumbra não conta duas vezes
+    // Consequências físicas no DEM FINO (a realidade é a mesma para A e B).
+    if (S.custoHib && r.tEscuro > ESCURO_MAX) { r.vivo = false; r.motivo = 'CONGELOU (>50 h no escuro)'; }
+    else if (T.noGo[i]) { r.vivo = false; r.motivo = 'CAIU EM MICROCRATERA'; }
+    else if (T.slope[i] > r.mod.limite && Math.abs(r.vel) > 7) { r.vivo = false; r.motivo = 'TOMBAMENTO (acima do limite)'; }
+    else if (r.bat <= 0.1) { r.vivo = false; r.motivo = 'BLECAUTE NA SOMBRA'; }
+    else if (r.carga > 45 && r.x < 120) { r.vivo = false; r.motivo = 'ESTAGNAÇÃO'; }
+    else if (S.t - r.tProg > 25 && r.acao !== 3) { r.vivo = false; r.motivo = 'PRESO (sem progresso)'; }
+    else if (r.x >= GOAL_X) { r.vivo = false; r.chegou = true; r.motivo = 'META: BORDA DA PSR'; r.fitness += 400 + r.bat * 2; }
+  }
+
+  /** Avança um passo DT. Devolve true se a geração terminou neste passo. */
+  function passo(S) {
+    if (S.teste && S.gen > TESTE.length) return true;
+    if (S.autoSun) S.sunAz = (S.sunAz + SUN_RATE * DT) % 360;
+    S.t += DT;
+    let algum = false;
+    for (const r of S.A) { if (r.vivo) { algum = true; moverRover(S, r); } else if (r.fade > 0) r.fade = Math.max(0, r.fade - DT * 0.5); }
+    for (const r of S.B) { if (r.vivo) { algum = true; moverRover(S, r); } else if (r.fade > 0) r.fade = Math.max(0, r.fade - DT * 0.5); }
+    if (S.t >= T_MAX) for (const r of [...S.A, ...S.B]) if (r.vivo) { r.vivo = false; r.motivo = 'TEMPO ESGOTADO'; }
+    if (!algum || S.t >= T_MAX) { fimDeGeracao(S); return true; }
+    return false;
+  }
+
+  /** Obstáculos superados por um rover: microcrateras da rota ultrapassadas + sombras reais atravessadas. */
+  function obstaculos(T, r) {
+    let n = r.sombras;
+    for (const c of T.craters) if (c.naRota && c.rota === r.rk && r.x > c.x + c.r + 5) n++;
+    return n;
+  }
+  function resumo(lista, T) {
+    const causas = {};
+    let metas = 0, melhor = 0, soma = 0, reflexos = 0, obst = 0;
+    for (const r of lista) {
+      reflexos += r.nReflexos; obst += obstaculos(T, r);
+      soma += Math.min(r.x, GOAL_X); if (r.x > melhor) melhor = Math.min(r.x, GOAL_X);
+      if (r.chegou) metas++; else causas[r.motivo || 'EM ANDAMENTO'] = (causas[r.motivo || 'EM ANDAMENTO'] || 0) + 1;
+    }
+    const n = lista.length;
+    return { melhor, media: soma / n, pct: soma / n / GOAL_X * 100, obst: obst / n, metas, falhas: n - metas, causas, reflexos };
+  }
+
+  /**
+   * TESTE em terrenos inéditos: copia os cérebros atuais para uma simulação separada,
+   * SEM evolução, e roda nos terrenos de TESTE. A interface chama passo(Q) até Q.gen > TESTE.length.
+   */
+  function iniciarTeste(S) {
+    const Q = criarSim();
+    for (const k of ['modoB', 'conf', 'modelo', 'fontePrev', 'custoHib', 'camera', 'pesosModo', 'mut', 'multiRota']) Q[k] = S[k];
+    Q.pesosUsuario = { ...S.pesosUsuario };
+    Q.teste = true; Q.dinamico = true; Q.autoSun = true;
+    Q.genomas = S.genomas.map(clonar);
+    Q.pesosGenomas = S.pesosGenomas.map((w) => ({ ...w }));
+    Q.seed = TESTE[0]; Q.T = gerarTerreno(Q.seed); Q.sunAz = 0; Q.gen = 1; Q.historico = [];
+    nascer(Q);
+    return Q;
+  }
+
+  function fimDeGeracao(S) {
+    const a = resumo(S.A, S.T), b = resumo(S.B, S.T);
+    S.ultima = { gen: S.gen, A: a, B: b, modoB: S.modoB, plano: S.plano };
+    S.historico.push({ gen: S.gen, planoA: S.plano.A, planoB: S.plano.B, melhorReal: S.plano.melhorReal, aPct: a.pct, bPct: b.pct, aObst: a.obst, bObst: b.obst, aMeta: a.metas / POP * 100, bMeta: b.metas / POP * 100 });
+    if (S.historico.length > 60) S.historico.shift();
+    if (S.teste) {   // modo teste: sem evolução; próximo terreno inédito
+      S.gen++;
+      if (S.gen <= TESTE.length) { S.seed = TESTE[S.gen - 1]; S.T = gerarTerreno(S.seed); S.sunAz = 0; nascer(S); }
+      return;
+    }
+    const acA = S.acum.A, acB = S.acum['B-' + S.modoB];
+    acA.runs += POP; acA.dist += a.media * POP; acA.metas += a.metas; acA.falhas += a.falhas;
+    acB.runs += POP; acB.dist += b.media * POP; acB.metas += b.metas; acB.falhas += b.falhas;
+
+    // Neuroevolução: 8 elites + filhos mutados dos 18 melhores.
+    if (S.modoB === 'ia') {
+      const rank = [...S.B].sort((x, y) => y.fitness - x.fitness);
+      const prox = rank.slice(0, 8).map((r) => clonar(r.genoma));
+      while (prox.length < POP) {
+        const pai = rank[Math.floor(Math.pow(S.rng(), 1.9) * 18)];
+        prox.push(mutar(pai.genoma, S.rng, S.mut, S.mut * 1.45));
+      }
+      S.genomas = prox;
+    }
+    // Pesos da função de mérito evoluem do mesmo jeito (modo "aleatórios + evolução").
+    if (S.modoB === 'merito' && S.pesosModo === 'evolutivo') {
+      const rank = [...S.B].sort((x, y) => y.fitness - x.fitness);
+      const prox = rank.slice(0, 8).map((r) => ({ ...r.w }));
+      while (prox.length < POP) {
+        const pai = rank[Math.floor(Math.pow(S.rng(), 1.9) * 18)];
+        prox.push(Object.fromEntries(TERMOS.map((t) => [t.id,
+          S.rng() < S.mut * 2 ? clamp(pai.w[t.id] + (S.rng() * 2 - 1) * S.mut * 2, 0, 3) : pai.w[t.id]])));
+      }
+      S.pesosGenomas = prox;
+      S.eliteW = Object.fromEntries(TERMOS.map((t) => [t.id, rank.slice(0, 8).reduce((a, r) => a + r.w[t.id], 0) / 8]));
+    }
+    S.gen++;
+    if (S.dinamico) { S.seed += 101; S.T = gerarTerreno(S.seed); }
+    else S.sunAz = S.sunAz0;
+    nascer(S);
+  }
+
+  function lider(lista) {
+    let best = null;
+    for (const r of lista) if (r.vivo && (!best || r.x > best.x)) best = r;
+    if (!best) for (const r of lista) if (!best || r.x > best.x) best = r;
+    return best;
+  }
+
+  return {
+    CELL, GW, GH, W, H, SUN_ELEV, SLOPE_LIMIT, N_AZ, POP, IN, HID, OUT, GOAL_X, START_X, DT, T_MAX, CONF, ALCANCE, CAMERA, MODELOS, HORAS_POR_SEGUNDO, ESCURO_MAX, TERMOS, pesosPadrao,
+    aquecer, VIEW_W, TESTE, iniciarTeste, obstaculos, gerarTerreno, tabelaSombra, luz, acertoPrevisao, celula, direcaoSol, criarSim, reiniciar, zerarAcumulados, passo, fimDeGeracao, lider, nascer
+  };
+})();
+/*NUCLEO>>*/
+
+// =============================================================================
+// INTERFACE (DOM + canvas)
+// =============================================================================
+(() => {
+  const N = NUCLEO;
+  const S = N.criarSim();
+  const LW = 600, LH = 330, PX = LW / N.VIEW_W;  // 0,6 px por metro; a tela mostra uma janela de 1000 m
+  const VW = N.VIEW_W / N.CELL;                  // largura da janela em células
+  let camX = 0;                                  // borda esquerda (m) da janela que está sendo desenhada
+  const cam = { A: 0, B: 0 };                    // câmera de cada painel (segue o líder)
+  const st = { playing: true, vel: 1, xray: false, acc: 0, last: null };
+  const $ = (id) => document.getElementById(id);
+
+  // Imagem do terreno (1 pixel por célula), escalada para o canvas.
+  const terrCv = document.createElement('canvas');
+  terrCv.width = VW; terrCv.height = N.GH;
+  const terrCtx = terrCv.getContext('2d');
+  const terrImg = terrCtx.createImageData(VW, N.GH);
+
+  function paleta() {
+    const light = document.documentElement.classList.contains('light');
+    return {
+      light,
+      text: light ? '#0f172a' : '#f1f5f9',
+      muted: light ? '#52627a' : '#93a3bd',
+      badgeBg: light ? 'rgba(255,255,255,0.90)' : 'rgba(10,16,32,0.86)',
+      route: light ? '#0f172a' : '#ffffff',
+      grid: light ? 'rgba(15,23,42,0.06)' : 'rgba(148,163,184,0.08)'
+    };
+  }
+
+  function desenharTerrenoBase(pal) {
+    const T = S.T, d = terrImg.data, sun = N.direcaoSol(S.sunAz);
+    const c0 = Math.round(camX / N.CELL);
+    for (let gy = 0; gy < N.GH; gy++) {
+      for (let vx = 0; vx < VW; vx++) {
+        const gx = c0 + vx, i = gy * N.GW + gx;
+        const z0 = T.dem[i];
+        const zx1 = T.dem[gy * N.GW + Math.min(N.GW - 1, gx + 1)], zx0 = T.dem[gy * N.GW + Math.max(0, gx - 1)];
+        const zy1 = T.dem[Math.min(N.GH - 1, gy + 1) * N.GW + gx], zy0 = T.dem[Math.max(0, gy - 1) * N.GW + gx];
+        const nx = -(zx1 - zx0) / (2 * N.CELL), ny = -(zy1 - zy0) / (2 * N.CELL);
+        const nl = Math.hypot(nx, ny, 1);
+        const hill = Math.max(0, Math.min(1, 0.45 + ((nx * sun.dx + ny * sun.dy + 0.25) / nl) * 0.65));
+        const lit = N.luz(T, i, S.sunAz);
+        const alt = Math.max(0, Math.min(1, (z0 + 18) / 36));
+        const p = (gy * VW + vx) * 4;
+        let r, g, b, sh;
+        if (pal.light) { r = 135 + alt * 65 + hill * 35; g = 145 + alt * 60 + hill * 32; b = 160 + alt * 52 + hill * 28; sh = 0.26 + 0.74 * lit; }
+        else { r = 46 + alt * 52 + hill * 34; g = 56 + alt * 56 + hill * 34; b = 74 + alt * 60 + hill * 34; sh = 0.20 + 0.80 * lit; }
+        d[p] = Math.min(255, r * sh); d[p + 1] = Math.min(255, g * sh); d[p + 2] = Math.min(255, b * sh); d[p + 3] = 255;
+      }
+    }
+    terrCtx.putImageData(terrImg, 0, 0);
+  }
+
+  const sx = (x) => (x - camX) * PX, sy = (y) => y * PX;
+
+  // Erros da previsão de sombra do B (fonte escolhida) contra a sombra real, célula a célula.
+  const erroCv = document.createElement('canvas'); erroCv.width = VW; erroCv.height = N.GH;
+  const erroCtx = erroCv.getContext('2d'), erroImg = erroCtx.createImageData(VW, N.GH);
+  function desenharErroPrevisao(ctx) {
+    const T = S.T, d = erroImg.data;
+    const c0 = Math.round(camX / N.CELL);
+    for (let k = 0; k < VW * N.GH; k++) {
+      const i = Math.floor(k / VW) * N.GW + c0 + (k % VW);
+      const real = N.luz(T, i, S.sunAz) < 0.5, prev = N.luz(T, i, S.sunAz, S.fontePrev) < 0.5, p = k * 4;
+      if (real && !prev) { d[p] = 239; d[p + 1] = 68; d[p + 2] = 68; d[p + 3] = 150; }        // falso claro (perigoso)
+      else if (!real && prev) { d[p] = 56; d[p + 1] = 189; d[p + 2] = 248; d[p + 3] = 110; } // falso escuro (cautela demais)
+      else d[p + 3] = 0;
+    }
+    erroCtx.putImageData(erroImg, 0, 0);
+    ctx.save(); ctx.imageSmoothingEnabled = false; ctx.drawImage(erroCv, 0, 0, LW, LH); ctx.restore();
+  }
+
+  function rotulo(ctx, txt, x, y, cor, pal, borda) {
+    ctx.font = '600 12px system-ui, sans-serif';
+    const w = ctx.measureText(txt).width;
+    const rx = Math.min(Math.max(x - w / 2, 6), LW - w - 10);
+    ctx.fillStyle = pal.badgeBg;
+    ctx.beginPath(); ctx.roundRect(rx - 4, y - 12, w + 8, 17, 4); ctx.fill();
+    if (borda) { ctx.strokeStyle = borda; ctx.lineWidth = 1; ctx.stroke(); }
+    ctx.fillStyle = cor; ctx.fillText(txt, rx, y);
+  }
+
+  function bussola(ctx, pal) {
+    const cx = 34, cy = 34, r = 20, sun = N.direcaoSol(S.sunAz);
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = pal.badgeBg; ctx.fill();
+    ctx.strokeStyle = 'rgba(251,191,36,0.5)'; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.font = '600 9px system-ui'; ctx.fillStyle = pal.muted; ctx.textAlign = 'center'; ctx.fillText('N', cx, cy - r + 9);
+    const px = cx + sun.dx * (r - 3), py = cy + sun.dy * (r - 3);
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.beginPath(); ctx.arc(px, py, 4.5, 0, Math.PI * 2); ctx.fillStyle = '#fbbf24'; ctx.fill();
+    ctx.textAlign = 'left'; ctx.font = '600 12px system-ui'; ctx.fillText(`☀ ${Math.round(S.sunAz)}°`, cx + 26, cy + 4);
+    ctx.restore();
+  }
+
+  function camadaComum(ctx, pal, ladoA) {
+    const T = S.T;
+    ctx.setTransform(2, 0, 0, 2, 0, 0);
+    ctx.clearRect(0, 0, LW, LH);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(terrCv, 0, 0, LW, LH);
+
+    if (ladoA) { // grade de 60 m: o que o rover A "enxerga"
+      ctx.strokeStyle = 'rgba(248,250,252,0.13)'; ctx.lineWidth = 1;
+      for (let gx = -(camX % 60) * PX; gx <= LW; gx += 60 * PX) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, LH); ctx.stroke(); }
+      for (let gy = 0; gy <= LH; gy += 60 * PX) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(LW, gy); ctx.stroke(); }
+    }
+
+    // PSR e linha de chegada
+    ctx.save();
+    ctx.beginPath(); ctx.ellipse(sx(T.psr.x), sy(T.psr.y), T.psr.r * PX * 1.15, T.psr.r * PX * 1.15, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1.6; ctx.setLineDash([4, 3]); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sx(N.GOAL_X), 0); ctx.lineTo(sx(N.GOAL_X), LH); ctx.strokeStyle = 'rgba(56,189,248,0.45)'; ctx.setLineDash([2, 4]); ctx.stroke();
+    ctx.restore();
+
+    // Rota do Controle da Missão
+    ctx.save();
+    ctx.beginPath();
+    // Rotas candidatas (finas) e a escolhida no planejamento deste lado (tracejada forte).
+    const kEsc = S.plano ? (ladoA ? S.plano.A : S.plano.B) : 0;
+    const traca = (ry) => { const xa = Math.max(N.START_X, camX - 12), xb = Math.min(N.GOAL_X, camX + N.VIEW_W + 12);
+      for (let x = xa; x <= xb; x += 6) { const y = ry(x); x === xa ? ctx.moveTo(sx(x), sy(y)) : ctx.lineTo(sx(x), sy(y)); } };
+    if (S.multiRota) for (const rt of T.rotas) if (rt.k !== kEsc) {
+      ctx.save(); ctx.beginPath(); traca(rt.y); ctx.strokeStyle = pal.muted; ctx.globalAlpha = 0.45; ctx.lineWidth = 1; ctx.setLineDash([2, 6]); ctx.stroke(); ctx.restore();
+    }
+    ctx.beginPath();   // o caminho não faz parte do save/restore: recomeçar antes da rota escolhida
+    traca(T.rotas[kEsc].y);
+    if (ladoA) { ctx.strokeStyle = 'rgba(245,158,11,0.22)'; ctx.lineWidth = 14; ctx.lineCap = 'round'; ctx.stroke(); }
+    ctx.strokeStyle = ladoA ? '#f59e0b' : pal.route; ctx.lineWidth = 1.8; ctx.setLineDash([6, 5]); ctx.stroke();
+    ctx.restore();
+
+    // Microcrateras: lado B sempre vê (halo pelo quantil); lado A só no Raio-X.
+    const pad = { P50: 4, P90: 9, P99: 14 }[S.conf];
+    for (const c of T.craters) {
+      const X = sx(c.x), Y = sy(c.y), R = c.r * PX;
+      if (!ladoA && !c.detectada) {
+        // cratera que o mapa interpolado perdeu: só aparece no Raio-X (tracejada)
+        if (st.xray) { ctx.save(); ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(X, Y, R, 0, Math.PI * 2); ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1.4; ctx.stroke(); ctx.restore(); }
+        continue;
+      }
+      if (!ladoA) {
+        const rad = R + pad;
+        const g = ctx.createRadialGradient(X, Y, 1, X, Y, rad);
+        g.addColorStop(0, 'rgba(239,68,68,0.42)'); g.addColorStop(1, 'rgba(239,68,68,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(X, Y, rad, 0, Math.PI * 2); ctx.fill();
+      }
+      if (!ladoA || st.xray) {
+        ctx.beginPath(); ctx.arc(X, Y, R, 0, Math.PI * 2); ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1.3; ctx.stroke();
+      }
+    }
+    if (ladoA && st.xray) rotulo(ctx, 'Raio-X: microcrateras de 5 m (invisíveis a 60 m)', LW / 2, LH - 8, '#fca5a5', pal);
+    if (!ladoA && st.xray) {
+      desenharErroPrevisao(ctx);
+      rotulo(ctx, 'Raio-X: vermelho = sombra não prevista · azul = sombra falsa · tracejado = cratera perdida', LW / 2, LH - 8, '#fbbf24', pal);
+    }
+
+    // Rótulos de relevo (origem das sombras)
+    for (const p of T.peaks) if (sx(p.x) > 30 && sx(p.x) < LW - 30) rotulo(ctx, `▲ Pico +${p.a.toFixed(0)} m`, sx(p.x), sy(p.y) + 4, pal.text, pal);
+    if (sx(T.psr.x) < LW + 20) rotulo(ctx, `PSR (−${T.psr.d} m)`, sx(T.psr.x), sy(T.psr.y) - T.psr.r * PX * 1.2 - 4, '#38bdf8', pal);
+
+    // Pouso
+    ctx.beginPath(); ctx.arc(sx(N.START_X), sy(T.routeY(N.START_X)), 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#38bdf8'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.4; ctx.stroke();
+
+    bussola(ctx, pal);
+    if (S.multiRota && S.plano) {
+      const k = ladoA ? S.plano.A : S.plano.B, ok = k === S.plano.melhorReal;
+      rotulo(ctx, `Plano: rota ${T.rotas[k].nome} (${ladoA ? 'grade 60 m' : 'tese'})${ok ? ' ✓ a melhor de verdade' : ''}`, 150, LH - 26, ok ? '#10b981' : pal.text, pal);
+    }
+  }
+
+  // Faixa de progresso: a rota inteira (3 km), a janela visível e onde está cada rover.
+  function faixaProgresso(ctx, lista, cor, pal) {
+    const x0 = 120, x1 = LW - 16, y = 14, f = (x) => x0 + (x1 - x0) * Math.min(1, x / N.GOAL_X);
+    ctx.save();
+    ctx.fillStyle = pal.badgeBg; ctx.beginPath(); ctx.roundRect(x0 - 6, y - 9, x1 - x0 + 12, 18, 5); ctx.fill();
+    ctx.strokeStyle = pal.muted; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1.5; ctx.strokeRect(f(camX), y - 6, f(camX + N.VIEW_W) - f(camX), 12);
+    for (const r of lista) {
+      if (r.chegou) continue;
+      ctx.fillStyle = r.vivo ? cor : '#ef4444'; ctx.globalAlpha = r.vivo ? 0.9 : 0.35;
+      ctx.fillRect(f(r.x) - 1, y - 3, 2, 6);
+    }
+    ctx.globalAlpha = 1; ctx.fillStyle = '#38bdf8'; ctx.fillRect(x1 - 1, y - 6, 2, 12);
+    ctx.restore();
+  }
+
+  function desenharEnxame(ctx, lista, cor, lider, pal, nome) {
+    // Trilhas: líder + até 12 vivos
+    let k = 0;
+    for (const r of lista) {
+      if (!(r === lider || (r.vivo && k++ < 12))) continue;
+      if (r.trilha.length < 2) continue;
+      ctx.beginPath();
+      r.trilha.forEach((p, j) => (j ? ctx.lineTo(sx(p.x), sy(p.y)) : ctx.moveTo(sx(p.x), sy(p.y))));
+      ctx.lineTo(sx(r.x), sy(r.y));
+      ctx.strokeStyle = r === lider ? '#38bdf8' : cor; ctx.globalAlpha = r === lider ? 0.95 : 0.35;
+      ctx.lineWidth = r === lider ? 2.2 : 1; ctx.stroke(); ctx.globalAlpha = 1;
+    }
+    // Rovers mortos (X vermelho que esmaece) e vivos
+    for (const r of lista) {
+      const X = sx(r.x), Y = sy(r.y);
+      if (!r.vivo) {
+        if (r.chegou) { ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(X, Y, 2.6, 0, Math.PI * 2); ctx.fill(); continue; }
+        if (r.fade <= 0.03) continue;
+        ctx.globalAlpha = r.fade; ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(X - 3, Y - 3); ctx.lineTo(X + 3, Y + 3); ctx.moveTo(X + 3, Y - 3); ctx.lineTo(X - 3, Y + 3); ctx.stroke();
+        ctx.globalAlpha = 1; continue;
+      }
+      if (r === lider) continue;
+      ctx.save(); ctx.translate(X, Y); ctx.rotate(r.heading);
+      ctx.fillStyle = cor; ctx.globalAlpha = 0.85; ctx.fillRect(-3.5, -2, 7, 4); ctx.restore();
+    }
+    if (lider) desenharLider(ctx, lider, cor, pal, nome);
+  }
+
+  function desenharLider(ctx, r, cor, pal, nome) {
+    const X = sx(r.x), Y = sy(r.y);
+    ctx.save(); ctx.translate(X, Y);
+    if (r.vetado) {
+      const pulse = (performance.now() / 600) % 1;
+      ctx.beginPath(); ctx.arc(0, 0, 11 + pulse * 8, 0, Math.PI * 2);
+      ctx.strokeStyle = '#ef4444'; ctx.globalAlpha = 0.7 - pulse * 0.6; ctx.lineWidth = 2; ctx.stroke(); ctx.globalAlpha = 1;
+    }
+    ctx.rotate(r.heading);
+    ctx.fillStyle = '#475569';
+    for (const [wx, wy] of [[-8, -7], [3, -7], [-8, 4], [3, 4]]) ctx.fillRect(wx, wy, 5, 3);
+    ctx.fillStyle = '#f8fafc'; ctx.strokeStyle = cor; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(-7, -4.5, 14, 9, 2.5); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#0284c7'; ctx.fillRect(-3.5, -2.5, 6, 5);
+    ctx.restore();
+    const txt = `${nome} · ${r.bat.toFixed(0)}%`;
+    ctx.font = '600 12px system-ui';
+    const tw = ctx.measureText(txt).width;
+    const bx = Math.min(Math.max(X - tw / 2 - 5, 6), LW - tw - 16), by = Y > 50 ? Y - 30 : Y + 16;
+    ctx.fillStyle = pal.badgeBg; ctx.strokeStyle = cor; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.roundRect(bx, by, tw + 10, 19, 5); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = pal.text; ctx.fillText(txt, bx + 5, by + 13);
+  }
+
+  function raiosSensores(ctx, r) {
+    if (!r || !r.vivo) return;
+    const T = S.T, ra = r.ra(r.x);
+    const X = sx(r.x), Y = sy(r.y);
+    ctx.save(); ctx.lineWidth = 1.4;
+    for (const a of [ra + r.mod.desvio, r.heading, ra - r.mod.desvio]) {
+      ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X + Math.cos(a) * N.ALCANCE * 5 * PX, Y + Math.sin(a) * N.ALCANCE * 5 * PX);
+      ctx.strokeStyle = r.vetado ? 'rgba(239,68,68,0.85)' : 'rgba(56,189,248,0.85)'; ctx.stroke();
+    }
+    if (Math.abs(r.y - r.ry(r.x)) > 4) {
+      const tx = r.x + 22, ty = r.ry(tx);
+      ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(sx(tx), sy(ty)); ctx.strokeStyle = '#34d399'; ctx.lineWidth = 2; ctx.setLineDash([3, 2]); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // ---------------------------------------------------------------- REDE
+  const cvNN = $('cvNN'), ctxNN = cvNN.getContext('2d');
+  // Cores fixas por variável da função de mérito (mesma cor no painel e nas barras).
+  const COR_TERMO = ['#38bdf8', '#10b981', '#a78bfa', '#f59e0b', '#64748b', '#f472b6', '#ef4444'];
+  function desenharMerito(r, pal) {
+    const w = 600, h = 360, ctx = ctxNN;
+    ctx.setTransform(2, 0, 0, 2, 0, 0);
+    ctx.clearRect(0, 0, w, h); ctx.fillStyle = pal.grid; ctx.fillRect(0, 0, w, h);
+    if (!r || !r.mer) { ctx.fillStyle = pal.muted; ctx.font = '500 12px system-ui'; ctx.textAlign = 'center'; ctx.fillText('Aguardando decisão do líder B…', w / 2, h / 2); return; }
+    const acoes = ['Seguir / voltar', 'Desvio à direita', 'Desvio à esquerda', 'Recarregar'];
+    const x0 = 300, esc = 60, rowH = 64, y0 = 44;          // eixo zero em x0; 1 unidade de J = 60 px
+    ctx.font = '600 12px system-ui'; ctx.fillStyle = pal.muted; ctx.textAlign = 'left';
+    ctx.fillText('Contribuição w·f de cada variável (← reduz J · aumenta J →)', 16, 20);
+    ctx.strokeStyle = pal.muted; ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.moveTo(x0, y0 - 10); ctx.lineTo(x0, y0 + rowH * 4 - 10); ctx.stroke(); ctx.globalAlpha = 1;
+    acoes.forEach((nome, a) => {
+      const y = y0 + a * rowH, fin = r.acao === a, prop = r.acaoBruta === a, vet = prop && r.vetado && !fin;
+      ctx.textAlign = 'left'; ctx.font = (fin ? '700 ' : '500 ') + '12px system-ui';
+      ctx.fillStyle = fin ? '#10b981' : vet ? '#ef4444' : pal.text;
+      ctx.fillText(nome + (fin ? ' (ATIVO)' : vet ? ' (VETADO)' : ''), 16, y + 14);
+      ctx.fillStyle = pal.muted; ctx.font = '500 11.5px system-ui';
+      ctx.fillText('J = ' + r.mer.J[a].toFixed(2), 16, y + 30);
+      // barras empilhadas: positivas para a direita, negativas para a esquerda
+      let pos = x0, neg = x0;
+      N.TERMOS.forEach((t, k) => {
+        const v = r.w[t.id] * r.mer.f[a][t.id];
+        const len = Math.abs(v) * esc;
+        ctx.fillStyle = COR_TERMO[k]; ctx.globalAlpha = fin ? 0.95 : 0.55;
+        if (v >= 0) { ctx.fillRect(pos, y + 2, len, 22); pos += len; } else { neg -= len; ctx.fillRect(neg, y + 2, len, 22); }
+        ctx.globalAlpha = 1;
+      });
+      // marcador do J total
+      const xj = x0 + r.mer.J[a] * esc;
+      ctx.strokeStyle = fin ? '#10b981' : vet ? '#ef4444' : pal.text; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(xj, y - 2); ctx.lineTo(xj, y + 28); ctx.stroke(); ctx.lineWidth = 1;
+    });
+    // legenda
+    let lx = 16; const ly = h - 18; ctx.font = '500 11.5px system-ui'; ctx.textAlign = 'left';
+    N.TERMOS.forEach((t, k) => {
+      const lbl = t.curto;
+      ctx.fillStyle = COR_TERMO[k]; ctx.fillRect(lx, ly - 9, 10, 10);
+      ctx.fillStyle = pal.text; ctx.fillText(lbl, lx + 14, ly); lx += ctx.measureText(lbl).width + 30;
+    });
+  }
+
+  function desenharRede(r, pal) {
+    if (S.modoB === 'merito') return desenharMerito(r, pal);
+    const w = 600, h = 360, ctx = ctxNN;
+    ctx.setTransform(2, 0, 0, 2, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = pal.grid; ctx.fillRect(0, 0, w, h);
+    if (!r) return;
+    const inLbl = ['Raio Dir', 'Raio Centro', 'Raio Esq', 'Δ_rota', 'Declive', 'Sol 1,54°', 'Interp. 5m', 'Bateria'];
+    const outLbl = ['ROTA / VOLTAR', 'DESVIO DIR', 'DESVIO ESQ', 'RECARREGAR'];
+    const colX = [w * 0.27, w * 0.51, w * 0.73];
+    const yPos = (n, i, pad = 38) => pad + (i * (h - pad * 2)) / (n - 1);
+    const ia = S.modoB === 'ia' && r.nn;
+    const s = ia ? r.nn : { inputs: r.ent, hidden: [] };
+    const inputs = s.inputs;
+
+    if (ia) {
+      const g = r.genoma;
+      for (let i = 0; i < N.IN; i++) for (let j = 0; j < N.HID; j++) {
+        const wt = g.w1[j][i], sig = Math.abs(inputs[i] * wt);
+        ctx.beginPath(); ctx.moveTo(colX[0], yPos(N.IN, i)); ctx.lineTo(colX[1], yPos(N.HID, j, 46));
+        ctx.lineWidth = Math.max(0.5, Math.min(2.8, sig * 1.25));
+        ctx.strokeStyle = wt >= 0 ? `rgba(16,185,129,${Math.min(0.85, 0.14 + sig * 0.35)})` : `rgba(244,63,94,${Math.min(0.85, 0.14 + sig * 0.35)})`;
+        ctx.stroke();
+      }
+      for (let j = 0; j < N.HID; j++) for (let k = 0; k < N.OUT; k++) {
+        const wt = g.w2[k][j], sig = Math.abs(s.hidden[j] * wt);
+        ctx.beginPath(); ctx.moveTo(colX[1], yPos(N.HID, j, 46)); ctx.lineTo(colX[2], yPos(N.OUT, k, 68));
+        ctx.lineWidth = Math.max(0.7, Math.min(3.2, sig * 1.4));
+        ctx.strokeStyle = wt >= 0 ? `rgba(56,189,248,${Math.min(0.9, 0.16 + sig * 0.38)})` : `rgba(245,158,11,${Math.min(0.9, 0.16 + sig * 0.38)})`;
+        ctx.stroke();
+      }
+    } else {
+      ctx.fillStyle = pal.badgeBg; ctx.strokeStyle = '#10b981'; ctx.lineWidth = 1.6;
+      ctx.fillRect(colX[1] - 72, h * 0.32, 144, h * 0.36); ctx.strokeRect(colX[1] - 72, h * 0.32, 144, h * 0.36);
+      ctx.font = '600 12px system-ui'; ctx.fillStyle = pal.text; ctx.textAlign = 'center';
+      ctx.fillText('Filtro fixo', colX[1], h * 0.46); ctx.fillText(S.conf + ' (sem IA)', colX[1], h * 0.52);
+      ctx.fillStyle = '#10b981'; ctx.fillText('regra determinística', colX[1], h * 0.58);
+    }
+
+    ctx.font = '500 12px system-ui';
+    for (let i = 0; i < N.IN; i++) {
+      const y = yPos(N.IN, i), v = inputs[i];
+      ctx.beginPath(); ctx.arc(colX[0], y, 8.5, 0, Math.PI * 2);
+      ctx.fillStyle = i === 3 ? pal.route : v > 0.6 ? '#10b981' : v < 0.25 ? '#ef4444' : '#38bdf8';
+      ctx.fill(); ctx.strokeStyle = pal.text; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = pal.text; ctx.textAlign = 'right';
+      ctx.fillText(i === 3 ? `Δ_rota (${v >= 0 ? '+' : ''}${(v * 30).toFixed(0)} m)` : `${inLbl[i]} (${(v * 100).toFixed(0)}%)`, colX[0] - 13, y + 4);
+    }
+    if (ia) for (let j = 0; j < N.HID; j++) {
+      const y = yPos(N.HID, j, 46), a = s.hidden[j];
+      ctx.beginPath(); ctx.arc(colX[1], y, 9.5, 0, Math.PI * 2);
+      ctx.fillStyle = a >= 0 ? '#38bdf8' : '#d97706'; ctx.globalAlpha = 0.35 + Math.abs(a) * 0.65; ctx.fill(); ctx.globalAlpha = 1;
+      ctx.strokeStyle = pal.text; ctx.stroke();
+    }
+    for (let k = 0; k < N.OUT; k++) {
+      const y = yPos(N.OUT, k, 68), bruta = r.acaoBruta === k, fin = r.acao === k;
+      ctx.beginPath(); ctx.arc(colX[2], y, 11.5, 0, Math.PI * 2);
+      ctx.fillStyle = fin ? '#10b981' : bruta && r.vetado ? '#ef4444' : pal.badgeBg; ctx.fill();
+      ctx.strokeStyle = fin ? '#10b981' : pal.text; ctx.lineWidth = fin ? 2.4 : 1; ctx.stroke();
+      ctx.textAlign = 'left'; ctx.font = fin ? '700 12px system-ui' : '500 12px system-ui';
+      ctx.fillStyle = fin ? pal.text : pal.muted;
+      ctx.fillText(outLbl[k] + (bruta && r.vetado && !fin ? ' (VETADO)' : fin ? ' (ATIVO)' : ''), colX[2] + 15, y + 4);
+    }
+    ctx.font = '600 12px system-ui'; ctx.textAlign = 'center'; ctx.fillStyle = pal.muted;
+    ctx.fillText('Sensores + Δ_rota', colX[0], 17);
+    ctx.fillText(ia ? 'Rede MLP' : 'Lógica fixa', colX[1], 17);
+    ctx.fillText('Escudo ' + S.conf, colX[2], 17);
+  }
+  // ---------------------------------------------------------------- GRÁFICO
+  const cvChart = $('cvChart'), ctxCh = cvChart.getContext('2d');
+  function desenharGrafico(pal) {
+    const w = 600, h = 220, ctx = ctxCh;
+    ctx.setTransform(2, 0, 0, 2, 0, 0);
+    ctx.clearRect(0, 0, w, h); ctx.fillStyle = pal.grid; ctx.fillRect(0, 0, w, h);
+    const H = S.historico;
+    ctx.font = '500 12px system-ui';
+    if (!H.length) {
+      ctx.fillStyle = pal.muted; ctx.textAlign = 'center';
+      ctx.fillText('Aguarde o fim da travessia (3 km) ou use "⚡ Turbo +5" para ver a evolução.', w / 2, h / 2); return;
+    }
+    const pL = 46, pR = 14, pT = 26, pB = 24, cw = w - pL - pR, ch = h - pT - pB;
+    ctx.fillStyle = pal.muted; ctx.textAlign = 'right';
+    ctx.fillText('100%', pL - 6, pT + 4); ctx.fillText('50%', pL - 6, pT + ch / 2 + 4); ctx.fillText('0', pL - 6, pT + ch);
+    ctx.strokeStyle = pal.grid; ctx.beginPath(); ctx.moveTo(pL, pT + ch / 2); ctx.lineTo(pL + cw, pT + ch / 2); ctx.stroke();
+    ctx.textAlign = 'left'; ctx.fillText(`ger. ${H[0].gen}`, pL, h - 6); ctx.textAlign = 'right'; ctx.fillText(`ger. ${H[H.length - 1].gen}`, w - pR, h - 6);
+    const n = H.length, step = n > 1 ? cw / (n - 1) : 0;
+    const X = (i) => pL + i * step, Y = (v) => pT + ch - (v / 100) * ch;
+    // Média móvel de 5 gerações: tira o efeito da sorte de cada terreno.
+    const movel = (key) => H.map((_, i) => { const a = H.slice(Math.max(0, i - 4), i + 1); return a.reduce((t, p) => t + p[key], 0) / a.length; });
+    const pontos = (key, cor) => { ctx.fillStyle = cor; ctx.globalAlpha = 0.45; H.forEach((p, i) => { ctx.beginPath(); ctx.arc(X(i), Y(p[key]), 2.2, 0, Math.PI * 2); ctx.fill(); }); ctx.globalAlpha = 1; };
+    const linha = (vals, cor, dash, lw) => {
+      ctx.beginPath();
+      vals.forEach((v, i) => (i ? ctx.lineTo(X(i), Y(v)) : ctx.moveTo(X(i), Y(v))));
+      if (n === 1) ctx.lineTo(pL + cw, Y(vals[0]));
+      ctx.strokeStyle = cor; ctx.lineWidth = lw; ctx.setLineDash(dash); ctx.stroke(); ctx.setLineDash([]);
+    };
+    pontos('aPct', '#f59e0b'); pontos('bPct', '#10b981');
+    linha(movel('aPct'), '#f59e0b', [], 2);
+    linha(movel('bPct'), '#10b981', [], 2.6);
+    linha(movel('aMeta'), '#f59e0b', [4, 3], 1.3);
+    linha(movel('bMeta'), '#10b981', [4, 3], 1.3);
+    // Testes em terrenos inéditos: losangos na geração em que foram feitos.
+    for (const t of S.testes || []) {
+      const i = H.findIndex((p) => p.gen >= t.gen); const x = i < 0 ? pL + cw : X(i);
+      for (const [v, cor] of [[t.a, '#f59e0b'], [t.b, '#10b981']]) {
+        const y = Y(v); ctx.beginPath(); ctx.moveTo(x, y - 6); ctx.lineTo(x + 6, y); ctx.lineTo(x, y + 6); ctx.lineTo(x - 6, y); ctx.closePath();
+        ctx.fillStyle = cor; ctx.fill(); ctx.strokeStyle = pal.text; ctx.lineWidth = 1.2; ctx.stroke();
+      }
+    }
+    ctx.textAlign = 'left';
+    const leg = [['#f59e0b', '— A'], ['#10b981', '— B: rota percorrida (média móvel)'], [pal.muted, '· por geração'], [pal.muted, '- - chegam à PSR'], [pal.muted, '◆ teste inédito']];
+    let lx = pL + 4; for (const [c, t] of leg) { ctx.fillStyle = c; ctx.fillText(t, lx, 15); lx += ctx.measureText(t).width + 12; }
+  }
+
+  // ---------------------------------------------------------------- PESOS + MODELO
+  function montarPesos() {
+    $('pesosGrid').innerHTML = N.TERMOS.map((t, k) => `
+      <span><span class="sw" style="background:${COR_TERMO[k]}"></span> ${t.nome}</span>
+      <input type="range" min="0" max="3" step="0.05" id="w-${t.id}" value="${S.pesosUsuario[t.id]}" aria-label="Peso: ${t.nome}" />
+      <span class="val" id="wv-${t.id}">${S.pesosUsuario[t.id].toFixed(2)}</span>
+      <span class="elite" id="we-${t.id}">—</span>`).join('');
+    N.TERMOS.forEach((t) => $('w-' + t.id).addEventListener('input', (e) => {
+      S.pesosUsuario[t.id] = parseFloat(e.target.value);
+      $('wv-' + t.id).textContent = S.pesosUsuario[t.id].toFixed(2);
+      if (S.pesosModo === 'fixo') for (const r of S.B) r.w = { ...S.pesosUsuario };   // vale na hora
+    }));
+  }
+  function atualizarPesosUI(lB) {
+    const evol = S.pesosModo === 'evolutivo';
+    const ativo = S.modoB === 'merito';
+    $('pesosAviso').textContent = !ativo ? 'Ativo só com o cérebro "Mérito"' : evol ? 'Pesos evoluindo' : 'Pesos fixos ativos';
+    $('pesosAviso').className = 'badge ' + (!ativo ? 'b-amber' : evol ? 'b-sky' : 'b-green');
+    N.TERMOS.forEach((t) => {
+      const inp = $('w-' + t.id); inp.disabled = evol;
+      if (evol && lB && lB.w) { inp.value = lB.w[t.id]; $('wv-' + t.id).textContent = lB.w[t.id].toFixed(2); }
+      $('we-' + t.id).textContent = S.eliteW ? 'elite ' + S.eliteW[t.id].toFixed(2) : '—';
+    });
+    $('btnPesosElite').disabled = !S.eliteW;
+  }
+  function montarSpec() {
+    const m = N.MODELOS[S.modelo];
+    $('specTitulo').textContent = 'Modelo do rover: ' + m.nome;
+    const linhas = [
+      ['Escala de tempo da animação', `1 s ≈ ${N.HORAS_POR_SEGUNDO.toFixed(1)} h na Lua`],
+      ['Velocidade de cruzeiro / em desvio', `${m.vCruz} / ${m.vDesv} m/s`],
+      ['Ganho solar com Sol pleno (parado / andando)', `${m.gParado.toFixed(1)} / ${m.gAndando.toFixed(1)} %/s`],
+      ['Capacidade relativa da bateria', `${m.cap.toFixed(1)}×`],
+      ['Ganho do painel solar', `${m.painel.toFixed(2)}×`],
+      ['Consumo = base + k·v + k·declive', `${m.base} + ${m.kVel}·v + ${m.kDecl}·°`],
+      ['Consumo em hibernação', `${m.hib}`],
+      ['Alcance da câmera de perigo', `${m.cam} m`],
+      ['Inclinação máxima do chassi', `${m.limite}°`],
+      ['Reflexo da IMU (salto / máximo)', `>${m.reflGraus}° com salto >${m.reflSalto}° · >${m.reflMax}°`],
+      ['Ângulo de desvio', `${m.desvio} rad`]
+    ];
+    $('specNota').innerHTML = m.calibrado
+      ? 'Calibrado pelo VIPER: bateria de 5.420 Wh, 50 h de sobrevivência no escuro (≈108 W) e painéis de 320–450 W (NASA). Consumo acordado (~150 W) e andando (~250 W) são <strong>estimativas</strong>. Tolerância de fabricação: ±8% velocidade, bateria inicial de 88 a 100%.'
+      : 'Valores ilustrativos, na escala da animação. Cada rover ainda tem uma tolerância de fabricação própria: velocidade ±8%, bateria inicial de 88 a 100%, reserva ±5 pontos.';
+    $('specTabela').innerHTML = linhas.map(([k, v]) => `<tr><td>${k}</td><td class="n">${v}</td></tr>`).join('');
+  }
+
+  // ---------------------------------------------------------------- PAINÉIS
+  const fmtM = (v) => `${Math.round(v)} m`;
+  function principalFalha(lista) {
+    const c = {};
+    for (const r of lista) if (!r.vivo && !r.chegou) c[r.motivo] = (c[r.motivo] || 0) + 1;
+    const e = Object.entries(c).sort((a, b) => b[1] - a[1])[0];
+    return e ? `${e[0]} (${e[1]})` : '—';
+  }
+  function atualizarPaineis(lA, lB) {
+    const vivosA = S.A.filter((r) => r.vivo).length, vivosB = S.B.filter((r) => r.vivo).length;
+    const metaA = S.A.filter((r) => r.chegou).length, metaB = S.B.filter((r) => r.chegou).length;
+    $('kGen').textContent = S.gen;
+    $('kTempo').textContent = `${S.t.toFixed(0)} s / ${N.T_MAX} s`;
+    $('kAliveA').textContent = `${vivosA} / ${N.POP}`;
+    $('kAliveB').textContent = `${vivosB} / ${N.POP}`;
+    const md = (l) => (l.reduce((t, r) => t + N.obstaculos(S.T, r), 0) / l.length).toFixed(1);
+    $('kMeta').textContent = `${md(S.A)} · ${md(S.B)}`;
+    $('kVetos').textContent = S.vetos.toLocaleString('pt-BR');
+    $('sunReadout').textContent = `☀ Az ${Math.round(S.sunAz)}° · Elev 1,54°`;
+    $('sunSlider').value = Math.round(S.sunAz);
+
+    $('mA1').textContent = fmtM(lA.x); $('mA2').textContent = lA.vivo ? `${lA.bat.toFixed(0)}%` : '—';
+    $('mA4').textContent = principalFalha(S.A);
+    $('mB1').textContent = fmtM(lB.x); $('mB2').textContent = lB.vivo ? `${lB.bat.toFixed(0)}%` : '—';
+    if (!(S._accT > 0) || performance.now() - S._accT > 500) { S._acc = N.acertoPrevisao(S); S._accT = performance.now(); }
+    $('mB3').textContent = `${(S._acc.acerto * 100).toFixed(0)}% · ${(S._acc.falsoClaro * 100).toFixed(0)}%`;
+    $('mB3').style.color = S._acc.falsoClaro > 0.08 ? 'var(--red)' : S._acc.falsoClaro > 0.03 ? 'var(--amber)' : 'var(--green)';
+    $('mB4').textContent = principalFalha(S.B);
+
+    const bA = $('badgeA');
+    if (vivosA === 0) { bA.textContent = metaA ? `${metaA} chegaram · resto perdido` : 'Enxame A perdido'; bA.className = 'badge b-red'; }
+    else if (lA.recuo > 0) { bA.textContent = 'Reflexo IMU: recuando'; bA.className = 'badge b-red'; }
+    else if (lA.cam.frente < Infinity) { bA.textContent = 'Câmera viu obstáculo de perto!'; bA.className = 'badge b-red'; }
+    else if (lA.acao === 3) { bA.textContent = 'Recarga tardia (sem reserva)'; bA.className = 'badge b-amber'; }
+    else if (lA.acao === 1 || lA.acao === 2) { bA.textContent = 'Desvio tardio (60 m)'; bA.className = 'badge b-amber'; }
+    else { bA.textContent = 'Atalho 60 m (cego a 5 m)'; bA.className = 'badge b-amber'; }
+
+    const bB = $('badgeB');
+    if (vivosB === 0) { bB.textContent = metaB ? `✅ ${metaB} na PSR` : 'Enxame B perdido'; bB.className = metaB ? 'badge b-green' : 'badge b-red'; }
+    else if (lB.recuo > 0) { bB.textContent = 'Reflexo IMU: recuando'; bB.className = 'badge b-amber'; }
+    else if (lB.vetado) { bB.textContent = 'ESCUDO ATIVO: replanejou em O(1)'; bB.className = 'badge b-sky'; }
+    else if (lB.acao === 3) { bB.textContent = 'Recarga preventiva ao Sol'; bB.className = 'badge b-amber'; }
+    else { bB.textContent = `Rota O(1) segura (${S.conf})`; bB.className = 'badge b-green'; }
+
+    $('tituloB').textContent = S.modoB === 'ia' ? '2. Com a Tese: Escudo ' + S.conf + ' + IA (60 rovers)'
+      : S.modoB === 'merito' ? '2. Com a Tese: Mérito (Marcato) + Escudo ' + S.conf + ' (60 rovers)'
+      : '2. Com a Tese: Regra Fixa ' + S.conf + ' (60 rovers, sem IA)';
+    $('nnTitulo').textContent = S.modoB === 'ia' ? 'Decisão do Líder B (MLP 8→7→4 + Escudo ' + S.conf + ')'
+      : S.modoB === 'merito' ? 'Decisão do Líder B (J de cada ação = Σ peso × variável)'
+      : 'Decisão do Líder B (Regra fixa ' + S.conf + ', sem rede)';
+    $('nnSub').textContent = S.modoB === 'merito'
+      ? 'Cada barra é a contribuição w·f de uma variável para a ação. A ação de maior J é proposta; o escudo pode vetá-la (vermelho).'
+      : 'Entradas dos sensores à esquerda, camada oculta no meio, ações à direita. Verde = ação executada; vermelho = proposta vetada pelo escudo.';
+    $('explain').innerHTML = lB ? `<strong>${lB.vetado ? 'Escudo:' : 'Líder B:'}</strong> ${lB.razao || '—'}` : '';
+    const alcCam = N.MODELOS[S.modelo].cam * N.CAMERA[S.camera].fator;
+    $('mA3').textContent = alcCam ? `Baixa (60 m) + câm. ${alcCam} m` : 'Baixa (60 m), sem câm.';
+
+    const fmt = (a) => a.runs ? `${Math.round(a.dist / a.runs / N.GOAL_X * 100)}% rota · ${Math.round(a.metas / a.runs * 100)}% PSR` : 'Não testado';
+    $('cmpA').textContent = fmt(S.acum.A); $('cmpBr').textContent = fmt(S.acum['B-regra']); $('cmpBi').textContent = fmt(S.acum['B-ia']); $('cmpBm').textContent = fmt(S.acum['B-merito']);
+    atualizarPesosUI(lB);
+
+    narrativa(vivosA, vivosB, lB);
+  }
+
+  let ultimaGenTabela = -1;
+  function tabelaCausas() {
+    if (!S.ultima || S.ultima.gen === ultimaGenTabela) return;
+    ultimaGenTabela = S.ultima.gen;
+    const ca = S.ultima.A.causas, cb = S.ultima.B.causas;
+    const chaves = [...new Set([...Object.keys(ca), ...Object.keys(cb)])].sort((a, b) => ((cb[b] || 0) + (ca[b] || 0)) - ((cb[a] || 0) + (ca[a] || 0)));
+    const linhas = chaves.map((k) => `<tr><td>${k}</td><td class="n">${ca[k] || 0}</td><td class="n">${cb[k] || 0}</td></tr>`);
+    linhas.push(`<tr><td>Reflexos da IMU (paradas e recuos)</td><td class="n">${S.ultima.A.reflexos}</td><td class="n">${S.ultima.B.reflexos}</td></tr>`);
+    linhas.push(`<tr><td>Obstáculos superados por rover (crateras + sombras)</td><td class="n">${S.ultima.A.obst.toFixed(1)}</td><td class="n">${S.ultima.B.obst.toFixed(1)}</td></tr>`);
+    linhas.push(`<tr><td>Rota percorrida (média)</td><td class="n">${S.ultima.A.pct.toFixed(0)}%</td><td class="n">${S.ultima.B.pct.toFixed(0)}%</td></tr>`);
+    linhas.push(`<tr><td><strong>Chegaram à PSR</strong></td><td class="n"><strong>${S.ultima.A.metas}</strong></td><td class="n"><strong>${S.ultima.B.metas}</strong></td></tr>`);
+    $('tbCausas').innerHTML = linhas.join('');
+  }
+
+  function narrativa(vivosA, vivosB, lB) {
+    let t, x;
+    if (S.gen === 1 && S.t < 8) {
+      t = 'Ger. 1 — Largada:';
+      x = 'Mesmo equipamento nos dois enxames: velocidade, câmera de perigo (' + N.CAMERA[S.camera].nome + ') e reflexo da IMU. À esquerda, o plano vem da grade de 60 m; à direita, do mapa de 5 m, das sombras pré-calculadas e do escudo ' + S.conf + '.';
+    } else if (vivosA < N.POP * 0.5 && vivosB > vivosA) {
+      t = `Ger. ${S.gen} — Microcrateras de 5 m:`;
+      x = S.camera === 'danificada'
+        ? 'Sem câmera, o rover A só sente a cratera pela IMU, já na borda: muitos tombam. O B nem chega perto — o mapa de 5 m o desviou a 50 m.'
+        : 'O rover A só vê a microcratera pela câmera, a poucos metros (e nada na sombra): freia, recua e muitas vezes fica preso tentando de novo. O B desviou a 50 m pelo mapa de 5 m e usa a câmera só para conferir.';
+    } else if (lB && lB.acao === 3) {
+      t = `Ger. ${S.gen} — Energia sob Sol rasante:`;
+      x = 'Com o Sol a 1,54°, o relevo de poucos metros projeta sombras de centenas de metros. O líder B para ao Sol para recarregar antes de cruzar a próxima sombra.';
+    } else if (S.modoB === 'merito') {
+      t = `Ger. ${S.gen} — Função de mérito (Marcato):`;
+      x = S.pesosModo === 'evolutivo'
+        ? 'Cada rover B nasce com pesos sorteados para as 7 variáveis; os 8 melhores passam os pesos adiante. Veja a coluna "elite" convergir no painel de pesos.'
+        : 'Todos os rovers B escolhem a ação de maior J = Σ peso × variável, com os pesos que você definiu. O escudo ' + S.conf + ' continua como restrição.';
+    } else if (S.modoB === 'ia') {
+      t = `Ger. ${S.gen} — Neuroevolução:`;
+      x = 'A cada geração os 8 melhores cérebros são copiados e os demais nascem de mutações. A rota tem 3 km e muda a cada geração, para a rede não decorar o caminho; a nota é a rota percorrida e os obstáculos superados.';
+    } else {
+      t = `Ger. ${S.gen} — Regra fixa:`;
+      x = 'Sem rede neural: o rover B aplica a margem ' + S.conf + ' e desvia por regra. Compare com "IA MLP + Escudo" no gráfico ao lado.';
+    }
+    $('narrTitulo').textContent = t; $('narrTexto').textContent = x;
+  }
+
+  // ---------------------------------------------------------------- RENDER
+  const ctxA = $('cvA').getContext('2d'), ctxB = $('cvB').getContext('2d');
+  function render() {
+    const pal = paleta();
+    const lA = N.lider(S.A), lB = N.lider(S.B);
+    // Câmera: segue o líder de cada painel com suavização; alinhada à grade de 5 m.
+    const alvo = (l) => Math.max(0, Math.min(N.W - N.VIEW_W, (l ? l.x : 0) - 350));
+    const segue = (k, l) => { const a = alvo(l); cam[k] += (a - cam[k]) * (Math.abs(a - cam[k]) > 600 ? 1 : 0.12); return Math.round(cam[k] / N.CELL) * N.CELL; };
+
+    camX = segue('A', lA);
+    desenharTerrenoBase(pal);
+    camadaComum(ctxA, pal, true);
+    desenharEnxame(ctxA, S.A, '#f59e0b', lA, pal, 'Líder A');
+    faixaProgresso(ctxA, S.A, '#f59e0b', pal);
+    const camA = camX;
+    camX = segue('B', lB);
+    if (camX !== camA) desenharTerrenoBase(pal);
+    camadaComum(ctxB, pal, false);
+    raiosSensores(ctxB, lB);
+    desenharEnxame(ctxB, S.B, '#10b981', lB, pal, 'Líder B');
+    faixaProgresso(ctxB, S.B, '#10b981', pal);
+
+    desenharRede(lB, pal);
+    desenharGrafico(pal);
+    atualizarPaineis(lA, lB);
+    tabelaCausas();
+  }
+  function tick(ts) {
+    if (st.last === null) st.last = ts;
+    const dt = Math.min(0.1, (ts - st.last) / 1000);
+    st.last = ts;
+    if (st.playing) {
+      st.acc += dt * st.vel;
+      // Orçamento de ~14 ms por quadro: em velocidade alta a simulação desacelera em vez de travar a página.
+      const t0 = performance.now();
+      while (st.acc >= N.DT && performance.now() - t0 < 14) { N.passo(S); st.acc -= N.DT; }
+      if (st.acc > 1) st.acc = 0;
+      // Folga no quadro: monta uma tabela de sombra antes que o Sol chegue nela (evita engasgos).
+      if (performance.now() - t0 < 8) N.aquecer(S.T, 'real', S.sunAz) || N.aquecer(S.T, S.fontePrev, S.sunAz);
+    }
+    render();
+    requestAnimationFrame(tick);
+  }
+
+  // ---------------------------------------------------------------- CONTROLES
+  function segmento(id, attr, onPick) {
+    const box = $(id);
+    box.querySelectorAll('.btn').forEach((b) => b.addEventListener('click', () => {
+      box.querySelectorAll('.btn').forEach((x) => x.classList.toggle('on', x === b));
+      onPick(b.dataset[attr]);
+    }));
+  }
+  segmento('segConf', 'conf', (v) => { S.conf = v; });
+  function recomecar() { N.reiniciar(S); S.testes = []; cam.A = cam.B = 0; ultimaGenTabela = -1; $('tbCausas').innerHTML = ''; }
+  segmento('segModo', 'modo', (v) => { S.modoB = v; recomecar(); });
+  segmento('segMapa', 'mapa', (v) => { S.dinamico = v === 'dinamico'; recomecar(); });
+  segmento('segMut', 'mut', (v) => { S.mut = parseFloat(v); });
+  segmento('segPrev', 'prev', (v) => { S.fontePrev = v; });
+  segmento('segRotas', 'rotas', (v) => { S.multiRota = v === '4'; recomecar(); });
+  segmento('segHib', 'hib', (v) => { S.custoHib = v === '1'; });   // vale na hora; o mundo real não muda
+  segmento('segModelo', 'modelo', (v) => { S.modelo = v; N.zerarAcumulados(S); montarSpec(); recomecar(); });
+  segmento('segPesos', 'pesos', (v) => { S.pesosModo = v; S.eliteW = null; recomecar(); });
+  $('btnPesosPadrao').addEventListener('click', () => {
+    S.pesosUsuario = N.pesosPadrao();
+    N.TERMOS.forEach((t) => { $('w-' + t.id).value = S.pesosUsuario[t.id]; $('wv-' + t.id).textContent = S.pesosUsuario[t.id].toFixed(2); });
+    if (S.pesosModo === 'fixo') for (const r of S.B) r.w = { ...S.pesosUsuario };
+  });
+  $('btnPesosElite').addEventListener('click', () => {
+    if (!S.eliteW) return;
+    S.pesosUsuario = { ...S.eliteW };
+    // passa para o modo fixo com os pesos aprendidos
+    S.pesosModo = 'fixo';
+    $('segPesos').querySelectorAll('.btn').forEach((x) => x.classList.toggle('on', x.dataset.pesos === 'fixo'));
+    N.TERMOS.forEach((t) => { $('w-' + t.id).value = S.pesosUsuario[t.id]; $('wv-' + t.id).textContent = S.pesosUsuario[t.id].toFixed(2); });
+    recomecar();
+  });
+  montarPesos(); montarSpec();
+  segmento('segCam', 'cam', (v) => { S.camera = v; });
+  segmento('segVel', 'vel', (v) => { st.vel = parseFloat(v); });
+
+  $('btnPlay').addEventListener('click', () => {
+    st.playing = !st.playing;
+    $('btnPlay').textContent = st.playing ? '⏸ Pausar' : '▶ Executar';
+  });
+  $('btnNextGen').addEventListener('click', () => N.fimDeGeracao(S));
+  $('btnTurbo').addEventListener('click', () => {
+    const btn = $('btnTurbo'); btn.disabled = true; btn.textContent = '⚡ Rodando...';
+    const alvo = S.gen + 5;
+    // Roda em fatias para não travar a página.
+    const fatia = () => {
+      const t0 = performance.now();
+      while (S.gen < alvo && performance.now() - t0 < 30) N.passo(S);
+      if (S.gen < alvo) requestAnimationFrame(fatia);
+      else { btn.disabled = false; btn.textContent = '⚡ Turbo +5'; }
+    };
+    fatia();
+  });
+  $('btnTeste').addEventListener('click', () => {
+    const btn = $('btnTeste'); btn.disabled = true;
+    const Q = N.iniciarTeste(S), genNoTeste = S.gen;
+    const fatia = () => {
+      const t0 = performance.now();
+      while (Q.gen <= N.TESTE.length && performance.now() - t0 < 25) N.passo(Q);
+      if (Q.gen <= N.TESTE.length) { btn.textContent = `🧪 Testando ${Q.gen}/${N.TESTE.length}…`; requestAnimationFrame(fatia); return; }
+      const m = (k) => Q.historico.reduce((t, p) => t + p[k], 0) / Q.historico.length;
+      (S.testes = S.testes || []).push({ gen: genNoTeste, a: m('aPct'), b: m('bPct') });
+      $('testeOut').textContent = `Teste (ger. ${genNoTeste}): A ${m('aPct').toFixed(0)}% · B ${m('bPct').toFixed(0)}% da rota · PSR ${m('aMeta').toFixed(0)}% · ${m('bMeta').toFixed(0)}%`;
+      btn.disabled = false; btn.textContent = '🧪 Testar em 3 terrenos inéditos';
+    };
+    fatia();
+  });
+  $('btnReset').addEventListener('click', () => { N.zerarAcumulados(S); recomecar(); });
+  $('btnXray').addEventListener('click', () => {
+    st.xray = !st.xray;
+    $('btnXray').textContent = st.xray ? '🔍 Raio-X 5 m: ON' : '🔍 Raio-X 5 m: OFF';
+    $('btnXray').classList.toggle('on', st.xray);
+  });
+  $('btnTheme').addEventListener('click', () => document.documentElement.classList.toggle('light'));
+  $('sunSlider').addEventListener('input', (e) => {
+    S.autoSun = false; $('btnAutoSun').classList.remove('on');
+    S.sunAz = parseFloat(e.target.value);
+  });
+  $('btnAutoSun').addEventListener('click', () => {
+    S.autoSun = !S.autoSun; $('btnAutoSun').classList.toggle('on', S.autoSun);
+  });
+
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    st.playing = false; $('btnPlay').textContent = '▶ Executar';
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

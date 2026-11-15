@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lunar Landing Site Navigator — NASA Space Apps 2026</title>
+  <style>
+    :root {
+      --bg: #0B0E14;
+      --card-bg: #151922;
+      --card-border: #222938;
+      --text: #F0F4F8;
+      --text-muted: #8E9BAE;
+      --primary: #0070F3;
+      --primary-hover: #0060DF;
+      --accent-sun: #FFB020;
+      --accent-earth: #00D2FF;
+      --success: #10B981;
+      --danger: #EF4444;
+      --warning: #F59E0B;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 20px; line-height: 1.5; }
+
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 15px; margin-bottom: 20px; }
+    .header h1 { font-size: 1.4rem; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .header .badge { background: #1E293B; color: #38BDF8; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; border: 1px solid #0284C7; font-weight: 600; }
+
+    .grid { display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 18px; margin-bottom: 20px; }
+    .card h2 { font-size: 1rem; color: #E2E8F0; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #1E293B; padding-bottom: 6px; }
+
+    .control-group { margin-bottom: 16px; }
+    .control-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
+    select, input[type="range"], input[type="date"] {
+      width: 100%; padding: 8px 10px; background: #0D1117; border: 1px solid var(--card-border); color: #fff; border-radius: 6px; font-size: 0.85rem; outline: none;
+    }
+    select:focus, input:focus { border-color: var(--primary); }
+
+    .toggle-container { display: flex; align-items: center; justify-content: space-between; background: #0D1117; padding: 10px 12px; border-radius: 6px; border: 1px solid var(--card-border); margin-top: 10px; }
+    .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .3s; border-radius: 22px; }
+    .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(22px); }
+
+    /* Widgets de Contagem Regressiva */
+    .countdown-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+    .countdown-card { background: #0D1117; border: 1px solid var(--card-border); border-radius: 6px; padding: 12px; text-align: center; }
+    .countdown-card.sun { border-top: 3px solid var(--accent-sun); }
+    .countdown-card.earth { border-top: 3px solid var(--accent-earth); }
+    .countdown-card .val { font-size: 1.3rem; font-weight: 700; margin: 4px 0; color: #fff; }
+    .countdown-card .lbl { font-size: 0.75rem; color: var(--text-muted); }
+
+    /* Canvas do Horizonte 360 */
+    .skyplot-wrapper { position: relative; width: 100%; height: 260px; background: #07090E; border: 1px solid var(--card-border); border-radius: 6px; overflow: hidden; margin-bottom: 16px; }
+    canvas#horizonCanvas { width: 100%; height: 100%; display: block; }
+    .legend { display: flex; gap: 16px; font-size: 0.75rem; margin-top: 8px; justify-content: center; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    /* Linha do Tempo / Gantt */
+    .timeline-wrapper { background: #0D1117; border: 1px solid var(--card-border); border-radius: 6px; padding: 12px; margin-top: 15px; }
+    .timeline-bar { height: 24px; border-radius: 4px; display: flex; overflow: hidden; margin: 8px 0; }
+    .seg-both { background: var(--success); flex: 4; }
+    .seg-sun { background: var(--warning); flex: 2; }
+    .seg-earth { background: #0284C7; flex: 2; }
+    .seg-dark { background: var(--danger); flex: 1.5; }
+    .time-ticks { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); }
+
+    /* Botao Otimizar Marcato */
+    .btn-opt { width: 100%; background: linear-gradient(135deg, #0070F3, #1E40AF); color: #fff; padding: 10px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; transition: 0.2s; }
+    .btn-opt:hover { filter: brightness(1.15); }
+    .opt-box { background: rgba(0, 112, 243, 0.08); border: 1px dashed var(--primary); padding: 10px; border-radius: 6px; font-size: 0.78rem; margin-top: 12px; display: none; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>🚀 Lunar Landing Site Navigator <span style="font-size: 0.9rem; font-weight: normal; color: var(--text-muted);">| Polo Sul da Lua</span></h1>
+    <div class="badge">NASA Space Apps 2026</div>
+  </div>
+
+  <div class="grid">
+    <!-- COLUNA DA ESQUERDA: CONTROLES E CONFIGURACOES -->
+    <div>
+      <div class="card">
+        <h2>📍 Configuração do Pouso</h2>
+        
+        <div class="control-group">
+          <label for="siteSelect">Sítio Candidato (130 catalogados)</label>
+          <select id="siteSelect" onchange="atualizarSimulacao()">
+            <option value="shackleton" selected>Borda de Shackleton (Peak 1) [89.9°S]</option>
+            <option value="malapert">Maciço Malapert (Peak) [85.9°S]</option>
+            <option value="connecting">Connecting Ridge [89.4°S]</option>
+            <option value="nobile">Nobile Rim 2 (DM2) [84.2°S]</option>
+            <option value="de_gerlache">Borda de Gerlache [88.5°S]</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="dataSelect">Data da Missão</label>
+          <input type="date" id="dataSelect" value="2026-11-15" onchange="atualizarSimulacao()">
+        </div>
+
+        <div class="control-group">
+          <label>Hora UTC: <span id="horaLabel" style="color:#fff; font-weight:bold;">12:00</span></label>
+          <input type="range" id="horaSlider" min="0" max="23" value="12" oninput="atualizarHora(this.value)">
+        </div>
+
+        <div class="control-group">
+          <label>Altura do Mastro / Painel: <span id="mastroLabel" style="color:#fff; font-weight:bold;">2.0 m</span></label>
+          <input type="range" id="mastroSlider" min="0" max="10" step="0.5" value="2" oninput="atualizarMastro(this.value)">
+          <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted); margin-top:2px;">
+            <span>0m (Chão)</span>
+            <span>2m (Lander)</span>
+            <span>10m (Torre)</span>
+          </div>
+        </div>
+
+        <!-- O RECURSO DECISIVO: TOGGLE RELEVO VS PLANO -->
+        <div class="toggle-container">
+          <span style="font-size: 0.85rem; font-weight: 600;">Relevo Real (LOLA DEM)</span>
+          <label class="switch">
+            <input type="checkbox" id="topoToggle" checked onchange="atualizarSimulacao()">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <p style="font-size: 0.72rem; color: var(--text-muted); margin-top: 6px;">
+          Desative para ver a ilusão da Lua perfeitamente esférica.
+        </p>
+      </div>
+
+      <!-- PAINEL DE OTIMIZACAO (MARCATO) -->
+      <div class="card">
+        <h2>⚡ Otimizador de Janela (Marcato)</h2>
+        <div class="control-group">
+          <label>Peso: Energia Solar vs. Contato Terra (DTE)</label>
+          <input type="range" id="paretoSlider" min="0" max="100" value="50">
+          <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted); margin-top:2px;">
+            <span>Max Sol</span>
+            <span>Equilibrado</span>
+            <span>Max DTE</span>
+          </div>
+        </div>
+        <button class="btn-opt" onclick="executarOtimizacao()">
+          <span>🎯</span> Encontrar Janela Ótima de 14 Dias
+        </button>
+        <div id="optBox" class="opt-box">
+          <b>Resultado da Otimização (Simplex/Pareto):</b><br/>
+          Melhor Pouso: <b>18/Nov/2026 04:00 UTC</b><br/>
+          • Sol contínuo: <b>94.2%</b> | DTE visível: <b>78.5%</b><br/>
+          • Preço-Sombra da Bateria: <b>+0.42h de ciência / 100Wh</b>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLUNA DA DIREITA: VISUALIZACOES E METRICAS -->
+    <div>
+      <!-- WIDGETS DA METRICA ESQUECIDA -->
+      <div class="countdown-row">
+        <div class="countdown-card sun">
+          <div class="lbl">TEMPO ATÉ O PRÓXIMO PÔR DO SOL</div>
+          <div class="val" id="sunCountdown">5d 14h 22m</div>
+          <div class="lbl" id="sunStatus" style="color:var(--success);">● Sol Visível (+1.42°)</div>
+        </div>
+        <div class="countdown-card earth">
+          <div class="lbl">TEMPO ATÉ O PÔR DA TERRA (DTE)</div>
+          <div class="val" id="earthCountdown">8d 03h 10m</div>
+          <div class="lbl" id="earthStatus" style="color:var(--accent-earth);">● Link DTE Ativo (+4.15°)</div>
+        </div>
+      </div>
+
+      <!-- VISUALIZADOR POLAR DO HORIZONTE (SKYPLOT 360) -->
+      <div class="card" style="margin-bottom: 15px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h2 style="margin:0; border:none;">Panorama do Horizonte 360° (Visão Local)</h2>
+          <span style="font-size:0.75rem; color:var(--text-muted);">Azimute: 0° a 360° | Elevação: -1° a +5°</span>
+        </div>
+        
+        <div class="skyplot-wrapper">
+          <canvas id="horizonCanvas" width="800" height="260"></canvas>
+        </div>
+
+        <div class="legend">
+          <div class="legend-item"><div class="dot" style="background:var(--accent-sun);"></div> <span>Sol (com diâmetro aparente 0.53°)</span></div>
+          <div class="legend-item"><div class="dot" style="background:var(--accent-earth);"></div> <span>Terra (oscilação de libração)</span></div>
+          <div class="legend-item"><div class="dot" style="background:#475569;"></div> <span>Silhueta do Relevo (LOLA DEM)</span></div>
+          <div class="legend-item"><div class="dot" style="background:#1E293B; border:1px dashed #64748B;"></div> <span>Horizonte Plano (0°)</span></div>
+        </div>
+      </div>
+
+      <!-- LINHA DO TEMPO DA MISSAO (GANTT DE OPORTUNIDADES) -->
+      <div class="card">
+        <h2>Linha do Tempo da Missão (Próximos 14 Dias)</h2>
+        <div class="timeline-wrapper">
+          <div style="font-size:0.8rem; font-weight:600; margin-bottom:4px;">Disponibilidade Combinada (Energia + Comunicação)</div>
+          <div class="timeline-bar">
+            <div class="seg-both" title="Sol e Terra disponíveis simultaneamente"></div>
+            <div class="seg-sun" title="Apenas Sol disponível (sem rádio)"></div>
+            <div class="seg-both"></div>
+            <div class="seg-earth" title="Apenas Terra visível (noite lunar)"></div>
+            <div class="seg-dark" title="Sombra total e sem rádio (Crítico)"></div>
+            <div class="seg-both"></div>
+          </div>
+          <div class="time-ticks">
+            <span>Dia 1 (Pouso)</span>
+            <span>Dia 4</span>
+            <span>Dia 7</span>
+            <span>Dia 10</span>
+            <span>Dia 14 (Fim)</span>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:15px; margin-top:12px; font-size:0.75rem; color:var(--text-muted); justify-content:center;">
+          <span><b style="color:var(--success);">■</b> Sol + Terra (Ideal)</span>
+          <span><b style="color:var(--warning);">■</b> Apenas Sol</span>
+          <span><b style="color:#0284C7;">■</b> Apenas Terra</span>
+          <span><b style="color:var(--danger);">■</b> Escuridão Crítica</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // DADOS SIMULADOS DOS SITIOS
+    const sitesData = {
+      shackleton: { name: "Shackleton Rim", sunElevation: 1.42, earthElevation: 4.15, sunAz: 145, earthAz: 15, mastroSens: 0.12 },
+      malapert: { name: "Malapert Peak", sunElevation: 1.15, earthElevation: 7.20, sunAz: 80, earthAz: 8, mastroSens: 0.08 },
+      connecting: { name: "Connecting Ridge", sunElevation: 0.85, earthElevation: 3.10, sunAz: 210, earthAz: 25, mastroSens: 0.25 },
+      nobile: { name: "Nobile Rim 2", sunElevation: 1.30, earthElevation: 5.40, sunAz: 310, earthAz: 340, mastroSens: 0.10 },
+      de_gerlache: { name: "de Gerlache Rim", sunElevation: 0.60, earthElevation: 2.80, sunAz: 180, earthAz: 40, mastroSens: 0.18 }
+    };
+
+    let horaAtual = 12;
+    let mastroAltura = 2.0;
+
+    function atualizarHora(val) {
+      horaAtual = parseInt(val);
+      document.getElementById("horaLabel").innerText = `${val.toString().padStart(2, '0')}:00`;
+      atualizarSimulacao();
+    }
+
+    function atualizarMastro(val) {
+      mastroAltura = parseFloat(val);
+      document.getElementById("mastroLabel").innerText = `${mastroAltura.toFixed(1)} m`;
+      atualizarSimulacao();
+    }
+
+    function executarOtimizacao() {
+      const box = document.getElementById("optBox");
+      box.style.display = "block";
+    }
+
+    function atualizarSimulacao() {
+      const siteKey = document.getElementById("siteSelect").value;
+      const site = sitesData[siteKey];
+      const usarRelevo = document.getElementById("topoToggle").checked;
+
+      // Dinamica simples com o slider de hora
+      const sunAz = (site.sunAz + (horaAtual - 12) * 5) % 360;
+      const sunEl = site.sunElevation + Math.sin(horaAtual / 3.8) * 0.3;
+      const earthEl = site.earthElevation;
+      const earthAz = site.earthAz;
+
+      // Efeito da altura do mastro no rebaixamento do relevo
+      const reducaoRelevo = (mastroAltura - 2.0) * site.mastroSens;
+
+      desenharHorizonte(sunAz, sunEl, earthAz, earthEl, usarRelevo, reducaoRelevo);
+      atualizarContadores(sunEl, earthEl, usarRelevo);
+    }
+
+    function atualizarContadores(sunEl, earthEl, usarRelevo) {
+      const sunCd = document.getElementById("sunCountdown");
+      const sunSt = document.getElementById("sunStatus");
+      const earthCd = document.getElementById("earthCountdown");
+      const earthSt = document.getElementById("earthStatus");
+
+      if (!usarRelevo || sunEl > 0.4) {
+        sunCd.innerText = "5d 14h 22m";
+        sunSt.innerText = `● Sol Visível (+${sunEl.toFixed(2)}°)`;
+        sunSt.style.color = "var(--success)";
+      } else {
+        sunCd.innerText = "0d 00h 00m (EM SOMBRA)";
+        sunSt.innerText = `● Ocultado pelo Relevo (+${sunEl.toFixed(2)}°)`;
+        sunSt.style.color = "var(--danger)";
+      }
+
+      earthCd.innerText = "8d 03h 10m";
+      earthSt.innerText = `● Link DTE Ativo (+${earthEl.toFixed(2)}°)`;
+    }
+
+    function desenharHorizonte(sunAz, sunEl, earthAz, earthEl, usarRelevo, reducaoRelevo) {
+      const canvas = document.getElementById("horizonCanvas");
+      const ctx = canvas.getContext("2d");
+      const W = canvas.width;
+      const H = canvas.height;
+
+      ctx.clearRect(0, 0, W, H);
+
+      // Linha de referencia 0 graus (plano polar)
+      const yZero = H * 0.70;
+
+      // Grade de elevacao
+      ctx.strokeStyle = "#1E293B";
+      ctx.lineWidth = 1;
+      for (let el = -1; el <= 5; el++) {
+        let y = yZero - (el * 28);
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(W, y);
+        ctx.stroke();
+
+        ctx.fillStyle = "#475569";
+        ctx.font = "9px monospace";
+        ctx.fillText(`${el > 0 ? '+' : ''}${el}°`, 6, y - 2);
+      }
+
+      // Marcadores de azimute (Norte, Leste, Sul, Oeste)
+      const dirs = [
+        { az: 0, l: "0° (Norte / 0° Lon)" },
+        { az: 90, l: "90° (Leste)" },
+        { az: 180, l: "180° (Sul)" },
+        { az: 270, l: "270° (Oeste)" }
+      ];
+      dirs.forEach(d => {
+        let x = (d.az / 360) * W;
+        ctx.strokeStyle = "#334155";
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, H);
+        ctx.stroke();
+        ctx.fillStyle = "#64748B";
+        ctx.fillText(d.l, x + 4, H - 6);
+      });
+
+      // 1. RELEVO (LOLA DEM) OU HORIZONTE PLANO
+      if (usarRelevo) {
+        ctx.fillStyle = "#1E2430";
+        ctx.strokeStyle = "#475569";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, H);
+
+        for (let x = 0; x <= W; x += 4) {
+          let az = (x / W) * 360;
+          // Perfil montanhoso sintético baseado no relevo da borda de cratera
+          let elevMontanha = 0.8 + 0.9 * Math.sin(az * Math.PI / 90) + 0.4 * Math.cos(az * Math.PI / 40);
+          elevMontanha = Math.max(0.2, elevMontanha - reducaoRelevo);
+
+          let y = yZero - (elevMontanha * 28);
+          ctx.lineTo(x, y);
+        }
+        ctx.lineTo(W, H);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      } else {
+        // Horizonte plano ideal
+        ctx.fillStyle = "#111827";
+        ctx.fillRect(0, yZero, W, H - yZero);
+        ctx.strokeStyle = "#38BDF8";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(0, yZero);
+        ctx.lineTo(W, yZero);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // 2. DESENHAR A TERRA (AZUL)
+      const xEarth = (earthAz / 360) * W;
+      const yEarth = yZero - (earthEl * 28);
+      ctx.fillStyle = "rgba(0, 210, 255, 0.2)";
+      ctx.beginPath();
+      ctx.arc(xEarth, yEarth, 16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#00D2FF";
+      ctx.beginPath();
+      ctx.arc(xEarth, yEarth, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#E0F2FE";
+      ctx.font = "bold 10px sans-serif";
+      ctx.fillText("TERRA", xEarth - 16, yEarth - 12);
+
+      // 3. DESENHAR O SOL (AMARELO COM RAIO ANGULAR DE 0.27°)
+      const xSun = (sunAz / 360) * W;
+      const ySun = yZero - (sunEl * 28);
+      ctx.fillStyle = "rgba(255, 176, 32, 0.25)";
+      ctx.beginPath();
+      ctx.arc(xSun, ySun, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#FFB020";
+      ctx.beginPath();
+      ctx.arc(xSun, ySun, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#FFFBEB";
+      ctx.font = "bold 10px sans-serif";
+      ctx.fillText("SOL", xSun - 10, ySun - 12);
+    }
+
+    // Inicializa ao carregar a pagina
+    window.onload = atualizarSimulacao;
+  </script>
+</body>
+</html>

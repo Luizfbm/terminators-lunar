@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mapa 3D Lunar (60 Rovers) — Rota da Missão, Desvio &amp; Retorno</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    :root {
+      --background: #090d16;
+      --content: #0f172a;
+      --card: #111827;
+      --border: #1e293b;
+      --foreground: #f1f5f9;
+      --muted-foreground: #94a3b8;
+      --primary: #0284c7;
+      --primary-foreground: #ffffff;
+      --secondary: #1e293b;
+      --secondary-foreground: #e2e8f0;
+    }
+    .sim-stage-container {
+      content-visibility: auto;
+      contain-intrinsic-size: auto none auto 500px;
+    }
+    .interactive-3d {
+      touch-action: none;
+    }
+    .pulse-soft {
+      transition: opacity 0.2s ease-out, background-color 0.2s ease-out, border-color 0.2s ease-out;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .shield-active {
+        animation: shieldGlow 0.9s ease-in-out infinite alternate;
+      }
+      @keyframes shieldGlow {
+        from { opacity: 0.85; }
+        to { opacity: 1; }
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .shield-active {
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased p-4 md:p-6">
+  <div class="max-w-7xl mx-auto space-y-4">
+    <!-- Header & Actions -->
+    <header class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm space-y-3">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <div>
+          <h1 class="text-lg md:text-xl font-semibold text-[var(--foreground)]">
+            Simulador 3D (60 Rovers) — Rota da Missão, Desvio de Zonas Evitadas e Retorno Seguro
+          </h1>
+          <p class="text-xs md:text-sm text-[var(--muted-foreground)] mt-0.5">
+            60 rovers testando simultaneamente a Rota do Controle da Missão: desviam dos riscos ocultos em 5 m e retornam ao traçado assim que o corredor reabre.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            id="btnTogglePlay"
+            type="button"
+            class="px-3.5 py-2 rounded-lg text-xs md:text-sm font-medium bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)] cursor-pointer"
+          >
+            Pausar
+          </button>
+          <button
+            id="btnNextGen"
+            type="button"
+            class="px-3 py-2 rounded-lg text-xs md:text-sm font-medium border border-[var(--border)] bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:opacity-90 cursor-pointer"
+          >
+            +1 Geração
+          </button>
+          <button
+            id="btnTurbo5"
+            type="button"
+            class="px-3 py-2 rounded-lg text-xs md:text-sm font-medium border border-[var(--border)] bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:opacity-90 cursor-pointer"
+          >
+            Turbo (+5 Gen)
+          </button>
+          <button
+            id="btnReset"
+            type="button"
+            class="px-3 py-2 rounded-lg text-xs md:text-sm font-medium border border-[var(--border)] bg-transparent text-[var(--foreground)] hover:bg-[var(--secondary)] cursor-pointer"
+          >
+            Reiniciar
+          </button>
+        </div>
+      </div>
+
+      <!-- 3 Modes Selector -->
+      <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--border)]" role="group" aria-label="Selecionar arquitetura de controle">
+        <span class="text-xs font-medium text-[var(--muted-foreground)] mr-1">Modo:</span>
+        <button id="mode1Btn" type="button" class="px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--border)] cursor-pointer transition-colors">
+          Modo 1: Padrão Atual (Segue Rota 60 m cegamente)
+        </button>
+        <button id="mode2Btn" type="button" class="px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--border)] cursor-pointer transition-colors">
+          Modo 2: Tese Base (Desvio P90/P99 + Retorno)
+        </button>
+        <button id="mode3Btn" type="button" class="px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--border)] cursor-pointer transition-colors">
+          Modo 3: Híbrido (IA Proibitiva + Retorno Escudado P90/P99)
+        </button>
+      </div>
+
+      <!-- Controls Strip -->
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 pt-2 border-t border-[var(--border)] text-xs">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="font-medium text-[var(--muted-foreground)]">Mapa:</span>
+          <button id="mapStaticBtn" type="button" class="px-2.5 py-1 rounded-md border border-[var(--border)] font-medium cursor-pointer">Estático</button>
+          <button id="mapDynamicBtn" type="button" class="px-2.5 py-1 rounded-md border border-[var(--border)] font-medium cursor-pointer">Dinâmico</button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-1.5">
+          <span class="font-medium text-[var(--muted-foreground)]">Evolução (Mutação):</span>
+          <button data-mut="0.12" type="button" class="mut-btn px-2 py-1 rounded-md border border-[var(--border)] font-medium cursor-pointer">Lenta</button>
+          <button data-mut="0.25" type="button" class="mut-btn px-2 py-1 rounded-md border border-[var(--border)] font-medium cursor-pointer">Média</button>
+          <button data-mut="0.45" type="button" class="mut-btn px-2 py-1 rounded-md border border-[var(--border)] font-medium cursor-pointer">Rápida</button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-1.5">
+          <span class="font-medium text-[var(--muted-foreground)]">Vel. Animação:</span>
+          <button data-speed="1" type="button" class="speed-btn px-2 py-1 rounded-md border border-[var(--border)] font-medium cursor-pointer">1×</button>
+          <button data-speed="3" type="button" class="speed-btn px-2 py-1 rounded-md border border-[var(--border)] font-medium cursor-pointer">3×</button>
+          <button data-speed="6" type="button" class="speed-btn px-2 py-1 rounded-md border border-[var(--border)] font-medium cursor-pointer">6×</button>
+          <button data-speed="12" type="button" class="speed-btn px-2 py-1 rounded-md border border-[var(--border)] font-medium cursor-pointer">12×</button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label for="sunSlider" class="font-medium text-[var(--muted-foreground)] whitespace-nowrap">
+            Sol 1,54°: <strong id="sunDegLabel" class="text-[var(--foreground)]">35°</strong>
+          </label>
+          <input id="sunSlider" type="range" min="0" max="360" value="35" class="w-24 accent-[var(--primary)] cursor-pointer" />
+          <button id="btnAutoSun" type="button" class="px-2 py-1 rounded-md border border-[var(--border)] font-medium cursor-pointer whitespace-nowrap">Auto: ON</button>
+        </div>
+      </div>
+
+      <div id="mapNotice" class="text-xs text-[var(--muted-foreground)] bg-[var(--secondary)]/50 border border-[var(--border)] rounded-lg px-3 py-2">
+        Mapa Dinâmico ativo.
+      </div>
+    </header>
+
+    <!-- KPI Telemetry Strip -->
+    <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3" aria-label="Métricas atuais">
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3">
+        <div class="text-xs text-[var(--muted-foreground)]">Geração / Ciclo</div>
+        <div id="kpiGen" class="text-lg font-semibold mt-0.5">1</div>
+      </div>
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3">
+        <div class="text-xs text-[var(--muted-foreground)]">Rovers Vivos</div>
+        <div id="kpiAlive" class="text-lg font-semibold mt-0.5">60 / 60</div>
+      </div>
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3">
+        <div class="text-xs text-[var(--muted-foreground)]">Avanço na Rota</div>
+        <div id="kpiDist" class="text-lg font-semibold mt-0.5">0 m</div>
+      </div>
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3">
+        <div class="text-xs text-[var(--muted-foreground)]">Desvio Atual (ΔY)</div>
+        <div id="kpiRouteErr" class="text-lg font-semibold mt-0.5">0,0 m</div>
+      </div>
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3">
+        <div class="text-xs text-[var(--muted-foreground)]">Vetos P90/P99</div>
+        <div id="kpiVetos" class="text-lg font-semibold mt-0.5">0</div>
+      </div>
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3">
+        <div class="text-xs text-[var(--muted-foreground)]">Estado do Líder</div>
+        <div id="kpiStatus" class="text-sm font-semibold mt-1 truncate">Na rota</div>
+      </div>
+    </section>
+
+    <!-- Main Split Stage -->
+    <main id="simContainer" class="sim-stage-container grid grid-cols-1 xl:grid-cols-12 gap-4">
+      <!-- Left: 3D Terrain + Mission Control Route + 60 Rovers -->
+      <section class="xl:col-span-7 bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm flex flex-col gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 class="text-sm md:text-base font-semibold">Terreno Lunar 3D (60 Rovers + Rota + Zonas Evitadas)</h2>
+            <p class="text-xs text-[var(--muted-foreground)]">
+              Tracejado branco = Rota da Missão | Verde = raio de retorno seguro | Vermelho = zonas proibidas (P99/ShadowCam)
+            </p>
+          </div>
+          <span id="shieldBadge" class="pulse-soft px-2.5 py-1 rounded-full text-xs font-medium border border-[var(--border)]">Status</span>
+        </div>
+
+        <div class="relative w-full rounded-lg overflow-hidden border border-[var(--border)]">
+          <canvas
+            id="worldCanvas"
+            class="interactive-3d block w-full h-[390px] cursor-grab active:cursor-grabbing"
+            aria-label="Mapa 3D com 60 rovers contornando zonas evitadas e retornando à rota pré-traçada"
+          ></canvas>
+
+          <div class="absolute bottom-2.5 right-2.5 flex items-center gap-1.5 bg-[var(--card)]/90 border border-[var(--border)] rounded-lg p-1 shadow-sm">
+            <button id="camLeft" type="button" title="Girar câmera à esquerda" class="px-2 py-1 text-xs rounded hover:bg-[var(--secondary)] cursor-pointer">↺</button>
+            <button id="camRight" type="button" title="Girar câmera à direita" class="px-2 py-1 text-xs rounded hover:bg-[var(--secondary)] cursor-pointer">↻</button>
+            <button id="camZoomIn" type="button" title="Aproximar câmera" class="px-2 py-1 text-xs rounded hover:bg-[var(--secondary)] cursor-pointer">+</button>
+            <button id="camZoomOut" type="button" title="Afastar câmera" class="px-2 py-1 text-xs rounded hover:bg-[var(--secondary)] cursor-pointer">−</button>
+            <button id="camReset" type="button" title="Resetar câmera 3D" class="px-2 py-1 text-xs rounded hover:bg-[var(--secondary)] cursor-pointer">Reset</button>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--muted-foreground)]">
+          <span class="inline-flex items-center gap-1.5"><span class="w-4 h-0.5 border-t-2 border-dashed border-white inline-block bg-slate-500"></span> Rota Missão</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-emerald-500 inline-block"></span> LOLA Real (7,29%)</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-amber-500 inline-block"></span> Interp. 5 m (92,71%)</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-indigo-900 border border-indigo-400 inline-block"></span> Sombra (1,54°)</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-full border-2 border-rose-500 inline-block"></span> Zona Evitada</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-sky-400 inline-block"></span> Líder / Retorno</span>
+        </div>
+      </section>
+
+      <!-- Right: MLP 8 -> 7 -> 4 + Deterministic Shield Gate -->
+      <section class="xl:col-span-5 bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm flex flex-col gap-3">
+        <div>
+          <h2 id="brainTitle" class="text-sm md:text-base font-semibold">Decisão do Rover (MLP 8→7→4 + Retorno à Rota)</h2>
+          <p id="brainSubtitle" class="text-xs text-[var(--muted-foreground)]">
+            Sensores direcionais + Δ_rota permitem desviar de zonas proibidas e voltar à linha da missão com segurança P90/P99.
+          </p>
+        </div>
+
+        <div class="relative w-full rounded-lg overflow-hidden border border-[var(--border)]">
+          <canvas
+            id="nnCanvas"
+            class="block w-full h-[390px]"
+            aria-label="Visualização da rede neural 8 para 7 para 4 e filtro de retorno seguro"
+          ></canvas>
+        </div>
+
+        <div id="gateExplainer" class="text-xs text-[var(--muted-foreground)] leading-relaxed">
+          Aguardando ciclo de decisão...
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom: Comparative Chart + Optimization Parameters -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div class="lg:col-span-6 bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm space-y-2">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm md:text-base font-semibold">Comparativo por Ciclo (Avanço vs. Falha)</h2>
+          <span class="text-xs text-[var(--muted-foreground)]">Últimos 30 ciclos</span>
+        </div>
+        <div class="rounded-lg overflow-hidden border border-[var(--border)]">
+          <canvas id="chartCanvas" class="block w-full h-[180px]" aria-label="Gráfico de evolução e falhas"></canvas>
+        </div>
+        <div class="grid grid-cols-3 gap-2 pt-1 text-xs">
+          <div class="rounded-lg border border-[var(--border)] p-2">
+            <div class="text-[var(--muted-foreground)]">Modo 1 (Atual 60m)</div>
+            <div id="cmpM1" class="font-semibold mt-0.5">—</div>
+          </div>
+          <div class="rounded-lg border border-[var(--border)] p-2">
+            <div class="text-[var(--muted-foreground)]">Modo 2 (Tese P90/P99)</div>
+            <div id="cmpM2" class="font-semibold mt-0.5">—</div>
+          </div>
+          <div class="rounded-lg border border-[var(--border)] p-2">
+            <div class="text-[var(--muted-foreground)]">Modo 3 (Híbrido IA)</div>
+            <div id="cmpM3" class="font-semibold mt-0.5">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Optimization Parameter Suggestion Panel -->
+      <aside class="lg:col-span-6 bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h2 class="text-sm md:text-base font-semibold">Sugestão de Parâmetros para Otimização (TOPSIS / Monte Carlo)</h2>
+          <span class="text-xs px-2 py-0.5 rounded bg-[var(--secondary)] text-[var(--secondary-foreground)]">Calibrado com 60 rovers/ciclo</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5 text-xs">
+          <div class="rounded-lg border border-[var(--border)] p-2.5">
+            <div class="text-[var(--muted-foreground)]">Quantil de Segurança Sugerido</div>
+            <div id="optQuantile" class="text-sm font-semibold mt-0.5">P99 (Margem +5,4°)</div>
+            <div id="optQuantileWhy" class="text-[var(--muted-foreground)] mt-0.5">Contra microcrateras ocultas na rota</div>
+          </div>
+          <div class="rounded-lg border border-[var(--border)] p-2.5">
+            <div class="text-[var(--muted-foreground)]">Reserva Bateria (SOC_min)</div>
+            <div id="optSoc" class="text-sm font-semibold mt-0.5">32%</div>
+            <div id="optSocWhy" class="text-[var(--muted-foreground)] mt-0.5">Proteção em desvios sob sombra 1,54°</div>
+          </div>
+          <div class="rounded-lg border border-[var(--border)] p-2.5">
+            <div class="text-[var(--muted-foreground)]">Peso de Retorno à Rota (w_rota)</div>
+            <div id="optRouteWeight" class="text-sm font-semibold mt-0.5">w_rota = 0,35</div>
+            <div id="optRouteWhy" class="text-[var(--muted-foreground)] mt-0.5">Equilibra aderência vs. contorno seguro</div>
+          </div>
+          <div class="rounded-lg border border-[var(--border)] p-2.5">
+            <div class="text-[var(--muted-foreground)]">Penalidade Interpolação (LDEC=0)</div>
+            <div id="optInterpWeight" class="text-sm font-semibold mt-0.5">w_interp = 1,85×</div>
+            <div id="optInterpWhy" class="text-[var(--muted-foreground)] mt-0.5">Custo extra em trechos sem LOLA</div>
+          </div>
+        </div>
+
+        <p class="text-xs text-[var(--muted-foreground)] leading-relaxed">
+          <strong>Nota cética:</strong> No Modo 3, a rede sugere o retorno à rota sempre que o raio de retorno está livre; o Escudo P90/P99 bloqueia apenas cortes prematuros sobre cratera ou sombra, permitindo que a maioria dos 60 rovers sobreviva e volte ao traçado.
+        </p>
+      </aside>
+    </section>
+  </div>
+
+  <script>
+    (() => {
+      // ---------- Constants ----------
+      const POP_SIZE = 60; // High-density swarm like the video!
+      const INPUT_DIM = 8;
+      const HIDDEN_DIM = 7;
+      const OUTPUT_DIM = 4;
+      const CELL_SIZE = 5;
+      const INTERP_RATE = 0.9271;
+      const SLOPE_LIMIT_DEG = 15.0;
+      const TAN_SUN_ELEV = Math.tan((1.54 * Math.PI) / 180);
+
+      // ---------- Simulation State ----------
+      let activeMode = 3; // 1 = NASA 60m | 2 = Thesis P90/P99 | 3 = Hybrid AI + Shield
+      let isDynamicMap = true;
+      let mutationRate = 0.25;
+      let speedMult = 1;
+      let generation = 1;
+      let totalVetos = 0;
+      let isPlaying = true;
+      let isVisibleForRender = true;
+      let rafId = null;
+      let lastTime = 0;
+      let terrainSeed = 2026;
+      let sunAzimuthDeg = 35;
+      let autoRotateSun = true;
+      let history = [];
+
+      const modeStats = {
+        1: { runs: 0, totalDist: 0, totalFails: 0, totalRmse: 0, slopeFails: 0, shadowFails: 0, interpFails: 0 },
+        2: { runs: 0, totalDist: 0, totalFails: 0, totalRmse: 0, slopeFails: 0, shadowFails: 0, interpFails: 0 },
+        3: { runs: 0, totalDist: 0, totalFails: 0, totalRmse: 0, slopeFails: 0, shadowFails: 0, interpFails: 0 }
+      };
+
+      const cam = { yaw: -0.62, pitch: 0.68, zoom: 1.0, dragging: false, lastX: 0, lastY: 0 };
+
+      // ---------- DOM Refs ----------
+      const simContainer = document.getElementById('simContainer');
+      const worldCanvas = document.getElementById('worldCanvas');
+      const nnCanvas = document.getElementById('nnCanvas');
+      const chartCanvas = document.getElementById('chartCanvas');
+
+      const btnTogglePlay = document.getElementById('btnTogglePlay');
+      const btnNextGen = document.getElementById('btnNextGen');
+      const btnTurbo5 = document.getElementById('btnTurbo5');
+      const btnReset = document.getElementById('btnReset');
+
+      const mode1Btn = document.getElementById('mode1Btn');
+      const mode2Btn = document.getElementById('mode2Btn');
+      const mode3Btn = document.getElementById('mode3Btn');
+      const mapStaticBtn = document.getElementById('mapStaticBtn');
+      const mapDynamicBtn = document.getElementById('mapDynamicBtn');
+      const mapNotice = document.getElementById('mapNotice');
+
+      const sunSlider = document.getElementById('sunSlider');
+      const sunDegLabel = document.getElementById('sunDegLabel');
+      const btnAutoSun = document.getElementById('btnAutoSun');
+      const shieldBadge = document.getElementById('shieldBadge');
+      const brainTitle = document.getElementById('brainTitle');
+      const brainSubtitle = document.getElementById('brainSubtitle');
+      const gateExplainer = document.getElementById('gateExplainer');
+
+      const kpiGen = document.getElementById('kpiGen');
+      const kpiAlive = document.getElementById('kpiAlive');
+      const kpiDist = document.getElementById('kpiDist');
+      const kpiRouteErr = document.getElementById('kpiRouteErr');
+      const kpiVetos = document.getElementById('kpiVetos');
+      const kpiStatus = document.getElementById('kpiStatus');
+
+      const cmpM1 = document.getElementById('cmpM1');
+      const cmpM2 = document.getElementById('cmpM2');
+      const cmpM3 = document.getElementById('cmpM3');
+      const optQuantile = document.getElementById('optQuantile');
+      const optQuantileWhy = document.getElementById('optQuantileWhy');
+      const optSoc = document.getElementById('optSoc');
+      const optSocWhy = document.getElementById('optSocWhy');
+      const optRouteWeight = document.getElementById('optRouteWeight');
+      const optRouteWhy = document.getElementById('optRouteWhy');
+      const optInterpWeight = document.getElementById('optInterpWeight');
+      const optInterpWhy = document.getElementById('optInterpWhy');
+
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+      // ---------- Pre-Planned Mission Control Route Y_missao(x) ----------
+      function getMissionRouteY(x) {
+        return 20 * Math.sin(x * 0.011) + 9 * Math.cos(x * 0.0052) - 6;
+      }
+
+      function getMissionRouteAngle(x) {
+        const dydx = 20 * 0.011 * Math.cos(x * 0.011) - 9 * 0.0052 * Math.sin(x * 0.0052);
+        return Math.atan(dydx);
+      }
+
+      // ---------- PRNG & Caching ----------
+      function mulberry32(a) {
+        return function () {
+          let t = (a += 0x6d2b79f5);
+          t = Math.imul(t ^ (t >>> 15), t | 1);
+          t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+
+      function hash2D(ix, iy) {
+        let h = (ix * 374761393 + iy * 668265263 + terrainSeed * 1442695041) | 0;
+        h = (h ^ (h >>> 13)) * 1274126177;
+        return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+      }
+
+      const craterCache = new Map();
+      const metricsCache = new Map();
+      const shadowCache = new Map();
+      let lastShadowSunBucket = -999;
+
+      function resetTerrain(seed) {
+        terrainSeed = seed;
+        craterCache.clear();
+        metricsCache.clear();
+        shadowCache.clear();
+        lastShadowSunBucket = -999;
+      }
+
+      function getChunkFeatures(cx, cy) {
+        const key = `${cx},${cy}`;
+        if (craterCache.has(key)) return craterCache.get(key);
+        const rng = mulberry32((cx * 73856093) ^ (cy * 19349663) ^ terrainSeed);
+        const features = { craters: [], boulders: [], noGoZones: [] };
+        const baseWorldX = cx * 60;
+        const baseWorldY = cy * 60;
+
+        if (baseWorldX >= 55) {
+          const routeYCenter = getMissionRouteY(baseWorldX + 30);
+          // Place avoid-zones right on or near the pre-planned 60m route (~50% of chunks) with clear bypass room!
+          if (Math.abs(routeYCenter - (baseWorldY + 30)) < 36 && rng() < 0.55) {
+            const hx = baseWorldX + 16 + rng() * 28;
+            const hy = getMissionRouteY(hx) + (rng() * 10 - 5);
+            const rad = 9.5 + rng() * 4.5;
+            features.noGoZones.push({ x: hx, y: hy, r: rad });
+            features.craters.push({ x: hx, y: hy, r: rad * 0.92, depth: 2.9 + rng() * 3.0 });
+          } else if (rng() < 0.72) {
+            features.craters.push({
+              x: baseWorldX + 12 + rng() * 36,
+              y: baseWorldY + 10 + rng() * 40,
+              r: 7.5 + rng() * 9,
+              depth: 2.2 + rng() * 3.2
+            });
+          }
+
+          if (rng() < 0.55) {
+            features.boulders.push({
+              x: baseWorldX + 10 + rng() * 40,
+              y: baseWorldY + 8 + rng() * 44,
+              r: 2.4 + rng() * 1.6
+            });
+          }
+        }
+        craterCache.set(key, features);
+        return features;
+      }
+
+      function evalCoarseZ(wx, wy) {
+        return Math.sin(wx * 0.018) * 3.6 + Math.cos(wy * 0.026) * 4.2 + Math.sin((wx + wy) * 0.011) * 2.2;
+      }
+
+      function evalSurfaceRaw(wx, wy) {
+        const gx = Math.round(wx / CELL_SIZE);
+        const gy = Math.round(wy / CELL_SIZE);
+        const cx0 = Math.floor(wx / 60);
+        const cy0 = Math.floor(wy / 60);
+
+        let z = evalCoarseZ(wx, wy);
+        const h1 = hash2D(gx, gy);
+        const h2 = hash2D(gx + 313, gy - 97);
+        const isMeasured = h1 > INTERP_RATE;
+
+        let hasBoulder = false;
+        let inNoGo = false;
+
+        for (let dcx = -1; dcx <= 1; dcx++) {
+          for (let dcy = -1; dcy <= 1; dcy++) {
+            const feat = getChunkFeatures(cx0 + dcx, cy0 + dcy);
+            for (const c of feat.craters) {
+              const dist = Math.hypot(wx - c.x, wy - c.y);
+              if (dist < c.r * 1.25) {
+                const u = dist / c.r;
+                if (u < 1.0) z -= c.depth * (1 - u * u);
+                else z += c.depth * 0.18 * (1 - (u - 1.0) / 0.25);
+              }
+            }
+            for (const b of feat.boulders) {
+              if (Math.hypot(wx - b.x, wy - b.y) < b.r) hasBoulder = true;
+            }
+            for (const nz of feat.noGoZones) {
+              if (Math.hypot(wx - nz.x, wy - nz.y) < nz.r) inNoGo = true;
+            }
+          }
+        }
+
+        if (!isMeasured && wx > 45) z += (h2 - 0.5) * 0.35;
+        return { z, isMeasured, hasBoulder, inNoGo };
+      }
+
+      function getTerrainMetrics(x, y) {
+        const gx = Math.round(x / CELL_SIZE);
+        const gy = Math.round(y / CELL_SIZE);
+        const key = `${gx},${gy}`;
+        if (metricsCache.has(key)) return metricsCache.get(key);
+
+        const wx = gx * CELL_SIZE;
+        const wy = gy * CELL_SIZE;
+        const s0 = evalSurfaceRaw(wx, wy);
+        const sx = evalSurfaceRaw(wx + CELL_SIZE, wy);
+        const sy = evalSurfaceRaw(wx, wy + CELL_SIZE);
+        const slopeDeg = (Math.atan(Math.hypot((sx.z - s0.z) / CELL_SIZE, (sy.z - s0.z) / CELL_SIZE)) * 180) / Math.PI;
+
+        const c0 = evalCoarseZ(wx, wy);
+        const cx = evalCoarseZ(wx + 20, wy);
+        const cy = evalCoarseZ(wx, wy + 20);
+        const coarseSlopeDeg = (Math.atan(Math.hypot((cx - c0) / 20, (cy - c0) / 20)) * 180) / Math.PI;
+
+        const res = {
+          z: s0.z, coarseZ: c0, slopeDeg, coarseSlopeDeg,
+          isMeasured: s0.isMeasured, hasBoulder: s0.hasBoulder, inNoGo: s0.inNoGo
+        };
+        metricsCache.set(key, res);
+        return res;
+      }
+
+      function isPointInShadow(x, y, z, useCoarse = false) {
+        const sunBucket = Math.floor(sunAzimuthDeg / 2);
+        if (sunBucket !== lastShadowSunBucket) {
+          shadowCache.clear();
+          lastShadowSunBucket = sunBucket;
+        }
+        const gx = Math.round(x / CELL_SIZE);
+        const gy = Math.round(y / CELL_SIZE);
+        const key = `${gx},${gy},${useCoarse ? 1 : 0}`;
+        if (shadowCache.has(key)) return shadowCache.get(key);
+
+        const azRad = (sunAzimuthDeg * Math.PI) / 180;
+        const dx = Math.cos(azRad), dy = Math.sin(azRad);
+        const shadowSlope = TAN_SUN_ELEV * 4.2;
+        let shaded = false;
+        for (let d = 5; d <= 70; d += 5) {
+          const sx = x + dx * d, sy = y + dy * d;
+          const sz = useCoarse ? evalCoarseZ(sx, sy) : getTerrainMetrics(sx, sy).z;
+          if (sz > z + d * shadowSlope) { shaded = true; break; }
+        }
+        shadowCache.set(key, shaded);
+        return shaded;
+      }
+
+      // ---------- MLP 8 -> 7 -> 4 ----------
+      function createGenome(rng) {
+        const w1 = Array.from({ length: HIDDEN_DIM }, () =>
+          Array.from({ length: INPUT_DIM + 1 }, () => (rng() * 2 - 1) * 1.25)
+        );
+        const w2 = Array.from({ length: OUTPUT_DIM }, () =>
+          Array.from({ length: HIDDEN_DIM + 1 }, () => (rng() * 2 - 1) * 1.25)
+        );
+        return { w1, w2 };
+      }
+
+      function cloneGenome(g) {
+        return { w1: g.w1.map((r) => [...r]), w2: g.w2.map((r) => [...r]) };
+      }
+
+      function mutateGenome(g, rng, rate, strength) {
+        const c = cloneGenome(g);
+        const mut = (val) => (rng() < rate ? Math.max(-4, Math.min(4, val + (rng() * 2 - 1) * strength)) : val);
+        c.w1 = c.w1.map((r) => r.map(mut));
+        c.w2 = c.w2.map((r) => r.map(mut));
+        return c;
+      }
+
+      function forwardMLP(genome, inputs) {
+        const hidden = [];
+        for (let h = 0; h < HIDDEN_DIM; h++) {
+          let sum = genome.w1[h][INPUT_DIM];
+          for (let i = 0; i < INPUT_DIM; i++) sum += genome.w1[h][i] * inputs[i];
+          hidden.push(Math.tanh(sum));
+        }
+        const outputs = [];
+        for (let o = 0; o < OUTPUT_DIM; o++) {
+          let sum = genome.w2[o][HIDDEN_DIM];
+          for (let h = 0; h < HIDDEN_DIM; h++) sum += genome.w2[o][h] * hidden[h];
+          outputs.push(Math.tanh(sum));
+        }
+        return { inputs, hidden, outputs };
+      }
+
+      // ---------- 60-Rover Swarm Population ----------
+      let rovers = [];
+      let evoRng = mulberry32(9001);
+
+      function spawnPopulation(genomes) {
+        const startX = 15;
+        const startY = getMissionRouteY(startX);
+        const startAng = getMissionRouteAngle(startX);
+        rovers = genomes.map((genome, idx) => ({
+          id: idx,
+          genome,
+          x: startX + (idx % 3) * 1.2,
+          y: startY + ((idx % 15) - 7) * 1.1,
+          heading: startAng,
+          vel: 0,
+          battery: 92,
+          alive: true,
+          failReason: '',
+          failFade: 1.0,
+          fitness: 0,
+          vetoedCount: 0,
+          sqErrSum: 0,
+          stepsCount: 0,
+          lastAction: 0, // 0: Retornar/Seguir Rota, 1: Desviar Esq, 2: Desviar Dir, 3: Recarregar
+          lastRawAction: 0,
+          lastVetoed: false,
+          lastVetoReason: '',
+          nnState: null,
+          chargeTimer: 0,
+          trail: [{ x: startX, y: startY }]
+        }));
+      }
+
+      function resetAllStats() {
+        for (const k of [1, 2, 3]) {
+          modeStats[k] = { runs: 0, totalDist: 0, totalFails: 0, totalRmse: 0, slopeFails: 0, shadowFails: 0, interpFails: 0 };
+        }
+      }
+
+      function initGenOne(clearStats = false) {
+        generation = 1;
+        totalVetos = 0;
+        history = [];
+        if (clearStats) resetAllStats();
+        evoRng = mulberry32(9001);
+        resetTerrain(2026);
+        if (!isDynamicMap) sunAzimuthDeg = 35;
+        const genomes = Array.from({ length: POP_SIZE }, () => createGenome(evoRng));
+        spawnPopulation(genomes);
+      }
+
+      function finishGenerationAndEvolve() {
+        const ranked = [...rovers].sort((a, b) => b.fitness - a.fitness);
+        const bestDist = Math.max(...rovers.map((r) => r.x));
+        const meanDist = rovers.reduce((acc, r) => acc + r.x, 0) / POP_SIZE;
+        const meanRmse = rovers.reduce((acc, r) => acc + Math.sqrt(r.sqErrSum / Math.max(1, r.stepsCount)), 0) / POP_SIZE;
+        const deadRovers = rovers.filter((r) => !r.alive && r.failReason !== 'META ALCANÇADA!');
+        const failRate = Math.round((deadRovers.length / POP_SIZE) * 100);
+
+        const st = modeStats[activeMode];
+        st.runs += POP_SIZE;
+        st.totalDist += meanDist * POP_SIZE;
+        st.totalFails += deadRovers.length;
+        st.totalRmse += meanRmse * POP_SIZE;
+        for (const r of deadRovers) {
+          if (r.failReason.includes('TOMBAMENTO') || r.failReason.includes('MATACÃO') || r.failReason.includes('ZONA')) st.slopeFails++;
+          if (r.failReason.includes('PSR')) st.shadowFails++;
+          if (!getTerrainMetrics(r.x, r.y).isMeasured) st.interpFails++;
+        }
+
+        history.push({ gen: generation, bestDist, failRate });
+        if (history.length > 30) history.shift();
+
+        // Keep top 8 elites out of 60 so learned return & detour behaviors stay strong!
+        const elites = ranked.slice(0, 8).map((r) => cloneGenome(r.genome));
+        const nextGenomes = [...elites];
+        while (nextGenomes.length < POP_SIZE) {
+          const parent = ranked[Math.floor(Math.pow(evoRng(), 1.9) * Math.min(18, ranked.length))];
+          nextGenomes.push(mutateGenome(parent.genome, evoRng, mutationRate, mutationRate * 1.45));
+        }
+
+        generation++;
+        if (isDynamicMap) resetTerrain(terrainSeed + 109);
+        spawnPopulation(nextGenomes);
+      }
+
+      // ---------- Directional Sensing + Return-to-Route Ray ----------
+      function senseRay(x, y, angleRad, useCoarseOnly = false, maxSteps = 8) {
+        const maxDist = maxSteps * 5;
+        let clearDist = maxDist;
+        let maxSlope = 0;
+        let shadowDist = maxDist;
+        let interpCount = 0;
+
+        for (let s = 1; s <= maxSteps; s++) {
+          const d = s * 5;
+          const px = x + Math.cos(angleRad) * d;
+          const py = y + Math.sin(angleRad) * d;
+          const m = getTerrainMetrics(px, py);
+          const slopeSeen = useCoarseOnly ? m.coarseSlopeDeg : m.slopeDeg;
+          const hazardSeen = useCoarseOnly ? false : (m.hasBoulder || m.inNoGo);
+          const sh = isPointInShadow(px, py, useCoarseOnly ? m.coarseZ : m.z, useCoarseOnly);
+
+          if ((hazardSeen || slopeSeen > SLOPE_LIMIT_DEG || Math.abs(py) > 68) && d < clearDist) {
+            clearDist = d;
+          }
+          if (slopeSeen > maxSlope) maxSlope = slopeSeen;
+          if (sh && d < shadowDist) shadowDist = d;
+          if (!m.isMeasured) interpCount++;
+        }
+        return { clearDist, maxSlope, shadowDist, interpRatio: interpCount / maxSteps };
+      }
+
+      function senseRover3D(r, useCoarseOnly = false) {
+        const curr = getTerrainMetrics(r.x, r.y);
+        const currShadow = isPointInShadow(r.x, r.y, useCoarseOnly ? curr.coarseZ : curr.z, useCoarseOnly);
+
+        const targetX = r.x + 22;
+        const targetY = getMissionRouteY(targetX);
+        const returnAngle = Math.atan2(targetY - r.y, targetX - r.x);
+        const routeErr = getMissionRouteY(r.x) - r.y; // + means route is to Left (+Y), - means Right (-Y)
+        const routeDeltaNorm = Math.max(-1, Math.min(1, routeErr / 30));
+
+        // Anchor left/mid/right rays relative to the route angle so detours stay aligned with corridor!
+        const routeAng = getMissionRouteAngle(r.x);
+        const rayLeft = senseRay(r.x, r.y, routeAng + 0.56, useCoarseOnly, 8);
+        const rayMid = senseRay(r.x, r.y, r.heading, useCoarseOnly, 8);
+        const rayRight = senseRay(r.x, r.y, routeAng - 0.56, useCoarseOnly, 8);
+        // Dedicated ray straight along the rejoin path back to the Mission Control Route!
+        const rayReturn = senseRay(r.x, r.y, returnAngle, useCoarseOnly, 7);
+
+        return {
+          inputs: [
+            rayLeft.clearDist / 40,
+            rayMid.clearDist / 40,
+            rayRight.clearDist / 40,
+            routeDeltaNorm,
+            Math.min(1, (useCoarseOnly ? curr.coarseSlopeDeg : curr.slopeDeg) / 25),
+            currShadow ? 0 : Math.min(1, rayMid.shadowDist / 40),
+            rayMid.interpRatio,
+            r.battery / 100
+          ],
+          curr, currShadow, routeErr, routeDeltaNorm, returnAngle,
+          rayLeft, rayMid, rayRight, rayReturn
+        };
+      }
+
+      // ---------- Mode Controllers ----------
+      function decideAction(r) {
+        // Mode 1: Blindly tracks Mission Control Route on 60 m DEM
+        if (activeMode === 1) {
+          const sCoarse = senseRover3D(r, true);
+          r.nnState = { inputs: sCoarse.inputs, hidden: new Array(HIDDEN_DIM).fill(0), outputs: [1, 0, 0, 0] };
+          let action = 0;
+          let reason = 'Modo 1 segue a rota pré-traçada confiando na grade de 60 m';
+          if (sCoarse.rayMid.clearDist < 16) {
+            action = sCoarse.rayLeft.clearDist >= sCoarse.rayRight.clearDist ? 1 : 2;
+            reason = 'Desvio tardio apenas por declive visível em 60 m';
+          } else if (!sCoarse.currShadow && r.battery < 18) {
+            action = 3;
+            reason = 'Recarga tardia sem margem P90/P99';
+          }
+          return { rawAction: action, finalAction: action, vetoed: false, vetoReason: reason, sense: sCoarse };
+        }
+
+        // Mode 2: Thesis Base (P90/P99 Deterministic Detour + Smooth Rejoin to Route!)
+        if (activeMode === 2) {
+          const s = senseRover3D(r, false);
+          r.nnState = { inputs: s.inputs, hidden: new Array(HIDDEN_DIM).fill(0), outputs: [0.3, 0.3, 0.3, 0.3] };
+          const p99Margin = 2.0 + 2.2 * Math.max(0.4, s.rayMid.interpRatio);
+          const returnClear = s.rayReturn.clearDist >= 18 && s.rayReturn.maxSlope + p99Margin * 0.55 <= SLOPE_LIMIT_DEG + 1.0;
+
+          let action = 0; // Return to / follow Mission Route
+          let reason = Math.abs(s.routeErr) > 3.5
+            ? 'Tese P99: corredor de retorno livre — voltando à Rota da Missão'
+            : 'Tese P99: seguindo linha do Controle da Missão com margem segura';
+
+          if (!s.currShadow && (r.battery < 32 || (s.rayMid.shadowDist <= 14 && r.battery < 44))) {
+            action = 3;
+            reason = 'Tese P99 Solar: recarga preventiva antes da sombra';
+          } else if (s.rayMid.clearDist <= 25 || s.rayMid.maxSlope + p99Margin > SLOPE_LIMIT_DEG) {
+            const leftScore = s.rayLeft.clearDist + (s.routeErr > 0 ? 3 : 0);
+            const rightScore = s.rayRight.clearDist + (s.routeErr < 0 ? 3 : 0);
+            action = leftScore >= rightScore ? 1 : 2;
+            reason = action === 1 ? 'Tese P99: desviando à ESQUERDA da zona evitada' : 'Tese P99: desviando à DIREITA da zona evitada';
+          } else if (Math.abs(s.routeErr) > 4.5 && !returnClear) {
+            // Obstacle sits directly between rover and route: cruise parallel (action 4 internal -> keep routeAng) until past it!
+            action = 0; // Will steer parallel if vetoed, wait: use dedicated parallel flag via vetoed=true
+            return { rawAction: 0, finalAction: 0, vetoed: true, parallelHold: true, vetoReason: 'Tese P99: mantendo paralelo até passar a zona evitada para retornar', sense: s };
+          }
+          return { rawAction: action, finalAction: action, vetoed: false, parallelHold: false, vetoReason: reason, sense: s };
+        }
+
+        // Mode 3: Hybrid (Prohibitive MLP 8->7->4 + P90/P99 Shield enabling Safe Return!)
+        const s = senseRover3D(r, false);
+        const nn = forwardMLP(r.genome, s.inputs);
+        r.nnState = nn;
+
+        let rawAction = 0;
+        for (let k = 1; k < OUTPUT_DIM; k++) {
+          if (nn.outputs[k] > nn.outputs[rawAction]) rawAction = k;
+        }
+
+        const p99Margin = 1.8 + 2.2 * Math.max(0.4, s.rayMid.interpRatio);
+        const returnSafe = s.rayReturn.clearDist >= 18 && s.rayReturn.maxSlope + p99Margin * 0.55 <= SLOPE_LIMIT_DEG + 1.2;
+        const midDanger = s.rayMid.clearDist <= 19 || s.rayMid.maxSlope + p99Margin > SLOPE_LIMIT_DEG + 1.5;
+
+        let finalAction = rawAction;
+        let vetoed = false;
+        let parallelHold = false;
+        let vetoReason = Math.abs(s.routeErr) > 4
+          ? 'IA retornando suavemente à Rota da Missão'
+          : 'IA mantendo rota nominal validada pelo Escudo P90/P99';
+
+        // 1. Safety Shield checks energy & PSR first
+        if (!s.currShadow && r.battery < 26 && rawAction !== 3) {
+          finalAction = 3;
+          vetoed = true;
+          vetoReason = 'VETO ENERGIA: Recarga obrigatória ao Sol antes de continuar';
+        } else if (!s.currShadow && s.rayMid.shadowDist <= 13 && r.battery < 38 && rawAction === 0) {
+          finalAction = 3;
+          vetoed = true;
+          vetoReason = 'VETO SOL 1,54°: Reserva insuficiente para cruzar sombra adiante';
+        } else if (s.currShadow && rawAction === 3) {
+          finalAction = returnSafe ? 0 : (s.rayLeft.clearDist >= s.rayRight.clearDist ? 1 : 2);
+          vetoed = true;
+          vetoReason = 'VETO PSR: Proibido estacionar dentro da sombra';
+        }
+        // 2. Check Return-to-Route attempt vs Hazard
+        else if (rawAction === 0 && midDanger) {
+          if (s.rayLeft.clearDist >= s.rayRight.clearDist && s.rayLeft.clearDist > 16) {
+            finalAction = 1;
+            vetoed = true;
+            vetoReason = 'VETO P99: Zona evitada à frente; contornando à ESQUERDA';
+          } else if (s.rayRight.clearDist > 16) {
+            finalAction = 2;
+            vetoed = true;
+            vetoReason = 'VETO P99: Zona evitada à frente; contornando à DIREITA';
+          } else {
+            finalAction = 3;
+            vetoed = true;
+            vetoReason = 'VETO P99: Corredor estreito — desaceleração preventiva';
+          }
+        } else if (rawAction === 0 && Math.abs(s.routeErr) > 5 && !returnSafe) {
+          // Don't cut diagonally across the avoided zone yet — hold parallel along route until clear!
+          finalAction = 0;
+          vetoed = true;
+          parallelHold = true;
+          vetoReason = 'VETO P99: Bloqueado corte prematuro; seguindo paralelo até zona livre para retornar';
+        }
+        // 3. Check lateral detour safety
+        else if ((rawAction === 1 && s.rayLeft.clearDist < 15) || (rawAction === 2 && s.rayRight.clearDist < 15)) {
+          if (returnSafe) {
+            finalAction = 0;
+            vetoed = true;
+            vetoReason = 'VETO LATERAL: Borda fechada; retornando pelo corredor livre à rota';
+          } else {
+            finalAction = s.rayLeft.clearDist >= s.rayRight.clearDist ? 1 : 2;
+            vetoed = true;
+            vetoReason = 'VETO LATERAL: Desvio redirecionado para o lado mais seguro';
+          }
+        }
+        // 4. Anti-drift guard: once clear past the hazard (> 12 m off route & returnSafe), let rover rejoin!
+        else if (Math.abs(s.routeErr) > 12 && returnSafe && (rawAction === 1 || rawAction === 2)) {
+          finalAction = 0;
+          vetoed = true;
+          vetoReason = 'RETORNO À ROTA: Zona segura reaberta — Escudo guia retorno ao traçado da missão';
+        }
+
+        return { rawAction, finalAction, vetoed, parallelHold, vetoReason, sense: s };
+      }
+
+      // ---------- Simulation Physics ----------
+      function stepSimulation(dtSec, forceSubSteps = null) {
+        const subSteps = forceSubSteps !== null ? forceSubSteps : speedMult;
+        const stepDt = Math.min(0.045, dtSec);
+
+        if (isDynamicMap && autoRotateSun) {
+          sunAzimuthDeg = (sunAzimuthDeg + stepDt * subSteps * 6.5) % 360;
+          sunSlider.value = String(Math.round(sunAzimuthDeg));
+          sunDegLabel.textContent = `${Math.round(sunAzimuthDeg)}°`;
+        }
+
+        for (let step = 0; step < subSteps; step++) {
+          let anyAlive = false;
+
+          for (const r of rovers) {
+            if (!r.alive) {
+              if (r.failFade > 0) r.failFade = Math.max(0, r.failFade - stepDt * 0.7);
+              continue;
+            }
+            anyAlive = true;
+
+            const dec = decideAction(r);
+            r.lastRawAction = dec.rawAction;
+            r.lastAction = dec.finalAction;
+            r.lastVetoed = dec.vetoed;
+            r.lastVetoReason = dec.vetoReason;
+            if (dec.vetoed) {
+              r.vetoedCount++;
+              totalVetos++;
+            }
+
+            // Smoother, realistic heading targets aligned to the Mission Control Route!
+            const routeAng = getMissionRouteAngle(r.x + 8);
+            const desiredReturnAng = dec.sense ? dec.sense.returnAngle : routeAng;
+
+            let targetHeading = routeAng;
+            let targetVel = 16;
+
+            if (r.lastAction === 0) {
+              // Follow / return to Mission Control Route (or hold parallel if passing a lateral hazard!)
+              targetHeading = dec.parallelHold
+                ? routeAng
+                : Math.max(-0.95, Math.min(0.95, desiredReturnAng));
+              targetVel = activeMode === 2 ? 12.8 : 19.0;
+            } else if (r.lastAction === 1) {
+              // Smooth controlled detour Left (+0.55 rad relative to route, never spinning off the map!)
+              targetHeading = Math.min(1.0, routeAng + 0.56);
+              targetVel = activeMode === 2 ? 10.2 : 12.2;
+            } else if (r.lastAction === 2) {
+              // Smooth controlled detour Right (-0.55 rad relative to route)
+              targetHeading = Math.max(-1.0, routeAng - 0.56);
+              targetVel = activeMode === 2 ? 10.2 : 12.2;
+            } else {
+              targetHeading = desiredReturnAng;
+              targetVel = 0.6;
+              r.chargeTimer += stepDt;
+            }
+
+            // Soft corridor guard at |Y| > 60 m so rovers don't vanish arbitrarily off-edge
+            if (r.y > 60 && targetHeading > 0) targetHeading = -0.35;
+            if (r.y < -60 && targetHeading < 0) targetHeading = 0.35;
+
+            r.heading += (targetHeading - r.heading) * Math.min(1, stepDt * 5.8);
+            const accelRate = targetVel < r.vel ? 11.0 : 6.5; // Brake quickly when shield vetoes!
+            r.vel += (targetVel - r.vel) * Math.min(1, stepDt * accelRate);
+            r.x += Math.cos(r.heading) * r.vel * stepDt;
+            r.y += Math.sin(r.heading) * r.vel * stepDt;
+
+            const currErr = r.y - getMissionRouteY(r.x);
+            r.sqErrSum += currErr * currErr;
+            r.stepsCount++;
+
+            const lastPt = r.trail[r.trail.length - 1];
+            if (Math.hypot(r.x - lastPt.x, r.y - lastPt.y) > 4.5) {
+              r.trail.push({ x: r.x, y: r.y });
+              if (r.trail.length > 50) r.trail.shift();
+            }
+
+            // Real 5m Physical Terrain Consequences
+            const onCell = getTerrainMetrics(r.x, r.y);
+            const inShad = isPointInShadow(r.x, r.y, onCell.z, false);
+            const solarGain = inShad ? 0 : r.lastAction === 3 ? 17.5 : 5.6;
+            const driveCost = 2.4 + r.vel * 0.24 + onCell.slopeDeg * 0.14;
+            r.battery = Math.max(0, Math.min(100, r.battery + (solarGain - driveCost) * stepDt));
+
+            // Fitness rewards distance on mission + tight return to route after detour + energy margin
+            r.fitness = r.x - Math.abs(currErr) * 0.38 + r.battery * 0.25 - r.chargeTimer * 1.8;
+
+            // Failure rules: Mode 1 crashes easily at speed into blind craters/boulders; shielded/slowed rovers survive!
+            if (Math.abs(r.y) > 74) {
+              r.alive = false;
+              r.failReason = 'FORA DO CORREDOR';
+            } else if (onCell.hasBoulder && (activeMode === 1 || r.vel > 13.5)) {
+              r.alive = false;
+              r.failReason = 'COLISÃO MATACÃO';
+            } else if (onCell.slopeDeg > SLOPE_LIMIT_DEG && r.vel > 13.6) {
+              r.alive = false;
+              r.failReason = 'TOMBAMENTO (>15°)';
+            } else if (onCell.inNoGo && onCell.slopeDeg > 13.8 && r.vel > 13.6) {
+              r.alive = false;
+              r.failReason = 'ENTROU ZONA EVITADA';
+            } else if (r.battery <= 0.1) {
+              r.alive = false;
+              r.failReason = 'BLECAUTE PSR';
+            } else if (r.chargeTimer > 14 && r.x < 120) {
+              r.alive = false;
+              r.failReason = 'ESTAGNAÇÃO';
+            } else if (r.x > 1600) {
+              r.fitness += 500;
+              r.alive = false;
+              r.failReason = 'META ALCANÇADA!';
+            }
+          }
+
+          if (!anyAlive) {
+            finishGenerationAndEvolve();
+            break;
+          }
+        }
+      }
+
+      function runTurboGenerations(count) {
+        const targetGen = generation + count;
+        let guard = 0;
+        while (generation < targetGen && guard < 22000) {
+          stepSimulation(0.04, 1);
+          guard++;
+        }
+      }
+
+      // ---------- Theme & Canvas Helpers ----------
+      function getPalette() {
+        const isLight = document.documentElement.classList.contains('light');
+        return isLight
+          ? {
+              bgTop: '#e2e8f0', bgBot: '#f8fafc', text: '#0f172a', muted: '#475569',
+              grid: 'rgba(15, 23, 42, 0.08)', sunDisc: '#d97706',
+              measuredSun: 'rgba(16, 185, 129, 0.72)', interpSun: 'rgba(245, 158, 11, 0.58)',
+              shadowFace: 'rgba(49, 46, 129, 0.72)', steepFace: 'rgba(220, 38, 38, 0.75)',
+              wire: 'rgba(15, 23, 42, 0.16)', leader: '#0284c7', peer: 'rgba(15, 23, 42, 0.42)',
+              hazard: '#dc2626', vetoText: '#b91c1c', routeLine: '#0f172a',
+              noGoRing: 'rgba(220, 38, 38, 0.85)', returnRay: '#059669'
+            }
+          : {
+              bgTop: '#050811', bgBot: '#0f172a', text: '#f1f5f9', muted: '#94a3b8',
+              grid: 'rgba(148, 163, 184, 0.10)', sunDisc: '#fbbf24',
+              measuredSun: 'rgba(16, 185, 129, 0.76)', interpSun: 'rgba(217, 119, 6, 0.56)',
+              shadowFace: 'rgba(30, 27, 75, 0.88)', steepFace: 'rgba(225, 29, 72, 0.78)',
+              wire: 'rgba(148, 163, 184, 0.18)', leader: '#38bdf8', peer: 'rgba(203, 213, 225, 0.40)',
+              hazard: '#f43f5e', vetoText: '#fda4af', routeLine: '#ffffff',
+              noGoRing: 'rgba(244, 63, 94, 0.90)', returnRay: '#34d399'
+            };
+      }
+
+      function sizeCanvas(canvas) {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const w = Math.max(300, Math.round(rect.width * dpr));
+        const h = Math.max(140, Math.round(rect.height * dpr));
+        if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return { ctx, w: rect.width, h: rect.height };
+      }
+
+      function project3D(wx, wy, wz, pivotX, pivotY, w, h) {
+        const dx = wx - pivotX, dy = wy - pivotY, dz = wz;
+        const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);
+        const cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
+        const x1 = dx * cy - dy * sy;
+        const y1 = dx * sy + dy * cy;
+        const y2 = y1 * cp - dz * sp;
+        const z2 = y1 * sp + dz * cp;
+        const depth = 185 / cam.zoom + y2;
+        if (depth < 8) return null;
+        const focal = 460 * cam.zoom;
+        return { sx: w * 0.5 + (x1 * focal) / depth, sy: h * 0.54 - (z2 * focal) / depth, depth };
+      }
+
+      // ---------- Render 3D World ----------
+      function renderWorld3D(leader) {
+        const { ctx, w, h } = sizeCanvas(worldCanvas);
+        const pal = getPalette();
+
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, pal.bgTop);
+        grad.addColorStop(1, pal.bgBot);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        const pivotX = leader ? leader.x + 28 : 40;
+        const pivotY = leader ? getMissionRouteY(pivotX) * 0.45 : 0;
+
+        const sunRad = (sunAzimuthDeg * Math.PI) / 180;
+        const sunScreenX = w * 0.5 + Math.cos(sunRad + cam.yaw) * (w * 0.36);
+        const sunScreenY = 34 + Math.sin(sunRad + cam.yaw) * 9;
+        ctx.beginPath();
+        ctx.arc(sunScreenX, sunScreenY, 11, 0, Math.PI * 2);
+        ctx.fillStyle = pal.sunDisc;
+        ctx.fill();
+        ctx.font = '600 12px system-ui, sans-serif';
+        ctx.fillStyle = pal.sunDisc;
+        ctx.textAlign = 'center';
+        ctx.fillText(`Sol 1,54° (φ=${Math.round(sunAzimuthDeg)}°)`, sunScreenX, sunScreenY + 23);
+
+        const startX = Math.floor((pivotX - 70) / CELL_SIZE) * CELL_SIZE;
+        const endX = startX + 160;
+        const quads = [];
+
+        for (let gx = startX; gx < endX; gx += CELL_SIZE) {
+          for (let gy = -70; gy < 70; gy += CELL_SIZE) {
+            const m00 = getTerrainMetrics(gx, gy);
+            const m10 = getTerrainMetrics(gx + CELL_SIZE, gy);
+            const m11 = getTerrainMetrics(gx + CELL_SIZE, gy + CELL_SIZE);
+            const m01 = getTerrainMetrics(gx, gy + CELL_SIZE);
+
+            const p00 = project3D(gx, gy, m00.z * 2.2, pivotX, pivotY, w, h);
+            const p10 = project3D(gx + CELL_SIZE, gy, m10.z * 2.2, pivotX, pivotY, w, h);
+            const p11 = project3D(gx + CELL_SIZE, gy + CELL_SIZE, m11.z * 2.2, pivotX, pivotY, w, h);
+            const p01 = project3D(gx, gy + CELL_SIZE, m01.z * 2.2, pivotX, pivotY, w, h);
+            if (!p00 || !p10 || !p11 || !p01) continue;
+
+            quads.push({
+              p00, p10, p11, p01,
+              avgDepth: (p00.depth + p10.depth + p11.depth + p01.depth) * 0.25,
+              shaded: isPointInShadow(gx + 2.5, gy + 2.5, m00.z, false),
+              isMeasured: m00.isMeasured,
+              steep: m00.slopeDeg > SLOPE_LIMIT_DEG,
+              hasBoulder: m00.hasBoulder,
+              wx: gx + 2.5, wy: gy + 2.5, wz: m00.z * 2.2
+            });
+          }
+        }
+
+        quads.sort((a, b) => b.avgDepth - a.avgDepth);
+        for (const q of quads) {
+          ctx.beginPath();
+          ctx.moveTo(q.p00.sx, q.p00.sy);
+          ctx.lineTo(q.p10.sx, q.p10.sy);
+          ctx.lineTo(q.p11.sx, q.p11.sy);
+          ctx.lineTo(q.p01.sx, q.p01.sy);
+          ctx.closePath();
+
+          ctx.fillStyle = q.steep ? pal.steepFace : q.shaded ? pal.shadowFace : q.isMeasured ? pal.measuredSun : pal.interpSun;
+          ctx.fill();
+          ctx.strokeStyle = pal.wire;
+          ctx.lineWidth = 0.6;
+          ctx.stroke();
+
+          if (q.hasBoulder) {
+            const topP = project3D(q.wx, q.wy, q.wz + 3.2, pivotX, pivotY, w, h);
+            if (topP) {
+              ctx.beginPath();
+              ctx.arc(topP.sx, topP.sy, Math.max(3, 500 / q.avgDepth), 0, Math.PI * 2);
+              ctx.fillStyle = pal.hazard;
+              ctx.fill();
+            }
+          }
+        }
+
+        // No-Go Avoidance Rings
+        const cxMin = Math.floor(startX / 60) - 1;
+        const cxMax = Math.floor(endX / 60) + 1;
+        for (let cx = cxMin; cx <= cxMax; cx++) {
+          for (let cy = -2; cy <= 2; cy++) {
+            const feat = getChunkFeatures(cx, cy);
+            for (const nz of feat.noGoZones) {
+              if (nz.x < startX - 10 || nz.x > endX + 10) continue;
+              ctx.beginPath();
+              let first = true;
+              for (let a = 0; a <= 16; a++) {
+                const ang = (a / 16) * Math.PI * 2;
+                const px = nz.x + Math.cos(ang) * nz.r;
+                const py = nz.y + Math.sin(ang) * nz.r;
+                const pz = getTerrainMetrics(px, py).z * 2.2 + 1.5;
+                const p = project3D(px, py, pz, pivotX, pivotY, w, h);
+                if (!p) continue;
+                if (first) { ctx.moveTo(p.sx, p.sy); first = false; }
+                else ctx.lineTo(p.sx, p.sy);
+              }
+              ctx.strokeStyle = pal.noGoRing;
+              ctx.lineWidth = 2.2;
+              ctx.stroke();
+            }
+          }
+        }
+
+        // Pre-Planned Mission Control Route
+        ctx.beginPath();
+        let routeStarted = false;
+        for (let rx = startX; rx <= endX; rx += 5) {
+          const ry = getMissionRouteY(rx);
+          const rz = getTerrainMetrics(rx, ry).z * 2.2 + 1.2;
+          const p = project3D(rx, ry, rz, pivotX, pivotY, w, h);
+          if (!p) continue;
+          if (!routeStarted) { ctx.moveTo(p.sx, p.sy); routeStarted = true; }
+          else ctx.lineTo(p.sx, p.sy);
+        }
+        if (routeStarted) {
+          ctx.save();
+          ctx.setLineDash([7, 5]);
+          ctx.strokeStyle = pal.routeLine;
+          ctx.lineWidth = 2.6;
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // Draw Trails for top 14 alive peers + Leader (keeps 60-rover view super crisp!)
+        const alivePeers = rovers.filter((r) => r.alive && r !== leader).slice(0, 14);
+        for (const r of alivePeers) {
+          ctx.beginPath();
+          let started = false;
+          for (const pt of r.trail) {
+            const p = project3D(pt.x, pt.y, getTerrainMetrics(pt.x, pt.y).z * 2.2 + 0.8, pivotX, pivotY, w, h);
+            if (!p) continue;
+            if (!started) { ctx.moveTo(p.sx, p.sy); started = true; }
+            else ctx.lineTo(p.sx, p.sy);
+          }
+          if (started) {
+            ctx.strokeStyle = pal.peer;
+            ctx.lineWidth = 1.1;
+            ctx.stroke();
+          }
+        }
+
+        if (leader && leader.trail.length > 1) {
+          ctx.beginPath();
+          let started = false;
+          for (const pt of leader.trail) {
+            const p = project3D(pt.x, pt.y, getTerrainMetrics(pt.x, pt.y).z * 2.2 + 1.3, pivotX, pivotY, w, h);
+            if (!p) continue;
+            if (!started) { ctx.moveTo(p.sx, p.sy); started = true; }
+            else ctx.lineTo(p.sx, p.sy);
+          }
+          if (started) {
+            ctx.strokeStyle = pal.leader;
+            ctx.lineWidth = 3.2;
+            ctx.stroke();
+          }
+        }
+
+        // Sensor Cone + Return-to-Route Ray (Green when clear to rejoin!)
+        if (leader && leader.alive && activeMode !== 1) {
+          const lm = getTerrainMetrics(leader.x, leader.y);
+          const originP = project3D(leader.x, leader.y, lm.z * 2.2 + 3.0, pivotX, pivotY, w, h);
+          if (originP) {
+            const routeAng = getMissionRouteAngle(leader.x);
+            ctx.lineWidth = 1.5;
+            for (const ang of [routeAng + 0.56, leader.heading, routeAng - 0.56]) {
+              const rx = leader.x + Math.cos(ang) * 32;
+              const ry = leader.y + Math.sin(ang) * 32;
+              const tipP = project3D(rx, ry, getTerrainMetrics(rx, ry).z * 2.2 + 1.0, pivotX, pivotY, w, h);
+              if (tipP) {
+                ctx.beginPath();
+                ctx.moveTo(originP.sx, originP.sy);
+                ctx.lineTo(tipP.sx, tipP.sy);
+                ctx.strokeStyle = leader.lastVetoed ? pal.hazard : pal.leader;
+                ctx.stroke();
+              }
+            }
+            // Dedicated Return-to-Route target ray
+            const tx = leader.x + 22;
+            const ty = getMissionRouteY(tx);
+            const retTip = project3D(tx, ty, getTerrainMetrics(tx, ty).z * 2.2 + 1.2, pivotX, pivotY, w, h);
+            if (retTip && Math.abs(leader.y - getMissionRouteY(leader.x)) > 4) {
+              ctx.beginPath();
+              ctx.moveTo(originP.sx, originP.sy);
+              ctx.lineTo(retTip.sx, retTip.sy);
+              ctx.strokeStyle = pal.returnRay;
+              ctx.lineWidth = 2.0;
+              ctx.stroke();
+            }
+          }
+        }
+
+        // Draw ALL 60 Rovers sorted back-to-front
+        const sprites = [];
+        for (const r of rovers) {
+          if (!r.alive && r.failFade <= 0.05) continue;
+          const m = getTerrainMetrics(r.x, r.y);
+          const baseP = project3D(r.x, r.y, m.z * 2.2 + 1.5, pivotX, pivotY, w, h);
+          const mastP = project3D(r.x, r.y, m.z * 2.2 + 6.0, pivotX, pivotY, w, h);
+          if (baseP && mastP) sprites.push({ r, baseP, mastP, isLeader: r === leader });
+        }
+        sprites.sort((a, b) => b.baseP.depth - a.baseP.depth);
+
+        for (const sp of sprites) {
+          const { r, baseP, mastP, isLeader } = sp;
+          const scale = Math.max(0.48, Math.min(1.5, 190 / baseP.depth));
+          ctx.save();
+          ctx.globalAlpha = r.alive ? (isLeader ? 1 : 0.72) : r.failFade * 0.55;
+          ctx.strokeStyle = !r.alive ? pal.hazard : isLeader ? pal.leader : pal.peer;
+          ctx.lineWidth = isLeader ? 2.5 : 1.2;
+          ctx.beginPath();
+          ctx.moveTo(baseP.sx, baseP.sy);
+          ctx.lineTo(mastP.sx, mastP.sy);
+          ctx.stroke();
+          ctx.fillStyle = !r.alive ? pal.hazard : isLeader ? pal.leader : pal.peer;
+          ctx.fillRect(baseP.sx - 7 * scale, baseP.sy - 3.5 * scale, 14 * scale, 6 * scale);
+          ctx.fillStyle = pal.sunDisc;
+          ctx.fillRect(mastP.sx - 5 * scale, mastP.sy - 2 * scale, 10 * scale, 2.5 * scale);
+          ctx.restore();
+
+          if (isLeader && r.lastVetoed) {
+            ctx.font = '700 12px system-ui, sans-serif';
+            ctx.fillStyle = pal.vetoText;
+            ctx.textAlign = 'center';
+            ctx.fillText('VETO P90/P99', mastP.sx, mastP.sy - 10);
+          }
+        }
+
+        if (leader) {
+          const err = leader.y - getMissionRouteY(leader.x);
+          ctx.font = '600 12px system-ui, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillStyle = pal.text;
+          ctx.fillText(
+            `Líder #${leader.id + 1} | X=${Math.round(leader.x)}m | ΔRota=${err >= 0 ? '+' : ''}${err.toFixed(1)}m | Bat=${leader.battery.toFixed(0)}%`,
+            12,
+            24
+          );
+          ctx.fillStyle = pal.grid;
+          ctx.fillRect(12, 32, 130, 8);
+          ctx.fillStyle = leader.battery > 30 ? pal.measuredSun : pal.hazard;
+          ctx.fillRect(12, 32, 1.3 * leader.battery, 8);
+        }
+      }
+
+      // ---------- Render Brain (MLP 8 -> 7 -> 4) ----------
+      function renderNN(leader) {
+        const { ctx, w, h } = sizeCanvas(nnCanvas);
+        const pal = getPalette();
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = pal.grid;
+        ctx.fillRect(0, 0, w, h);
+
+        if (!leader || !leader.nnState) return;
+        const { inputs, hidden } = leader.nnState;
+        const inputLabels = ['Raio Esq', 'Raio Centro', 'Raio Dir', 'Δ_rota', 'Declive IMU', 'Sol 1,54°', 'Interp. 5m', 'Bateria'];
+        const outputLabels = ['ROTA / VOLTAR', 'DESV. ESQ', 'DESV. DIR', 'RECARREGAR'];
+
+        const colX = [w * 0.27, w * 0.51, w * 0.74];
+        const yPos = (count, idx, pad = 38) => pad + ((idx * (h - pad * 2)) / (count - 1));
+
+        if (activeMode === 3) {
+          const g = leader.genome;
+          for (let i = 0; i < INPUT_DIM; i++) {
+            for (let j = 0; j < HIDDEN_DIM; j++) {
+              const weight = g.w1[j][i];
+              const signal = Math.abs(inputs[i] * weight);
+              ctx.beginPath();
+              ctx.moveTo(colX[0], yPos(INPUT_DIM, i));
+              ctx.lineTo(colX[1], yPos(HIDDEN_DIM, j, 46));
+              ctx.lineWidth = Math.max(0.5, Math.min(2.8, signal * 1.25));
+              ctx.strokeStyle = weight >= 0 ? `rgba(16,185,129,${Math.min(0.85, 0.14 + signal * 0.35)})` : `rgba(244,63,94,${Math.min(0.85, 0.14 + signal * 0.35)})`;
+              ctx.stroke();
+            }
+          }
+          for (let j = 0; j < HIDDEN_DIM; j++) {
+            for (let k = 0; k < OUTPUT_DIM; k++) {
+              const weight = g.w2[k][j];
+              const signal = Math.abs(hidden[j] * weight);
+              ctx.beginPath();
+              ctx.moveTo(colX[1], yPos(HIDDEN_DIM, j, 46));
+              ctx.lineTo(colX[2], yPos(OUTPUT_DIM, k, 68));
+              ctx.lineWidth = Math.max(0.7, Math.min(3.2, signal * 1.4));
+              ctx.strokeStyle = weight >= 0 ? `rgba(56,189,248,${Math.min(0.9, 0.16 + signal * 0.38)})` : `rgba(245,158,11,${Math.min(0.9, 0.16 + signal * 0.38)})`;
+              ctx.stroke();
+            }
+          }
+        } else {
+          ctx.fillStyle = pal.bgBot;
+          ctx.strokeStyle = activeMode === 1 ? pal.hazard : pal.measuredSun;
+          ctx.lineWidth = 1.6;
+          ctx.fillRect(colX[1] - 58, h * 0.3, 116, h * 0.4);
+          ctx.strokeRect(colX[1] - 58, h * 0.3, 116, h * 0.4);
+          ctx.font = '600 12px system-ui, sans-serif';
+          ctx.fillStyle = pal.text;
+          ctx.textAlign = 'center';
+          if (activeMode === 1) {
+            ctx.fillText('Rota Fixa', colX[1], h * 0.46);
+            ctx.fillText('Grade 60 m', colX[1], h * 0.52);
+            ctx.fillStyle = pal.hazard;
+            ctx.fillText('(Cega a 5 m)', colX[1], h * 0.58);
+          } else {
+            ctx.fillText('Filtro Fixo', colX[1], h * 0.46);
+            ctx.fillText('P90 / P99', colX[1], h * 0.52);
+            ctx.fillStyle = pal.measuredSun;
+            ctx.fillText('(Sem ML)', colX[1], h * 0.58);
+          }
+        }
+
+        ctx.font = '500 12px system-ui, sans-serif';
+        for (let i = 0; i < INPUT_DIM; i++) {
+          const y = yPos(INPUT_DIM, i);
+          const v = inputs[i];
+          ctx.beginPath();
+          ctx.arc(colX[0], y, 8.5, 0, Math.PI * 2);
+          ctx.fillStyle = i === 3 ? pal.routeLine : v > 0.6 ? pal.measuredSun : v < 0.25 ? pal.hazard : pal.leader;
+          ctx.fill();
+          ctx.strokeStyle = pal.text;
+          ctx.lineWidth = 1.1;
+          ctx.stroke();
+          ctx.fillStyle = pal.text;
+          ctx.textAlign = 'right';
+          const lbl = i === 3 ? `Δ_rota (${v >= 0 ? '+' : ''}${(v * 30).toFixed(0)}m)` : `${inputLabels[i]} (${(v * 100).toFixed(0)}%)`;
+          ctx.fillText(lbl, colX[0] - 13, y + 4);
+        }
+
+        if (activeMode === 3) {
+          for (let j = 0; j < HIDDEN_DIM; j++) {
+            const y = yPos(HIDDEN_DIM, j, 46);
+            const act = hidden[j];
+            ctx.beginPath();
+            ctx.arc(colX[1], y, 9.5, 0, Math.PI * 2);
+            ctx.fillStyle = act >= 0 ? pal.leader : pal.interpSun;
+            ctx.globalAlpha = 0.35 + Math.abs(act) * 0.65;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            ctx.strokeStyle = pal.text;
+            ctx.lineWidth = 1.1;
+            ctx.stroke();
+          }
+        }
+
+        for (let k = 0; k < OUTPUT_DIM; k++) {
+          const y = yPos(OUTPUT_DIM, k, 68);
+          const isRaw = leader.lastRawAction === k;
+          const isFinal = leader.lastAction === k;
+          ctx.beginPath();
+          ctx.arc(colX[2], y, 11.5, 0, Math.PI * 2);
+          ctx.fillStyle = isFinal ? pal.measuredSun : isRaw && leader.lastVetoed ? pal.hazard : pal.bgBot;
+          ctx.fill();
+          ctx.strokeStyle = isFinal ? pal.measuredSun : pal.text;
+          ctx.lineWidth = isFinal ? 2.4 : 1.1;
+          ctx.stroke();
+
+          ctx.textAlign = 'left';
+          ctx.font = isFinal ? '700 12px system-ui, sans-serif' : '500 12px system-ui, sans-serif';
+          ctx.fillStyle = isFinal ? pal.text : pal.muted;
+          const tag = isRaw && leader.lastVetoed ? ' (VETADO)' : isFinal ? ' (ATIVO)' : '';
+          ctx.fillText(outputLabels[k] + tag, colX[2] + 15, y + 4);
+        }
+
+        ctx.font = '600 12px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = pal.muted;
+        ctx.fillText(activeMode === 1 ? 'Leitura 60 m' : 'Sensores + ΔRota', colX[0], 17);
+        ctx.fillText(activeMode === 3 ? 'Rede MLP' : 'Lógica Fixa', colX[1], 17);
+        ctx.fillText(activeMode === 1 ? 'Ação Direta' : 'Escudo P90/P99', colX[2], 17);
+      }
+
+      // ---------- Chart ----------
+      function renderChart() {
+        const { ctx, w, h } = sizeCanvas(chartCanvas);
+        const pal = getPalette();
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = pal.grid;
+        ctx.fillRect(0, 0, w, h);
+
+        if (history.length === 0) {
+          ctx.font = '500 12px system-ui, sans-serif';
+          ctx.fillStyle = pal.muted;
+          ctx.textAlign = 'center';
+          ctx.fillText('Use "Turbo (+5 Gen)" ou aguarde o fim do ciclo para plotar evolução...', w / 2, h / 2);
+          return;
+        }
+
+        const padL = 44, padR = 16, padT = 22, padB = 24;
+        const cw = w - padL - padR, ch = h - padT - padB;
+        const maxD = Math.max(400, ...history.map((d) => d.bestDist));
+
+        ctx.font = '500 12px system-ui, sans-serif';
+        ctx.fillStyle = pal.muted;
+        ctx.textAlign = 'right';
+        ctx.fillText(`${Math.round(maxD)}m`, padL - 6, padT + 8);
+        ctx.fillText('0m', padL - 6, padT + ch);
+
+        const n = history.length;
+        const stepX = n > 1 ? cw / (n - 1) : cw;
+
+        ctx.beginPath();
+        history.forEach((pt, idx) => {
+          const x = padL + idx * stepX;
+          const y = padT + ch - (pt.bestDist / maxD) * ch;
+          if (idx === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.strokeStyle = pal.leader;
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        ctx.beginPath();
+        history.forEach((pt, idx) => {
+          const x = padL + idx * stepX;
+          const y = padT + ch - (pt.failRate / 100) * ch;
+          if (idx === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.strokeStyle = pal.hazard;
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+
+        ctx.textAlign = 'left';
+        ctx.fillStyle = pal.leader;
+        ctx.fillText('— Avanço na Rota (m)', padL + 8, 15);
+        ctx.fillStyle = pal.hazard;
+        ctx.fillText('— Taxa de Falha (%)', padL + 150, 15);
+      }
+
+      // ---------- UI & Parameter Tuning Suggestions ----------
+      function updateOptimizationSuggestions() {
+        const formatCmp = (st) => {
+          if (st.runs === 0) return 'Não testado';
+          const avgD = Math.round(st.totalDist / st.runs);
+          const fPct = Math.round((st.totalFails / st.runs) * 100);
+          const rmse = (st.totalRmse / st.runs).toFixed(1);
+          return `${avgD}m | ${fPct}% falha | Δ=${rmse}m`;
+        };
+        cmpM1.textContent = formatCmp(modeStats[1]);
+        cmpM2.textContent = formatCmp(modeStats[2]);
+        cmpM3.textContent = formatCmp(modeStats[3]);
+
+        const s1 = modeStats[1], s2 = modeStats[2], s3 = modeStats[3];
+        const totalRuns = s1.runs + s2.runs + s3.runs;
+        const totalSlopeFails = s1.slopeFails + s2.slopeFails + s3.slopeFails;
+        const totalShadowFails = s1.shadowFails + s2.shadowFails + s3.shadowFails;
+        const totalInterpFails = s1.interpFails + s2.interpFails + s3.interpFails;
+
+        const slopeRatio = totalRuns > 0 ? totalSlopeFails / totalRuns : 0.25;
+        const shadowRatio = totalRuns > 0 ? totalShadowFails / totalRuns : 0.08;
+
+        if (slopeRatio > 0.15 || (s1.runs > 0 && s1.totalFails / s1.runs > 0.3)) {
+          optQuantile.textContent = 'P99 (Margem +5,4°)';
+          optQuantileWhy.textContent = totalRuns > 0 ? `${totalSlopeFails} falhas na rota exigem P99` : 'Padrão conservador contra microcrateras';
+        } else if (slopeRatio > 0.05) {
+          optQuantile.textContent = 'P95 (Margem +4,1°)';
+          optQuantileWhy.textContent = 'Equilíbrio segurança/aderência observado';
+        } else {
+          optQuantile.textContent = 'P90 (Margem +3,0°)';
+          optQuantileWhy.textContent = 'Baixa incidência crítica no corredor';
+        }
+
+        const recSoc = Math.min(48, Math.max(26, Math.round(28 + shadowRatio * 120)));
+        optSoc.textContent = `${recSoc}%`;
+        optSocWhy.textContent = totalShadowFails > 0 ? `Ajustado por ${totalShadowFails} blecautes em desvios` : 'Reserva mínima para contornar sombra';
+
+        const avgRmseM3 = s3.runs > 0 ? s3.totalRmse / s3.runs : s2.runs > 0 ? s2.totalRmse / s2.runs : 6.5;
+        const wRoute = Math.max(0.15, Math.min(0.65, 0.5 - avgRmseM3 * 0.015)).toFixed(2).replace('.', ',');
+        optRouteWeight.textContent = `w_rota = ${wRoute}`;
+        optRouteWhy.textContent = totalRuns > 0 ? `Calibrado para retorno seguro (Δ médio ${avgRmseM3.toFixed(1)} m)` : 'Evita retorno prematuro sobre zona proibida';
+
+        const interpFactor = totalRuns > 0 ? (1.4 + Math.min(1.1, (totalInterpFails / Math.max(1, totalRuns)) * 2.2)).toFixed(2) : '1,85';
+        optInterpWeight.textContent = `w_interp = ${interpFactor.replace('.', ',')}×`;
+        optInterpWhy.textContent = 'Peso extra na função objetivo em células LDEC = 0';
+      }
+
+      function updateUI(leader) {
+        const aliveCount = rovers.filter((r) => r.alive).length;
+        const bestCurr = Math.max(...rovers.map((r) => r.x));
+
+        kpiGen.textContent = String(generation);
+        kpiAlive.textContent = `${aliveCount} / ${POP_SIZE}`;
+        kpiDist.textContent = `${Math.round(bestCurr)} m`;
+        if (leader) {
+          const errNow = Math.abs(leader.y - getMissionRouteY(leader.x));
+          kpiRouteErr.textContent = `${errNow.toFixed(1).replace('.', ',')} m`;
+        }
+        kpiVetos.textContent = String(totalVetos);
+
+        if (leader) {
+          if (leader.lastVetoed) {
+            kpiStatus.textContent = 'VETO P90/P99';
+            gateExplainer.textContent = leader.lastVetoReason;
+          } else {
+            const names = ['Na rota / Retornando', 'Desvio Esquerda', 'Desvio Direita', 'Recarga Solar'];
+            kpiStatus.textContent = names[leader.lastAction];
+            gateExplainer.textContent = leader.lastVetoReason;
+          }
+        }
+
+        const activeClass = 'bg-[var(--primary)] text-[var(--primary-foreground)] border-transparent';
+        const idleClass = 'bg-transparent text-[var(--foreground)] border-[var(--border)]';
+
+        mode1Btn.className = `px-3 py-1.5 rounded-lg text-xs font-medium border cursor-pointer transition-colors ${activeMode === 1 ? activeClass : idleClass}`;
+        mode2Btn.className = `px-3 py-1.5 rounded-lg text-xs font-medium border cursor-pointer transition-colors ${activeMode === 2 ? activeClass : idleClass}`;
+        mode3Btn.className = `px-3 py-1.5 rounded-lg text-xs font-medium border cursor-pointer transition-colors ${activeMode === 3 ? activeClass : idleClass}`;
+
+        mapStaticBtn.className = `px-2.5 py-1 rounded-md border font-medium cursor-pointer ${!isDynamicMap ? activeClass : idleClass}`;
+        mapDynamicBtn.className = `px-2.5 py-1 rounded-md border font-medium cursor-pointer ${isDynamicMap ? activeClass : idleClass}`;
+
+        mapNotice.textContent = isDynamicMap
+          ? 'Mapa Dinâmico ativo: 60 rovers enfrentam novas zonas evitadas (92,71% interpolados) + Sol 1,54° em rotação, testando desvio e retorno à rota.'
+          : 'Mapa Estático ativo: mesma rota e mesmos obstáculos em todas as gerações (útil para inspeção, mas propenso a memorização/overfitting).';
+
+        brainTitle.textContent =
+          activeMode === 1
+            ? 'Modo 1: Padrão Atual (Segue Rota 60 m Cegamente)'
+            : activeMode === 2
+            ? 'Modo 2: Tese Base (Desvio P90/P99 + Retorno Determinístico)'
+            : 'Modo 3: Híbrido (MLP 8→7→4 com Δ_rota + Retorno Escudado)';
+
+        brainSubtitle.textContent =
+          activeMode === 1
+            ? 'Ignora zonas proibidas de 5 m que interceptam a rota nominal.'
+            : activeMode === 2
+            ? 'Contorna zonas evitadas por regra fixa e retorna à linha da missão.'
+            : 'IA aprende contorno e retorno econômicos; Escudo barra retorno prematuro e guia volta segura.';
+
+        btnAutoSun.textContent = `Auto: ${autoRotateSun ? 'ON' : 'OFF'}`;
+        btnAutoSun.className = `px-2 py-1 rounded-md border font-medium cursor-pointer whitespace-nowrap ${autoRotateSun && isDynamicMap ? activeClass : idleClass}`;
+
+        if (activeMode === 1) {
+          shieldBadge.textContent = 'Sem Escudo (Grade 60 m)';
+          shieldBadge.className = 'px-2.5 py-1 rounded-full text-xs font-medium border border-rose-500/40 bg-rose-500/10 text-rose-500';
+        } else if (activeMode === 2) {
+          shieldBadge.textContent = 'Tese P90/P99 Fixa Ativa';
+          shieldBadge.className = 'px-2.5 py-1 rounded-full text-xs font-medium border border-sky-500/40 bg-sky-500/10 text-sky-500';
+        } else {
+          shieldBadge.textContent = leader && leader.lastVetoed ? 'ESCUDO ATIVO NA ROTA' : 'Híbrido (60 Rovers + P90/P99)';
+          shieldBadge.className = 'shield-active px-2.5 py-1 rounded-full text-xs font-medium border border-emerald-500/40 bg-emerald-500/10 text-emerald-500';
+        }
+
+        document.querySelectorAll('.speed-btn').forEach((btn) => {
+          btn.className = `speed-btn px-2 py-1 rounded-md border font-medium cursor-pointer ${Number(btn.dataset.speed) === speedMult ? activeClass : idleClass}`;
+        });
+        document.querySelectorAll('.mut-btn').forEach((btn) => {
+          btn.className = `mut-btn px-2 py-1 rounded-md border font-medium cursor-pointer ${Math.abs(Number(btn.dataset.mut) - mutationRate) < 0.01 ? activeClass : idleClass}`;
+        });
+
+        updateOptimizationSuggestions();
+      }
+
+      const renderFrame = () => {
+        const alive = rovers.filter((r) => r.alive);
+        const leader = alive.length > 0 ? alive.reduce((best, r) => (r.x > best.x ? r : best), alive[0]) : rovers[0];
+        renderWorld3D(leader);
+        renderNN(leader);
+        renderChart();
+        updateUI(leader);
+      };
+
+      const renderStaticSnapshot = () => {
+        stepSimulation(0.02, 1);
+        renderFrame();
+      };
+
+      function tick(ts) {
+        if (!lastTime) lastTime = ts;
+        const dt = (ts - lastTime) / 1000;
+        lastTime = ts;
+        if (isPlaying && isVisibleForRender) stepSimulation(dt);
+        renderFrame();
+        if (isPlaying && isVisibleForRender) rafId = requestAnimationFrame(tick);
+        else rafId = null;
+      }
+
+      function startLoop() {
+        if (!rafId && isPlaying && isVisibleForRender) {
+          lastTime = 0;
+          rafId = requestAnimationFrame(tick);
+        }
+      }
+
+      function stopLoop() {
+        if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+      }
+
+      // ---------- Listeners ----------
+      worldCanvas.addEventListener('pointerdown', (e) => {
+        cam.dragging = true; cam.lastX = e.clientX; cam.lastY = e.clientY;
+        worldCanvas.setPointerCapture(e.pointerId);
+      });
+      worldCanvas.addEventListener('pointermove', (e) => {
+        if (!cam.dragging) return;
+        cam.yaw += (e.clientX - cam.lastX) * 0.006;
+        cam.pitch = Math.max(0.25, Math.min(1.35, cam.pitch + (e.clientY - cam.lastY) * 0.005));
+        cam.lastX = e.clientX; cam.lastY = e.clientY;
+        if (!isPlaying) renderFrame();
+      });
+      worldCanvas.addEventListener('pointerup', () => { cam.dragging = false; });
+      worldCanvas.addEventListener('pointercancel', () => { cam.dragging = false; });
+      worldCanvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        cam.zoom = Math.max(0.65, Math.min(1.85, cam.zoom - e.deltaY * 0.001));
+        if (!isPlaying) renderFrame();
+      }, { passive: false });
+
+      document.getElementById('camLeft').addEventListener('click', () => { cam.yaw -= 0.18; if (!isPlaying) renderFrame(); });
+      document.getElementById('camRight').addEventListener('click', () => { cam.yaw += 0.18; if (!isPlaying) renderFrame(); });
+      document.getElementById('camZoomIn').addEventListener('click', () => { cam.zoom = Math.min(1.85, cam.zoom + 0.15); if (!isPlaying) renderFrame(); });
+      document.getElementById('camZoomOut').addEventListener('click', () => { cam.zoom = Math.max(0.65, cam.zoom - 0.15); if (!isPlaying) renderFrame(); });
+      document.getElementById('camReset').addEventListener('click', () => { cam.yaw = -0.62; cam.pitch = 0.68; cam.zoom = 1.0; if (!isPlaying) renderFrame(); });
+
+      btnTogglePlay.addEventListener('click', () => {
+        isPlaying = !isPlaying;
+        btnTogglePlay.textContent = isPlaying ? 'Pausar' : 'Reproduzir';
+        if (isPlaying) startLoop();
+        else { stopLoop(); renderFrame(); }
+      });
+
+      btnNextGen.addEventListener('click', () => { finishGenerationAndEvolve(); renderStaticSnapshot(); });
+      btnTurbo5.addEventListener('click', () => { runTurboGenerations(5); renderStaticSnapshot(); });
+      btnReset.addEventListener('click', () => { initGenOne(true); renderStaticSnapshot(); });
+
+      mode1Btn.addEventListener('click', () => { activeMode = 1; initGenOne(false); renderStaticSnapshot(); });
+      mode2Btn.addEventListener('click', () => { activeMode = 2; initGenOne(false); renderStaticSnapshot(); });
+      mode3Btn.addEventListener('click', () => { activeMode = 3; initGenOne(false); renderStaticSnapshot(); });
+
+      mapStaticBtn.addEventListener('click', () => { isDynamicMap = false; initGenOne(false); renderStaticSnapshot(); });
+      mapDynamicBtn.addEventListener('click', () => { isDynamicMap = true; initGenOne(false); renderStaticSnapshot(); });
+
+      sunSlider.addEventListener('input', () => {
+        autoRotateSun = false;
+        sunAzimuthDeg = Number(sunSlider.value);
+        sunDegLabel.textContent = `${sunAzimuthDeg}°`;
+        if (!isPlaying) renderFrame();
+        else updateUI(rovers.find((r) => r.alive) || rovers[0]);
+      });
+
+      btnAutoSun.addEventListener('click', () => {
+        autoRotateSun = !autoRotateSun;
+        if (!isPlaying) renderFrame();
+        else updateUI(rovers.find((r) => r.alive) || rovers[0]);
+      });
+
+      document.querySelectorAll('.speed-btn').forEach((btn) => {
+        btn.addEventListener('click', () => { speedMult = Number(btn.dataset.speed); updateUI(rovers.find((r) => r.alive) || rovers[0]); });
+      });
+
+      document.querySelectorAll('.mut-btn').forEach((btn) => {
+        btn.addEventListener('click', () => { mutationRate = Number(btn.dataset.mut); updateUI(rovers.find((r) => r.alive) || rovers[0]); });
+      });
+
+      // ---------- Efficient Background Processing ----------
+      if ('contentVisibility' in document.documentElement.style) {
+        simContainer.addEventListener('contentvisibilityautostatechange', (event) => {
+          isVisibleForRender = !event.skipped;
+          if (event.skipped) stopLoop();
+          else if (isPlaying) startLoop();
+        });
+      } else {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              isVisibleForRender = entry.isIntersecting;
+              if (entry.isIntersecting && isPlaying) startLoop();
+              else if (!entry.isIntersecting) stopLoop();
+            });
+          },
+          { rootMargin: '200px' }
+        );
+        observer.observe(simContainer);
+      }
+
+      // ---------- Init ----------
+      initGenOne(true);
+      if (prefersReducedMotion.matches) {
+        isPlaying = false;
+        btnTogglePlay.textContent = 'Reproduzir';
+        renderStaticSnapshot();
+      } else {
+        startLoop();
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Pragyan — trajeto, desvios e dados</title>
+<style>
+:root{--bg:#0b0f17;--card:#141b27;--line:#243040;--txt:#e6edf7;--dim:#93a4bb;--acc:#4da3ff;--warn:#ffb347;--ok:#3ddc97}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1120px;margin:0 auto;padding:28px 20px 60px}
+h1{font-size:26px;margin:0 0 4px;letter-spacing:.2px}
+.sub{color:var(--dim);font-size:13px;margin-bottom:22px}
+h2{font-size:17px;margin:30px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:14px;margin:18px 0 8px;color:var(--acc);text-transform:uppercase;letter-spacing:.06em}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:16px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.card .k{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.07em}
+.card .v{font-size:19px;font-weight:650;margin-top:3px}
+.card .n{font-size:11px;color:var(--dim);margin-top:2px}
+table{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:13.5px}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#1b2432;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#b9c9dd}
+tr:nth-child(even) td{background:#111823}
+.tag{display:inline-block;padding:1px 7px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.t-dev{background:rgba(255,179,71,.16);color:var(--warn);border:1px solid rgba(255,179,71,.35)}
+.t-stop{background:rgba(77,163,255,.14);color:var(--acc);border:1px solid rgba(77,163,255,.3)}
+.t-end{background:rgba(61,220,151,.13);color:var(--ok);border:1px solid rgba(61,220,151,.3)}
+figure{margin:14px 0 22px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}
+figure img{width:100%;height:auto;border-radius:8px;display:block}
+figcaption{color:var(--dim);font-size:12.5px;margin-top:8px}
+.note{border-left:3px solid var(--warn);background:rgba(255,179,71,.07);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0;font-size:13.5px}
+ul{margin:8px 0 14px;padding-left:20px}
+li{margin:4px 0}
+.src{font-size:12.5px;color:var(--dim)}
+.src a{color:var(--acc);text-decoration:none}
+code{background:#1b2432;padding:1px 5px;border-radius:4px;font-size:12.5px}
+</style></head><body><div class="wrap">
+
+<h1>Pragyan / Chandrayaan-3 — trajeto, desvios e dados</h1>
+<div class="sub">Pacote extraído em 14/11/2026 &middot; fonte primária: Stooke, LPSC 2025 #1025 + ISRO/PRL (APXS) + Nature 633</div>
+
+<div class="cards">
+  <div class="card"><div class="k">Pouso</div><div class="v">23/08/2023</div><div class="n">12:32 UTC</div></div>
+  <div class="card"><div class="k">Coordenadas</div><div class="v">69,373°S</div><div class="n">32,319°E</div></div>
+  <div class="card"><div class="k">Distância</div><div class="v">101,4 m</div><div class="n">~103 m (ISRO)</div></div>
+  <div class="card"><div class="k">Dias</div><div class="v">12</div><div class="n">~10 dirigindo</div></div>
+  <div class="card"><div class="k">Pontos APXS</div><div class="v">23</div><div class="n">em ~31 h</div></div>
+  <div class="card"><div class="k">Desvios</div><div class="v">5</div><div class="n">1 por obstáculo</div></div>
+</div>
+
+<div class="note"><strong>Enquadramento geográfico:</strong> o sítio fica a 69,373°S — cerca de 2.100 km do polo. É a região polar <em>no uso jornalístico</em>; a região polar propriamente dita começa perto de 88,5°S. Este é o rover com trajeto real mais próximo do polo sul já dirigido.</div>
+
+<h2>Cronologia e desvios</h2>
+<table>
+<tr><th style="width:96px">Data</th><th>Evento</th><th style="width:90px">Direção</th><th style="width:150px">Tipo</th></tr>
+<tr><td>23–24 ago</td><td>Desce a rampa do Vikram, segue ao sul e para para carregar bateria perto da South Crater</td><td>S</td><td><span class="tag t-stop">parada</span></td></tr>
+<tr><td>25 ago</td><td>Move mais ao sul; imagens para S e E revelam a cratera A (~1 m) na borda da South Crater (9 m)</td><td>S</td><td><span class="tag t-stop">parada</span></td></tr>
+<tr><td>25–27 ago</td><td>Bifurcação; ramo central ao sul</td><td>S</td><td><span class="tag t-stop">parada</span></td></tr>
+<tr><td><strong>27 ago</strong></td><td>Encontra cratera de <strong>4 m</strong> a 3 m à frente → comandado a refazer o caminho e seguir por rota nova</td><td>S</td><td><span class="tag t-dev">DESVIO 1</span></td></tr>
+<tr><td>28 ago</td><td>Novo caminho; dois stops no ramo leste, um a oeste</td><td>E / O</td><td><span class="tag t-stop">parada</span></td></tr>
+<tr><td>28–29 ago</td><td>Retorno por <strong>caminho deslocado</strong> para <strong>testar tração</strong>; fotografou as próprias marcas</td><td>—</td><td><span class="tag t-dev">DESVIO deliberado</span></td></tr>
+<tr><td>29 ago</td><td>Dois stops no ramo sudoeste</td><td>SO</td><td><span class="tag t-stop">parada</span></td></tr>
+<tr><td>30 ago</td><td>Desloca-se a oeste rumo à West Crater; 07:35 foto do Vikram com ChaSTE e ILSA; 11:04 foto a 15 m</td><td>O</td><td><span class="tag t-stop">parada</span></td></tr>
+<tr><td><strong>31 ago</strong></td><td>5 stops (oeste→NW→NE→oeste→extremo oeste); contorna a borda oeste da West Crater; <strong>loop ~4 m a oeste da cratera B</strong></td><td>O/NW/NE</td><td><span class="tag t-dev">DESVIO 2</span></td></tr>
+<tr><td><strong>1 set</strong></td><td>Afasta-se da borda ao S/SE, contorna obstáculo, vai a E e NE; após a cratera B segue NW (trecho incerto); <strong>rodeia a cratera B</strong> até a borda da cratera maior sobreposta</td><td>S/SE/E/NE/NW</td><td><span class="tag t-dev">DESVIO 3</span></td></tr>
+<tr><td><strong>2 set</strong></td><td>Rumo N/NE em dois stops, <strong>pequeno desvio</strong> e chega à posição final; entra em sleep mode</td><td>N/NE</td><td><span class="tag t-dev">DESVIO 4</span> <span class="tag t-end">fim</span></td></tr>
+<tr><td>3 set</td><td>Vikram executa um hop (~40 cm); mapa marca <em>pre-hop</em> e <em>post-hop</em></td><td>—</td><td><span class="tag t-stop">marco</span></td></tr>
+<tr><td>22 set</td><td>Janela prevista de reativação; rover não respondeu</td><td>—</td><td><span class="tag t-end">fim</span></td></tr>
+</table>
+
+<h2>Erros do mapa oficial da ISRO (corrigidos por Stooke)</h2>
+<ul>
+<li>A ISRO <strong>rotacionou as duas excursões da South Crater no sentido anti-horário</strong>.</li>
+<li>A ISRO <strong>apresentou as trilhas novas como se fossem o primeiro conjunto</strong> de trilhas.</li>
+<li>A ISRO colocou o rover <strong>a leste da cratera A</strong> — mas uma foto voltada a leste só mostra essa cratera se o rover estiver <strong>a oeste</strong> dela.</li>
+<li>A ISRO mostra o rover quase <strong>sobre a borda da cratera B</strong>; as imagens de superfície mostram um <strong>loop ~4 m mais a oeste</strong>.</li>
+<li>O mapa de Ghosh et al. [5] é <strong>"muito distorcido"</strong>; os mapas da equipe <strong>APXS são mais acurados</strong>.</li>
+<li>O trecho entre o lander e a West Crater <strong>permanece incerto</strong>.</li>
+</ul>
+
+<h3>Fig. 1 — comparação dos cinco mapas de trajeto</h3>
+<figure><img src="__FIG1__" alt="Comparação dos mapas de trajeto do Pragyan"/>
+<figcaption>Cinza+pontos: mapa ISRO [1]. Círculos e linha branca: sítios e rota APXS [2]. Quadrados: sítios APXS [3]. Linha cinza fraca: [4]. Linha branca fina: [5]. Quadrados pretos: rover nas imagens LRO/OHRC.</figcaption></figure>
+
+<h3>Fig. 2 — West Crater (30 ago – 2 set)</h3>
+<figure><img src="__FIG2__" alt="Atividades na West Crater"/>
+<figcaption>Datas 30 e 31 de agosto e 1 e 2 de setembro. Cratera B no centro; posição final no alto à direita. Setas indicam o sentido do movimento.</figcaption></figure>
+
+<h3>Fig. 3 — South Crater (23–29 ago) e o hop do Vikram</h3>
+<figure><img src="__FIG3__" alt="Atividades na South Crater"/>
+<figcaption>Ramos de 23–24, 25, 25–27, 28 e 29 de agosto. Cratera A sobre a South Crater, e as posições do lander antes e depois do hop.</figcaption></figure>
+
+<h2>Os 23 pontos do APXS</h2>
+<figure><img src="__FIG4__" alt="23 pontos APXS sobre imagem OHRC"/>
+<figcaption>Figura 3 do release ISRO/PRL: 23 quadrados brancos sobre imagem OHRC do Chandrayaan-2. Escala 10 m; eixos 32,316–32,32°E e 69,373°S; “Pragyan” e “Vikram” marcados.</figcaption></figure>
+
+<table>
+<tr><th style="width:150px">Medida</th><th style="width:130px">Faixa</th><th>Interpretação</th></tr>
+<tr><td>S (enxofre)</td><td>900–1.400 ppm<br/><span class="src">média 1.200</span></td><td>300–500 ppm acima de Apollo 16 e Luna 20 — enriquecimento anômalo</td></tr>
+<tr><td>Na (sódio)</td><td>700–2.800 ppm</td><td>Depletado em relação às terras altas equatoriais</td></tr>
+<tr><td>K (potássio)</td><td>300–400 ppm</td><td>Depletado em relação às terras altas equatoriais</td></tr>
+<tr><td>Litologia</td><td>FAN + Mg-suite</td><td>Plagioclásio dominante; olivina e piroxênio acima do esperado → material de crosta inferior/manto escavado pela bacia SPA (~4,3 Ga)</td></tr>
+</table>
+
+<h2>Especificações</h2>
+<table>
+<tr><th style="width:190px">Item</th><th>Valor</th></tr>
+<tr><td>Massa</td><td>26 kg (algumas fontes 27 kg)</td></tr>
+<tr><td>Dimensões</td><td>0,9 × 0,75 × 0,85 m</td></tr>
+<tr><td>Mobilidade</td><td>6 rodas, rocker-bogie, BLDC independente por roda, skid steering</td></tr>
+<tr><td>Potência</td><td>50 W solar</td></tr>
+<tr><td>Velocidade / alcance de projeto</td><td>1 cm/s / 500 m</td></tr>
+<tr><td>Instrumentos</td><td>LIBS + APXS (700 g)</td></tr>
+<tr><td>Navegação</td><td>2 × NavCam estéreo mono 1 MP (gera DEM local)</td></tr>
+<tr><td>Fim</td><td>Sleep mode em 02/09/2023 com bateria cheia; nunca acordou</td></tr>
+</table>
+
+<h2>Fontes</h2>
+<div class="src">
+<p>1. Stooke, P. J. (2025). <em>Chandrayaan 3 and Pragyan Rover: Traverse Analysis</em>. 56th LPSC #1025. <a href="https://www.hou.usra.edu/meetings/lpsc2025/pdf/1025.pdf">PDF</a><br/>
+2. ISRO/PRL (2024). Release do APXS. <a href="https://www.isro.gov.in/media_isro/pdf/APXS_CH3.pdf">PDF</a><br/>
+3. Vadawale, S. V. et al. (2024). Nature 633, 327–331. <a href="https://doi.org/10.1038/s41586-024-07870-7">DOI</a><br/>
+4. Nature Comm. Earth &amp; Environment (2025). <a href="https://www.nature.com/articles/s43247-025-02305-1">Artigo</a><br/>
+5. ISRO (28/08/2023). <a href="https://x.com/isro/status/1697881823391711684">Post da cratera de 4 m</a><br/>
+6. Vijayan, S. et al. (2024). Icarus. <a href="https://doi.org/10.1016/j.icarus.2024.116329">DOI</a></div>
+
+<p class="src" style="margin-top:22px">Limitações: o resumo do LPSC tem 2 páginas com pôster comprimido, então rótulos pequenos foram lidos por ampliação. A Tabela 2 do artigo da Nature (Na/K/S por waypoint) não foi obtida — acesso automatizado bloqueado.</p>
+
+</div></body></html>

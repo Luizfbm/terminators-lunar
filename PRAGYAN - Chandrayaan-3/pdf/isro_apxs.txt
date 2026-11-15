@@ -1,0 +1,96 @@
+August 21, 2024
+
+PRL-built APXS on Pragyan Rover of Chandrayaan-3 made the First
+Elemental Abundance Measurements of Lunar Soil in the South Polar
+Region of the Moon
+
+A team of scientists from the Physical Research Laboratory (PRL), Ahmedabad, and ISRO,
+has reported the first in-situ elemental abundance of lunar soil near the Southern Polar
+region using measurements made by the Alpha Particle X-ray Spectrometer (APXS) on the
+Pragyan rover of the Chandrayaan-3 mission. This study published in the journal Nature has
+provided evidence that supports the Lunar Magma Ocean hypothesis, which predicts that
+the primordial lunar crust was formed as a result of the floatation of lighter anorthite
+plagioclase -- but, APXS also detected higher abundance of magnesium-rich minerals,
+suggesting contributions from deeper layer material ejected from South Pole-Aitken basin
+during its formation. The analysis from 23 measurements at different locations within 50-
+metre of the Chandrayaan-3 landing site ­ Shiv Shakti point ­ showed that the lunar regolith
+is uniform in elemental composition, and hence can serve as an excellent ground truth for
+future remote sensing missions.
+
+The Vikram Lander of the Chandrayaan-3 mission made the historic Moon landing on the 23rd
+August 2023 at 18.04 Indian time at the 69.37-degree South latitude and 32.35-degree East
+longitude (Shiv Shakti point). The Pragyan rover deployed on lunar surface explored the near-
+by area by traversing about 103 meters over the next ten days. The PRL-built scientific
+instrument APXS (Figure 1) aboard the Pragyan rover was designed to measure the elemental
+composition of lunar soil at the locations of rover stops, by deploying the APXS close to lunar
+surface for measurements and stowing it back while moving (Figure 2). The APXS employs the
+techniques of X-ray Fluorescence Spectroscopy and Particle Induced X-ray Emission to detect
+and quantify various major and minor elements present in lunar soil, such as Si, Mg, Al, Fe,
+Ca, as well as Mn, Cr, Ti, Ni, K, Na, and, S etc. By irradiating the lunar surface with its Cm-244
+sources, APXS recorded characteristic X-ray lines of all major and minor elements.
+Figure 1: Photographs of the APXS instrument Flight model in Lab. The compact instrument weighs
+just 700 grams.
+
+Figure 2: Snapshots of APXS deployment (front-side), with APXS in stowed position (left) and deployed
+position (right). APXS is marked in red in the images of the Pragyan Rover captured by the camera on
+the Vikram Lander during mission.
+
+The APXS carried out 23 scientific observations along the rover path, shown in the Figure-3,
+and obtained an X-ray spectrum at each location. The observation time at each location varied
+from about 20 minutes (minimum) to about 3 hours (maximum), depending on the mission
+requirement plan; with a total observation duration of about 31 hours over the mission period
+of 10 days. The analysis of APXS measurements from each location have revealed that the
+elemental composition is fairly uniform across the area explored by the Pragyan rover. The
+APXS spectrum obtained by adding all the observations over 31 hours is shown in the Figure-
+4, where the characteristic peaks of all major and minor rock-forming elements can be seen.
+The average lunar soil composition near Shiv Shakti point, as measured by APXS, is shown in
+a pie chart (Figure-5).
+Figure 3: Locations of 23 scientific observations of APXS (marked as white squares) along the rover
+path overlaid on the high-resolution image of the region from Chandrayaan-2 OHRC.
+
+Figure 4. APXS spectrum obtained by adding data from all 23 scientific observations amounting to a
+total exposure of 31.34 h. An extra line of zinc (K) is detected in the coadded spectrum, while sodium
+(Na), potassium (K), and sulphur (S) are also clearly seen.
+Figure 5: Elemental composition of the lunar soil as measured by APXS. Aside from the major
+components Si, Al, Ca, Mg, and Fe in oxide form, abundances of various minor elements are also
+obtained.
+
+From the APXS-measured composition, and CIPW normative minerology computations, the
+PRL scientists inferred that the soil is a mixture of two types of rocks named Ferroan
+Anorthosite (FAN), rich in plagioclase mineral, and Magnesian Suite (Mg-suite). While the
+dominant mineral present is plagioclase, as expected in lunar highland terrain, other minerals,
+olivine and pyroxene, are higher than typically expected in the outer crust of the Moon.
+
+According to the widely accepted hypothesis on the early evolution of the Moon, the Lunar
+Magma Ocean (LMO) hypothesis, the Moon was entirely an ocean of magma when it formed.
+As the magma cooled, heavier minerals such as olivine and pyroxene sank and formed the
+inner layers of the Moon, while the lighter mineral plagioclase floated and formed the outer
+crust of the Moon. The dominant presence of FAN in the soil observed by APXS further
+confirms the LMO hypothesis. However, the presence of additional Mg-rich materials
+suggests that the outer crustal material has been mixed with material from deeper layers of
+the Moon to form the soil near the Shiv Shakti point.
+
+The South Pole Aitken (SPA) basin on the Moon, the largest known impact basin in the solar
+system, is believed to have been formed about 4.2­4.3 billion years ago due to an asteroid
+impact. This impact resulted in the excavation of Mg-rich material from deeper layers of the
+Moon and brought to the surrounding areas, including the Chandrayaan-3 landing site, which
+is about 350 km away from the rim of the SPA basin. Subsequent cratering caused the mixing
+of the surficial material with the material from deeper layers to form the soil with the
+composition seen by the APXS.
+Thus, the new measurements by APXS in this never-before-explored region of the Moon
+indicates that the lunar soil is a mixture of two types of rocks where part of the material is
+excavated from deeper layers of the Moon, providing direct insight into the evolutionary
+history of the Moon.
+
+The APXS instrument was designed and developed by Physical Research Laboratory,
+Ahmedabad (a Unit of the Department of Space), with support from SAC Ahmedabad and
+URSC Bangalore.
+
+The original article entitled "Chandrayaan-3 APXS elemental abundance measurements at
+lunar high latitude", authored by Santosh V. Vadawale et al., Nature, is available at
+https://doi.org/10.1038/s41586-024-07870-7
+https://www.nature.com/articles/s41586-024-07870-7
+
+Further detailed explanations of the results are available on the PRL website
+https://www.prl.res.in/
+

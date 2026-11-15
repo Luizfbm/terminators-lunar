@@ -1,0 +1,51 @@
+[    0.0 s] ========================================================================================
+[    0.0 s] MONTE CARLO DA TESE COM DADOS LOLA REAIS — sítio Site11 — 14/11/2026 23:12
+[    0.0 s] grade grossa 60 m (bloco 12×12) · limite 15.0° · 5 dobras · 100 sorteios · semente 2026
+[    0.0 s] ========================================================================================
+[    0.0 s] [1/7] Lendo as camadas oficiais do LOLA (surf, ldec, slp, slperr)…
+[    0.1 s]       recorte central de 1992×1992 células (10.0 × 10.0 km) de um total de 3200×3200
+[    0.1 s]       3,968,064 células · com disparo LOLA (LDEC > 0): 7.82% · interpoladas: 92.18%
+[    0.1 s]       declive oficial: mediana 15.3° · células > 15.0°: 51.77% · erro de declive (slperr) mediano 1.70°
+[    0.2 s]       conferência: declive recalculado da superfície × camada slp oficial: |diferença| média 0.0002°
+[    0.2 s] [2/7] Montando a grade grossa de 60 m…
+[    0.4 s]       declive da grade: mediana 15.0° · células > 15.0°: 49.87%
+[    0.4 s] [3/7] Validação cruzada da tese em 5 dobras (σ da correção local = 1.8 células)…
+[    0.6 s]       dobra 1/5: 60,595 células escondidas e conferidas · |erro| médio tese 1.04° · grade 1.69°
+[    0.7 s]       dobra 2/5: 60,209 células escondidas e conferidas · |erro| médio tese 1.04° · grade 1.69°
+[    0.9 s]       dobra 3/5: 60,569 células escondidas e conferidas · |erro| médio tese 1.04° · grade 1.70°
+[    1.1 s]       dobra 4/5: 60,333 células escondidas e conferidas · |erro| médio tese 1.03° · grade 1.69°
+[    1.3 s]       dobra 5/5: 60,166 células escondidas e conferidas · |erro| médio tese 1.04° · grade 1.69°
+[    1.4 s] [4/7] Monte Carlo: 100 sorteios do declive verdadeiro ~ Normal(slp, slperr) nas 301,872 células conferidas…
+[    1.8 s]       sorteio 20/100
+[    2.2 s]       sorteio 40/100
+[    2.6 s]       sorteio 60/100
+[    3.0 s]       sorteio 80/100
+[    3.4 s]       sorteio 100/100
+[    3.4 s] [5/7] Calibrando as margens com os quantis reais do erro (perto × longe de dado), usando 20 sorteios de calibração…
+[    4.3 s]       P50: margem calibrada +0.09° perto de dado · -0.01° longe (nominal do simulador: 1.00° / 1.00°)
+[    5.0 s]       P90: margem calibrada +3.09° perto de dado · +2.73° longe (nominal do simulador: 2.03° / 3.56°)
+[    5.8 s]       P99: margem calibrada +7.19° perto de dado · +6.02° longe (nominal do simulador: 2.86° / 5.65°)
+[    5.8 s]       Controle: grade 60 m com margem uniforme (P90 calibrada e mesmo falso alarme da tese P90)…
+[    8.0 s]       margem da grade: P90 calibrada +3.78° · mesmo falso alarme da tese (35.2%) +2.78°
+[    8.0 s] [6/7] Resumo (média dos sorteios [intervalo de 95%]):
+[    8.0 s]       método                                  perigo NÃO vetado         falso alarme          cobertura
+[    8.0 s]       Grade 60 m                              16.8% [16.7–16.9]    11.2% [11.1–11.3]  46.8% [46.6–47.0]
+[    8.0 s]       Tese P50 (margem nominal)                6.6% [ 6.5– 6.7]    17.2% [17.1–17.3]  67.6% [67.5–67.8]
+[    8.0 s]       Tese P90 (margem nominal)                2.1% [ 2.1– 2.2]    35.2% [35.1–35.3]  87.7% [87.6–87.8]
+[    8.0 s]       Tese P99 (margem nominal)                1.0% [ 0.9– 1.0]    49.8% [49.8–49.9]  93.6% [93.5–93.7]
+[    8.0 s]       Tese P90 + 1° em encosta                 1.0% [ 1.0– 1.1]    44.9% [44.8–45.0]  92.2% [92.1–92.3]
+[    8.0 s]       Tese P50 (margem calibrada)             11.9% [11.8–12.0]    10.4% [10.3–10.5]  50.0% [49.8–50.2]
+[    8.0 s]       Tese P90 (margem calibrada)              1.5% [ 1.4– 1.5]    36.9% [36.8–37.0]  90.0% [89.9–90.1]
+[    8.0 s]       Tese P99 (margem calibrada)              0.1% [ 0.0– 0.1]    74.3% [74.2–74.3]  99.0% [99.0–99.0]
+[    8.0 s]       Grade 60 m + margem P90 calibrada        1.8% [ 1.7– 1.8]    48.2% [48.1–48.3]  90.0% [89.9–90.1]
+[    8.0 s]       Grade 60 m + margem (mesmo falso alarme da tese P90)       3.9% [ 3.8– 4.0]    35.2% [35.1–35.3]  83.1% [83.0–83.2]
+[    8.1 s]       McNemar (perigos oficiais, P90): só a grade detecta 86 · só a tese detecta 17689 · p < 10⁻³⁰⁰
+[    8.1 s]       Wilcoxon |erro| grade × tese (20,000 células): mediana 1.22° × 0.70° · p < 10⁻³⁰⁰
+[    8.1 s]       Spearman densidade de dado × |erro| da tese: ρ = +0.13 (p < 10⁻³⁰⁰)
+[    8.1 s]       Curvas de troca: perigo não vetado × falso alarme, varrendo o tamanho da margem de cada família…
+[    8.2 s]       Grade 60 m, margem uniforme                    FA 10% → 18.5% · FA 20% →  9.4% · FA 30% →  5.3%
+[    8.3 s]       Tese, margem por densidade de dado             FA 10% → 12.3% · FA 20% →  5.6% · FA 30% →  2.9%
+[    8.3 s]       Tese, margem por densidade e declive           FA 10% → 12.3% · FA 20% →  5.6% · FA 30% →  2.9%
+[    8.3 s] [7/7] Gerando figuras e o relatório HTML…
+[   10.7 s]       pronto: C:\NASA PROJETO 2026\simulacao_rover\monte_carlo_lola\resultados\Site11\relatorio.html
+[   10.7 s] ========================================================================================

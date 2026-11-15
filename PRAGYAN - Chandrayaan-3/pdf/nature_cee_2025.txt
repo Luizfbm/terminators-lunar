@@ -1,0 +1,1534 @@
+communications earth & environment
+Article
+A Nature Portfolio journal
+https://doi.org/10.1038/s43247-025-02305-1
+Primitive lunar mantle materials at the
+Chandrayaan-3 landing site
+Check for updates
+Rishitosh K. Sinha
+, Neha Panwar
+, Neeraj Srivastava
+, Dwijesh Ray
+, N.P.S. Mithun
+,
+Kuljeet K. Marhas
+, S. Vijayan
+, Megha Bhatt
+, Arpit R. Patel
+, M. Shanmugam
+,
+Santosh V. Vadawale
+& Anil Bhardwaj
+Sodium (Na), potassium (K), and sulfur (S) abundances are key to understanding the Moon’s
+geochemistry and volatile inventory. Here we conduct an assessment comparing the Pragyan rover’s
+Alpha Particle X-ray Spectrometer (APXS) measured abundances of these elements at the
+Chandrayaan-3 southern high-latitude highland site with their abundances from previous missions.
+The Chandrayaan-3 landing site exhibits anomalous depletion in sodium and potassium but
+enrichment in sulfur compared to other highland sites. The reduced sodium and potassium
+abundances suggest inadequate crystallization of materials enriched in these elements within the
+source region of the ancient South Pole-Aitken (SPA) basin, which excavated materials from the lunar
+interior and deposited it at the Chandrayaan-3 landing site. The sulfur enrichment at the landing site
+likely indicates the presence of sulfur-rich materials originating from the Moon’s primitive mantle. This
+inference aligns with the timing of the SPA basin formation and the lunar magma ocean (LMO)
+crystallization stages.
+Measuring concentrations of volatiles on the Moon provides important
+insights into its geochemical composition and the volatile budget of its
+interior1–4. Prior to ISRO’s Chandrayaan-3 mission, there were no in-situ
+volatile abundance measurements from the lunar southern high-latitude
+highlands. Consequently, our understanding of the variations in the con-
+centrations of volatiles across the lunar surface is constrained by the limited
+scope of measurements obtained primarily from lunar samples collected
+from equatorial regions, as shown in Fig. 1. This points to a substantial gap
+in our understanding of the mechanisms governing enrichment-depletion
+of volatiles such as sodium (Na), potassium (K) and sulfur (S) on the Moon,
+particularly when localized variations in their concentrations may arise
+from the intermixing of components either enriched or depleted in these
+elements5.
+The lunar magma ocean (LMO) model predicts the presence of a
+layer referred to as urKREEP at the crust-mantle boundary6, where
+KREEP represents potassium (K), rare earth elements (REE), and phos-
+phorus (P), with “ur” indicating original6. The KREEP component in
+lunar soils contributes substantial quantities of K and Na6–8, allowing for
+its classiﬁcation as a primary geochemical reservoir for these elements on
+the Moon7. The measured concentrations of S in crystalline rocks vary
+from 0 to 3140 ppm, whereas in soils, S ranges from 310 to 1400 ppm in
+mare and 290 to 900 ppm in highlands1,9,10. Notably, the highland soils are
+enriched in S compared to their constituent anorthositic rocks (36-410
+ppm)9,10. This enrichment in S is often attributed to contribution from
+meteoritic sources9, such as Type I carbonaceous chondrites (CC)
+meteorites9. Themare basaltic rocks fromtheApollo 11and17siteshavea
+S abundance of 1500–3140 ppm, which is nearly twice the S levels com-
+pared to those from Apollo 12 and 15 (300–1000 ppm)2,9,10. This disparity
+is attributed to S saturation in the source regions for magmas of Apollo 11
+and 17, while source regions for magmas at Apollo 12 and 15 were
+S-undersaturated11. For the Chang’e-5 mare basalts, a S abundance of
+360 ± 180 ppm suggests that approximately 40% of the original S was lost
+by degassing during the eruption and crystallization of the parent magma,
+which likely contained 600 ± 300 ppm of S12,13. These results suggest that
+the parent magma was enriched in S relative to the S abundance in the
+mare basalts at the Chang’e-5 landing site.
+The Chandrayaan-3 mission achieved a successful soft landing of the
+Vikram lander on 23 August 2023, at the Shiv Shakti statio (69.37 °S, 32.32
+°E) located in the nearside of the southern high-latitude region of the
+Moon14, as shown in Fig. 1. The Alpha Particle X-ray Spectrometer (APXS)
+aboard the Pragyan rover revealed uniformity in abundances of major
+elements (Si, Fe, Mg, Al, and Ca) in the soils at the Chandrayaan-3 landing
+site, corroborating the lunar magma ocean (LMO) hypothesis. The LMO
+hypothesis states that the Moon’s primary crust formed when plagioclase
+crystals ﬂoated
+to the surface during
+the late stages of LMO
+crystallization15–19. In addition, the APXS measurements of major elements
+implied the possibility for presence of SPA basin ejecta at the Chandrayaan-
+3 landing site, which includes a mixture of ferroan anorthosite (FAN)-type
+Physical Research Laboratory, Ahmedabad, India.
+e-mail: rishitosh@prl.res.in
+Communications Earth & Environment |  (2025) 6:321 
+1
+1234567890():,;
+1234567890():,;
+
+rocks from the upper crust and Mg-suite-type rocks from the lower crust/
+upper mantle14.
+The APXS also measured abundances of volatile elements including
+Na, K, and S in the soils14, as shown in Fig. 2. These elements showed varied
+concentrations, ranging from 700–2800 ppm, 300–400 ppm, and 900–1400
+ppm,respectively14 (Table 1).These measured abundancesofNaand Kbear
+strong implications for the enrichment of KREEP in the lunar interior.
+Moreover, the previous landing sites were located within or adjacent to the
+Procellarum KREEP Terrane (PKT), and hence they do not always offer a
+perspective of Na and K abundance far from PKT. Similarly, the abundance
+of S in highland soils9,10is largelyinﬂuenced bycontribution frommeteoritic
+sources9, prohibiting understanding of the extents of S contribution from
+the lunar interior, which is otherwise regarded as the major source for S
+enrichment in mare soils9. Here, we present an assessment comparing the
+concentrations of Na, K, and S between the Chandrayaan-3 and previous
+landing sites in lunar highlands to speciﬁcally constrain the contribution of
+these individual elements from the lunar interior. We use the results to
+examinewhetherKREEPwassufﬁcientlyconcentratedatthetimeandplace
+of SPA basin impact and S may have been contributed from the primitive
+mantle before being partitioned into the lunar core.
+Results and Discussion
+Notably, the comparison of measured abundances of Na and K between the
+Chandrayaan-3 and previous landing sites reveal substantially lower values
+of these elements in the soils at the Chandrayaan-3 landing site, as shown in
+Fig. 3a, b (Table 1). Compared to Apollo 16 soils in the lunar highlands, the
+maximum concentrations of Na and K measured at the Chandrayaan-3
+landing site are less by approximately 40% and 80%, respectively. This
+difference increases to about 50% for Na and 90% for K when compared to
+Apollo 12 and 14 soils, likely attributable to the presence of KREEP-rich
+rock components in the source regions20,21. Contrary to Na and K, the
+highland soils analyzed at the Chandrayaan-3 landing site exhibit an
+enrichment in S relative to the highland soils from Apollo 16 and Luna 20
+(Fig. 3c). The average S content of the Chandrayaan-3 landing site is 1200
+ppm, with the overall range being approximately 300-500 ppm higher than
+that of the soils from Apollo 16 and Luna 20. Furthermore, a comparison
+with other Apollo sites that have highland soils, such as Apollo 15 and 17,
+reveals that they also have lower S values, ranging from 310-830 ppm, as
+shown in Fig. 3c. The Na-Al2O3, K-Al2O3, and S-Al2O3 trends in Fig. 3d-f
+(Table 2) suggest that the Apollo, Luna 20, and Chang’e-5 soils originated
+from distinct igneous sources compared to those at the Chandrayaan-3
+landing site. It is important to investigate the origin of these asymmetries in
+abundances of Na, K, and S and infer the probable sources that led to the
+enrichment-depletion of these elements at the Chandrayaan-3 landing site.
+To understand the Na, K, and S abundances observed at the
+Chandrayaan-3 landing site, we consider contribution from both indigen-
+ousandexogenoussources22 (Fig.4).Thelandingsite’saverageK2Ocontent
+is 460 ± 70 ppm14, which is substantially lower than the <3500 ppm K2O
+levels found in the low-K KREEP region23. Further, the mean value of Na2O
+abundance is 2640 ± 560 ppm at the landing site14, which is comparatively
+lowerthan the average Na2O contentinthe Apollo 16(4700 ppm) and Luna
+20 (4000 ppm) highland landing sites. However, the S content (mean
+abundance: 1200 ± 200 ppm) in the landing site is higher relative to the
+highland soils from Apollo 16 (290-900 ppm) and Luna 20 (800 ppm)
+landing sites. For the highland soils, the lower and upper limits of the
+quantity of Type I CC meteorites are constrained as 0.7-1.7% based on the
+mean concentrations of iridium (Ir) and gold (Au)24. The quantity of
+meteoriticmaterialcan beless than1.7%based on theabundance of Irin the
+average soil metal. The Type I CC meteorites contain approximately 0.5 wt
+% of Na, 0.05 wt% of K, and 6 wt% of S25–29. Considering the constrained
+values of the quantity of Type I CC meteorites, it would contribute
+approximately 35-85 ppm Na, 3.5-8.5 ppm K, and 420-1020 ppm S to the
+southern high-latitude highland soils at the Chandrayaan-3 landing site25–29.
+The Na and K contributions fall below the measurement uncertainties of
+these elements at the landing site14, suggesting Type I CC meteorites are an
+insigniﬁcant source for Na and K. Although the S contribution from Type I
+CC meteorites exceeds the total S content found in some lunar highland
+soils, such as those from the Apollo 16 and Luna 20 landing sites25,30, it
+remains inadequate to explain the sulfur levels at the Chandrayaan-3
+landing site.The S contentmeasured along the Pragyantraverse path ranges
+between 900-1400 ppm (mean abundance: 1200 ppm), which is approxi-
+mately 200-400 ppm higher than what would be contributed by Type I CC
+meteorites. Given that anorthosites contribute only 40 ppm S25, the excep-
+tionally lower Na and K values, coupled with higher S content, cannot be
+Fig. 1 | Locations of the landing sites of Apollo, Luna 20, Chang’e-5, and
+Chandrayaan-3 missions. Spatial distribution of the locations of the samples col-
+lected from previous lunar landing missions. Except for the Chandrayaan-3 landing
+site, the majority of the previous landing sites are located within or adjacent to the
+Procellarum KREEP Terrane (PKT6–8; outlined by red dashed line8). The landing
+sites within lunar highlands are shown as yellow circles and those in mare are shown
+as white circles. The South Pole-Aitken (SPA) basin rim is outlined by white dashed
+line63. The Chandrayaan-3 landing site shown as a yellow circle in the southern high-
+latitude region is about 350 km from the SPA basin rim. The basemap is a LROC
+WAC image.
+https://doi.org/10.1038/s43247-025-02305-1
+Article
+Communications Earth & Environment |  (2025) 6:321 
+2
+
+comprehended bycontributionsfromKREEPand/orTypeI CCmeteorites.
+Consequently, such a scenario would have implications on the concentra-
+tion of KREEP during the SPA basin impact.
+The terrain’s nature, composition, and geological setting where the
+SPA basin impacted depend on the extent of LMO crystallization and the
+timing of the LMO overturn. The earliest lunar crust likely formed between
+4.45 and 4.4 Ga31, with LMO crystallization persisting for another 150–200
+millionyears31.ThistimelinealignswiththeagesoflunarmeteoriteKalahari
+009 (4.369 ± 0.007 Ga)32, FAN 60025 (4.360 ± 0.003 Ga)33, and KREEP-rich
+samples (4.22-4.27 Ga)31. Models of LMO crystallization34 suggest that
+urKREEP liquid residue6, the ﬁnal 0.5% of the LMO, formed after 99.5%
+LMO had crystallized34. The SPA basin, which formed around 4.3 Ga35,
+predates both the LMO overturn36 and urKREEP crystallization6,35. Owing
+totheimmensescaleoftheSPAbasin,itexcavatedsubstantialmaterialfrom
+the lower crust/upper mantle37–39 (Fig. 4). However, urKREEP was not a
+predominant component of the lower crust/upper mantle at the time and
+place of the SPA basin impact, possibly explaining the low Na and K
+abundances at the Chandrayaan-3 landing site. In this case, it is likely that
+the higher S content be related to the SPA basin ejecta from the lunar
+interior, such as the lower crust/upper mantle.
+On a global scale, S concentrates in the residual silicate melt sand-
+wiched between the anorthosite crust and the cumulate mantle (Sup-
+plementary Fig. 1a). Studies suggest that this late stage residual melt
+becomes progressively enriched in troilite (FeS), with its concentration
+potentially surpassing the S concentration at sulﬁde saturation (SCSS)
+during the end of the LMO crystallization40. S begins to exsolve as FeS
+after about 85–90% of the magma ocean has crystallized40,41. Modeling
+results demonstrate that FeS sulﬁde liquid saturation occurs when ~96-
+98% of the LMO has crystallized41. Ultimately, all S is eventually exsolved
+as FeS at the end of the LMO crystallization process. The segregated
+sulﬁde is then transported to greater depths during the overturn
+phase40,41. The SPA basin has excavated FeS from the lunar interior,
+including the lower crust/upper mantle of the Moon37, as shown in
+Supplementary Fig. 1b. The suggested timing of KREEP formation
+implies that S in the lunar interior was excavated possibly when the
+sulﬁde saturation was being reached, while the KREEP layer still in the
+process of formation. Therefore, the SPA basin ejecta would have
+exhibited elevated S values without corresponding elevated KREEP sig-
+natures. The subsequent impacts on the SPA basin ejecta likely led to the
+mixing of sulfur-rich and sulfur-poor materials in the vicinity (Supple-
+mentary Fig. 1c). The close proximity of the Chandrayaan-3 landing site
+to the SPA basin rim increases the likelihood of mixing of the sulfur-rich
+SPA basin ejecta and the adjacent units. However, the amount of S
+contributed by SPA basin ejecta to the Chandrayaan-3 landing site is still
+unclear.
+We now focus on assessing the S contribution from SPA basin
+ejecta, composed of lower crust and upper mantle materials, to the soils
+at the Chandrayaan-3 landing site. Assuming ferroan anorthosite (FAN),
+pyroxene, and olivine as corresponding endmember for upper crust,
+lower crust42, and upper mantle43,44, the triangular plot (Supplementary
+Fig. 2) suggests a mixing of nearly 8% of lower crust and 14% of upper
+mantle materials at this site14. Apollo 17 norite 78236, a pristine lower
+Table 1 | Comparison of measured abundances of Na, K, and S
+at Chandrayaan-3, Apollo, Luna-20, and Chang’e-5 sites
+Missions
+Na (ppm)
+K (ppm)
+S (ppm)
+Chandrayaan-3
+700–2800
+300–400
+900–1400
+Apollo 11
+2003–4302
+249–2822
+680–1350
+Apollo 12
+2596–6187
+830–4648
+594–1150
+Apollo 14
+3857–5934
+1909–5313
+600–1000
+Apollo 15
+1854–6083
+498–4565
+400–950
+Apollo 16
+2225–4822
+381–2075
+290–900
+Apollo 17
+1558–4228
+581–1577
+310–1400
+Luna 20
+2151–3709
+547–830
+800
+Chang’e-5
+3346–3518
+1617–1866
+180–540
+The minimum and maximum levels of Na, K, and S abundances measured in soils at the landing site
+of Chandrayaan-314 (Obs. ID 01-29), Apollo62, Luna 2062, and Chang’e-512,13 missions. For Luna 20,
+average level of S abundance is currently available62.
+Fig. 2 | Chandrayaan-3 landing site and measured
+volatile abundances. a The Chandrayaan-2 Orbiter
+High Resolution Camera (OHRC) image based
+traverse (solid white line) map of Pragyan rover. The
+approximate locations of the 23 waypoints (white
+circles) on which APXS measured Na, K, and S are
+overlaid on the traverse path14. The inset on the top
+left shows the LRO WAC mosaic of the South Polar
+Region and the location of Shiv Shakti point is
+marked by a circle symbol. The Shiv Shakti point is
+approximately 350 km away from the outer rim
+(dashed white line) of the SPA basin. b–d Measured
+abundances of Na, K, and S with 1σ uncertainties for
+all the 23 waypoints denoted here as observation
+IDs14. The data used to make these plots are given in
+Table 2.
+https://doi.org/10.1038/s43247-025-02305-1
+Article
+Communications Earth & Environment |  (2025) 6:321 
+3
+
+crust sample45, contains 200 ppm S15. At the Chandrayaan-3 landing site,
+the concentrations of anorthosite and Type I CC meteorites are 77%14
+and 0.7-1.7%24, respectively. The remaining 21.3-22.3% is distributed
+between the lower crust (8%) and upper mantle (14%) materials
+(Table 3). Typically, 8% lower crustal materials would add only 16 ppm
+of S to the soils at the Chandrayaan-3 landing site, which is insufﬁcient to
+explain the observed excess of 200-400 ppm S. To ﬁrst order, this sug-
+gests that the dominant component of S was likely contributed from the
+upper mantle. Since S was excavated from the upper mantle in the form
+of FeS, the mean Fe content at the Chandrayaan-3 landing site
+(4.9 ± 0.25 wt%)14 is correspondingly higher than the mean Fe content
+(4 wt%) measured in Apollo 16 highland soils.
+We have strengthened our S abundance calculations by estimating
+the concentration of nickel (Ni) at the Chandrayaan-3 landing site using
+the same set of mixing model components applied to S (Supplementary
+Table 1). Type I CC meteorites, which contain 1 wt% Ni, would con-
+tribute 178.5 ppm Ni to lunar soils for a 1.7% contribution of Type I CC
+material. Further, the Ni content in the upper crust (FAN), lower crust
+Fig. 3 | Measured abundances of lunar Na, K, and S in lunar soils. a-c Histograms
+showing the overall range of Na, K, and S abundances measured in soils analyzed in
+A-11 (brown line): Apollo 11; A-12 (purple line): Apollo 12; A-14 (gray line): Apollo
+14; A-15 (green line): Apollo 15; A-16 (pink line): Apollo 16; A-17 (black line):
+Apollo 17; L-20 (orange line): Luna 20; CE-5 (cyan line): Chang’e-5; and Ch-3 (blue
+line): Chandrayaan-3 missions. d–f Total abundance of Na/K/S vs. Al2O3 for lunar
+soils. The data for these plots are given in Tables 1 and 2. A-11 (brown circles):
+Apollo 11; A-12 (purple circles): Apollo 12; A-14 (gray circles): Apollo 14; A-15
+(green circles): Apollo 15; A-16 (pink triangles): Apollo 16; A-17 (black circles):
+Apollo 17; L-20 (orange square): Luna 20; CE-5 (cyan square): Chang’e-5; Ch-3 (blue
+diamond): Chandrayaan-3.
+https://doi.org/10.1038/s43247-025-02305-1
+Article
+Communications Earth & Environment |  (2025) 6:321 
+4
+
+Table 2 | Na, K, and S abundances in lunar soils
+Mission
+ID
+Al2O3 (wt%)
+Na (ppm)
+K (ppm)
+S (ppm)
+Chandrayaan-3
+Obs. ID. 1
+26.2 ± 1.84
+2800 ± 460
+400 ± 70
+1100 ± 220
+2
+26.2 ± 1.34
+2600 ± 410
+400 ± 50
+1200 ± 200
+3
+26.3 ± 1.81
+2000 ± 490
+400 ± 80
+1200 ± 230
+4
+26.3 ± 1.61
+2000 ± 480
+400 ± 80
+1200 ± 230
+5
+26.4 ± 1.33
+800 ± 320
+300 ± 60
+1200 ± 200
+6
+26.1 ± 1.42
+1900 ± 350
+400 ± 50
+1200 ± 200
+11
+26.1 ± 1.91
+1700 ± 550
+400 ± 90
+1200 ± 240
+12
+25.9 ± 1.24
+2100 ± 340
+400 ± 50
+1200 ± 200
+13
+26.0 ± 1.36
+1700 ± 350
+400 ± 60
+1200 ± 200
+15
+25.3 ± 0.91
+2400 ± 200
+300 ± 30
+1400 ± 180
+16
+25.9 ± 1.47
+2600 ± 390
+400 ± 60
+1300 ± 220
+17
+25.8 ± 1.08
+2400 ± 260
+400 ± 40
+1200 ± 180
+18
+26.1 ± 1.07
+2100 ± 230
+400 ± 40
+1200 ± 160
+19
+25.9 ± 1.10
+2200 ± 250
+400 ± 40
+1100 ± 160
+20
+25.9 ± 1.01
+2500 ± 240
+400 ± 40
+1200 ± 170
+21
+26.5 ± 1.71
+700 ± 540
+400 ± 90
+900 ± 200
+22
+26.3 ± 0.89
+2200 ± 210
+400 ± 30
+1200 ± 160
+23
+26.3 ± 1.08
+1600 ± 330
+400 ± 50
+1100 ± 190
+24
+26.6 ± 2.30
+2700 ± 1010
+300 ± 120
+1000 ± 280
+25
+26.6 ± 1.27
+1500 ± 360
+400 ± 60
+1200 ± 190
+26
+26.3 ± 1.27
+1000 ± 290
+400 ± 60
+1100 ± 190
+28
+26.1 ± 1.12
+2100 ± 300
+400 ± 50
+1200 ± 180
+29
+25.5 ± 1.36
+1400 ± 390
+300 ± 70
+1400 ± 240
+Apollo 11
+Sample ID. 10002
+13.6
+3319.8
+1095.8
+1200
+10084
+13.69
+3319.8
+1137.3
+1350
+Apollo 12
+12032
+14.51
+4362.1
+3104.7
+690
+12033
+15.74
+5244.9
+3619.4
+700
+12057
+13.31
+3338.4
+2116.9
+700
+12070
+12.75
+3160.3
+2000.7
+1000
+Apollo 14
+14163
+17.46
+5163.3
+4516.0
+900
+14260
+17.98
+5489.7
+4192.2
+600
+14141
+16.1
+5920.0
+6000.0
+1000
+14240
+18.44
+5452.6
+4748.4
+900
+Apollo 15
+15020
+14.03
+3464.5
+2175.0
+600
+15070
+12.67
+2537.2
+880.0
+700
+15080
+13.44
+2670.7
+1129.0
+500
+15100
+17.55
+3063.9
+1444.5
+716
+15240
+16.26
+3457.1
+1660.3
+740
+15260
+16.05
+3724.1
+2573.5
+865
+15270
+16.46
+3434.8
+1701.8
+780
+15300
+14.75
+2752.3
+1245.2
+700
+15410
+15.22
+2893.2
+1319.9
+770
+15471
+13.18
+2700.4
+1021.1
+700
+15501
+12.62
+2752.3
+1319.9
+750
+15511
+12.33
+2759.7
+1278.4
+800
+15601
+10.72
+2322.0
+971.3
+600
+Apollo 16
+60500
+26.55
+3241.9
+971.3
+565
+60600
+26.63
+3308.7
+1112.4
+700
+61220
+27.8
+3635.1
+805.2
+600
+61240
+26.74
+3872.5
+921.5
+700
+61500
+26.7
+3523.8
+1104.1
+750
+https://doi.org/10.1038/s43247-025-02305-1
+Article
+Communications Earth & Environment |  (2025) 6:321 
+5
+
+(pyroxene), and upper mantle (olivine) is approximately 30 ppm, 25
+ppm, and 400 ppm, respectively. The APXS instrument measured a Ni
+concentration of 300 ± 50 ppm at the landing site. Supplementary Table 1
+shows the Ni contributions from individual mixing model components,
+yielding a mean estimated Ni abundance of approximately 260 ppm. This
+value closely aligns with the APXS measurement, suggesting that the
+mixing model used in the study is robust.
+To ascertain the S content of the upper mantle, the ideal samples
+would be those in which the S concentration of the lunar mantle has been
+directly quantiﬁed. However, such direct samples are lacking in the existing
+lunar collections. Consequently, our focus should shift to mantle-derived
+magmatic samples for this investigation, though these likely underwent
+rapid S degassing while passing through the lunar crust and erupting onto
+the surface46. Therefore, it is reasonable to estimate S abundance based on
+Table 2 (continued) | Na, K, and S abundances in lunar soils
+Mission
+ID
+Al2O3 (wt%)
+Na (ppm)
+K (ppm)
+S (ppm)
+63320
+27.26
+3991.2
+805.2
+500
+63500
+27.72
+3538.7
+796.9
+700
+64420
+27.64
+3420.0
+921.5
+675
+64501
+27.5
+3479.3
+896.6
+450
+64801
+27.33
+3375.4
+1187.1
+650
+65500
+25.63
+3405.1
+1153.9
+820
+65700
+26.66
+3286.4
+1187.1
+900
+66040
+26.5
+3190.0
+996.2
+900
+66080
+26.3
+3457.1
+1037.7
+900
+67461
+29.12
+3264.2
+456.6
+500
+67481
+28.58
+3516.4
+539.6
+290
+67601
+28.4
+3783.5
+572.8
+400
+67701
+28.62
+3768.6
+772.0
+600
+68121
+26.51
+3457.1
+996.2
+800
+68501
+26.71
+3353.2
+1062.6
+800
+68841
+26.15
+3635.1
+1029.4
+800
+Apollo 17
+70050
+16.15
+3190.0
+830.1
+800
+70161
+11.6
+2603.9
+664.1
+1200
+70180
+12.35
+2863.6
+705.6
+1100
+71041
+10.8
+2811.6
+647.5
+1300
+71061
+10.7
+3078.7
+664.1
+1300
+71501
+11.5
+2715.2
+614.3
+1200
+72141
+15.96
+2967.4
+896.6
+900
+72161
+14.3
+3219.7
+846.7
+800
+72320
+21.02
+3449.6
+1295.0
+600
+72441
+20.73
+3368.0
+1494.3
+700
+72461
+21.1
+3538.7
+1353.1
+600
+72501
+20.63
+3471.9
+1369.7
+900
+72701
+20.7
+3509.0
+1286.7
+660
+73141
+21.37
+3219.7
+1162.2
+600
+74121
+19.34
+3063.9
+1212.0
+830
+74241
+13.37
+3360.6
+1037.7
+1400
+76240
+17.85
+3234.5
+1046.0
+700
+76321
+18.65
+3204.8
+1037.7
+750
+76501
+18.48
+2796.8
+855.1
+700
+77531
+17.16
+3056.5
+913.2
+800
+78221
+17.71
+2945.2
+863.4
+880
+79221
+13.52
+2908.1
+780.3
+1200
+Luna 20
+22.82
+2967.43
+572.8
+800
+Chang’e-5
+CE5C0400 & CE5C0600
+11.19
+3421
+1728
+360
+The measured abundances of Na, K, S, and Al2O3 at individual observation IDs at the Chandrayaan-314 landing site. Additionally, the table includes the average abundance of Na, K, S, and Al2O3 in individual
+soil samples collected from Apollo62, Luna 2062, and Chang’e-512,13 missions. Please note that the data for only those Apollo samples for which Na, K, and S abundances were measured have been included
+in this study62.
+https://doi.org/10.1038/s43247-025-02305-1
+Article
+Communications Earth & Environment |  (2025) 6:321 
+6
+
+undegassed mantle-derived materials. The olivine-hosted melt-inclusions
+found in the undegassed Apollo 17 magma (e.g., 74235) exhibit a S
+abundance of 950 ppm and contain sulﬁde globules47. However, these
+melts were not saturated with sulﬁde in their mantle source regions47. The
+experiments on S solubility in lunar melts have revealed that they have a
+great ability to dissolve S and to achieve sulﬁde saturation in their mantle
+source regions they may require S concentration higher than 2000 ppm17,48.
+However, the SCSS value varies substantially with factors such as pressure,
+temperature, and compositional parameters like FeO, SiO2, and TiO2
+49–51.
+Therefore, it is crucial to constrain the SCSS value before using it in our
+work. To address this, we refer to a mean SCSS value of 3923 ppm41,
+determined from sulfur solubility experiments conducted across different
+LMO crystallization stages. Modeling studies indicate that SCSS initially
+decreases as the percentage of LMO crystallization increases (up to
+96–98%) but does not exceed 4000 ppm for pure FeS liquid in different
+LMO crystallization scenarios41. Therefore, a SCSS range of 2000–4000
+ppm is a reasonable estimate for our work, capturing the potential roles of
+sulﬁdes, the timing of SPA basin formation, and KREEP concentration
+across different LMO crystallization stages. Consequently, 14% upper
+mantle material would contribute approximately 280-565 ppm of S to the
+soils at the Chandrayaan-3 landing site (Table 3). At a mean SCSS range of
+3000 ppm, 14% upper mantle material would contribute around 420 ppm
+of S. This value of S concentration is in good agreement with the excess
+200–400 ppm of S measured in the southern high-latitude highland soils by
+Chandrayaan-3 mission (Fig. 5). Therefore, APXS measurements of excess
+S likely provides a potential proof of primitive mantle materials in the
+Moon’s southern high-latitude region, particularly at the highland landing
+site of the Chandrayaan-3 mission.
+The LMO19,52 crystallization model constrains that: (1) after about 85-
+90% of LMO crystallization, S begins to exsolve as FeS41; (2) FeS sulﬁde
+saturates the lunar mantle between 96% and 98% of LMO crystallization41;
+(3) the SPA basin forms around 4.3 Ga35, a period preceding the crystal-
+lization of the KREEP layer, and (4) KREEP is the remaining 0.5% liquid
+residue after 99.5% LMO crystallization6, which forms during 4.22-4.27
+Ga31. The APXS data show that the SPA basin formation excavated lower
+crust/upper mantle materials14, which are low in Na and K concentrations
+due to the lack of adequately concentrated KREEP-rich materials in the
+source regions, but high in S, likely sourced from the primitive mantle. The
+APXS measured abundances of Na and K at the Chandrayaan-3 landing site
+align with the LMO crystallization model, and are sufﬁciently robust to
+support the LMO hypothesis for the Moon’s formation.
+Finally, to understand whether the excess 200-400 ppm S measured at
+theChandrayaan-3landingsitecouldbesourcedbysurfacecondensationof
+atmospheric S-carrying components, we discuss the loss mechanism of
+volatiles and examine the surface temperature of the landing site (see
+SupplementaryDiscussions1and2).CondensationofScompoundlikeH2S
+is believed to be intense inside the permanently shadow regions (PSRs) due
+to the presence of a number of ultra-cold trap regions with temperatures as
+low as 20-30 K53 (Supplementary Discussion 2). A cold-trapping mechan-
+ism likely trapped the outgassed H2S from the mare regions54, thereby,
+making it the second most abundant volatile present at the poles after H2O55
+(SupplementaryDiscussion2).PreviousstudieshaveshownthatburiedSO2
+Fig. 4 | An illustration depicting various scenarios of Na, K, and S enrichment-
+depletion on the lunar surface, as inferred from the Chandrayaan-3 and previous
+missions to the Moon. In the PKT (shown in gray color shading) located within the
+equatorial regions, the S level depends on S levels in the magma’s source region. For
+example, S-enriched magma arises from the S-saturated source (shown in red color)
+(A11 & A17; shown in red-orange-yellow color shading). However, S depletion can
+result from an S-unsaturated source (shown in medium coral light color) (A12 &
+A15; shown in brown-white color shading) or degassing (shown as black arrows)
+after eruption of basalts (CE-5; shown in red-orange-yellow color shading). In the
+lunar highlands, S level exceeds expectations due to contributions from Type I CC
+meteorites to the soils (shown as white arrows). At the Chandrayaan-3 landing site
+(shown as a yellow color ellipse) in the southern high-latitude highlands (around 70°
+S), the measured abundance of S is notably higher than the other highland sites like
+Apollo 16 (shown as a blue color ellipse) and Luna 20 (shown as a red color ellipse).
+The Chandrayaan-3 landing site has undergone evolution by the SPA basin’s
+(outlined by shite solid line) ejecta64. Due tosparselyconcentrated KREEP (shown in
+black color) at the SPA impact place and time, materials deposited at the landing site
+are depleted in Na and K. However, SPA’s excavation likely deposited S-rich
+materials from the primitive mantle (shown in cabernet color shading) to the
+landing site, enhancing the soil S levels by 200-400 ppm. The SPA basin excavation
+(shown as a white dashed line) depth reached about 120 km39, which was well below
+the base of lunar crust (shown in tudor rose dust shading). The Chandrayaan-3
+APXS conﬁrmed this excess S, detecting the potential presence of primitive mantle-
+derived S-rich materials (depicted as S connected to white arrows) exposed at the
+landing site. Layers are not to scale.
+https://doi.org/10.1038/s43247-025-02305-1
+Article
+Communications Earth & Environment |  (2025) 6:321 
+7
+
+Table 3 | S abundances in lunar crust and mantle
+Upper crust
+(anorthosite)wt%
+S (ppm)
+Lower crust
+(pyroxene) wt%
+S (ppm)
+Upper mantle
+(olivine) wt%
+S* (ppm)
+S# (ppm)
+Type I CC
+S (ppm)
+Total
+S* (ppm)
+Total
+S# (ppm)
+APXS S (ppm)
+77.81
+31.12
+6.06
+12.12
+15.25
+610.0
+305
+420-1020
+1073.2
+1368.2
+1100 ± 220
+77.79
+31.12
+6.49
+12.98
+14.94
+597.6
+298.8
+420-1020
+1061.7
+1362.9
+1200 ± 200
+77.51
+31.00
+8.14
+16.28
+13.37
+534.8
+267.4
+420-1020
+1002.1
+1334.7
+1200 ± 230
+77.51
+31.00
+8.13
+16.26
+13.38
+535.2
+267.6
+420-1020
+1002.5
+1334.9
+1200 ± 230
+77.15
+30.86
+9.15
+18.3
+12.82
+512.8
+256.4
+420-1020
+982.0
+1325.6
+1200 ± 200
+77.12
+30.85
+9.27
+18.54
+12.73
+509.2
+254.6
+420-1020
+978.6
+1324.0
+1200 ± 200
+76.76
+30.70
+8.63
+17.26
+13.70
+548.0
+274
+420-1020
+1016.0
+1342.0
+1200 ± 240
+76.62
+30.65
+8.63
+17.26
+13.86
+554.4
+277.2
+420-1020
+1022.3
+1345.1
+1200 ± 200
+76.71
+30.68
+9.10
+18.2
+13.23
+529.2
+264.6
+420-1020
+998.1
+1333.5
+1200 ± 200
+74.00
+29.60
+6.13
+12.26
+18.12
+724.8
+362.4
+420-1020
+1186.7
+1424.3
+1400 ± 180
+76.80
+30.72
+6.42
+12.84
+15.84
+633.6
+316.8
+420-1020
+1097.2
+1380.4
+1300 ± 220
+76.65
+30.66
+6.11
+12.22
+16.34
+653.6
+326.8
+420-1020
+1116.5
+1389.7
+1200 ± 180
+77.19
+30.88
+7.44
+14.88
+14.45
+578.0
+289
+420-1020
+1043.8
+1354.8
+1200 ± 160
+76.75
+30.70
+7.98
+15.96
+14.34
+573.6
+286.8
+420-1020
+1040.3
+1353.5
+1100 ± 160
+76.86
+30.74
+6.66
+13.32
+15.59
+623.6
+311.8
+420-1020
+1087.7
+1375.9
+1200 ± 170
+77.32
+30.93
+11.35
+22.7
+10.35
+414.0
+207
+420-1020
+887.6
+1280.6
+900 ± 200
+77.45
+30.98
+7.22
+14.44
+14.48
+579.2
+289.6
+420-1020
+1044.6
+1355.0
+1200 ± 160
+77.43
+30.97
+6.93
+13.86
+14.73
+589.2
+294.6
+420-1020
+1054.0
+1359.4
+1100 ± 190
+75.46
+30.18
+10.21
+20.42
+12.61
+504.4
+252.2
+420-1020
+975.0
+1322.8
+1000 ± 280
+78.04
+31.22
+6.64
+13.28
+14.48
+579.2
+289.6
+420-1020
+1043.7
+1354.1
+1200 ± 190
+77.07
+30.83
+6.74
+13.48
+15.27
+610.8
+305.4
+420-1020
+1075.1
+1369.7
+1100 ± 190
+77.14
+30.86
+8.82
+17.64
+13.02
+520.8
+260.4
+420-1020
+989.3
+1328.9
+1200 ± 180
+75.15
+30.06
+11.72
+23.44
+12.23
+489.2
+244.6
+420-1020
+962.7
+1318.1
+1400 ± 240
+76.88
+30.75
+8.00
+15.99
+14.14
+565.4
+282.8
+420-1020
+1032.2
+1349.5
+1200 ± 200
+Contribution of S from upper crust (anorthosite), lower crust (pyroxene), and upper mantle (olivine) to the soils at the Chandrayaan-3 landing site. The data for anorthosite, pyroxene, and olivine are from ref.
+14. Inthis table, S*corresponds to4000 ppm S andS# corresponds to2000 ppmS. TheseS valuesare the experimentally derivedabundancesof S required bylunarmeltsto achievesulﬁdesaturation intheir
+mantle source regions17,48–51. Pure anorthosite S abundance is 40 ppm9,10. Apollo 17 norite 78236, a potential sample of the lower crust S abundance is 200 ppm46. Type I CC meteorite S range: 420-1020
+ppm9,10,24. From the calculations shown in the table, average S abundance ranges between 1032.2-1349.5 ppm (shown in the last row of the table). At a mean SCSS range of 3000 ppm S, average S
+abundanceranges between890.8-1490.8ppm.The overall rangeand average S abundancemeasured byAPXS is 900-1400ppm and 1200ppm14, respectively. Thus, the calculatedS abundancevalue is in
+good agreement with the measured abundances.
+Fig. 5 | Excess S sourced from primitive mantle
+and deposited as part of the SPA ejecta at the
+Chandrayaan-3 landing site. The plot shows a
+comparison between S measured by APXS at
+Chandrayaan-3 landing site and calculated con-
+centrations of S after considering contributions
+from primitive mantle. Black line (23 data points
+shown as black color circles) indicates calculated S at
+Chandrayaan-3 landing site after considgering
+mantle contribution of S as 4000 ppm and blue line
+(23 data points shown as blue color circles) is after
+considering mantle contribution of S as 2000 ppm.
+The APXS measured abundances of S shown as
+green line (23 data points shown as green color
+circles) are given in ref. 14. The measured and cal-
+culated values of S are in good agreement. Also, see
+Table 3.
+https://doi.org/10.1038/s43247-025-02305-1
+Article
+Communications Earth & Environment |  (2025) 6:321 
+8
+
+ice can remain stable only in areas where mean surface temperatures stay
+below 110 K56, a condition found exclusively in the Moon’s polar areas. At
+the Chandrayaan-3 landing site around 70° S, the modeled diurnal max-
+imum surface temperature observed at local noon ranges between 250 and
+300 K57–59. Such a temperature is much higher than the volatility tempera-
+ture of S60; therefore, the cold-trapping mechanism of surface enrichment of
+S for geologically long periods is unlikely at the landing site. A different
+possibility (Supplementary Discussion 1), which hypothesizes 32S implan-
+tation into highland soils, would elevate S abundance while decreasing 34S
+values61. However, the APXS experiment aboard the Chandrayaan-3 mis-
+sion did not perform isotope-level measurements; therefore, this scenario
+cannot be examined. As a result,we suggest that the enrichment of S by 200-
+400 ppm at the Chandrayaan-3 landing site may be contributed from the
+primitive mantle.
+Conclusions
+To summarize, our analysis reveals that the soils at the Chandrayaan-3
+landing site are enriched in S by approximately 300-500 ppm compared to
+otherlunarhighlandsites(Apollo16andLuna20)butdepletedinNaandK.
+This observation is particularly important as it marks the ﬁrst analysis of Na
+and K concentrations, to the best of our knowledge, from a location far from
+the PKT. The low levels of Na and K suggest minimal contributions from
+KREEP and Type I CC meteorites. The elevated levels of S measured at the
+landing site cannot be explained by Type I CC meteorites alone, suggesting
+that the excess 200-400 ppm S measured at the Chandrayaan-3 landing site
+originated from the lunar primitive mantle (Fig. 4). Notably, the landing site
+isapotentialregionforexploringmaterialsexcavatedbytheSPAbasinfrom
+the lower crust/upper mantle, which makes a good case for future sampling
+of S-rich materials from the landing site. These ﬁndings emphasizes that the
+KREEP-rich materials were not adequately concentrated at the time and
+place of SPA basin impact, aligning with the timing of LMO crystallization.
+Overall, the Chandrayaan-3 mission has provided reﬁned models of the
+lunar interior, illustrating scenarios of volatile enrichment-depletion in the
+southern high-latitude highlands of the Moon.
+Data availability
+APXScalibrateddataisavailablepubliclyattheChandrayaan-3portalofthe
+ISRO Science Data Archive (ISDA) at https://pradan.issdc.gov.in/ch3/.
+Chandrayaan-2
+Orbiter
+High
+Resolution
+Camera
+(OHRC)
+data (Id: ch2_ohr_ncp_20240425T1012478407) is available publicly at
+https://pradan.issdc.gov.in/ch2/. The measured abundances of volatiles in
+Apollo and Luna samples are available publicly at https://curator.jsc.nasa.
+gov/lunar/lsc/.
+Received: 13 December 2024; Accepted: 15 April 2025;
+References
+1.
+Gibson, E. K. Jr, Chang, S. H. E. R. W. O. O. D., Lennon, K. E. N. N. E. T.
+H., Moore, G. W. & Pearce, G. W. Sulfur abundances and distributions
+in mare basalts and their source magmas. Sixth Lunar Sci. Conf. 6,
+1287–1301 (1975).
+2.
+Clayton, R. N., Mayeda, T. K. & Hurd, J. M. Loss of oxygen, silicon,
+sulfur, and potassium from the lunar regolith. Fifth Lunar Sci. Conf. 5,
+1801–1809 (1974).
+3.
+Gibson, E. K. Jr, Hubbard, N. J., Wiesmann, H., Bansal,B. M. & Moore,
+G. W. How to lose Rb, K, and change the K/Rb ratio: An experimental
+study. Fourth Lunar Sci. Conf. 4, 1263 (1973).
+4.
+Garner, E. L., Machlan, L. A. & Barnes, I. L. The isotopic composition of
+lithium, potassium, and rubidium in some Apollo 11, 12, 14, 15, and
+16 samples. Sixth Lunar Sci. Conf. 6, 1287–1301 (1975).
+5.
+Cripe, J. D. & Moore, C. B. Total sulfur contents of Apollo 15 and
+Apollo 16 lunar samples. Lunar Sci. V, 523–525 (1974).
+6.
+Warren, P. H. & Wasson, J. T. The origin of KREEP. Rev. Geophys.17,
+73–88 (1979).
+7.
+Tian, Z. et al. Potassium isotopic composition of the Moon. Geochim.
+et. Cosmochim. Acta 280, 263–280 (2020).
+8.
+Jolliff, B. L., Gillis, J. J., Haskin, L. A., Korotev, R. L. & Wieczorek, M. A.
+Major lunar crustal terranes: Surface expressions and crust-mantle
+origins. J. Geophys. Res.: Planets 105, 4197–4216 (2000).
+9.
+Cripe, J. D. & Moore, C. B. Extralunar sulfur in Apollo 16 and 17 lunar
+ﬁnes. Seventh Lunar Sci. Conf. 6, 1287–1301 (1976).
+10. Renggli, C. J., Steenstra, E. S. & Saal, A. E. Sulfur in the Moon and
+Mercury.arXivpreprint arXiv:2410.18599 (2024).
+11. Brett, R. Reduction of mare basalts by sulfur loss. Geochim. et.
+Cosmochim. Acta 40, 997–1004 (1976).
+12. Zong, K. et al. Bulk compositions of the Chang’E-5 lunar soil: Insights
+into chemical homogeneity, exotic addition, and origin of landing site
+basalts. Geochim. et. Cosmochim. Acta 335, 284–296 (2022).
+13. Liu, X. et al. Sulfur Isotopic Fractionation of the Youngest Chang’e-5
+Basalts: Constraints on the Magma Degassing and Geochemical
+Features of the Mantle Source. Geophys. Res. Lett. 49,
+e2022GL099922 (2022).
+14. Vadawale, S. V. et al. Chandrayaan-3 APXS elemental abundance
+measurements at lunar high latitude. Nature 633, 327–331 (2024).
+15. Blanchard, D. P. & McKay, G. A. Remnants from the Ancient Mare
+Crust Iii: Norite 78236. Twelfth Lunar Planet. Sci. Conf. 12, 83–85
+(1981).
+16. Bombardieri, D. J., Norman, M. D., Kamenetsky, V. S. & Danyushevsky,
+L. V. Major element and primary sulfur concentrations in Apollo 12 mare
+basalts: The view from melt inclusions. Meteorit. Planet. Sci. 40,
+679–693 (2005).
+17. Haughton, D. R., Roeder, P. L. & Skinner, B. J. Solubility of sulfur in
+maﬁc magmas. Econ. Geol. 69, 451–467 (1974).
+18. Danckwerth, P. A., Hess, P. C. & Rutherford, M. J. The solubility of
+sulfur in high-TiO2 mare basalts. Tenth Lunar Planet. Sci. Conf. 10,
+517–530 (1979).
+19. Wood, J. A., Dickey, J. S. Jr, Marvin, U. B. & Powell, B. N. Lunar
+anorthosites and a geophysical model of the moon. Apollo 11 Lunar
+Sci. Conf. 1, 965 (1970).
+20. Wiik, H. B., Maxwell, J. A. & Bouvier, J. L. Chemical composition of
+some Apollo 14 lunar samples. Earth Planet. Sci. Lett. 17, 365–368
+(1973).
+21. Meyer, C. Jr et al. Mineralogy, chemistry, and origin of the KREEP
+component in soil samples from the Ocean of Storms. Second Lunar
+Sci. Conf. 2, 393 (1971).
+22. Gibson, E. K. Jr & Moore, G. W. Carbon and sulfur distributions and
+abundances in lunar ﬁnes. Fourth Lunar Sci. Conf. 4, 1577 (1973).
+23. Zhang, G., Li, C., Ouyang, Z., Zou, Y. & Zheng, Y. Lunar Elemental
+Distribution. In Encyclopedia of Lunar Science (Cudnik, B. eds)
+(Springer, Cham, 2017).
+24. Korotev, R. L. The nature of the meteoritic components of Apollo
+16 soil, as inferred from correlations of iron, cobalt, iridium, and gold
+with nickel. J. Geophys. Res.: Solid Earth 92, E447–E461 (1987).
+25. Cripe, J. D. & Moore, C. B. Extralunar sulfur in Apollo 16 and 17 lunar
+ﬁnes. Seventh Lunar Sci. Conf. 7, 469–479 (1976).
+26. Schmitt, R. A., Goles, G. G., Smith, R. H. & Osborn, T. W. Elemental
+abundances in stone meteorites. Meteoritics 7, 131–213 (1972).
+27. Edwards, G. Sodium and potassium in meteorites. Geochim. et.
+Cosmochim. Acta 8, 285–294 (1955).
+28. Kirsten, T., Krankowsky, D. & Zähringer, J. Edelgas-und kalium-
+bestimmungen an einer gröβeren zahl von steinmeteoriten. Geochim.
+et. Cosmochim. Acta 27, 13–42 (1963).
+29. Mason, B. Handbook of Elemental Abundances in Meteorites, pp. 555
+(Gordon and Breach, New York, 1971).
+30. Vinogradov, A. P. Preliminary data on lunar soil collected by the Luna
+20 unmanned spacecraft. Geochim. et. Cosmochim. Acta 37,
+721–729 (1973).
+31. Maurice, M., Tosi, N., Schwinger, S., Breuer, D. & Kleine, T. A long-
+lived magma ocean on a young Moon. Sci. Adv. 6, eaba8949 (2020).
+https://doi.org/10.1038/s43247-025-02305-1
+Article
+Communications Earth & Environment |  (2025) 6:321 
+9
+
+32. Snape, J. F. et al. Ancient volcanism on the Moon: Insights from Pb
+isotopes in the MIL 13317 and Kalahari 009 lunar meteorites. Earth
+Planet. Sci. Lett. 502, 84–95 (2018).
+33. Borg, L. E., Connelly, J. N., Boyet, M. & Carlson, R. W. Chronological
+evidencethattheMoon is eitheryoungor did not havea global magma
+ocean. Nature 477, 70–72 (2011).
+34. Thiemens, M. M., Sprung, P., Fonseca, R. O., Leitzke, F. P. & Münker,
+C. Early Moon formation inferred from hafnium–tungsten systematics.
+Nat. Geosci. 12, 696–700 (2019).
+35. Morbidelli, A., Marchi, S., Bottke, W. F. & Kring, D. A. A sawtooth-like
+timeline for the ﬁrst billion years of lunar bombardment. Earth Planet.
+Sci. Lett. 355, 144–151 (2012).
+36. Hurwitz, D. M. & Kring, D. A. Differentiation of the South Pole–Aitken
+basin impact melt sheet: Implications for lunar exploration. J.
+Geophys. Res. Planets 119, 1110–1133 (2014).
+37. Melosh, H. J. et al. South Pole–Aitken basin ejecta reveal the Moon’s
+upper mantle. Geology 45, 1063–1066 (2017).
+38. Moriarty Iii, D. P. et al. Evidence for a stratiﬁed upper mantle preserved
+within the South Pole-Aitken basin. J. Geophys. Res.: Planets 126,
+e2020JE006589 (2021).
+39. Potter, R. W., Collins, G. S., Kiefer, W. S., McGovern, P. J. & Kring, D.
+A. Constraining the size of the South Pole-Aitken basin impact. Icarus
+220, 730–743 (2012).
+40. Morbidelli, A. et al. The timeline of the lunar bombardment: Revisited.
+Icarus 305, 262–276 (2018).
+41. Steenstra, E. S. et al. The Fate of Sulfur and Chalcophile Elements
+During Crystallization of the Lunar Magma Ocean. J. Geophys. Res.
+Planets 125, e2019JE006328 (2020).
+42. Wieczorek, M. A. & Zuber, M. T. The composition and origin of the
+lunar crust: Constraints from central peaks and crustal thickness
+modeling. Geophys. Res. Lett. 28, 4023–4026 (2001).
+43. Yamamoto, S. et al. Possible mantle origin of olivine around
+lunar impact basins detected by SELENE. Nat. Geosci. 3, 533–536
+(2010).
+44. Yamamoto, S. et al. Lunar Mantle Composition Based on Spectral and
+Geologic Analysis of Low-Ca Pyroxene-and Olivine-Rich Rocks
+Exposed on the Lunar Surface. J. Geophys. Res.: Planets 128,
+e2023JE007817 (2023).
+45. Zhang, B. et al. Timing of lunar Mg-suite magmatism constrained by
+SIMS U-Pb dating of Apollo norite 78238. Earth Planet. Sci. Lett. 569,
+117046 (2021).
+46. Weitz, C. M. et al. Ascent and eruption of a lunar high-titanium magma
+as inferred from the petrology of the 74001/2 drill core. Meteorit.
+Planet. Sci. 34, 527–540 (1999).
+47. Ni, P., Zhang, Y., Chen, S. & Gagnon, J. A melt inclusion study on
+volatile abundances in the lunar mantle. Geochim. et. Cosmochim.
+Acta 249, 17–41 (2019).
+48. Danckwerth, P. A., Hess, P. C. & Rutherford, M. J. 1979. The solubility
+of sulfur in high-TiO2 mare basalts. Tenth Lunar Planet. Sci. Conf. 10,
+517–530 (1979).
+49. Steenstra, E. S. et al. Evidence for a sulfur-undersaturated lunar
+interior from the solubility of sulfur in lunar melts and sulﬁde-silicate
+partitioning of siderophile elements. Geochim. et. Cosmochim. Acta
+231, 130–156 (2018).
+50. Ding, S., Hough, T. & Dasgupta, R. New high pressure
+experiments on sulﬁde saturation of high-FeO∗basalts with
+variable TiO2 contents–Implications for the sulfur inventory of
+the lunar interior. Geochim. et. Cosmochim. Acta 222, 319–339
+(2018).
+51. O’NEILL, H. S. C. & Mavrogenes, J. A. The sulﬁde capacity and the
+sulfurcontentat sulﬁde saturationof silicatemeltsat1400C and1 bar.
+J. Petrol. 43, 1049–1087 (2002).
+52. Warren, P. H. The magma ocean concept and lunar evolution. IN:
+Annual review of earth and planetary sciences. Volume 13. Palo
+Alto, CA, Annual Reviews, Inc., 1985, p. 201-240., 13, 201-240
+(1985).
+53. Hayes, C. W., Minton, D. A., Kloos, J. L. & Moores, J. E. Topography-
+enhanced ultra-cold trapping at the LCROSS impact site. J. Geophys.
+Res.: Planets 129, e2023JE007925 (2024).
+54. Aleinov, I. et al. Modeling a transient secondary paleolunar
+atmosphere: 3-D simulations and analysis. Geophys. Res. Lett. 46,
+5107–5116 (2019).
+55. Colaprete, A. et al. Detection of water in the LCROSS ejecta plume.
+science 330, 463–468 (2010).
+56. Berezhnoy, A. A., Hasebe, N., Hiramoto, T. & Klumov, B. A. Possibility
+of the Presence of S, SO2, and CO2 at the Poles of the Moon. Publ.
+Astron. Soc. Jpn. 55, 859–870 (2003).
+57. Durga Prasad, K. et al. Contextual characterization study of
+Chandrayaan-3 primary landing site. Monthly Not. R. Astro. Soc.: Lett.
+526, L116–L123 (2023).
+58. Rajasekhar, R. P. et al. Comprehensive analysis of Chandrayaan-3
+landing site region focussing on morphology, hydration and gravity
+anomalies. Icarus 415, 116074 (2024).
+59. Williams, J. P., Paige, D. A., Greenhagen, B. T. & Sefton-Nash, E.
+The global surface temperatures of the Moon as measured by
+the Diviner Lunar Radiometer Experiment. Icarus 283, 300–325
+(2017).
+60. Zhang, J. A. & Paige, D. A. Cold-trapped organic compounds at the
+poles of the Moon and Mercury: Implications for origins. Geophys.
+Res. Lett. 36, L16203 (2009).
+61. Petrowski, C., Kerridge, J. F. & Kaplan, I. R. Light element geochemistry
+of the Apollo 17 site. Fifth Lunar Sci. Conf. 5, 1939–1948 (1974).
+62. Meyer, C. Lunar sample compendium https://ui.adsabs.harvard.edu/
+abs/2005STIN...0611039M (2005).
+63. Kring, D. A. & Durda, D. A global lunar landing site study to provide the
+scientiﬁc context for exploration of the Moon. https://hdl.handle.net/
+20.500.11753/1328 (2012).
+64. Vijayan, S. et al. Chandrayaan-3 landing site evolution by South
+Pole-Aitken basin and other impact craters. Icarus 425, 116329
+(2025).
+Acknowledgements
+We acknowledge the assessment of our manuscript by 3 reviewers (2
+anonymous and Prof. Edgar Steenstra) and thank them for providing
+constructive comments and suggestions. Thanks to the editors at Nature
+Communications Earth and Environment for the editorial handling of the
+manuscript. The APXS experiment was designed and developed by
+Physical Research Laboratory (https://www.prl.res.in/prl-eng/).
+Department of Space, Government of India is thanked for supporting the
+APXS experiment. We acknowledge the entire Chandrayaan-3 team from
+various ISRO centers, for their extensive support and contribution in suc-
+cessful planning, implementation, and execution of the mission. Indian
+Space Science Data Center (ISSDC) is acknowledged for archiving the
+APXS data for public access. We acknowledge Varun Sheel, Debabrata
+Banerjee, Amit Basu Sarbadhikari, and Durga Prasad Karanam for
+thoughtful discussions. Geological samples are not used in the pre-
+sent study.
+Author contributions
+R.K.S., N.P., N.S., D.R., and A.B. contributed to conceptualization, analysis,
+and interpretation. N.P.S.M., A.P., S.V.V., and M.S. contributed to the
+design, development, and calibration of the APXS instrument. R.K.S. and
+V.S. contributed to Pragyan rover path planning and navigation operations.
+R.K.S., N.P., N.S., D.R., N.P.S.M., K.K.M., V.S., M.B., M.S., S.V.V. and A.B.
+contributed to manuscript preparation.
+Competing interests
+The authors declare no competing interests.
+https://doi.org/10.1038/s43247-025-02305-1
+Article
+Communications Earth & Environment |  (2025) 6:321 
+10
+
+Additional information
+Supplementary information The online version contains
+supplementary material available at
+https://doi.org/10.1038/s43247-025-02305-1.
+Correspondence and requests for materials should be addressed to
+Rishitosh K. Sinha.
+Peer review information Communications Earth & Environment thanks the
+anonymous reviewers for their contribution to the peer review of this work.
+Primary Handling Editors: Ke Zhu and Joe Aslin. A peer review ﬁle is available.
+Reprints and permissions information is available at
+http://www.nature.com/reprints
+Publisher’s note Springer Nature remains neutral with regard to jurisdictional
+claims in published maps and institutional afﬁliations.
+Open Access This article is licensed under a Creative Commons
+Attribution-NonCommercial-NoDerivatives 4.0 International License,
+which permits any non-commercial use, sharing, distribution and
+reproduction in any medium or format, as long as you give appropriate
+credit to the original author(s) and the source, provide a link to the Creative
+Commons licence, and indicate if you modiﬁed the licensed material. You
+do not have permission under this licence to share adapted material
+derived from this article or parts of it. The images or other third party
+material in this article are included in the article’s Creative Commons
+licence, unless indicated otherwise in a credit line to the material. If material
+isnot includedin thearticle’s CreativeCommons licenceandyour intended
+use is not permitted by statutory regulation or exceeds the permitted use,
+you will need to obtain permission directly from the copyright holder. To
+view a copy of this licence, visit http://creativecommons.org/licenses/by-
+nc-nd/4.0/.
+© The Author(s) 2025
+https://doi.org/10.1038/s43247-025-02305-1
+Article
+Communications Earth & Environment |  (2025) 6:321 
+11

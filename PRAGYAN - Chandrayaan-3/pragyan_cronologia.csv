@@ -1,0 +1,13 @@
+﻿data;evento;direcao;tipo;fonte
+23-24 ago 2023;Desce a rampa do Vikram, segue ao sul e para para carregar a bateria perto da South Crater;S;Parada/marco;"LPSC 2025 p.1; Fig.3"
+25 ago 2023;"Move mais ao sul; imagens para S e E revelam cratera A (~1 m) na borda da South Crater (9 m)";S;Parada;"LPSC 2025 p.1; Fig.3"
+25-27 ago 2023;"Ponto de bifurcacao; ramo central ao sul";S;Parada;Fig.3
+27 ago 2023;"Encontra cratera de 4 m de diametro a 3 m a frente; comandado a refazer o caminho";S;DESVIO 1 (obstaculo);"ISRO X; LPSC p.1"
+28 ago 2023;"Novo caminho apos o desvio; dois stops no ramo leste e um a oeste";E/O;Parada;Fig.3
+29 ago 2023;Dois stops no ramo sudoeste;SO;Parada;Fig.3
+30 ago 2023;"Inicia deslocamento para oeste rumo a West Crater; 07:35 foto do Vikram (ChaSTE e ILSA desdobrados); 11:04 foto a 15 m";O;Parada/marco;"Fig.2; Wikipedia"
+31 ago 2023;"5 stops (oeste, NW, NE, oeste, ponto mais a oeste); contorna borda oeste da West Crater; loop ~4 m a oeste da crater B";O/NW/NE;DESVIO 2 (loop nao mapeado);"Fig.2; LPSC p.1"
+1 set 2023;"Afasta-se da borda ao S/SE, contorna obstaculo, vai a E e NE; apos crater B segue NW (trecho incerto); rodeia crater B ate a borda da cratera maior";S/SE/E/NE/NW;DESVIO 3 (contorno);"Fig.2; LPSC p.1"
+2 set 2023;"Rumo N/NE em dois stops, pequeno desvio e chega a posicao final; entra em sleep mode com bateria cheia";N/NE;DESVIO 4 + fim;"Fig.2; Wikipedia"
+3 set 2023;"Vikram executa hop (~40 cm); mapa marca pre-hop e post-hop";-;Marco do lander;"Fig.3; Wikipedia"
+22 set 2023;"Janela prevista de reativacao; rover nao respondeu";-;Fim;Wikipedia

@@ -1,0 +1,47 @@
+[
+  {
+    "id": "shackleton_rim",
+    "name": "Borda da Cratera Shackleton",
+    "name_en": "Shackleton Crater Rim",
+    "latitude": -89.9,
+    "longitude": 0.0,
+    "elevation_m": 4200,
+    "description": "Próximo ao Polo Sul exato; picos com iluminação solar quase contínua no verão lunar e fácil acesso a crateras com gelo de água permanente."
+  },
+  {
+    "id": "malapert_peak",
+    "name": "Cume do Maciço Malapert",
+    "name_en": "Malapert Mountain (Peak)",
+    "latitude": -85.9,
+    "longitude": 2.7,
+    "elevation_m": 5000,
+    "description": "Excelente visibilidade contínua da Terra (Direct-to-Earth) devido à grande elevação topográfica; candidato chave para estação repetidora de comunicação."
+  },
+  {
+    "id": "connecting_ridge",
+    "name": "Crista de Conexão (Connecting Ridge)",
+    "name_en": "Connecting Ridge",
+    "latitude": -89.4,
+    "longitude": 222.0,
+    "elevation_m": 2100,
+    "description": "Faixa topográfica estratégica conectando as crateras Shackleton e de Gerlache; favorável para locomoção e rotas de rovers."
+  },
+  {
+    "id": "leibnitz_plateau",
+    "name": "Planalto de Leibnitz",
+    "name_en": "Leibnitz Plateau",
+    "latitude": -85.4,
+    "longitude": 32.5,
+    "elevation_m": 3300,
+    "description": "Área plana ampla e geologicamente estável, adequada para manobras de pouso seguro com módulos de carga pesada."
+  },
+  {
+    "id": "haworth_rim",
+    "name": "Borda da Cratera Haworth",
+    "name_en": "Haworth Rim",
+    "latitude": -87.4,
+    "longitude": 355.0,
+    "elevation_m": 2800,
+    "description": "Borda montanhosa com rica presença de voláteis aprisionados pelo frio na depressão interna."
+  }
+]

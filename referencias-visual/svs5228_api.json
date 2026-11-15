@@ -1,0 +1,294 @@
+{
+    "id": 5228,
+    "url": "http://svs.gsfc.nasa.gov/5228/",
+    "page_type": "Visualization",
+    "title": "Lunar South Pole Illumination with Earth and Sun",
+    "description": "An animated view of the Earth and Sun as seen from near the Moon's South Pole. || southpole_earth_sun.1858_print.jpg (1024x576) [38.5 KB] || southpole_earth_sun.1858_searchweb.png (320x180) [19.0 KB] || southpole_earth_sun.1858_thm.png (80x40) [1.8 KB] || southpole_earth_sun_1080p30.mp4 (1920x1080) [10.5 MB] || southpole_earth_sun_720p30.mp4 (1280x720) [5.7 MB] || 1920x1080_16x9_30p (1920x1080) [0 Item(s)] || southpole_earth_sun_360p30.mp4 (640x360) [1.6 MB] || ",
+    "release_date": "2024-02-23T16:15:00-05:00",
+    "update_date": "2024-02-23T14:23:29.299200-05:00",
+    "main_image": {
+        "id": 1089511,
+        "url": "http://svs.gsfc.nasa.gov/vis/a000000/a005200/a005228/southpole_earth_sun.1858_print.jpg",
+        "filename": "southpole_earth_sun.1858_print.jpg",
+        "media_type": "Image",
+        "alt_text": "An animated view of the Earth and Sun as seen from near the Moon's South Pole.",
+        "width": 1024,
+        "height": 576,
+        "pixels": 589824
+    },
+    "main_video": null,
+    "main_credits": {
+        "Visualizations by": [
+            {
+                "name": "Ernie Wright",
+                "employer": "USRA"
+            }
+        ]
+    },
+    "progress": "Complete",
+    "media_groups": [
+        {
+            "id": 373523,
+            "url": "http://svs.gsfc.nasa.gov/5228/#media_group_373523",
+            "widget": "Video player",
+            "title": "",
+            "caption": "",
+            "description": "An animated view of the Earth and Sun as seen from near the Moon's South Pole.",
+            "items": [
+                {
+                    "id": 421613,
+                    "type": "media",
+                    "extra_data": null,
+                    "title": null,
+                    "caption": null,
+                    "instance": {
+                        "id": 1089511,
+                        "url": "http://svs.gsfc.nasa.gov/vis/a000000/a005200/a005228/southpole_earth_sun.1858_print.jpg",
+                        "filename": "southpole_earth_sun.1858_print.jpg",
+                        "media_type": "Image",
+                        "alt_text": "An animated view of the Earth and Sun as seen from near the Moon's South Pole.",
+                        "width": 1024,
+                        "height": 576,
+                        "pixels": 589824
+                    }
+                },
+                {
+                    "id": 421614,
+                    "type": "media",
+                    "extra_data": null,
+                    "title": null,
+                    "caption": null,
+                    "instance": {
+                        "id": 1089512,
+                        "url": "http://svs.gsfc.nasa.gov/vis/a000000/a005200/a005228/southpole_earth_sun.1858_searchweb.png",
+                        "filename": "southpole_earth_sun.1858_searchweb.png",
+                        "media_type": "Image",
+                        "alt_text": "An animated view of the Earth and Sun as seen from near the Moon's South Pole.",
+                        "width": 320,
+                        "height": 180,
+                        "pixels": 57600
+                    }
+                },
+                {
+                    "id": 421615,
+                    "type": "media",
+                    "extra_data": null,
+                    "title": null,
+                    "caption": null,
+                    "instance": {
+                        "id": 1089513,
+                        "url": "http://svs.gsfc.nasa.gov/vis/a000000/a005200/a005228/southpole_earth_sun.1858_thm.png",
+                        "filename": "southpole_earth_sun.1858_thm.png",
+                        "media_type": "Image",
+                        "alt_text": "An animated view of the Earth and Sun as seen from near the Moon's South Pole.",
+                        "width": 80,
+                        "height": 40,
+                        "pixels": 3200
+                    }
+                },
+                {
+                    "id": 421610,
+                    "type": "media",
+                    "extra_data": null,
+                    "title": null,
+                    "caption": null,
+                    "instance": {
+                        "id": 1089509,
+                        "url": "http://svs.gsfc.nasa.gov/vis/a000000/a005200/a005228/southpole_earth_sun_1080p30.mp4",
+                        "filename": "southpole_earth_sun_1080p30.mp4",
+                        "media_type": "Movie",
+                        "alt_text": "An animated view of the Earth and Sun as seen from near the Moon's South Pole.",
+                        "width": 1920,
+                        "height": 1080,
+                        "pixels": 2073600
+                    }
+                },
+                {
+                    "id": 421611,
+                    "type": "media",
+                    "extra_data": null,
+                    "title": null,
+                    "caption": null,
+                    "instance": {
+                        "id": 1089510,
+                        "url": "http://svs.gsfc.nasa.gov/vis/a000000/a005200/a005228/southpole_earth_sun_720p30.mp4",
+                        "filename": "southpole_earth_sun_720p30.mp4",
+                        "media_type": "Movie",
+                        "alt_text": "An animated view of the Earth and Sun as seen from near the Moon's South Pole.",
+                        "width": 1280,
+                        "height": 720,
+                        "pixels": 921600
+                    }
+                },
+                {
+                    "id": 421612,
+                    "type": "media",
+                    "extra_data": null,
+                    "title": null,
+                    "caption": null,
+                    "instance": {
+                        "id": 1089504,
+                        "url": "http://svs.gsfc.nasa.gov/vis/a000000/a005200/a005228/frames/1920x1080_16x9_30p/",
+                        "filename": "1920x1080_16x9_30p",
+                        "media_type": "Frames",
+                        "alt_text": "An animated view of the Earth and Sun as seen from near the Moon's South Pole.",
+                        "width": 1920,
+                        "height": 1080,
+                        "pixels": 2073600
+                    }
+                },
+                {
+                    "id": 421609,
+                    "type": "media",
+                    "extra_data": null,
+                    "title": null,
+                    "caption": null,
+                    "instance": {
+                        "id": 1089508,
+                        "url": "http://svs.gsfc.nasa.gov/vis/a000000/a005200/a005228/southpole_earth_sun_360p30.mp4",
+                        "filename": "southpole_earth_sun_360p30.mp4",
+                        "media_type": "Movie",
+                        "alt_text": "An animated view of the Earth and Sun as seen from near the Moon's South Pole.",
+                        "width": 640,
+                        "height": 360,
+                        "pixels": 230400
+                    }
+                }
+            ],
+            "extra_data": {}
+        },
+        {
+            "id": 373524,
+            "url": "http://svs.gsfc.nasa.gov/5228/#media_group_373524",
+            "widget": "Basic text with HTML",
+            "title": "",
+            "caption": "",
+            "description": "This visualization shows the unusual motions of the Earth and Sun as viewed from a location near the South Pole of the Moon. The Sun glides around the horizon, never more than a few degrees above or below it, while the Earth bobs up and down, never veering far from 0&deg; longitude. The Earth appears to be upside-down and rotating backwards. The perpetually low Sun angle produces extremely long shadows that rotate across the rugged lunar terrain.<br><br>The animation compresses six months into two and a half minutes. The periodic darkness of the terrain isn't always because the Sun is below the horizon. Sometimes, the Sun is directly in front of the viewer, and at those times, we're seeing the shadows cast by distant elevations.<br><br>From front to back, the prominent craters are Idel′son L, Amundsen (with the central peak), and Nobile (to the left). The mountain behind Nobile is the recently named Mons Mouton. The red dot is provided as a focal point and a horizon marker, helpful when the terrain is deeply shadowed.",
+            "items": [],
+            "extra_data": {}
+        }
+    ],
+    "studio": "svs",
+    "funding_sources": [
+        "LRO"
+    ],
+    "credits": [
+        {
+            "role": "Visualizer",
+            "people": [
+                {
+                    "name": "Ernie Wright",
+                    "employer": "USRA"
+                }
+            ]
+        },
+        {
+            "role": "Technical support",
+            "people": [
+                {
+                    "name": "Laurence Schuler",
+                    "employer": "ADNET Systems, Inc."
+                },
+                {
+                    "name": "Ian Jones",
+                    "employer": "ADNET Systems, Inc."
+                }
+            ]
+        }
+    ],
+    "missions": [
+        "Artemis Program (Human Spaceflight — Moon to Mars) (Artemis)"
+    ],
+    "series": [
+        "The Moon"
+    ],
+    "tapes": [],
+    "papers": [],
+    "datasets": [
+        {
+            "name": "Digital Elevation Map",
+            "common_name": "DEM",
+            "platform": "LRO",
+            "sensor": "LOLA",
+            "type": "Other",
+            "organizations": [],
+            "description": "",
+            "credit": "",
+            "url": "",
+            "date_range": null
+        },
+        {
+            "name": "JPL DE421",
+            "common_name": "DE421",
+            "platform": null,
+            "sensor": null,
+            "type": "Ephemeris",
+            "organizations": [
+                "NASA/JPL"
+            ],
+            "description": "Planetary ephemerides",
+            "credit": "",
+            "url": "http://ssd.jpl.nasa.gov/?ephemerides#planets",
+            "date_range": null
+        }
+    ],
+    "nasa_science_categories": [
+        "Planets & Moons"
+    ],
+    "keywords": [
+        "Artemis",
+        "Earth",
+        "HDTV",
+        "LRO",
+        "Lunar Reconnaissance Orbiter",
+        "Moon",
+        "South Pole",
+        "Sun-Earth-Moon Interactions"
+    ],
+    "recommended_pages": [],
+    "related": [
+        {
+            "id": 14583,
+            "url": "http://svs.gsfc.nasa.gov/14583/",
+            "page_type": "Produced Video",
+            "title": "Artemis & JETT5 Interview with Kelsey Young",
+            "description": "Dr. Kelsey Young is the Artemis Science Flight Operations Lead and works at NASA’s Goddard Space Flight Center in Greenbelt, Maryland.Complete transcript available.Dr. Young discusses the JETT5 mission, which was conducted May 13-17. During JETT5, astronauts performed a series of simulated moonwalks in the San Francisco Volcanic Field near Flagstaff, Arizona, while flight controllers and scientists at NASA’s Johnson Space Center in Houston, Texas guided and provided feedback on their progress. JETT5 was designed to prepare crew members for the historic Artemis III mission that will land near the Moon’s south pole.00:00:00:00 – What is your role in NASA’s Artemis missions?00:00:58:03 – What was the JETT5 mission, and what activities did it include?00:01:49:03 – Why are mission simulations like JETT5 critical?00:02:32:20 – Why was Arizona chosen as the site of the JETT5 field test?00:03:44:18 – Why were the field tests conducted both in daytime and at night?00:04:39:13 – Where were Mission Control team members and scientists located?00:05:21:26 – What is the Science Evaluation Room for the Artemis missions?00:06:10:17 – What are the activities and roles within the Science Evaluation Room?00:06:49:00 – What science payloads will the Artemis crew deploy on the lunar surface?00:07:22:28 – What goes into creating a scientifically well-trained crew member? || Kelsey_Young_Interview_Preview_print.jpg (1024x576) [89.8 KB] || Kelsey_Young_Interview_Preview.png (3840x2160) [11.8 MB] || Kelsey_Young_Interview_Preview.jpg (3840x2160) [2.7 MB] || Kelsey_Young_Interview_Preview_searchweb.png (320x180) [76.3 KB] || Kelsey_Young_Interview_Preview_thm.png (80x40) [6.6 KB] || Kelsey_Young_Interview_JETT5_720.mp4 (1280x720) [122.5 MB] || Kelsey_Young_Interview_JETT5_1080.mp4 (1920x1080) [685.7 MB] || KelseyYoungInterviewJETT5.en_US.srt [14.0 KB] || KelseyYoungInterviewJETT5.en_US.vtt [13.4 KB] || Kelsey_Young_Interview_JETT5_4K.mp4 (3840x2160) [4.2 GB] || Kelsey_Young_Interview_JETT5_ProRes.mov (3840x2160) [32.5 GB] || ",
+            "release_date": "2024-05-08T00:00:00-04:00",
+            "update_date": "2024-06-26T15:30:59-04:00",
+            "main_image": {
+                "id": 1091952,
+                "url": "http://svs.gsfc.nasa.gov/vis/a010000/a014500/a014583/Kelsey_Young_Interview_Preview_print.jpg",
+                "filename": "Kelsey_Young_Interview_Preview_print.jpg",
+                "media_type": "Image",
+                "alt_text": "Dr. Kelsey Young is the Artemis Science Flight Operations Lead and works at NASA’s Goddard Space Flight Center in Greenbelt, Maryland.\r\rComplete transcript available.\r\rDr. Young discusses the JETT5 mission, which was conducted May 13-17. During JETT5, astronauts performed a series of simulated moonwalks in the San Francisco Volcanic Field near Flagstaff, Arizona, while flight controllers and scientists at NASA’s Johnson Space Center in Houston, Texas guided and provided feedback on their progress. JETT5 was designed to prepare crew members for the historic Artemis III mission that will land near the Moon’s south pole.\r\r00:00:00:00 – What is your role in NASA’s Artemis missions?\r00:00:58:03 – What was the JETT5 mission, and what activities did it include?\r00:01:49:03 – Why are mission simulations like JETT5 critical?\r00:02:32:20 – Why was Arizona chosen as the site of the JETT5 field test?\r00:03:44:18 – Why were the field tests conducted both in daytime and at night?\r00:04:39:13 – Where were Mission Control team members and scientists located?\r00:05:21:26 – What is the Science Evaluation Room for the Artemis missions?\r00:06:10:17 – What are the activities and roles within the Science Evaluation Room?\r00:06:49:00 – What science payloads will the Artemis crew deploy on the lunar surface?\r00:07:22:28 – What goes into creating a scientifically well-trained crew member?\r",
+                "width": 1024,
+                "height": 576,
+                "pixels": 589824
+            }
+        },
+        {
+            "id": 4893,
+            "url": "http://svs.gsfc.nasa.gov/4893/",
+            "page_type": "Visualization",
+            "title": "Shadows near the Moon's South Pole",
+            "description": "This video shows the movement of shadows near the Moon's South Pole, over the course of two lunar days, which is approximately two months on Earth.  The visualization was created from data gathered by the Lunar Reconnaissance Orbiter spacecraft.Music Provided by Universal Production Music: “Two Horizons” – Anthony d’AmarioWatch this video on the NASA Goddard YouTube channel. || ShadowsMoonSouthPole_Thumbnail1.jpg (1920x1080) [381.7 KB] || ShadowsMoonSouthPole_Thumbnail1_print.jpg (1024x576) [133.0 KB] || ShadowsMoonSouthPole_YouTubeHD.webm (1920x1080) [10.8 MB] || ShadowsMoonSouthPole_YouTubeHD.mp4 (1920x1080) [157.1 MB] || ShadowsMoonSouthPole_FacebookHD.mp4 (1920x1080) [118.7 MB] || ShadowsMoonSouthPole_CAPTIONS.en_US.srt [1.3 KB] || ShadowsMoonSouthPole_CAPTIONS.en_US.vtt [1.3 KB] || ShadowsMoonSouthPole_MASTER.mov (1920x1080) [1.3 GB] || ShadowsMoonSouthPole_FacebookHD.mp4.hwshow || ",
+            "release_date": "2021-04-01T10:00:00-04:00",
+            "update_date": "2021-04-01T14:52:10-04:00",
+            "main_image": {
+                "id": 379370,
+                "url": "http://svs.gsfc.nasa.gov/vis/a000000/a004800/a004893/moon.1500_print.jpg",
+                "filename": "moon.1500_print.jpg",
+                "media_type": "Image",
+                "alt_text": "Visualization only (No audio, no icons)",
+                "width": 1024,
+                "height": 576,
+                "pixels": 589824
+            }
+        }
+    ],
+    "sources": [],
+    "products": [],
+    "newer_versions": [],
+    "older_versions": [],
+    "alternate_versions": []
+}

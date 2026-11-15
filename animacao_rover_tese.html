@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tese: Rover sob Sombras Dinâmicas de Relevo vs. Técnica Multirresolução O(1)</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    :root {
+      --background: #090d16;
+      --card: #111827;
+      --foreground: #f1f5f9;
+      --muted-foreground: #94a3b8;
+      --border: #1e293b;
+      --primary: #10b981;
+      --primary-foreground: #022c22;
+      --secondary: #1e293b;
+      --secondary-foreground: #e2e8f0;
+    }
+    body { background-color: var(--background); color: var(--foreground); font-family: system-ui, -apple-system, sans-serif; }
+    input[type="range"] {
+      accent-color: var(--primary);
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      image-rendering: auto;
+    }
+  </style>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased p-3 md:p-4">
+  <div class="max-w-7xl mx-auto space-y-2.5">
+
+    <!-- Barra Superior Compacta (Controles + Sol em Tempo Real) -->
+    <header class="bg-[var(--card)] border border-[var(--border)] rounded-xl px-4 py-2.5 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h1 class="text-sm md:text-base font-bold text-[var(--foreground)]">
+            Mesmo Terreno, Mesmo Sol (1,54°): Incerteza &amp; Gargalo O(N³) vs. Técnica Multirresolução da Tese O(1)
+          </h1>
+          <p class="text-xs text-[var(--muted-foreground)]">
+            As sombras nascem dos relevos reais (picos, cristas e crateras) conforme o Sol gira lentamente ao redor do horizonte.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <span id="sunReadout" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-500/15 text-amber-500 border border-amber-500/30">
+            ☀ Az 215° · Elev 1,54°
+          </span>
+          <button id="btnPlayPause" class="px-3 py-1 rounded-md text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 cursor-pointer">
+            ⏸ Pausar
+          </button>
+          <button id="btnReset" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] cursor-pointer">
+            ↺ Reiniciar
+          </button>
+          <button id="btnXray" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] cursor-pointer">
+            🔍 Raio-X 5 m: OFF
+          </button>
+        </div>
+      </div>
+
+      <!-- Linha de Parâmetros -->
+      <div class="mt-2 pt-2 border-t border-[var(--border)] flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-xs font-semibold text-[var(--muted-foreground)]">Confiança (Tese):</span>
+          <div class="inline-flex rounded-md border border-[var(--border)] overflow-hidden">
+            <button data-conf="P50" class="conf-btn px-2 py-0.5 text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] cursor-pointer">P50</button>
+            <button data-conf="P90" class="conf-btn px-2 py-0.5 text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] cursor-pointer">P90</button>
+            <button data-conf="P99" class="conf-btn px-2 py-0.5 text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] cursor-pointer">P99</button>
+          </div>
+          <span class="text-xs font-semibold text-[var(--muted-foreground)] ml-1">Velocidade:</span>
+          <select id="selectSpeed" class="px-2 py-0.5 rounded-md text-xs font-medium bg-[var(--background)] text-[var(--foreground)] border border-[var(--border)] cursor-pointer">
+            <option value="0.6">0.6× (Muito Lento)</option>
+            <option value="1" selected>1× (Lento · 40 s)</option>
+            <option value="2">2× (Rápido)</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2.5 flex-1 min-w-[220px] max-w-md">
+          <span id="phaseLabel" class="text-xs font-semibold text-[var(--foreground)] whitespace-nowrap">t = 0,0 s / 40,0 s</span>
+          <input id="timeScrubber" type="range" min="0" max="40" step="0.05" value="0" class="w-full cursor-pointer" />
+        </div>
+      </div>
+    </header>
+
+    <!-- DUAS SITUAÇÕES NA MESMA TELA (Lado a Lado Compacto) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+
+      <!-- SITUAÇÃO 1 (ESQUERDA): LIMITAÇÕES -->
+      <section class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 shadow-sm flex flex-col gap-2">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0"></span>
+            <h2 class="text-sm font-bold text-[var(--foreground)]">
+              1. Sem a Tese: Grade 60 m/px + Ray-Tracing Inviável
+            </h2>
+          </div>
+          <span id="leftStatusBadge" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-500/15 text-red-500 border border-red-500/30 whitespace-nowrap">
+            Calculando...
+          </span>
+        </div>
+
+        <div class="rounded-lg overflow-hidden border border-[var(--border)]">
+          <canvas id="canvasLeft" width="560" height="300"></canvas>
+        </div>
+
+        <!-- Telemetria em 1 linha -->
+        <div class="grid grid-cols-4 gap-1.5">
+          <div class="px-2 py-1.5 rounded-md bg-[var(--background)] border border-[var(--border)]">
+            <div class="text-xs text-[var(--muted-foreground)]">Tempo Replan</div>
+            <div id="leftTimeMetric" class="text-xs font-bold text-red-500">~4,8 h O(N³)</div>
+          </div>
+          <div class="px-2 py-1.5 rounded-md bg-[var(--background)] border border-[var(--border)]">
+            <div class="text-xs text-[var(--muted-foreground)]">RAD750 / RAM</div>
+            <div id="leftCpuMetric" class="text-xs font-bold text-red-500">100% · &gt;32 GB</div>
+          </div>
+          <div class="px-2 py-1.5 rounded-md bg-[var(--background)] border border-[var(--border)]">
+            <div class="text-xs text-[var(--muted-foreground)]">Certeza Relevo</div>
+            <div id="leftCertMetric" class="text-xs font-bold text-amber-500">Baixa (60 m)</div>
+          </div>
+          <div class="px-2 py-1.5 rounded-md bg-[var(--background)] border border-[var(--border)]">
+            <div class="text-xs text-[var(--muted-foreground)]">Bateria</div>
+            <div id="leftBattMetric" class="text-xs font-bold text-[var(--foreground)]">100%</div>
+          </div>
+        </div>
+
+        <!-- Limitações -->
+        <div class="px-3 py-2 rounded-lg bg-red-500/5 border border-red-500/20 text-xs text-[var(--foreground)] space-y-1">
+          <div class="font-bold text-red-500">Limitações (Deslocamento em Tempo Real &amp; Rotas):</div>
+          <p>• <strong>Alisamento 60 m/px:</strong> esconde microcrateras (17°–23° &gt; limite 15° VIPER) e micro-sombras, criando falsos positivos de rota.</p>
+          <p>• <strong>Gargalo O(N³):</strong> <em>ray-tracing</em> 5 m exige <strong>1.728× ops</strong> e &gt;32 GB RAM; trava o chip <code>RAD750</code> (133 MHz) enquanto a sombra de relevo avança.</p>
+          <p>• <strong>Lacuna 5 m:</strong> 26/130 sítios sem 5 m (PCB/SP/MMP) e 92,71% interpolado no <code>LDEM_875S_5M</code>.</p>
+        </div>
+      </section>
+
+      <!-- SITUAÇÃO 2 (DIREITA): BENEFÍCIOS DA TESE -->
+      <section class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 shadow-sm flex flex-col gap-2">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+            <h2 class="text-sm font-bold text-[var(--foreground)]">
+              2. Com a Tese: Extrapolação Multirresolução O(1)
+            </h2>
+          </div>
+          <span id="rightStatusBadge" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 whitespace-nowrap">
+            Rota O(1) Segura
+          </span>
+        </div>
+
+        <div class="rounded-lg overflow-hidden border border-[var(--border)]">
+          <canvas id="canvasRight" width="560" height="300"></canvas>
+        </div>
+
+        <!-- Telemetria em 1 linha -->
+        <div class="grid grid-cols-4 gap-1.5">
+          <div class="px-2 py-1.5 rounded-md bg-[var(--background)] border border-[var(--border)]">
+            <div class="text-xs text-[var(--muted-foreground)]">Tempo Replan</div>
+            <div id="rightTimeMetric" class="text-xs font-bold text-emerald-500">0,001 s O(1)</div>
+          </div>
+          <div class="px-2 py-1.5 rounded-md bg-[var(--background)] border border-[var(--border)]">
+            <div class="text-xs text-[var(--muted-foreground)]">RAD750 / RAM</div>
+            <div id="rightCpuMetric" class="text-xs font-bold text-emerald-500">1,4% · &lt;5 MB</div>
+          </div>
+          <div class="px-2 py-1.5 rounded-md bg-[var(--background)] border border-[var(--border)]">
+            <div class="text-xs text-[var(--muted-foreground)]">Certeza Relevo</div>
+            <div id="rightCertMetric" class="text-xs font-bold text-emerald-500">98,3% (5 m)</div>
+          </div>
+          <div class="px-2 py-1.5 rounded-md bg-[var(--background)] border border-[var(--border)]">
+            <div class="text-xs text-[var(--muted-foreground)]">Bateria</div>
+            <div id="rightBattMetric" class="text-xs font-bold text-[var(--foreground)]">100%</div>
+          </div>
+        </div>
+
+        <!-- Benefícios & Gargalos Eliminados -->
+        <div class="px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-xs text-[var(--foreground)] space-y-1">
+          <div class="font-bold text-emerald-500">Benefícios da Tese &amp; Gargalos Eliminados:</div>
+          <p>• <strong>Fim do Gargalo O(N³):</strong> calibração <em>ceteris paribus</em> (240→5 m, DE440) roda em <strong>1 ms</strong> e <strong>&lt;5 MB</strong> a bordo (<strong>17.280.000×</strong> mais rápido).</p>
+          <p>• <strong>Certeza sobre Relevo &amp; Rotas:</strong> <code>ε(R,S)</code>, <code>L(A)</code> e quantis <code>P50/P90/P99</code> filtram falsos positivos de 60 m e desviam de sombras móveis.</p>
+          <p>• <strong>Auditoria Multimodal:</strong> separa energia solar (LOLA/GRAIL/DE440) da checagem óptica <code>ShadowCam (~2 m/px)</code> na entrada da PSR.</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Rodapé de Narrativa Dinâmica em Tempo Real -->
+    <footer class="bg-[var(--card)] border border-[var(--border)] rounded-xl px-4 py-2.5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-2">
+      <div class="text-xs text-[var(--foreground)]">
+        <strong id="narrativeTitle" class="text-[var(--foreground)]">Fase 1:</strong>
+        <span id="narrativeText" class="text-[var(--muted-foreground)]"></span>
+      </div>
+      <div class="flex flex-wrap gap-1.5 shrink-0">
+        <button data-jump="2" class="jump-btn px-2 py-1 rounded text-xs font-medium bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] cursor-pointer">1. Escolha</button>
+        <button data-jump="13" class="jump-btn px-2 py-1 rounded text-xs font-medium bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] cursor-pointer">2. Sombra do Pico</button>
+        <button data-jump="25" class="jump-btn px-2 py-1 rounded text-xs font-medium bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] cursor-pointer">3. Replan O(1)</button>
+        <button data-jump="35" class="jump-btn px-2 py-1 rounded text-xs font-medium bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] cursor-pointer">4. Entrada PSR</button>
+      </div>
+    </footer>
+
+  </div>
+
+  <script>
+    (() => {
+      const DURATION = 40.0; // Ciclo lento de 40s para observar sombras dos relevos
+      const CW = 560, CH = 300;
+      const GW = 140, GH = 75; // Grade física de 10 m/célula (1.400 m x 750 m)
+      const CELL_M = 10;
+      const TAN_SUN = Math.tan((1.54 * Math.PI) / 180); // 0.02688 (Sol rasante real 1,54°)
+
+      const state = {
+        t: 0,
+        playing: true,
+        speed: 1.0,
+        conf: 'P90',
+        xray: false,
+        lastTs: null
+      };
+
+      const confParams = {
+        P50: { z: 0.00, pad: 8, cert: '82,4%' },
+        P90: { z: 1.282, label: 'P90', pad: 16, cert: '95,1%' },
+        P99: { z: 2.326, label: 'P99', pad: 24, cert: '99,1%' }
+      };
+
+      // Construção do Modelo Digital de Elevação (DEM) real em metros
+      const dem = new Float32Array(GW * GH);
+      const dem60 = new Float32Array(GW * GH);
+
+      function buildDEM() {
+        for (let y = 0; y < GH; y++) {
+          for (let x = 0; x < GW; x++) {
+            // Plano inclinado suave + crista sul elevada (+15 m)
+            let z = 1.5 * Math.sin(x * 0.07) + 1.0 * Math.cos(y * 0.09);
+
+            // 1. Pico Noroeste (+13.5 m) — projeta longa sombra sobre o centro conforme Sol gira
+            const dPeak1 = Math.hypot((x - 42) / 10, (y - 26) / 9);
+            z += 13.5 * Math.exp(-dPeak1 * dPeak1);
+
+            // 2. Colina Central-Leste (+10.5 m) — sua sombra gira e atinge o trecho intermediário em t ~ 22-30s
+            const dHill2 = Math.hypot((x - 86) / 11, (y - 45) / 8);
+            z += 10.5 * Math.exp(-dHill2 * dHill2);
+
+            // 3. Crista Segura Sul (+15.5 m) — platô mais alto que permanece iluminado
+            const dyRidge = (y - (61 - 0.18 * Math.max(0, x - 55))) / 7.5;
+            const xMask = (x > 12 && x < 122) ? 1 : Math.exp(-Math.pow((x - 67) / 60, 4));
+            z += 15.5 * Math.exp(-dyRidge * dyRidge) * xMask;
+
+            // 4. Microcrateras sub-resolução (10-15 m de diâmetro, bordas +2.5 m e fundo -8 m) no atalho central
+            const microCraters = [
+              { cx: 56, cy: 40, r: 3.3, depth: 8.5 },
+              { cx: 71, cy: 33, r: 2.9, depth: 7.5 },
+              { cx: 48, cy: 46, r: 2.6, depth: 6.5 }
+            ];
+            for (const mc of microCraters) {
+              const d = Math.hypot(x - mc.cx, y - mc.cy);
+              if (d < mc.r * 1.7) {
+                const rn = d / mc.r;
+                if (rn < 1.0) {
+                  z -= mc.depth * (1 - rn * rn);
+                } else {
+                  z += 2.4 * Math.exp(-Math.pow((rn - 1.15) / 0.3, 2));
+                }
+              }
+            }
+
+            // 5. Cratera PSR profunda no canto superior direito (-32 m de fundo, borda +10 m)
+            const dPsr = Math.hypot((x - 120) / 13, (y - 16) / 10);
+            if (dPsr < 1.65) {
+              if (dPsr < 0.95) {
+                z -= 32 * (1 - dPsr * dPsr);
+              } else {
+                // Entrada mais suave pelo lado sudeste (ShadowCam)
+                const seGap = (x > 114 && y > 18) ? 0.35 : 1.0;
+                z += 10 * seGap * Math.exp(-Math.pow((dPsr - 1.15) / 0.25, 2));
+              }
+            }
+
+            dem[y * GW + x] = z;
+          }
+        }
+
+        // DEM suavizado 60 m/px (média de blocos 6x6 células = 60 m)
+        const B = 6;
+        for (let by = 0; by < GH; by += B) {
+          for (let bx = 0; bx < GW; bx += B) {
+            let sum = 0, cnt = 0;
+            for (let dy = 0; dy < B && by + dy < GH; dy++) {
+              for (let dx = 0; dx < B && bx + dx < GW; dx++) {
+                sum += dem[(by + dy) * GW + (bx + dx)];
+                cnt++;
+              }
+            }
+            const avg = sum / cnt;
+            for (let dy = 0; dy < B && by + dy < GH; dy++) {
+              for (let dx = 0; dx < B && bx + dx < GW; dx++) {
+                dem60[(by + dy) * GW + (bx + dx)] = avg;
+              }
+            }
+          }
+        }
+      }
+      buildDEM();
+
+      // Canvas offscreen para renderizar terreno + relevo sombreado + sombras ray-marched rápidas
+      const terrainCanvas = document.createElement('canvas');
+      terrainCanvas.width = GW;
+      terrainCanvas.height = GH;
+      const terrainCtx = terrainCanvas.getContext('2d');
+      const terrainImg = terrainCtx.createImageData(GW, GH);
+      const shadowGrid = new Float32Array(GW * GH);
+
+      // Azimute solar gira suavemente de N-NW (-118°) até W-SW (-220°) para que a sombra do Pico NW varra o atalho devagar
+      function getSunDir(t) {
+        const frac = t / DURATION;
+        const angleScreen = ((-118 - frac * 102) * Math.PI) / 180;
+        const azDeg = Math.round((332 - frac * 102 + 360) % 360);
+        return {
+          dx: Math.cos(angleScreen), // vetor em direção ao Sol
+          dy: Math.sin(angleScreen),
+          azDeg
+        };
+      }
+
+      // Calcula iluminação solar real por ray-marching sobre os relevos do DEM
+      function computeTerrainShadowsAndRender(sun, lightMode) {
+        const data = terrainImg.data;
+        const maxSteps = 54;
+        const diskHalf = 0.0046; // Meia-largura angular do disco solar (~0.53°/2)
+
+        for (let y = 0; y < GH; y++) {
+          for (let x = 0; x < GW; x++) {
+            const idx = y * GW + x;
+            const z0 = dem[idx];
+
+            // Gradiente local (normal do terreno para hillshade 3D dos relevos)
+            const zx1 = dem[y * GW + Math.min(GW - 1, x + 1)];
+            const zx0 = dem[y * GW + Math.max(0, x - 1)];
+            const zy1 = dem[Math.min(GH - 1, y + 1) * GW + x];
+            const zy0 = dem[Math.max(0, y - 1) * GW + x];
+            const dzdx = (zx1 - zx0) / (2 * CELL_M);
+            const dzdy = (zy1 - zy0) / (2 * CELL_M);
+
+            // Ray-marching real até o Sol
+            let maxBlockAngle = -1.0;
+            for (let s = 1; s <= maxSteps; s++) {
+              const sx = Math.round(x + sun.dx * s);
+              const sy = Math.round(y + sun.dy * s);
+              if (sx < 0 || sx >= GW || sy < 0 || sy >= GH) break;
+              const zs = dem[sy * GW + sx];
+              const slopeAngle = (zs - z0) / (s * CELL_M);
+              if (slopeAngle > maxBlockAngle) maxBlockAngle = slopeAngle;
+            }
+
+            // Visibilidade solar suave considerando disco solar de 0,53°
+            let lit = 1.0;
+            if (maxBlockAngle > TAN_SUN + diskHalf) {
+              lit = 0.0;
+            } else if (maxBlockAngle > TAN_SUN - diskHalf) {
+              lit = 1.0 - (maxBlockAngle - (TAN_SUN - diskHalf)) / (2 * diskHalf);
+            }
+            shadowGrid[idx] = lit;
+
+            // Hillshade para destacar visualmente o formato dos relevos (picos, cristas, crateras)
+            const nx = -dzdx, ny = -dzdy, nz = 1.0;
+            const nLen = Math.hypot(nx, ny, nz);
+            const dotSun = (nx * sun.dx + ny * sun.dy + nz * 0.25) / nLen;
+            const hill = Math.max(0, Math.min(1, 0.45 + dotSun * 0.65));
+
+            // Cor base por altitude + iluminação de sombra real
+            const altNorm = Math.max(0, Math.min(1, (z0 + 18) / 36));
+            const p = idx * 4;
+            if (lightMode) {
+              const baseR = 135 + altNorm * 65 + hill * 35;
+              const baseG = 145 + altNorm * 60 + hill * 32;
+              const baseB = 160 + altNorm * 52 + hill * 28;
+              const shade = 0.26 + 0.74 * lit;
+              data[p] = Math.min(255, Math.round(baseR * shade));
+              data[p + 1] = Math.min(255, Math.round(baseG * shade));
+              data[p + 2] = Math.min(255, Math.round(baseB * shade));
+              data[p + 3] = 255;
+            } else {
+              const baseR = 46 + altNorm * 52 + hill * 34;
+              const baseG = 56 + altNorm * 56 + hill * 34;
+              const baseB = 74 + altNorm * 60 + hill * 34;
+              const shade = 0.20 + 0.80 * lit;
+              data[p] = Math.min(255, Math.round(baseR * shade));
+              data[p + 1] = Math.min(255, Math.round(baseG * shade));
+              data[p + 2] = Math.min(255, Math.round(baseB * shade));
+              data[p + 3] = 255;
+            }
+          }
+        }
+        terrainCtx.putImageData(terrainImg, 0, 0);
+      }
+
+      // Rotas em coordenadas de tela (560 x 300)
+      const geo = {
+        start: { x: 64, y: 242 },
+        target: { x: 480, y: 64 },
+        shortcutPts: [
+          { x: 64, y: 242 },
+          { x: 148, y: 196 },
+          { x: 224, y: 160 }, // Microcrateras + sombra do Pico Noroeste!
+          { x: 356, y: 118 },
+          { x: 480, y: 64 }
+        ],
+        uncertainAlts: [
+          [{ x: 64, y: 242 }, { x: 112, y: 142 }, { x: 235, y: 95 }, { x: 365, y: 74 }, { x: 480, y: 64 }],
+          [{ x: 64, y: 242 }, { x: 185, y: 236 }, { x: 310, y: 185 }, { x: 425, y: 130 }, { x: 480, y: 64 }]
+        ],
+        safeBasePts: [
+          { x: 64, y: 242 },
+          { x: 155, y: 246 },
+          { x: 256, y: 240 },
+          { x: 352, y: 214 },
+          { x: 426, y: 164 },
+          { x: 462, y: 108 },
+          { x: 480, y: 64 }
+        ],
+        safeDetourPts: [
+          { x: 64, y: 242 },
+          { x: 155, y: 246 },
+          { x: 258, y: 244 },
+          { x: 368, y: 224 },
+          { x: 446, y: 176 },
+          { x: 472, y: 112 },
+          { x: 480, y: 64 }
+        ],
+        traps: [
+          { x: 224, y: 160, r: 15, label: 'Cratera 5m (21°)' },
+          { x: 284, y: 132, r: 13, label: 'Cratera 5m (19°)' },
+          { x: 192, y: 184, r: 12, label: 'Sombra Sub-px' }
+        ],
+        reliefLabels: [
+          { x: 168, y: 92, txt: '▲ Pico NW (+13,5 m)' },
+          { x: 344, y: 180, txt: '▲ Colina (+10,5 m)' },
+          { x: 215, y: 266, txt: '▲ Crista Segura (+15,5 m)' },
+          { x: 480, y: 40, txt: 'PSR (-32 m)' }
+        ]
+      };
+
+      function samplePolyline(pts, u) {
+        const c = Math.max(0, Math.min(1, u));
+        const lens = [];
+        let tot = 0;
+        for (let i = 0; i < pts.length - 1; i++) {
+          const l = Math.hypot(pts[i + 1].x - pts[i].x, pts[i + 1].y - pts[i].y);
+          lens.push(l);
+          tot += l;
+        }
+        let d = c * tot;
+        for (let i = 0; i < lens.length; i++) {
+          if (d <= lens[i] || i === lens.length - 1) {
+            const f = lens[i] > 0 ? d / lens[i] : 0;
+            return {
+              x: pts[i].x + (pts[i + 1].x - pts[i].x) * f,
+              y: pts[i].y + (pts[i + 1].y - pts[i].y) * f,
+              angle: Math.atan2(pts[i + 1].y - pts[i].y, pts[i + 1].x - pts[i].x)
+            };
+          }
+          d -= lens[i];
+        }
+        const last = pts[pts.length - 1];
+        return { x: last.x, y: last.y, angle: 0 };
+      }
+
+      // DOM refs
+      const canvasLeft = document.getElementById('canvasLeft');
+      const canvasRight = document.getElementById('canvasRight');
+      const ctxL = canvasLeft.getContext('2d');
+      const ctxR = canvasRight.getContext('2d');
+      const sunReadout = document.getElementById('sunReadout');
+      const btnPlayPause = document.getElementById('btnPlayPause');
+      const btnReset = document.getElementById('btnReset');
+      const btnXray = document.getElementById('btnXray');
+      const selectSpeed = document.getElementById('selectSpeed');
+      const timeScrubber = document.getElementById('timeScrubber');
+      const phaseLabel = document.getElementById('phaseLabel');
+
+      const leftStatusBadge = document.getElementById('leftStatusBadge');
+      const rightStatusBadge = document.getElementById('rightStatusBadge');
+      const leftTimeMetric = document.getElementById('leftTimeMetric');
+      const leftCpuMetric = document.getElementById('leftCpuMetric');
+      const leftCertMetric = document.getElementById('leftCertMetric');
+      const leftBattMetric = document.getElementById('leftBattMetric');
+      const rightTimeMetric = document.getElementById('rightTimeMetric');
+      const rightCpuMetric = document.getElementById('rightCpuMetric');
+      const rightCertMetric = document.getElementById('rightCertMetric');
+      const rightBattMetric = document.getElementById('rightBattMetric');
+      const narrativeTitle = document.getElementById('narrativeTitle');
+      const narrativeText = document.getElementById('narrativeText');
+
+      function drawSunCompass(ctx, sun, pal) {
+        const cx = 50, cy = 44, r = 20;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fillStyle = pal.badgeBg;
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(251, 191, 36, 0.5)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        // Posição do Sol no anel
+        const sx = cx + sun.dx * (r - 2);
+        const sy = cy + sun.dy * (r - 2);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(sx, sy);
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(sx, sy, 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fill();
+
+        ctx.font = '600 12px system-ui, sans-serif';
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillText(`☀ ${sun.azDeg}°`, cx + 26, cy + 4);
+        ctx.restore();
+      }
+
+      function drawRover(ctx, x, y, angle, color, label, pulse, pal) {
+        ctx.save();
+        ctx.translate(x, y);
+        if (pulse > 0) {
+          ctx.beginPath();
+          ctx.arc(0, 0, 15 + pulse * 10, 0, Math.PI * 2);
+          ctx.strokeStyle = color;
+          ctx.globalAlpha = 0.65 - pulse * 0.5;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+        ctx.rotate(angle);
+        ctx.fillStyle = '#475569';
+        for (const [wx, wy] of [[-9, -8], [4, -8], [-9, 5], [4, 5]]) {
+          ctx.fillRect(wx, wy, 5, 3);
+        }
+        ctx.fillStyle = '#f8fafc';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(-8, -5, 16, 10, 2.5);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(-4, -3, 7, 6);
+        ctx.restore();
+
+        ctx.save();
+        ctx.font = '600 12px system-ui, sans-serif';
+        const tw = ctx.measureText(label).width;
+        const bx = Math.min(Math.max(x - tw / 2 - 5, 6), CW - tw - 16);
+        const by = y > 48 ? y - 28 : y + 18;
+        ctx.fillStyle = pal.badgeBg;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.roundRect(bx, by, tw + 10, 19, 5); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = pal.text;
+        ctx.fillText(label, bx + 5, by + 13);
+        ctx.restore();
+      }
+
+      function drawSharedReliefLayer(ctx, sun, pal, isLeft) {
+        ctx.clearRect(0, 0, CW, CH);
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(terrainCanvas, 0, 0, CW, CH);
+
+        if (isLeft) {
+          // Grade de 60 m/px (24 px na tela = 6 células = 60 m)
+          const step = 24;
+          ctx.strokeStyle = 'rgba(248, 250, 252, 0.14)';
+          ctx.lineWidth = 1;
+          for (let gx = 0; gx <= CW; gx += step) {
+            ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, CH); ctx.stroke();
+          }
+          for (let gy = 0; gy <= CH; gy += step) {
+            ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(CW, gy); ctx.stroke();
+          }
+        }
+
+        // Borda da PSR
+        ctx.save();
+        ctx.beginPath();
+        ctx.ellipse(480, 64, 52, 40, -0.3, 0, Math.PI * 2);
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.6;
+        ctx.setLineDash([4, 3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+
+        // Rótulos dos relevos físicos para o usuário identificar a origem de cada sombra
+        ctx.save();
+        ctx.font = '600 12px system-ui, sans-serif';
+        for (const rl of geo.reliefLabels) {
+          const w = ctx.measureText(rl.txt).width;
+          const rx = Math.min(Math.max(rl.x - w / 2, 6), CW - w - 10);
+          ctx.fillStyle = pal.badgeBg;
+          ctx.beginPath(); ctx.roundRect(rx - 4, rl.y - 12, w + 8, 17, 4); ctx.fill();
+          ctx.fillStyle = rl.txt.includes('PSR') ? '#38bdf8' : pal.text;
+          ctx.fillText(rl.txt, rx, rl.y);
+        }
+        ctx.restore();
+
+        // Raio-X ou Lado Direito: revela microcrateras sub-resolução 5 m
+        if (state.xray || !isLeft) {
+          for (const tr of geo.traps) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(tr.x, tr.y, tr.r * 0.55, 0, Math.PI * 2);
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 1.4;
+            ctx.stroke();
+            if (state.xray) {
+              ctx.font = '600 12px system-ui, sans-serif';
+              ctx.fillStyle = '#fca5a5';
+              ctx.fillText(tr.label, tr.x - 36, tr.y - 12);
+            }
+            ctx.restore();
+          }
+        }
+
+        // Ponto de pouso inicial
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(geo.start.x, geo.start.y, 5.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#38bdf8';
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.restore();
+
+        drawSunCompass(ctx, sun, pal);
+      }
+
+      function renderLeft(t, sun, pal) {
+        drawSharedReliefLayer(ctxL, sun, pal, true);
+
+        // Rotas de incerteza piscantes
+        const alpha = 0.35 + 0.25 * Math.sin(t * 4);
+        for (const alt of geo.uncertainAlts) {
+          ctxL.save();
+          ctxL.beginPath();
+          ctxL.moveTo(alt[0].x, alt[0].y);
+          for (let i = 1; i < alt.length; i++) ctxL.lineTo(alt[i].x, alt[i].y);
+          ctxL.strokeStyle = `rgba(168, 85, 247, ${alpha})`;
+          ctxL.lineWidth = 1.8;
+          ctxL.setLineDash([6, 6]);
+          ctxL.stroke();
+          ctxL.restore();
+        }
+
+        // Atalho 60 m (falso positivo)
+        ctxL.save();
+        ctxL.beginPath();
+        ctxL.moveTo(geo.shortcutPts[0].x, geo.shortcutPts[0].y);
+        for (let i = 1; i < geo.shortcutPts.length; i++) ctxL.lineTo(geo.shortcutPts[i].x, geo.shortcutPts[i].y);
+        ctxL.strokeStyle = 'rgba(245, 158, 11, 0.24)';
+        ctxL.lineWidth = 16;
+        ctxL.lineCap = 'round';
+        ctxL.stroke();
+        ctxL.strokeStyle = '#f59e0b';
+        ctxL.lineWidth = 2.2;
+        ctxL.setLineDash([5, 4]);
+        ctxL.stroke();
+        ctxL.restore();
+
+        let u = 0, status = 'Tentando Ray-Tracing 5 m...', col = '#f59e0b', batt = 100, pulse = 0;
+        if (t < 6.0) {
+          u = 0;
+          pulse = (t * 1.1) % 1;
+          batt = 99;
+        } else if (t < 17.5) {
+          u = ((t - 6.0) / 11.5) * 0.45;
+          status = 'Atalho 60 m (cego a 5 m)';
+          batt = Math.round(99 - (t - 6.0) * 2.2);
+        } else {
+          u = 0.45 + Math.sin(t * 2) * 0.003;
+          status = 'TRAVADO: Sombra do Pico + Rampa >15°';
+          col = '#ef4444';
+          batt = Math.max(18, Math.round(74 - (t - 17.5) * 2.5));
+          pulse = (t * 1.6) % 1;
+        }
+
+        const pos = samplePolyline(geo.shortcutPts, u);
+
+        // Varredura lenta de ray-tracing tentando e falhando no RAD750
+        if (t < 6.0 || t >= 17.5) {
+          ctxL.save();
+          const a0 = (t * 0.9) % (Math.PI * 2);
+          for (let i = 0; i < 12; i++) {
+            const a = a0 + (i * Math.PI * 2) / 12;
+            ctxL.beginPath();
+            ctxL.moveTo(pos.x, pos.y);
+            ctxL.lineTo(pos.x + Math.cos(a) * 75, pos.y + Math.sin(a) * 75);
+            ctxL.strokeStyle = t >= 17.5 ? 'rgba(239,68,68,0.42)' : 'rgba(245,158,11,0.38)';
+            ctxL.lineWidth = 1.2;
+            ctxL.stroke();
+          }
+          const msg = t >= 17.5 ? '🛑 Ray-Tracing 5 m: ~4,8 h (RAD750 travado)' : '⏳ Tentando Ray-Tracing O(N³): 1.728× ops';
+          ctxL.font = '700 12px system-ui, sans-serif';
+          const mw = ctxL.measureText(msg).width;
+          const mx = Math.min(Math.max(pos.x - mw / 2, 10), CW - mw - 22);
+          const my = Math.min(pos.y + 24, CH - 30);
+          ctxL.fillStyle = pal.badgeBg;
+          ctxL.strokeStyle = col;
+          ctxL.beginPath(); ctxL.roundRect(mx, my, mw + 14, 22, 5); ctxL.fill(); ctxL.stroke();
+          ctxL.fillStyle = col;
+          ctxL.fillText(msg, mx + 7, my + 15);
+          ctxL.restore();
+        }
+
+        drawRover(ctxL, pos.x, pos.y, pos.angle, col, 'Rover A (Sem Tese)', pulse, pal);
+
+        leftStatusBadge.textContent = status;
+        leftBattMetric.textContent = `${batt}%`;
+        leftTimeMetric.textContent = t >= 17.5 ? '~4,8 h (Travado)' : (t < 6 ? 'O(N³) falhando...' : 'Sem 5 m local');
+        leftCpuMetric.textContent = (t < 6 || t >= 17.5) ? '100% · >32 GB' : 'Sem replan 5 m';
+        leftCertMetric.textContent = t >= 17.5 ? 'Falso Positivo 60m' : 'Incerta (60 m)';
+      }
+
+      function renderRight(t, sun, pal) {
+        drawSharedReliefLayer(ctxR, sun, pal, false);
+
+        const cPad = confParams[state.conf].pad;
+
+        // Halos de risco calibrado O(1) sobre microcrateras e encostas
+        for (const tr of geo.traps) {
+          const rad = tr.r + cPad * 0.6;
+          const rg = ctxR.createRadialGradient(tr.x, tr.y, 2, tr.x, tr.y, rad);
+          rg.addColorStop(0, 'rgba(239, 68, 68, 0.36)');
+          rg.addColorStop(1, 'rgba(239, 68, 68, 0)');
+          ctxR.fillStyle = rg;
+          ctxR.beginPath(); ctxR.arc(tr.x, tr.y, rad, 0, Math.PI * 2); ctxR.fill();
+        }
+
+        // Atalho rejeitado pela Tese
+        ctxR.save();
+        ctxR.beginPath();
+        ctxR.moveTo(geo.shortcutPts[0].x, geo.shortcutPts[0].y);
+        for (let i = 1; i < geo.shortcutPts.length; i++) ctxR.lineTo(geo.shortcutPts[i].x, geo.shortcutPts[i].y);
+        ctxR.strokeStyle = 'rgba(239, 68, 68, 0.45)';
+        ctxR.lineWidth = 1.6;
+        ctxR.setLineDash([4, 5]);
+        ctxR.stroke();
+        ctxR.restore();
+
+        // Trecho ShadowCam na entrada da PSR
+        ctxR.save();
+        ctxR.beginPath();
+        ctxR.moveTo(462, 108);
+        ctxR.lineTo(480, 64);
+        ctxR.strokeStyle = 'rgba(56, 189, 248, 0.65)';
+        ctxR.lineWidth = 10;
+        ctxR.lineCap = 'round';
+        ctxR.stroke();
+        ctxR.font = '600 12px system-ui, sans-serif';
+        ctxR.fillStyle = '#38bdf8';
+        ctxR.fillText('ShadowCam (~2 m/px)', 352, 96);
+        ctxR.restore();
+
+        // Troca instantânea O(1) em t >= 22s quando a sombra da Colina Leste gira
+        const useDetour = (state.conf === 'P99') || (t >= 22.0);
+        const route = useDetour ? geo.safeDetourPts : geo.safeBasePts;
+
+        ctxR.save();
+        ctxR.beginPath();
+        ctxR.moveTo(route[0].x, route[0].y);
+        for (let i = 1; i < route.length; i++) ctxR.lineTo(route[i].x, route[i].y);
+        ctxR.strokeStyle = 'rgba(16, 185, 129, 0.85)';
+        ctxR.lineWidth = 3;
+        ctxR.setLineDash([6, 4]);
+        ctxR.stroke();
+        ctxR.restore();
+
+        let u = 0, pulse = 0, status = `Cálculo O(1) (${state.conf})`, batt = 100;
+        if (t < 2.2) {
+          u = 0;
+          pulse = (t * 1.5) % 1;
+        } else if (t < 36.5) {
+          u = (t - 2.2) / 34.3;
+          batt = Math.round(100 - u * 15);
+          if (t >= 22.0 && t <= 26.0) {
+            pulse = ((t - 22.0) * 1.2) % 1;
+            status = 'Replan O(1) em 1 ms (Sombra da Colina)';
+          } else if (u > 0.8) {
+            status = 'Entrada PSR (ShadowCam OK)';
+          } else {
+            status = `Crista Iluminada (${state.conf})`;
+          }
+        } else {
+          u = 1;
+          batt = 85;
+          status = '✅ PSR Alcançada!';
+        }
+
+        const pos = samplePolyline(route, u);
+
+        if (t < 2.2 || (t >= 22.0 && t <= 25.5)) {
+          ctxR.save();
+          const msg = t < 2.2 ? '⚡ Tese O(1): 0,001 s · <5 MB RAM' : '⚡ Replan O(1) em 1 ms · Desviou da sombra!';
+          ctxR.font = '700 12px system-ui, sans-serif';
+          const mw = ctxR.measureText(msg).width;
+          const mx = Math.min(Math.max(pos.x - mw / 2, 10), CW - mw - 22);
+          const my = Math.max(pos.y - 52, 54);
+          ctxR.fillStyle = pal.badgeBg;
+          ctxR.strokeStyle = '#10b981';
+          ctxR.beginPath(); ctxR.roundRect(mx, my, mw + 14, 22, 5); ctxR.fill(); ctxR.stroke();
+          ctxR.fillStyle = '#10b981';
+          ctxR.fillText(msg, mx + 7, my + 15);
+          ctxR.restore();
+        }
+
+        drawRover(ctxR, pos.x, pos.y, pos.angle, '#10b981', 'Rover B (Com Tese)', pulse, pal);
+
+        rightStatusBadge.textContent = status;
+        rightBattMetric.textContent = `${batt}%`;
+        rightTimeMetric.textContent = '0,001 s (1 ms)';
+        rightCpuMetric.textContent = '1,4% · 3,8 MB';
+        rightCertMetric.textContent = `${confParams[state.conf].cert} (${state.conf})`;
+      }
+
+      function updateNarrative(t) {
+        if (t < 6.0) {
+          narrativeTitle.textContent = 'Fase 1 (0–6 s) — Escolha de Rota:';
+          narrativeText.textContent =
+            'Observe o Sol a 1,54° iluminando os picos e projetando sombras no mapa. À esquerda, o ray-tracing 5 m trava o RAD750 e o mapa de 60 m esconde as microcrateras; à direita, a tese avalia tudo em 1 ms e escolhe a Crista Segura (+15,5 m).';
+        } else if (t < 17.5) {
+          narrativeTitle.textContent = 'Fase 2 (6–17,5 s) — Sombra do Pico NW Varre o Atalho:';
+          narrativeText.textContent =
+            'Conforme o Sol gira devagar para Oeste, a sombra real do Pico NW (+13,5 m) avança lentamente sobre o atalho central e encontra as microcrateras de 5 m (19°–21°), prendendo o Rover A. O Rover B segue iluminado na crista elevada.';
+        } else if (t < 28.0) {
+          narrativeTitle.textContent = 'Fase 3 (17,5–28 s) — Gargalo O(N³) vs. Replanejamento O(1):';
+          narrativeText.textContent =
+            'Preso na sombra e inclinação >15°, o Rover A trava tentando recalcular ray-tracing a bordo (~4,8 h). Enquanto isso, a sombra da Colina (+10,5 m) gira para o caminho adiante — e o Rover B replaneja a rota em 0,001 s sem parar.';
+        } else {
+          narrativeTitle.textContent = 'Fase 4 (28–40 s) — Chegada Segura à PSR com ShadowCam:';
+          narrativeText.textContent =
+            'Enquanto o Rover A permanece bloqueado na zona de incerteza com bateria caindo, o Rover B conclui a travessia com 85% de bateria e entra na PSR (-32 m) pelo corredor auditado via ShadowCam (~2 m/px).';
+        }
+      }
+
+      function render() {
+        const light = document.documentElement.classList.contains('light');
+        const pal = {
+          light,
+          text: light ? '#0f172a' : '#f1f5f9',
+          badgeBg: light ? 'rgba(255,255,255,0.90)' : 'rgba(15, 23, 42, 0.88)'
+        };
+        const sun = getSunDir(state.t);
+        sunReadout.textContent = `☀ Az ${sun.azDeg}° · Elev 1,54°`;
+
+        computeTerrainShadowsAndRender(sun, light);
+        renderLeft(state.t, sun, pal);
+        renderRight(state.t, sun, pal);
+        updateNarrative(state.t);
+
+        timeScrubber.value = state.t.toFixed(2);
+        phaseLabel.textContent = `t = ${state.t.toFixed(1).replace('.', ',')} s / 40,0 s`;
+      }
+
+      function tick(ts) {
+        if (state.lastTs === null) state.lastTs = ts;
+        const dt = (ts - state.lastTs) / 1000;
+        state.lastTs = ts;
+        if (state.playing) {
+          state.t = (state.t + dt * state.speed) % DURATION;
+        }
+        render();
+        requestAnimationFrame(tick);
+      }
+
+      btnPlayPause.addEventListener('click', () => {
+        state.playing = !state.playing;
+        btnPlayPause.textContent = state.playing ? '⏸ Pausar' : '▶ Executar';
+      });
+
+      btnReset.addEventListener('click', () => {
+        state.t = 0;
+        state.playing = true;
+        btnPlayPause.textContent = '⏸ Pausar';
+        render();
+      });
+
+      btnXray.addEventListener('click', () => {
+        state.xray = !state.xray;
+        btnXray.textContent = state.xray ? '🔍 Raio-X 5 m: ON' : '🔍 Raio-X 5 m: OFF';
+        btnXray.classList.toggle('bg-[var(--primary)]', state.xray);
+        btnXray.classList.toggle('text-[var(--primary-foreground)]', state.xray);
+        btnXray.classList.toggle('bg-[var(--secondary)]', !state.xray);
+        btnXray.classList.toggle('text-[var(--secondary-foreground)]', !state.xray);
+        render();
+      });
+
+      document.querySelectorAll('.conf-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.conf = btn.dataset.conf;
+          document.querySelectorAll('.conf-btn').forEach(b => {
+            const active = b.dataset.conf === state.conf;
+            b.classList.toggle('bg-[var(--primary)]', active);
+            b.classList.toggle('text-[var(--primary-foreground)]', active);
+            b.classList.toggle('bg-[var(--secondary)]', !active);
+            b.classList.toggle('text-[var(--secondary-foreground)]', !active);
+          });
+          render();
+        });
+      });
+
+      selectSpeed.addEventListener('change', (e) => {
+        state.speed = parseFloat(e.target.value);
+      });
+
+      timeScrubber.addEventListener('input', (e) => {
+        state.playing = false;
+        btnPlayPause.textContent = '▶ Executar';
+        state.t = parseFloat(e.target.value);
+        render();
+      });
+
+      document.querySelectorAll('.jump-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.t = parseFloat(btn.dataset.jump);
+          render();
+        });
+      });
+
+      requestAnimationFrame(tick);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+56th LPSC (2025)                                            1025.pdf
+
+CHANDRAYAAN 3 AND PRAGYAN ROVER: TRAVERSE ANALYSIS. P. J. Stooke1, 1Institute for Earth
+and Space Exploration, University of Western Ontario, London, Ontario, Canada N6A 5B7, pjstooke@uwo.ca.
+
+    Introduction: India's first successful lunar            southeast towards the north rim of South Crater. It
+landing mission, Chandrayaan 3, placed its lander           returned by an offset path to test traction and imaged
+Vikram on the Moon 20° from the south pole on 23            these tracks, also viewing crater A. The ISRO map
+August 2023. It released its rover Pragyan which spent      represents these new tracks as the first set of tracks and
+11 days driving around the landing site. ISRO released      rotates the two excursions counterclockwise. Then
+a traverse map soon after the end of the lunar day.         Pragyan moved back to the lander, passed it and
+Several other maps of Pragyan's drive have been             headed towards West Crater. Images along that route
+published, but they do not agree with each other or the     are difficult to relate to OHRC images and the map is
+ISRO map in many details. This poster presents results      still uncertain in that area.
+of a new analysis which attempted to match surface
+images with orbital data. Although gaps remain, many            West Crater activities: Pragyan drove to and
+areas can now be mapped more confidently.                   around a 2 m diameter crater (crater B in Fig. 2). This
+                                                            crater and two smaller craters to its west are seen in
+    Data: This study uses Pragyan images released by        several surface images and in OHRC images,
+ISRO, images taken by the lander's camera, and              unambiguously locating the craters and the drives
+Chandrayaan 2 OHRC images of the landing site,              around them. The ISRO map had the rover drive
+currently the highest resolution available (c. 20-25        almost on the rim of crater B but surface images show
+cm/pixel). I acknowledge and thank ISRO for making          Pragyan looping about 4 m further west before it
+this material available via the Indian Space Science        returned to the crater on 31 August. On 1 September
+Data Centre (https://www.issdc.gov.in/). The lander         Pragyan drove around Crater B to approach the rim of
+apparently carried 4 cameras to provide a panoramic         a larger crater overlapped by West Crater, and viewed
+view of the landing site, which appear not to have          its interior. Finally it moved northeast along the rim of
+worked, but a camera monitoring rover deployment did        the larger crater and found a safe parking place,
+function during the surface mission.                        positioned to allow morning operations on the next
+                                                            lunar day if it survived the long night. LIBS and APXS
+    Previous maps: All released maps [1-5] share a          were operated at almost every stop along the traverse.
+common form. The rover moved south from the lander
+and maneuvered in the vicinity of South Crater (Figure          Comparison of this new mapping with maps by the
+1), then drove west to a point south of West Crater.        APXS team [2, 3] suggests that the APXS maps are
+The crater designations are from [5]. There it moved        more accurate than the original ISRO map. The map in
+west, north and northeast to approach a crater rim,         [5] is very distorted.
+retraced its steps and then drove north to its final
+parking place. The final position is unambiguously              This study of Pragyan images also made a horizon
+revealed by OHRC and LRO images. The ISRO map               panorama possible. Images were taken for drive
+and others published by Vadawale [2, 3], Vijayan [4]        planning, not horizon mapping, but about 75% of the
+and Ghosh [5] show these drive segments but differ in       horizon was observed. A synthetic panorama from
+details. The activities near South Crater are revealed in   ACT Quickmap was used to position the visible
+rover images of the tracks and small craters, and           sections of the panorama. This will be illustrated in the
+suggest an error in the ISRO map. Activities near           poster.
+West Crater can be positioned relative to small craters
+visible in OHRC images. The maps by the APXS team               Acknowledgments: All data used here were made
+are revealed to be more accurate than the initial ISRO      available by ISRO.
+map.
+                                                                References: [1] ISRO map,
+    South Crater activities: Pragyan drove south off        https://x.com/isro/status/1697881823391711684
+the lander and stopped to charge its battery, then          [2] Vadawale, S., ASET talk, Tata Institute, 19
+moved further south on 25 August. It took images            October 2023. [3] Vadawale, S. et al., 2024. Nature,
+facing south and east, and the east-facing images show      https://doi.org/10.1038/s41586-024-07870-7 .
+a crater about 1 m across (crater A in Fig. 3) on the rim   [4] Vijayan, S. et al., 2024. Icarus,
+of the 9 m diameter South Crater. The small crater can      https://doi.org/10.1016/j.icarus.2024.116329. [5]
+only appear in an east-facing image if the rover is to its  Ghosh, R. et al., 2024. Int. Conf. Space Robotics.
+west, but the ISRO map shows the rover east of that
+small crater. Pragyan moved back north and then drove           Figure captions: Fig. 1: several versions of the
+                                                            Pragyan route map. Fig. 2: activities near West Crater.
+                                                            Fig. 3: activities near South Crater.
+56th LPSC (2025)  1025.pdf
+

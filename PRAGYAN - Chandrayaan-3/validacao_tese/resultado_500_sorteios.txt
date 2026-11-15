@@ -1,0 +1,6 @@
+grade_3m  plano achado 500/500 | entra em perigo REAL 497/500 (99%) | comprimento mediana 18.8 m (IQR 18.8–18.8) | 1º perigo a mediana 11.1 m do início
+tese_P90  plano achado 500/500 | entra em perigo REAL 30/500 (6%) | comprimento mediana 21.9 m (IQR 21.7–22.2) | 1º perigo a mediana 13.4 m do início
+verdade   plano achado 500/500 | entra em perigo REAL 0/500 (0%) | comprimento mediana 21.9 m (IQR 21.7–22.1)
+detecção por cratera: cratera de 4 m (27/08, ISRO) 100%, South Crater (9 m) 100%, cratera A (1 m) 81%, depressão O1 90%, depressão O2 92%
+cratera de 4 m detectada no mapa da tese (≥1 célula medida nela): 100% dos sorteios
+declive máx. na cratera de 4 m: real 46° | grade 3 m 4.8° | tese+margem 52° (medianas)

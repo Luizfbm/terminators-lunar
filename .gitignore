@@ -1,0 +1,23 @@
+# Datasets brutos / GeoTIFFs pesados (NASA PGDA / LOLA / LROC / SfS)
+dados/
+lroc_nac/
+Enhanced Topography Models for selected Lunar South Pole regions with Shape-from-Shading/
+*.tif
+*.tiff
+*.img
+*.lbl
+*.zip
+
+# Repositório aninhado separado
+repo_lunar_navigator/
+
+# Python / Caches / Arquivos temporários do Office e SO
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+~$*.xlsx
+~$*.docx
+.DS_Store
+Thumbs.db

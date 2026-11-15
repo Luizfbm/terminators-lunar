@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Validação Pragyan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE work: um caderno de operações de rover, preciso e calmo
+   IDEA a prancha de travessia do LPSC (mapa de campo com grade em metros) que roda o planejamento ao vivo
+   PICTURE o mapa do setor da South Crater: relevo, crateras, trilha real do Pragyan e os três planos andando
+   COLOUR regolito cinza como chão, tinta quase preta; vermelho = plano grosso, verde = tese, azul = relevo real, violeta = Pragyan
+   TYPE Space Grotesk (títulos e números) + Inter (texto)
+   LAYOUT mapa grande à esquerda, placar e controles à direita; no celular: título, mapa, placar, controles */
+:root{color-scheme:light dark;--bg:light-dark(#f4f3f0,#121316);--card:light-dark(#ffffff,#1b1d22);--ink:light-dark(#16171a,#eceae4);--mut:light-dark(#5d5f66,#a3a5ad);--line:light-dark(#dddbd5,#2c2f36);--red:#dc2626;--grn:#059669;--blu:#2563eb;--vio:#7c3aed;--amb:#b45309}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,h2,.num{font-family:"Space Grotesk",Inter,sans-serif}
+h1{font-size:clamp(28px,3.4vw,44px);line-height:1.05;letter-spacing:-.02em;margin:0 0 8px;text-wrap:balance}
+h2{font-size:22px;margin:0 0 8px}
+.band{padding:clamp(20px,3vw,40px) max(4vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+.lead{color:var(--mut);max-width:70ch;margin:0}
+.grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:20px;margin-top:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.fig{position:relative;aspect-ratio:22/24;width:100%}
+.fig canvas{position:absolute;inset:0;width:100%;height:100%;border-radius:8px}
+.leg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;margin-top:10px;color:var(--mut)}
+.leg i{display:inline-block;width:18px;height:4px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.score{display:grid;gap:12px}
+.row{display:grid;grid-template-columns:150px minmax(0,1fr) 64px;align-items:center;gap:10px;font-size:15px}
+.bar{height:14px;background:var(--line);border-radius:7px;overflow:hidden}
+.bar b{display:block;height:100%;border-radius:7px;transition:width .3s}
+.val{text-align:right;font-family:"Space Grotesk",sans-serif;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.big{font-size:clamp(30px,4vw,44px);font-weight:700;line-height:1}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(8.5em,1fr));gap:12px;margin:6px 0 4px}
+.kpis div{border-top:3px solid var(--line);padding-top:6px}
+.kpis small{display:block;color:var(--mut);font-size:13px}
+.ctr{display:grid;gap:14px;margin-top:16px}
+label{font-size:14px;font-weight:600;display:flex;justify-content:space-between;gap:8px}
+label span{color:var(--mut);font-weight:400;white-space:nowrap}
+input[type=range]{width:100%;height:32px;accent-color:var(--grn)}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+button,select{font:600 15px Inter,sans-serif;min-height:44px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button.pri{background:var(--grn);border-color:var(--grn);color:#fff}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--blu);outline-offset:2px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{min-height:38px;font-size:14px}
+.seg button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.note{font-size:14px;color:var(--mut);margin-top:10px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:20px}
+.cols p,.cols li{font-size:15.5px}
+.cols ul{padding-left:18px;margin:6px 0}
+a{color:var(--blu)}
+@media(max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}.row{grid-template-columns:120px minmax(0,1fr) 56px}}
+</style>
+</head>
+<body>
+<section class="band"><div class="wrap">
+  <h1>Pragyan, 27/08/2023: o plano no mapa grosso repete o desvio real; o plano com a tese o evita</h1>
+  <p class="lead">Setor da South Crater do Chandrayaan-3, na mesma razão 12:1 da tese (grade de 3 m → 25 cm, como 60 m → 5 m). Cada sorteio monta o relevo, mede 7,29% das células e planeja do ponto de 23–24/08 para o sul com o mesmo planejador nos três mapas.</p>
+
+  <div class="grid">
+    <div class="card">
+      <div class="fig"><canvas id="cv" aria-label="Mapa do setor da South Crater com a trilha real do Pragyan e os três planos"></canvas></div>
+      <div class="leg">
+        <span><i style="background:var(--red)"></i>Plano na grade de 3 m</span>
+        <span><i style="background:var(--grn)"></i>Plano com a tese (P90)</span>
+        <span><i style="background:var(--blu)"></i>Plano com o relevo real</span>
+        <span><i style="background:var(--vio)"></i>Trilha real do Pragyan (ida e volta)</span>
+        <span><i style="background:var(--amb)"></i>Crateras digitalizadas</span>
+      </div>
+      <div class="seg" id="fundo" style="margin-top:12px" role="group" aria-label="Fundo do mapa">
+        <button class="on" data-f="real">Fundo: relevo real</button>
+        <button data-f="grade">O que a grade de 3 m vê</button>
+        <button data-f="tese">O que a tese vê</button>
+        <button data-f="med">Células medidas</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Placar do Monte Carlo</h2>
+      <div class="kpis">
+        <div><span class="big num" id="kN">0</span><small>sorteios</small></div>
+        <div><span class="big num" id="kG" style="color:var(--red)">—</span><small>plano grosso cai</small></div>
+        <div><span class="big num" id="kT" style="color:var(--grn)">—</span><small>plano da tese cai</small></div>
+      </div>
+      <div class="score" style="margin-top:12px">
+        <div class="row"><span>Grade 3 m entra em perigo</span><div class="bar"><b id="bG" style="width:0;background:var(--red)"></b></div><span class="val" id="vG">—</span></div>
+        <div class="row"><span>Tese entra em perigo</span><div class="bar"><b id="bT" style="width:0;background:var(--grn)"></b></div><span class="val" id="vT">—</span></div>
+        <div class="row"><span>Relevo real (referência)</span><div class="bar"><b id="bV" style="width:0;background:var(--blu)"></b></div><span class="val" id="vV">—</span></div>
+      </div>
+      <p class="note" id="comp">Comprimentos medianos aparecem aqui depois dos sorteios.</p>
+
+      <div class="ctr">
+        <label for="fr">Células medidas <span id="frV">7,29%</span></label>
+        <input type="range" id="fr" min="1" max="15" step="0.01" value="7.29">
+        <label for="dd">Profundidade das crateras (d/D) <span id="ddV">sorteada 0,10–0,20</span></label>
+        <input type="range" id="dd" min="0" max="20" step="1" value="0">
+        <div><label>Confiança da tese</label>
+          <div class="seg" id="conf" style="margin-top:6px"><button data-z="0">P50</button><button class="on" data-z="1.28">P90</button><button data-z="2.33">P99</button></div></div>
+        <div class="btns">
+          <button class="pri" id="bMC">Rodar 200 sorteios</button>
+          <button id="bUm">Novo sorteio</button>
+          <button id="bAni">Animar os rovers</button>
+          <button id="bZer">Zerar placar</button>
+        </div>
+        <p class="note" id="st">Mostrando o sorteio 1. Ao mudar um controle, o placar recomeça.</p>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="band" style="padding-top:0"><div class="wrap cols">
+  <div class="card"><h2>O que aconteceu de verdade</h2>
+    <p>Em 27/08/2023 o Pragyan seguia para o sul e encontrou uma cratera de 4 m de diâmetro 3 m à frente. Foi comandado a refazer o caminho e seguiu por outra rota (post da ISRO). A trilha e as paradas vêm da reanálise de Stooke (LPSC 2025, #1025, Fig. 3), que corrigiu o mapa oficial. Nessa ida e volta o rover percorreu cerca de 12,3 m à toa.</p>
+    <p>No mapa, o traço violeta é essa trilha; o ponto violeta é de onde ele viu a cratera.</p></div>
+  <div class="card"><h2>Como o teste funciona</h2>
+    <ul>
+      <li><b>Grade de 3 m:</b> média por blocos de 3 m, como um mapa orbital grosso. A cratera de 4 m quase desaparece (declive de ~5°).</li>
+      <li><b>Tese:</b> mesmas regras do simulador. Uma cratera entra no mapa se ao menos uma célula medida cair nela; as demais células são interpoladas com uma folga de segurança.</li>
+      <li><b>Relevo real:</b> o relevo do próprio sorteio, como referência do melhor caminho possível.</li>
+      <li>Os três usam o mesmo planejador de custo mínimo (limite de 15°). Depois, cada caminho é percorrido no relevo real para ver se cai.</li>
+    </ul></div>
+  <div class="card"><h2>Limites</h2>
+    <ul>
+      <li>A posição da cratera de 4 m é inferida (fim do ramo sul + depressão no fundo OHRC da Fig. 3), com incerteza de ±1 m sorteada.</li>
+      <li>O relevo das crateras é um modelo morfológico (d/D 0,10–0,20), não um DEM medido.</li>
+      <li>O ganho vem dos pontos medidos, não da margem: P50, P90 e P99 dão o mesmo resultado aqui; com 1% de células medidas a tese falha muito mais.</li>
+      <li>O local fica a 69,37°S, sem sombras longas: valida a parte de relevo da tese, não a de sombras.</li>
+    </ul>
+    <p class="note">Fontes: <a href="https://www.hou.usra.edu/meetings/lpsc2025/pdf/1025.pdf">Stooke, LPSC 2025 #1025</a> · <a href="https://x.com/isro/status/1697881823391711684">ISRO, 28/08/2023</a></p></div>
+</div></section>
+
+<script>
+{
+/*<<PRAG*/
+const PRAG = (() => {
+  const CEL = 0.25, BLOCO = 12, X0 = -8, X1 = 14, Y0 = -24, Y1 = 0, LIM = 15;
+  const NX = Math.round((X1 - X0) / CEL), NY = Math.round((Y1 - Y0) / CEL), N = NX * NY;
+  const INICIO = [0, -3.9], META = [0.8, -22.5];
+  const TRILHA = [[0, -3.2], [0, -3.9], [-0.12, -6.19], [0.1, -7.8], [0.72, -9.9], [0.77, -12.25]];
+  const BASE = [ // x, y, diâmetro, incerteza (m), nome
+    [0.8, -16.9, 4.0, 1.0, 'cratera de 4 m'], [8.0, -14.0, 9.0, 0.7, 'South Crater'], [3.6, -11.2, 1.0, 0.3, 'cratera A'],
+    [-1.9, -13.6, 1.2, 0.5, 'depressão O1'], [-2.3, -16.8, 1.2, 0.5, 'depressão O2']];
+  const xc = (j) => X0 + (j + 0.5) * CEL, yc = (i) => Y0 + (i + 0.5) * CEL;
+  const cel = (p) => [Math.floor((p[1] - Y0) / CEL), Math.floor((p[0] - X0) / CEL)];
+  function rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  const normal = (r) => Math.sqrt(-2 * Math.log(r() || 1e-12)) * Math.cos(2 * Math.PI * r());
+  function declive(z, p) {
+    const s = new Float32Array(N);
+    for (let i = 0; i < NY; i++) for (let j = 0; j < NX; j++) {
+      const ja = Math.max(0, j - p), jb = Math.min(NX - 1, j + p), ia = Math.max(0, i - p), ib = Math.min(NY - 1, i + p);
+      const gx = (z[i * NX + jb] - z[i * NX + ja]) / ((jb - ja) * CEL), gy = (z[ib * NX + j] - z[ia * NX + j]) / ((ib - ia) * CEL);
+      s[i * NX + j] = Math.atan(Math.hypot(gx, gy)) * 180 / Math.PI;
+    }
+    return s;
+  }
+  function grosso(z) {
+    const nbx = Math.ceil(NX / BLOCO), nby = Math.ceil(NY / BLOCO), med = new Float32Array(nbx * nby), out = new Float32Array(N);
+    for (let by = 0; by < nby; by++) for (let bx = 0; bx < nbx; bx++) {
+      let sm = 0, n = 0;
+      for (let i = by * BLOCO; i < Math.min(NY, (by + 1) * BLOCO); i++) for (let j = bx * BLOCO; j < Math.min(NX, (bx + 1) * BLOCO); j++) { sm += z[i * NX + j]; n++; }
+      med[by * nbx + bx] = sm / n;
+    }
+    for (let i = 0; i < NY; i++) for (let j = 0; j < NX; j++) {
+      const fx = Math.min(nbx - 1, Math.max(0, (j + 0.5) / BLOCO - 0.5)), fy = Math.min(nby - 1, Math.max(0, (i + 0.5) / BLOCO - 0.5));
+      const x0 = Math.floor(fx), y0 = Math.floor(fy), x1 = Math.min(nbx - 1, x0 + 1), y1 = Math.min(nby - 1, y0 + 1), tx = fx - x0, ty = fy - y0;
+      const a = med[y0 * nbx + x0] * (1 - tx) + med[y0 * nbx + x1] * tx, b = med[y1 * nbx + x0] * (1 - tx) + med[y1 * nbx + x1] * tx;
+      out[i * NX + j] = a * (1 - ty) + b * ty;
+    }
+    return out;
+  }
+  const perfil = (c, d) => d < 1 ? -c.prof * (1 - d * d) : d < 1.8 ? 0.04 * c.D * Math.exp(-(((d - 1.15) / 0.3) ** 2)) : 0;
+  /** Caminho de custo mínimo (8 vizinhos, heap binário); custo = comprimento × (1 + 2·declive/limite). Mesma função nos três mapas. */
+  function dijkstra(custo, bloq) {
+    const [si, sj] = cel(INICIO), [gi, gj] = cel(META), s0 = si * NX + sj, g0 = gi * NX + gj;
+    const dist = new Float64Array(N).fill(Infinity), prev = new Int32Array(N).fill(-1), H = [];
+    const push = (d, v) => { H.push([d, v]); let k = H.length - 1; while (k) { const p = (k - 1) >> 1; if (H[p][0] <= H[k][0]) break; [H[p], H[k]] = [H[k], H[p]]; k = p; } };
+    const pop = () => { const t = H[0], l = H.pop(); if (H.length) { H[0] = l; let k = 0; for (;;) { const a = 2 * k + 1, b = a + 1; let m = k; if (a < H.length && H[a][0] < H[m][0]) m = a; if (b < H.length && H[b][0] < H[m][0]) m = b; if (m === k) break; [H[m], H[k]] = [H[k], H[m]]; k = m; } } return t; };
+    dist[s0] = 0; push(0, s0);
+    while (H.length) {
+      const [d, v] = pop(); if (d > dist[v]) continue; if (v === g0) break;
+      const i = (v / NX) | 0, j = v % NX;
+      for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) {
+        if (!di && !dj) continue; const a = i + di, b = j + dj; if (a < 0 || b < 0 || a >= NY || b >= NX) continue;
+        const u = a * NX + b; if (bloq[u] && u !== g0) continue;
+        const nd = d + CEL * Math.hypot(di, dj) * (1 + 2 * custo[u] / LIM);
+        if (nd < dist[u]) { dist[u] = nd; prev[u] = v; push(nd, u); }
+      }
+    }
+    if (!isFinite(dist[g0])) return null;
+    const cam = [g0]; while (cam[cam.length - 1] !== s0) cam.push(prev[cam[cam.length - 1]]);
+    return cam.reverse();
+  }
+  function avaliar(cam, sReal, nogo) {
+    let comp = 0, ate = null, idx = null;
+    for (let k = 1; k < cam.length; k++) {
+      const a = cam[k - 1], b = cam[k]; comp += CEL * Math.hypot(((a / NX) | 0) - ((b / NX) | 0), (a % NX) - (b % NX));
+      if (ate === null && (sReal[b] > LIM || nogo[b])) { ate = comp; idx = k; }
+    }
+    return { comp, ate, idx };
+  }
+  /** Um sorteio completo. op: { semente, frac (0–1), z (margem), dD (null = sorteado em [0,10; 0,20]) } */
+  function sortear(op) {
+    const r = rng(op.semente), crs = BASE.map(([x, y, D, inc, nome]) => ({ x: x + normal(r) * inc / 2, y: y + normal(r) * inc / 2, D, nome, prof: (op.dD ?? (0.10 + r() * 0.10)) * D }));
+    const z = new Float32Array(N), nogo = new Uint8Array(N), med = new Uint8Array(N), ph1 = r() * 6, ph2 = r() * 6, ph3 = r() * 6, ph4 = r() * 6;
+    for (let i = 0; i < NY; i++) for (let j = 0; j < NX; j++) {
+      const x = xc(j), y = yc(i), k = i * NX + j; let h = 0.02 * Math.sin(x * 0.9 + ph1) * Math.cos(y * 0.7 + ph2);
+      for (const c of crs) { const d = Math.hypot(x - c.x, y - c.y) / (c.D / 2); h += perfil(c, d); if (d < 1) nogo[k] = 1; }
+      z[k] = h; med[k] = r() < op.frac ? 1 : 0;
+    }
+    const sReal = declive(z, 1), zg = grosso(z), sG = declive(zg, BLOCO);
+    const delta = new Float32Array(N), nogoT = new Uint8Array(N), det = [];
+    for (const c of crs) {
+      const rr = c.D / 2; let tiros = 0;
+      for (let k = 0; k < N; k++) if (med[k] && Math.hypot(xc(k % NX) - c.x, yc((k / NX) | 0) - c.y) <= 1.35 * rr) tiros++;
+      det.push(tiros > 0); if (!tiros) continue;
+      const kk = Math.min(1, Math.max(0.75, 0.68 + 0.12 * tiros));
+      for (let k = 0; k < N; k++) { const d = Math.hypot(xc(k % NX) - c.x, yc((k / NX) | 0) - c.y) / rr; if (d < 1.8) delta[k] += kk * perfil(c, d); if (d < 1) nogoT[k] = 1; }
+    }
+    const zt = new Float32Array(N);
+    for (let k = 0; k < N; k++) zt[k] = med[k] ? z[k] : zg[k] + delta[k] + 0.01 * Math.sin(xc(k % NX) * 0.6 + ph3) * Math.cos(yc((k / NX) | 0) * 0.5 + ph4);
+    const sT = declive(zt, 1), sTm = new Float32Array(N);
+    for (let k = 0; k < N; k++) sTm[k] = sT[k] + 1 + op.z * (med[k] ? 0.8 : 2.0);
+    const bl = (f) => { const b = new Uint8Array(N); for (let k = 0; k < N; k++) b[k] = f(k) ? 1 : 0; return b; };
+    const planos = {
+      grade: dijkstra(sG, bl((k) => sG[k] > LIM)),
+      tese: dijkstra(sT, bl((k) => sTm[k] > LIM || nogoT[k])),
+      real: dijkstra(sReal, bl((k) => sReal[k] > LIM || nogo[k])),
+    };
+    const av = {}; for (const k in planos) av[k] = planos[k] ? avaliar(planos[k], sReal, nogo) : null;
+    return { crs, z, sReal, sG, sTm, med, planos, av, det };
+  }
+  return { sortear, NX, NY, CEL, X0, X1, Y0, Y1, LIM, INICIO, META, TRILHA };
+})();
+/*PRAG>>*/
+
+const $ = (id) => document.getElementById(id), P = PRAG;
+const op = { semente: 1, frac: 0.0729, z: 1.28, dD: null };
+let atual = null, fundo = 'real', anim = null, placar = [];
+const cv = $('cv'), ctx = cv.getContext('2d');
+const sonda = document.createElement('i'); sonda.style.display = 'none'; document.body.appendChild(sonda);
+const cor = (n) => { sonda.style.color = `var(${n})`; return getComputedStyle(sonda).color; };   // resolve light-dark() para o canvas
+/** Texto com contorno da cor do fundo, para ficar legível sobre o mapa. */
+function txt(t, x, y, c) { ctx.lineWidth = 4; ctx.strokeStyle = cor('--card'); ctx.strokeText(t, x, y); ctx.fillStyle = c; ctx.fillText(t, x, y); }
+
+function desenhar(t) {
+  const W = cv.clientWidth, H = cv.clientHeight, dpr = window.devicePixelRatio || 1;
+  if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const sx = W / (P.X1 - P.X0), sy = H / (P.Y1 - P.Y0), X = (x) => (x - P.X0) * sx, Y = (y) => (P.Y1 - y) * sy;
+  const a = atual, img = ctx.createImageData(P.NX, P.NY), escuro = matchMedia('(prefers-color-scheme: dark)').matches && document.documentElement.dataset.theme !== 'light' || document.documentElement.dataset.theme === 'dark';
+  for (let i = 0; i < P.NY; i++) for (let j = 0; j < P.NX; j++) {
+    const k = i * P.NX + j, o = ((P.NY - 1 - i) * P.NX + j) * 4;
+    let v = fundo === 'grade' ? a.sG[k] : fundo === 'tese' ? a.sTm[k] - 3.56 : a.sReal[k];
+    v = Math.max(0, Math.min(1, v / 40)); let g = escuro ? 52 + v * 150 : 236 - v * 190;
+    if (fundo === 'med' && a.med[k]) g = escuro ? 230 : 30;
+    const perig = fundo !== 'med' && (fundo === 'grade' ? a.sG[k] > P.LIM : fundo === 'tese' ? a.sTm[k] > P.LIM : a.sReal[k] > P.LIM);
+    img.data[o] = perig ? Math.min(255, g + 40) : g; img.data[o + 1] = perig ? g * 0.75 : g; img.data[o + 2] = perig ? g * 0.7 : g; img.data[o + 3] = 255;
+  }
+  const off = document.createElement('canvas'); off.width = P.NX; off.height = P.NY; off.getContext('2d').putImageData(img, 0, 0);
+  ctx.imageSmoothingEnabled = false; ctx.drawImage(off, 0, 0, W, H);
+  // grade de 5 m
+  ctx.strokeStyle = escuro ? 'rgba(255,255,255,.10)' : 'rgba(0,0,0,.10)'; ctx.lineWidth = 1; ctx.font = '12px Inter, sans-serif'; const cm = cor('--mut'), gl = ctx.strokeStyle;
+  for (let x = -5; x <= 10; x += 5) { ctx.strokeStyle = gl; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X(x), 0); ctx.lineTo(X(x), H); ctx.stroke(); txt(x === 0 ? '0 m' : `${Math.abs(x)} m ${x < 0 ? 'O' : 'L'}`, X(x) + 3, H - 6, cm); }
+  for (let y = -5; y >= -20; y -= 5) { ctx.strokeStyle = gl; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, Y(y)); ctx.lineTo(W, Y(y)); ctx.stroke(); txt(`${-y} m S`, 4, Y(y) - 4, cm); }
+  // crateras
+  const ca = cor('--amb'), largo = W > 520;
+  a.crs.forEach((c) => { ctx.setLineDash([5, 4]); ctx.strokeStyle = ca; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(X(c.x), Y(c.y), c.D / 2 * sx, 0, 7); ctx.stroke(); });
+  ctx.setLineDash([]); ctx.textAlign = 'center';
+  a.crs.forEach((c, n) => { if (largo || n === 1) txt(c.nome + (a.det[n] ? '' : ' (não detectada)'), n === 0 ? X(c.x) : X(c.x), Y(c.y + c.D / 2) - 6, ca); });
+  const xyK = (k) => [X(P.X0 + ((k % P.NX) + 0.5) * P.CEL), Y(P.Y0 + (((k / P.NX) | 0) + 0.5) * P.CEL)];
+  const linha = (cam, c, w, ate, tracej) => {
+    if (!cam) return; const n = ate == null ? cam.length : Math.max(2, Math.min(cam.length, ate));
+    ctx.strokeStyle = c; ctx.lineWidth = w; ctx.setLineDash(tracej ? [3, 4] : []); ctx.beginPath();
+    for (let k = 0; k < n; k++) { const [x, y] = xyK(cam[k]); k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke(); ctx.setLineDash([]);
+  };
+  // trilha real
+  ctx.strokeStyle = cor('--vio'); ctx.globalAlpha = 0.75; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.beginPath();
+  P.TRILHA.forEach(([x, y], k) => k ? ctx.lineTo(X(x), Y(y)) : ctx.moveTo(X(x), Y(y))); ctx.stroke(); ctx.globalAlpha = 1;
+  const pf = P.TRILHA[P.TRILHA.length - 1]; ctx.fillStyle = cor('--vio'); ctx.beginPath(); ctx.arc(X(pf[0]), Y(pf[1]), 6, 0, 7); ctx.fill();
+  ctx.textAlign = 'left'; ctx.font = '600 12px Inter, sans-serif'; txt(largo ? '27/08: cratera 3 m à frente → volta' : '27/08: volta', X(pf[0]) + 10, Y(pf[1]) + 4, cor('--vio'));
+  const prog = t == null ? null : (k) => Math.floor(t * a.planos[k].length);
+  linha(a.planos.real, cor('--blu'), 1.6, prog && prog('real'), true);
+  linha(a.planos.tese, cor('--grn'), 3, prog && prog('tese'));
+  const pr = prog ? Math.min(prog('grade'), a.av.grade.idx ?? Infinity) : null;
+  linha(a.planos.grade, cor('--red'), 3, pr);
+  for (const [k, c] of [['real', '--blu'], ['tese', '--grn'], ['grade', '--red']]) {
+    const cam = a.planos[k]; if (!cam || t == null) continue;
+    const n = Math.min(cam.length - 1, k === 'grade' ? Math.min(prog(k), a.av.grade.idx ?? Infinity) : prog(k)); const [x, y] = xyK(cam[Math.max(0, n)]);
+    ctx.fillStyle = cor(c); ctx.beginPath(); ctx.arc(x, y, 6, 0, 7); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+  }
+  // onde o plano grosso cai
+  const ig = a.av.grade && a.av.grade.idx; if (ig && (t == null || prog('grade') >= ig)) {
+    const [x, y] = xyK(a.planos.grade[ig]); ctx.strokeStyle = cor('--red'); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x - 7, y - 7); ctx.lineTo(x + 7, y + 7); ctx.moveTo(x + 7, y - 7); ctx.lineTo(x - 7, y + 7); ctx.stroke();
+    ctx.textAlign = 'right'; txt(largo ? 'plano grosso cairia aqui' : 'cairia', x - 10, y + 4, cor('--red')); ctx.textAlign = 'left';
+  }
+  const [ix, iy] = P.INICIO, [mx, my] = P.META, ci = cor('--ink'); ctx.fillStyle = ci;
+  ctx.fillRect(X(ix) - 5, Y(iy) - 5, 10, 10); ctx.beginPath(); ctx.arc(X(mx), Y(my), 5, 0, 7); ctx.fillStyle = ci; ctx.fill();
+  txt('início (23–24/08)', X(ix) + 9, Y(iy) - 6, ci); txt('meta ao sul', X(mx) + 9, Y(my) + 4, ci);
+}
+
+const pct = (v) => (v * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%';
+const med = (a) => { const s = [...a].sort((p, q) => p - q); return s.length ? s[Math.floor(s.length / 2)] : NaN; };
+function atualizarPlacar() {
+  const n = placar.length; $('kN').textContent = n;
+  if (!n) { for (const k of ['kG', 'kT']) $(k).textContent = '—'; for (const k of ['G', 'T', 'V']) { $('b' + k).style.width = 0; $('v' + k).textContent = '—'; } $('comp').textContent = 'Comprimentos medianos aparecem aqui depois dos sorteios.'; return; }
+  const f = (k) => placar.filter((r) => r[k] && r[k].ate !== null).length / n;
+  [['G', 'grade'], ['T', 'tese'], ['V', 'real']].forEach(([s, k]) => { const v = f(k); $('b' + s).style.width = (v * 100) + '%'; $('v' + s).textContent = pct(v); });
+  $('kG').textContent = pct(f('grade')); $('kT').textContent = pct(f('tese'));
+  const L = (k) => med(placar.filter((r) => r[k]).map((r) => r[k].comp)).toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+  $('comp').textContent = `Comprimento mediano: grade ${L('grade')} m · tese ${L('tese')} m · relevo real ${L('real')} m. O Pragyan real perdeu ≈ 12,3 m na ida e volta.`;
+}
+function mostrar(sem) { op.semente = sem; atual = P.sortear(op); desenhar(); }
+function zerar() { placar = []; atualizarPlacar(); }
+function rodarMC(total) {
+  zerar(); let k = 0; $('bMC').disabled = true;
+  const passo = () => {
+    const t0 = performance.now();
+    while (k < total && performance.now() - t0 < 40) { const r = P.sortear({ ...op, semente: 1000 + k }); placar.push(r.av); k++; }
+    atualizarPlacar(); $('st').textContent = `Sorteando… ${k}/${total}`;
+    if (k < total) requestAnimationFrame(passo); else { $('bMC').disabled = false; $('st').textContent = `${total} sorteios com ${($('fr').value * 1).toLocaleString('pt-BR')}% de células medidas. O mapa mostra o sorteio ${op.semente}.`; }
+  };
+  passo();
+}
+function animar() {
+  if (anim) cancelAnimationFrame(anim); const t0 = performance.now(), dur = 6000, red = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (red) { desenhar(); return; }
+  const f = (now) => { const t = Math.min(1, (now - t0) / dur); desenhar(t); if (t < 1) anim = requestAnimationFrame(f); else anim = null; };
+  anim = requestAnimationFrame(f);
+}
+$('fr').addEventListener('input', (e) => { op.frac = e.target.value / 100; $('frV').textContent = (+e.target.value).toLocaleString('pt-BR') + '%'; });
+$('fr').addEventListener('change', () => { zerar(); mostrar(op.semente); });
+$('dd').addEventListener('input', (e) => { const v = +e.target.value; op.dD = v < 10 ? null : v / 100; $('ddV').textContent = v < 10 ? 'sorteada 0,10–0,20' : (v / 100).toLocaleString('pt-BR'); });
+$('dd').addEventListener('change', () => { zerar(); mostrar(op.semente); });
+document.querySelectorAll('#conf button').forEach((b) => b.addEventListener('click', () => { document.querySelectorAll('#conf button').forEach((x) => x.classList.toggle('on', x === b)); op.z = +b.dataset.z; zerar(); mostrar(op.semente); }));
+document.querySelectorAll('#fundo button').forEach((b) => b.addEventListener('click', () => { document.querySelectorAll('#fundo button').forEach((x) => x.classList.toggle('on', x === b)); fundo = b.dataset.f; desenhar(); }));
+$('bMC').addEventListener('click', () => rodarMC(200));
+$('bUm').addEventListener('click', () => { mostrar(op.semente + 1); $('st').textContent = `Mostrando o sorteio ${op.semente}.`; });
+$('bAni').addEventListener('click', animar);
+$('bZer').addEventListener('click', zerar);
+new ResizeObserver(() => atual && desenhar()).observe(cv);
+mostrar(1); rodarMC(200);
+}
+</script>
+</body>
+</html>
