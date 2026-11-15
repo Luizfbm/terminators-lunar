@@ -199,6 +199,11 @@ def _dem_fingerprint() -> tuple[tuple[str, int, int], ...]:
         if path.is_file():
             stat = path.stat()
             marks.append((band.product, stat.st_size, stat.st_mtime_ns))
+    # The 60 m DEM the polar ladder falls back on past the 80 m square.
+    wide = folder / f"{horizon.WIDE_PRODUCT}.TIF"
+    if wide.is_file():
+        stat = wide.stat()
+        marks.append((horizon.WIDE_PRODUCT, stat.st_size, stat.st_mtime_ns))
     for path in sorted((folder / horizon.OFFPOLE_DIR).glob("*/*.TIF")):
         stat = path.stat()
         marks.append((f"{path.parent.name}/{path.stem}", stat.st_size, stat.st_mtime_ns))

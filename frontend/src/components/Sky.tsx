@@ -21,6 +21,7 @@ import {
 } from '../domain/terrain'
 import { useI18n } from '../i18n/I18nContext'
 import type { GroundMark } from './Ground'
+import { regolithMaterial, SHADOW_FLOOR } from './regolith'
 import { loadGround, loadSiteGround, loadWideGround, type GroundData } from './groundData'
 
 const SUN = 0xf5bd3a
@@ -48,13 +49,12 @@ const GROUND_MARGIN_M = 10_000
 const SITE_NEAR_M = 4_000
 /** Regolith: a warm grey. */
 const REGOLITH = 0x8d8983
-/** The Sun on the ground with its whole disc in view, and the faint light from the sky that is left without it. */
+/** The Sun on the ground with its whole disc in view. What is left without it is `SHADOW_FLOOR`: the Moon has no sky (issue #250). */
 const SUNLIGHT = 3.2
-const SKYLIGHT = 0.7
 /** The fine relief of the image is tilted this much more, to go with the stretched heights. */
 const RELIEF = 3
-/** What the two lights above leave on a surface, as a share of its colour: the renderer spreads light over a hemisphere, a division by pi, and the sky's light is a soft blue-grey. */
-const FACE_LIGHT = { sunlight: SUNLIGHT / Math.PI, skylight: (SKYLIGHT * 0.72) / Math.PI }
+/** What the two lights leave on a surface, as a share of its colour: the renderer spreads light over a hemisphere, a division by pi. */
+const FACE_LIGHT = { sunlight: SUNLIGHT / Math.PI, skylight: SHADOW_FLOOR / Math.PI }
 const FIELD_OF_VIEW_DEG = 55
 const PITCH_MIN_DEG = -12
 /**
@@ -269,9 +269,9 @@ export function Sky({
     let earthLean: number | null = null
     const earth = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), earthMaterial)
     const sunlight = new THREE.DirectionalLight(0xfff1dc, SUNLIGHT)
-    // Light from above only: ground facing up keeps a little, ground facing down none.
-    const skylight = new THREE.HemisphereLight(0xaab2c8, 0x000000, SKYLIGHT)
-    scene.add(glow, sun, earth, sunlight, skylight)
+    // No sky light: on the Moon nothing scatters the Sun's. A small neutral floor keeps the shadow side readable.
+    const floor = new THREE.AmbientLight(0xffffff, SHADOW_FLOOR)
+    scene.add(glow, sun, earth, sunlight, floor)
 
     const path = new THREE.Points(
       new THREE.BufferGeometry(),
@@ -325,7 +325,7 @@ export function Sky({
     grain.needsUpdate = true
     const grained = new THREE.Color(REGOLITH).multiplyScalar(1 / (1 - GRAIN_DEPTH / 2))
     const level = (relief: boolean) => {
-      const material = new THREE.MeshStandardMaterial({ color: grained, roughness: 1, metalness: 0, normalScale: new THREE.Vector2(RELIEF, RELIEF) })
+      const material = regolithMaterial({ color: grained, normalScale: new THREE.Vector2(RELIEF, RELIEF) })
       material.map = grain.clone()
       const mesh = new THREE.Mesh(new THREE.BufferGeometry(), material)
       mesh.visible = false

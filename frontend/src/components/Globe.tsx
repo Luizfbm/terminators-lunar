@@ -1,11 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { levelOfView, type LevelId } from '../domain/globeLevels'
+import { latitudeCircle, POLAR_CIRCLE_LATITUDE, polarCircleShown } from '../domain/latitudeCircle'
+import { bubbleOnLeft, landPlace, latLonOfVector, type LandPlace } from '../domain/pick'
+import { POLE_LETTER_RADII, poleMark, visibleRuns } from '../domain/poleMark'
+import type { View } from '../domain/query'
+import { initialLayers, siteShown, type Layers } from '../domain/siteLayers'
+import { VIEW_DISTANCE, viewTarget, type MoonView } from '../domain/viewTarget'
 import { groundDirection, toVector, type LatLon } from '../domain/sky'
 import { bodyMarker, moonRadiusPx } from '../domain/stageMarkers'
 import { useRegions } from '../hooks/useRegions'
 import { useI18n } from '../i18n/I18nContext'
 import { MAP_EDGE_LATITUDE, mapPlaces, mapStep, pointOnMap, regionHeight, type MapEvent, type MapRegion, type MapView } from './globeMap/map'
+import { GlobeMenu } from './GlobeMenu'
 import { MapLayer, type MarkerElements } from './globeMap/MapLayer'
 import { positionMap, type NameSizes } from './globeMap/position'
 import { readoutText } from './globeMap/readout'
@@ -20,6 +28,8 @@ export interface GlobeSite extends LatLon {
   name: string
   /** The Region the Site belongs to: the map shows one marker per Region seen from the pole. */
   region_id?: string | null
+  /** Where the coordinate comes from: it says which switch of the menu governs the Site's dot. */
+  source?: string
 }
 
 export interface GlobeProps {
@@ -57,6 +67,10 @@ export interface GlobeProps {
   onDive?: (atSite: boolean) => void
   /** Nothing is drawn while the view from the ground covers the globe. */
   paused?: boolean
+  /** The level pressed in the menu: the app's view, or null on the ground. Without it, the one of `mode`. */
+  level?: LevelId | null
+  /** A level of the menu was clicked: the view to go to. */
+  onLevel?: (view: View) => void
 }
 
 const GRID_LATITUDES = [-88, -86, -84, -82, -80]
@@ -67,6 +81,24 @@ const EARTH = 0x9cc0ff
 const DOT = 0xe9e7e2
 const DOT_OTHER = 0x77787f
 const DOT_ON_MAP = 0xcfd3dc
+/** The poles of the Moon, in its own frame (MOON_ME): the letters belong to them and to nothing else. */
+const POLES = [
+  { letter: 'N', latitude: 90 },
+  { letter: 'S', latitude: -90 },
+] as const
+/** The Equator is sampled every 1.5° of longitude. */
+const EQUATOR_STEPS = 240
+/** Sizes of the marks as shares of the Moon's radius on screen, as in `globo_hemisferios.html`. */
+const EQUATOR_GAP = 1 / (0.36 * 62)
+const EQUATOR_BASE_WIDTH = 1 / (0.36 * 110)
+const EQUATOR_WIDTH = 1 / (0.36 * 170)
+const POLE_LETTER_SIZE = 0.062 / 0.36
+const POLE_LETTER_OUTLINE = 1 / (0.36 * 95)
+const POLE_STROKE_WIDTH = 1 / (0.36 * 330)
+const POLE_DOT = 1 / (0.36 * 190)
+/** The circle of latitude round the south pole: a white line of 2 px over a darker one of 4 px, whatever the zoom. */
+const CIRCLE_WIDTH_PX = 2
+const CIRCLE_BASE_WIDTH_PX = 4
 const PICK_RADIUS_PX = 16
 const FIELD_OF_VIEW_DEG = 32
 /** The Sun and Earth markers sit this far outside the Moon's disc, and keep clear of the caption and the view buttons. */
@@ -122,11 +154,39 @@ export function Globe(props: GlobeProps) {
   /** The name on the pin and its size on one line, measured once per name. */
   const pinText = useRef({ text: '', width: 0, height: 0 })
   const gridLabels = useRef<HTMLDivElement>(null)
+  const poleMarks = useRef<SVGSVGElement>(null)
+  /** A turn of the Moon asked for by the menu; the draw loop takes it up on its next frame. */
+  const turnAsked = useRef<MoonView | null>(null)
+  const { locale } = useI18n()
+  // "Land here": the point under the cursor and its bubble. The hook only records where for now.
+  const landLayer = useRef<HTMLDivElement>(null)
+  const landStatus = useRef<HTMLSpanElement>(null)
+  const landTarget = useRef<(LandPlace & { x: number; y: number; name: string | null }) | null>(null)
+  const landTimer = useRef(0)
+  const landHere = useCallback(() => {
+    const place = landTarget.current
+    if (!place) return
+    const spot: LandPlace = { lat: place.lat, lon: place.lon, ...(place.siteId ? { siteId: place.siteId } : {}) }
+    // TODO: the real action, to go to the view from the ground at this point. For now it only says where.
+    console.info('[land]', JSON.stringify(spot))
+    const line = landStatus.current
+    if (!line) return
+    // English in both languages, like the menu.
+    line.textContent = `Land at ${spot.lat.toFixed(3)}°, ${spot.lon.toFixed(3)}°. Not wired yet.` + (place.name ? ` (${place.name})` : '')
+    window.clearTimeout(landTimer.current)
+    landTimer.current = window.setTimeout(() => (line.textContent = ''), 2500)
+  }, [])
+  const landHereLive = useRef(landHere)
+  useEffect(() => {
+    landHereLive.current = landHere
+  })
   const live = useRef(props)
+  // The switches of the menu that show and hide the dots of the Sites and of the missions.
+  const [layers, setLayers] = useState<Layers>(initialLayers)
+  const layersLive = useRef(layers)
   const [supported, setSupported] = useState(canDraw)
 
   // The map: one marker per Region from the pole, the Sites of one Region once flown into it.
-  const { locale } = useI18n()
   const names = useRegions()
   const places = useMemo(() => mapPlaces(props.sites, names), [props.sites, names])
   const mode = props.mode ?? 'orbit'
@@ -156,6 +216,7 @@ export function Globe(props: GlobeProps) {
 
   useEffect(() => {
     live.current = props
+    layersLive.current = layers
     mapLive.current = { places, region, locale }
   })
 
@@ -224,6 +285,7 @@ export function Globe(props: GlobeProps) {
         const dot = new THREE.Mesh(dotShape, new THREE.MeshBasicMaterial({ color: DOT_OTHER }))
         dot.position.copy(vector(site.latitude_deg, site.longitude_deg, 1.002))
         dot.userData.id = site.id
+        dot.userData.source = site.source
         dots.add(dot)
       }
       dotsFor = sites
@@ -264,6 +326,9 @@ export function Globe(props: GlobeProps) {
     grid.visible = false
     scene.add(grid)
 
+    // The circle of latitude round the south pole, every degree of longitude, on the same sphere as the Equator.
+    const polarCircle = latitudeCircle(POLAR_CIRCLE_LATITUDE).map((point) => vector(point.latitude_deg, point.longitude_deg, 1.002))
+
     // The marked Occluder: a ring on it and a line from the Site.
     const toOccluder = stroke(SUN)
     const ringShape = new THREE.RingGeometry(0.0055, 0.0072, 40)
@@ -276,7 +341,7 @@ export function Globe(props: GlobeProps) {
     controls.enablePan = false
     // Close enough to read the 22.5 m level around the Sites.
     controls.minDistance = 1.04
-    controls.maxDistance = 6
+    controls.maxDistance = 12
     controls.enabled = false
 
     // The one orchestrated moment: from the whole Moon down to the south pole and the Site.
@@ -291,6 +356,8 @@ export function Globe(props: GlobeProps) {
       /** A change of view hides the map's markers until it lands; a flight into a Region keeps them. */
       kind: 'view' | 'region'
       toMap: boolean
+      /** The camera goes round the Moon along an arc, not in a straight line, which would cut through it. */
+      arc?: boolean
     } | null = null
     // With reduced motion a Region is reached by a short fade instead: out, a jump, back in.
     let fade: { to: THREE.Vector3; up: THREE.Vector3; start: number; jumped: boolean } | null = null
@@ -331,6 +398,8 @@ export function Globe(props: GlobeProps) {
       const box = host.getBoundingClientRect()
       let best: { id: string; distance: number } | null = null
       for (const site of live.current.sites) {
+        // A Site whose dot is hidden cannot be picked.
+        if (!siteShown(site, layersLive.current, live.current.site.id)) continue
         const spot = onScreen(site)
         const distance = Math.hypot(spot.x - (event.clientX - box.left), spot.y - (event.clientY - box.top))
         if (spot.facing && distance <= PICK_RADIUS_PX && (!best || distance < best.distance)) best = { id: site.id, distance }
@@ -382,6 +451,43 @@ export function Globe(props: GlobeProps) {
       window.clearTimeout(readoutTimer)
       if (touch) readoutTimer = window.setTimeout(hideReadout, TOUCH_READOUT_MS)
     }
+    // "Land here" follows the mouse over the Moon. It hides while the Moon is dragged and for a point in space.
+    const land = { at: null as { x: number; y: number } | null, dirty: false, down: null as { x: number; y: number; dragged: boolean } | null }
+    const onLandDown = (event: PointerEvent) => {
+      land.down = { x: event.clientX, y: event.clientY, dragged: false }
+    }
+    const onLandMove = (event: PointerEvent) => {
+      const box = host.getBoundingClientRect()
+      if (land.down && Math.hypot(event.clientX - land.down.x, event.clientY - land.down.y) > 5) land.down.dragged = true
+      if (event.pointerType === 'touch') return
+      land.at = { x: event.clientX - box.left, y: event.clientY - box.top }
+      land.dirty = true
+    }
+    const onLandUp = (event: PointerEvent) => {
+      const down = land.down
+      land.down = null
+      const clicked = down !== null && !down.dragged && Math.hypot(event.clientX - down.x, event.clientY - down.y) <= 5
+      if (!clicked || (live.current.mode ?? 'orbit') !== 'orbit') {
+        land.dirty = true
+        return
+      }
+      const box = host.getBoundingClientRect()
+      if (event.pointerType === 'touch') {
+        // A finger has no hover: the first tap shows the dot and the bubble, and the bubble is tapped to land.
+        land.at = { x: event.clientX - box.left, y: event.clientY - box.top }
+        land.dirty = true
+      } else landHereLive.current()
+    }
+    const onLandLeave = (event: PointerEvent) => {
+      // Onto the bubble itself it stays, so it can be clicked.
+      if (event.relatedTarget instanceof Node && landLayer.current?.contains(event.relatedTarget)) return
+      land.at = null
+      land.down = null
+    }
+    target.addEventListener('pointerdown', onLandDown)
+    target.addEventListener('pointermove', onLandMove)
+    target.addEventListener('pointerup', onLandUp)
+    target.addEventListener('pointerleave', onLandLeave)
     const onDown = (event: PointerEvent) => {
       pressed = { x: event.clientX, y: event.clientY }
       if (event.pointerType === 'touch') showReadout(event)
@@ -443,12 +549,34 @@ export function Globe(props: GlobeProps) {
         }
         target.dataset.dive = dive ? (wantDive ? 'down' : 'up') : 'at-site'
       }
+      // A button of the menu turns the Moon: the camera goes round it to the side asked for.
+      const asked = turnAsked.current
+      if (asked) {
+        turnAsked.current = null
+        const place = viewTarget(asked, state.sun)
+        if (place && mode === 'orbit' && !state.dive) {
+          const to = new THREE.Vector3(...place)
+          fade = null
+          if (still) {
+            flight = null
+            camera.up.copy(ORBIT_UP)
+            camera.position.copy(to)
+            camera.lookAt(0, 0, 0)
+          } else {
+            flight = { from: camera.position.clone(), to, fromUp: camera.up.clone(), toUp: ORBIT_UP.clone(), start: now, ms: 1800, kind: 'view', toMap: false, arc: true }
+          }
+        }
+      }
+      // On load the globe waits for the Sun to be known, to start on the day side, from where the camera begins.
+      const waitForSun = mode === 'orbit' && shownSite === null && !state.sun
       // The camera flies when the view changes, in orbit when the Site does, and on the map when a
       // Region is flown into or out of. Choosing a Site on the map leaves the camera where it is.
       if (wantDive || dive) {
         // The view's own flights wait for the dive.
-      } else if (shownMode !== mode || (mode === 'orbit' && shownSite !== state.site.id) || regionChanged) {
-        const to = mode === 'map' ? (region ? regionPoint(region, camera.aspect) : mapPoint(camera.aspect)) : viewpoint(state.site)
+      } else if (!waitForSun && (shownMode !== mode || (mode === 'orbit' && shownSite !== state.site.id) || regionChanged)) {
+        // The first placement in orbit is the initial position, the day side; after it, a Site flies to its own view.
+        const first = mode === 'orbit' && shownSite === null ? viewTarget('initial', state.sun) : null
+        const to = mode === 'map' ? (region ? regionPoint(region, camera.aspect) : mapPoint(camera.aspect)) : first ? new THREE.Vector3(...first) : viewpoint(state.site).setLength(VIEW_DISTANCE)
         const up = mode === 'map' ? MAP_UP : ORBIT_UP
         if (still && regionChanged) {
           flight = null
@@ -471,7 +599,7 @@ export function Globe(props: GlobeProps) {
           }
         }
       }
-      if (!wantDive && !dive) {
+      if (!wantDive && !dive && !waitForSun) {
         shownSite = state.site.id
         shownMode = mode
         shownRegion = region?.id ?? null
@@ -495,7 +623,13 @@ export function Globe(props: GlobeProps) {
       } else if (flight) {
         const progress = Math.min(1, (now - flight.start) / flight.ms)
         const eased = 1 - Math.pow(1 - progress, 3)
-        camera.position.lerpVectors(flight.from, flight.to, eased)
+        if (flight.arc) {
+          const round = new THREE.Quaternion().setFromUnitVectors(flight.from.clone().normalize(), flight.to.clone().normalize())
+          camera.position.copy(flight.from).applyQuaternion(new THREE.Quaternion().slerp(round, eased))
+          camera.position.setLength(THREE.MathUtils.lerp(flight.from.length(), flight.to.length(), eased))
+        } else {
+          camera.position.lerpVectors(flight.from, flight.to, eased)
+        }
         // Over the pole the two ups give the same picture, so the turn happens there.
         const turn = flight.toMap ? Math.pow(eased, 4) : 1 - Math.pow(1 - eased, 4)
         camera.up.lerpVectors(flight.fromUp, flight.toUp, turn).normalize()
@@ -541,12 +675,19 @@ export function Globe(props: GlobeProps) {
       const onMap = mode === 'map'
       const dotSize = Math.min(1, Math.max(onMap ? 0.22 : 0.06, ((camera.position.length() - 1) / DOT_FULL_SIZE_HEIGHT) * (onMap ? 1.7 : 1)))
       ring.scale.setScalar(Math.max(0.12, dotSize))
+      // The switches of the menu show and hide the dots; the chosen Site's dot stays with its ring.
+      let dotsShown = 0
       for (const dot of dots.children as THREE.Mesh[]) {
         const chosen = dot.userData.id === state.site.id
+        dot.visible = siteShown({ id: dot.userData.id, source: dot.userData.source }, layersLive.current, state.site.id)
+        if (dot.visible) dotsShown += 1
         ;(dot.material as THREE.MeshBasicMaterial).color.set(chosen ? (state.sunUp ? SUN : DOT) : onMap ? DOT_ON_MAP : DOT_OTHER)
         dot.scale.setScalar((chosen ? 1.8 : 1) * dotSize)
       }
 
+      // How many dots are drawn (those on the far side count too: the Moon hides them), for the tests.
+      const dotCount = String(dots.visible ? dotsShown : 0)
+      if (target.dataset.dots !== dotCount) target.dataset.dots = dotCount
       renderer.render(scene, camera)
       target.dataset.ready = 'true'
 
@@ -584,6 +725,51 @@ export function Globe(props: GlobeProps) {
         ringMark.style.left = `${chosen.x}px`
         ringMark.style.top = `${chosen.y}px`
         ringMark.dataset.lit = String(state.sunUp)
+      }
+      // "Land here": the point of the Moon under the cursor, snapped to a Site close to it, and the bubble.
+      const landed = landLayer.current
+      if (landed) {
+        const showing = mode === 'orbit' && !state.dive && land.at !== null && !land.down?.dragged
+        if (showing && (land.dirty || flight || fade)) {
+          land.dirty = false
+          pointer.set((land.at!.x / host.clientWidth) * 2 - 1, 1 - (land.at!.y / host.clientHeight) * 2)
+          caster.setFromCamera(pointer, camera)
+          const hit = caster.intersectObject(moon, false)[0]
+          if (hit) {
+            let place: { x: number; y: number; lat: number; lon: number; siteId?: string; name: string | null } | null = null
+            let nearest = PICK_RADIUS_PX
+            for (const site of state.sites) {
+              // The bubble does not snap to a Site whose dot is hidden.
+              if (!siteShown(site, layersLive.current, state.site.id)) continue
+              const spot = onScreen(site)
+              const distance = Math.hypot(spot.x - land.at!.x, spot.y - land.at!.y)
+              if (spot.facing && distance <= nearest) {
+                nearest = distance
+                place = { x: spot.x, y: spot.y, lat: site.latitude_deg, lon: site.longitude_deg, siteId: site.id, name: site.name }
+              }
+            }
+            if (!place) {
+              const there = latLonOfVector(hit.point.x, hit.point.y, hit.point.z)
+              place = { x: land.at!.x, y: land.at!.y, lat: there.latitude_deg, lon: there.longitude_deg, name: null }
+            }
+            const exact = landPlace({ latitude_deg: place.lat, longitude_deg: place.lon }, place.siteId)
+            landTarget.current = { ...exact, x: place.x, y: place.y, name: place.name }
+          } else landTarget.current = null
+        }
+        const spot = showing || land.at !== null ? landTarget.current : null
+        landed.hidden = !spot || !showing
+        if (spot && showing) {
+          const [dot, bubble] = [landed.children[0] as HTMLElement, landed.children[1] as HTMLElement]
+          const site = bubble.children[1] as HTMLElement
+          if (site.textContent !== (spot.name ?? '')) site.textContent = spot.name ?? ''
+          site.hidden = !spot.name
+          dot.style.transform = `translate(${spot.x}px, ${spot.y}px) translate(-50%, -50%)`
+          const gap = Math.max(12, host.clientWidth * 0.012)
+          const left = bubbleOnLeft(spot.x, gap, bubble.offsetWidth, host.clientWidth)
+          bubble.dataset.side = left ? 'left' : 'right'
+          bubble.style.left = `${left ? spot.x - gap - bubble.offsetWidth : spot.x + gap}px`
+          bubble.style.top = `${Math.max(8, Math.min(host.clientHeight - bubble.offsetHeight - 8, spot.y - bubble.offsetHeight * 1.05))}px`
+        }
       }
       const markers = layer.current
       // What the grid's labels keep clear of on the map: the chosen Site's name, the markers, the dots.
@@ -626,6 +812,75 @@ export function Globe(props: GlobeProps) {
         }
       }
 
+      // The Equator and the poles, drawn over the Moon each frame (see `globo_hemisferios.html`). The
+      // Equator is dotted, only the half turned to the eye; the letters N and S belong to the poles of
+      // the Moon, in its own frame, and turn with it. Only for the whole Moon, not the map or the dive.
+      const marks = poleMarks.current
+      if (marks) {
+        const discRadius = markRing - MARKER_GAP_PX
+        const toScreen = (point: THREE.Vector3) => {
+          const projected = point.clone().project(camera)
+          return { x: ((projected.x + 1) / 2) * host.clientWidth, y: ((1 - projected.y) / 2) * host.clientHeight }
+        }
+        const eye = camera.position
+        const eyeAt = eye.clone().normalize()
+        // A point of the unit sphere is on the near side when the camera is above its tangent plane.
+        const near = (point: THREE.Vector3) => point.dot(eye) > 1
+        const shown = mode === 'orbit' && !state.dive && Number.isFinite(discRadius)
+        marks.style.display = shown ? '' : 'none'
+        if (shown) {
+          const [base, yellow] = [marks.children[0], marks.children[1]]
+          const circle = Array.from({ length: EQUATOR_STEPS + 1 }, (_, step) => vector(0, (step * 360) / EQUATOR_STEPS, 1.002))
+          const runs = visibleRuns(circle.map(toScreen), circle.map(near))
+          const path = runs.map((run) => run.map((spot, at) => `${at ? 'L' : 'M'}${spot.x.toFixed(1)} ${spot.y.toFixed(1)}`).join('')).join('')
+          for (const [line, width] of [[base, EQUATOR_BASE_WIDTH], [yellow, EQUATOR_WIDTH]] as const) {
+            line.setAttribute('d', path)
+            line.setAttribute('stroke-width', String(width * discRadius))
+            line.setAttribute('stroke-dasharray', `0.1 ${EQUATOR_GAP * discRadius}`)
+          }
+          // The circle at 84° S: only the half turned to the eye, and only from orbit, not close to the ground.
+          const circleRuns = polarCircleShown(eye.length()) ? visibleRuns(polarCircle.map(toScreen), polarCircle.map(near)) : []
+          const circlePath = circleRuns.map((run) => run.map((spot, at) => `${at ? 'L' : 'M'}${spot.x.toFixed(1)} ${spot.y.toFixed(1)}`).join('')).join('')
+          for (const [line, width] of [[marks.children[2], CIRCLE_BASE_WIDTH_PX], [marks.children[3], CIRCLE_WIDTH_PX]] as const) {
+            line.setAttribute('d', circlePath)
+            line.setAttribute('stroke-width', String(width))
+          }
+          POLES.forEach((pole, index) => {
+            const group = marks.children[4 + index] as SVGGElement | undefined
+            if (!group) return
+            const at = vector(pole.latitude, 0)
+            const found = poleMark(
+              toScreen(at),
+              toScreen(at.clone().multiplyScalar(POLE_LETTER_RADII)),
+              near(at),
+              at.dot(eyeAt),
+              markCentre,
+              discRadius,
+            )
+            group.style.display = found ? '' : 'none'
+            if (!found) return
+            const [stroke, dot, text] = [group.children[0], group.children[1], group.children[2]]
+            group.setAttribute('opacity', String(found.opacity))
+            stroke.setAttribute('display', found.dot ? '' : 'none')
+            dot.setAttribute('display', found.dot ? '' : 'none')
+            if (found.dot) {
+              stroke.setAttribute('x1', String(found.dot.x))
+              stroke.setAttribute('y1', String(found.dot.y))
+              stroke.setAttribute('x2', String(found.letter.x))
+              stroke.setAttribute('y2', String(found.letter.y))
+              stroke.setAttribute('stroke-width', String(POLE_STROKE_WIDTH * discRadius))
+              dot.setAttribute('cx', String(found.dot.x))
+              dot.setAttribute('cy', String(found.dot.y))
+              dot.setAttribute('r', String(POLE_DOT * discRadius))
+            }
+            text.setAttribute('x', String(found.letter.x))
+            text.setAttribute('y', String(found.letter.y))
+            text.setAttribute('font-size', String(POLE_LETTER_SIZE * discRadius))
+            text.setAttribute('stroke-width', String(POLE_LETTER_OUTLINE * discRadius))
+          })
+        }
+      }
+
       const labels = gridLabels.current
       if (labels) {
         // Down in a Region the grid's labels are far off the picture, so they wait for the pole.
@@ -664,6 +919,11 @@ export function Globe(props: GlobeProps) {
       target.removeEventListener('pointerup', onUp)
       target.removeEventListener('pointermove', onMove)
       target.removeEventListener('pointerleave', onLeave)
+      target.removeEventListener('pointerdown', onLandDown)
+      target.removeEventListener('pointermove', onLandMove)
+      target.removeEventListener('pointerup', onLandUp)
+      target.removeEventListener('pointerleave', onLandLeave)
+      window.clearTimeout(landTimer.current)
       window.clearTimeout(readoutTimer)
       controls.dispose()
       for (const dot of dots.children as THREE.Mesh[]) (dot.material as THREE.Material).dispose()
@@ -721,6 +981,19 @@ export function Globe(props: GlobeProps) {
       <span className="globe__body globe__body--earth" ref={earthMark} aria-hidden="true" hidden>
         {props.earthLabel}
       </span>
+      <svg className="globe__poles" ref={poleMarks} aria-hidden="true" style={{ display: 'none' }}>
+        <path className="globe__equator globe__equator--base" fill="none" />
+        <path className="globe__equator" fill="none" />
+        <path className="globe__circle globe__circle--base" fill="none" />
+        <path className="globe__circle" fill="none" />
+        {POLES.map((pole) => (
+          <g key={pole.letter} style={{ display: 'none' }}>
+            <line />
+            <circle />
+            <text>{pole.letter}</text>
+          </g>
+        ))}
+      </svg>
       <div className="globe__grid" ref={gridLabels} aria-hidden="true" hidden>
         {(props.meridianLabels ?? []).slice(0, 4).map((text) => (
           <span key={text}>{text}</span>
@@ -729,6 +1002,23 @@ export function Globe(props: GlobeProps) {
           <span key={latitude}>{`${-latitude}°\u00a0S`}</span>
         ))}
       </div>
+      <div className="globe-land" ref={landLayer} hidden>
+        <span className="globe-land__dot" aria-hidden="true" />
+        <button type="button" className="globe-land__bubble" aria-label="Land here" onClick={landHere}>
+          <span>Land</span>
+          <span className="globe-land__site" hidden />
+        </button>
+      </div>
+      <span className="globe-land__status" ref={landStatus} aria-live="polite" />
+      <GlobeMenu
+        mode={mode}
+        level={props.level === undefined ? levelOfView(mode) : props.level}
+        onLevel={props.onLevel}
+        onView={(view) => {
+          turnAsked.current = view
+        }}
+        onLayers={setLayers}
+      />
     </div>
   )
 }

@@ -9,15 +9,15 @@ import './index.css'
 
 const TAGS: Record<Locale, string> = { en: 'en-GB', pt: 'pt-BR' }
 
-/** The language comes from the link when it names one, otherwise from the browser; the switch changes it. */
+/** The language comes from the link when it names one, otherwise from the browser. */
 function Root() {
-  const [locale, setLocale] = useState<Locale>(() => readLink(window.location.search).language ?? pickLocale(navigator.language))
+  const [locale] = useState<Locale>(() => readLink(window.location.search).language ?? pickLocale(navigator.language))
   useEffect(() => {
     document.documentElement.lang = TAGS[locale]
   }, [locale])
   return (
     <I18nProvider locale={locale} language={navigator.language}>
-      <App locale={locale} onLocale={setLocale} />
+      <App />
     </I18nProvider>
   )
 }

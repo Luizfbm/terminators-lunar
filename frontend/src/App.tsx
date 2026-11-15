@@ -1,9 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { Answer, occluderLabel } from './components/Answer'
-import { Assistant } from './components/phase4/assistant/Assistant'
 import { StageLoading } from './components/StageLoading'
 import { Cover, coverSeen, rememberCover } from './components/Cover'
-import { Guide } from './components/Guide'
 import type { GroundMark } from './components/Ground'
 import { GroundView, prepareGround } from './components/GroundView'
 import type { GlobeSite } from './components/Globe'
@@ -27,12 +25,13 @@ import {
 import { IM2_LANDING } from './domain/landing'
 import { DIVE_MS, fadeMs, scenesOf, startStage, stepStage } from './domain/stageMove'
 import { chosenGlobeSite } from './domain/chosenSite'
+import { levelOfView } from './domain/globeLevels'
 import { sampleAt, subPointsAt, type LatLon } from './domain/sky'
 import { isUp, statement, type Body } from './domain/statement'
 import { useAnswer, useSites, type Answer as Answered } from './hooks/useAnswer'
 import { useI18n } from './i18n/I18nContext'
 import type { I18n } from './i18n/i18n'
-import type { Locale, MessageKey } from './i18n/messages'
+import type { MessageKey } from './i18n/messages'
 
 /** A screen worked with a finger: the map's hint names the touch gestures. */
 const touchScreen = () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
@@ -61,7 +60,7 @@ function named(answer: Answered, i18n: I18n): Answered {
 /** The whole Window passes in this long while playing. */
 const PLAY_MS = 24_000
 
-export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: Locale) => void }) {
+export function App() {
   const i18n = useI18n()
   const { t } = i18n
   const link = useMemo(() => readLink(window.location.search), [])
@@ -84,12 +83,10 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
   const [stats, setStats] = useState(link.stats)
   // The cover is for the plain address, once per browser: a link with a Query goes to its answer.
   const [cover, setCover] = useState(() => window.location.search === '' && !coverSeen())
-  const [guideStep, setGuideStep] = useState<number | null>(null)
   const closeCover = useCallback(() => {
     rememberCover()
     setCover(false)
   }, [])
-  const closeGuide = useCallback(() => setGuideStep(null), [])
   // While the cover is up the app waits behind it, out of reach of the mouse and the keyboard.
   const coverOpen = cover && page === 'answer'
   useEffect(() => {
@@ -102,8 +99,8 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
   const [playing, setPlaying] = useState(false)
   // Whose Occluder is marked on the horizon: set by clicking the reason under a statement.
   const [marked, setMarked] = useState<Body | null>(null)
-  // The language goes in the link once the visitor picks one, or when the link already had it.
-  const [linkLanguage, setLinkLanguage] = useState(link.language)
+  // The language goes in the link when the link already had it.
+  const linkLanguage = link.language
   const [openedAt] = useState(() => Date.now())
   const sites = useSites()
   const { state, retry } = useAnswer(siteRef, choice)
@@ -249,46 +246,6 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
 
   return (
     <div className="screen">
-      <header className="bar">
-        <p>
-          <strong>{t('app.name')}</strong> · {t('app.place')}
-        </p>
-        <p className="bar__nav">
-          <button
-            type="button"
-            onClick={() => {
-              closeCover()
-              setPage('answer')
-              setGuideStep(0)
-            }}
-          >
-            {t('bar.guide')}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setGuideStep(null)
-              setPage('answer')
-              setCover(true)
-            }}
-          >
-            {t('bar.about')}
-          </button>
-          <Assistant result={result} />
-        </p>
-        <p className="bar__lang">
-          {(['pt', 'en'] as const).map((code) => (
-            <button key={code} type="button" lang={code} aria-pressed={locale === code} aria-label={`${code.toUpperCase()} ${t(`lang.${code}`)}`}
-              onClick={() => {
-                setLinkLanguage(code)
-                onLocale(code)
-              }}
-            >
-              {code.toUpperCase()}
-            </button>
-          ))}
-        </p>
-      </header>
 
       {page === 'proof' && <Proof />}
 
@@ -312,6 +269,8 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
               unavailable={t('globe.unavailable')}
               onSelect={setSiteRef}
               mode={stage.globeMode}
+              level={levelOfView(view)}
+              onLevel={setView}
               dive={scenes.globeDived}
               paused={!scenes.globeShown}
               onDive={(atSite) => {
@@ -422,10 +381,7 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
       )}
       {coverOpen && (
         <Cover
-          onStart={() => {
-            closeCover()
-            setGuideStep(0)
-          }}
+          onStart={closeCover}
           onLanding={() => {
             closeCover()
             setSiteRef(IM2_LANDING.site)
@@ -435,7 +391,6 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
           onClose={closeCover}
         />
       )}
-      {guideStep !== null && !cover && result && page === 'answer' && <Guide step={guideStep} onStep={setGuideStep} onClose={closeGuide} />}
     </div>
   )
 }
