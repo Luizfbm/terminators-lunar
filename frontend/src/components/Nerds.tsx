@@ -1,8 +1,9 @@
-import { useId } from 'react'
+import { useId, type ReactNode } from 'react'
 import type { VisibilityResult } from '../api/client'
 import { sampleAt } from '../domain/sky'
 import { useI18n } from '../i18n/I18nContext'
 import type { MessageKey } from '../i18n/messages'
+import { HorizonsLinks } from './horizons/HorizonsLinks'
 import { LadderPanel } from './LadderPanel'
 import { DsnLink } from './phase4/dsn/DsnLink'
 import { Numbers } from './Numbers'
@@ -36,13 +37,22 @@ export function Nerds({
   const { site } = result.query
   const position = (body: { azimuth_deg: number; elevation_deg: number }) =>
     t('nerds.position', { azimuth: formatNumber(round(body.azimuth_deg)), elevation: formatNumber(round(body.elevation_deg)) })
-  const rows: [MessageKey, string][] = [
+  const rows: [MessageKey, ReactNode][] = [
     ...(now
       ? ([
           ['nerds.sun', position(now.sun)],
           ['nerds.disc', formatPercent(now.sun.fraction)],
           ['nerds.earth', position(now.earth)],
-        ] satisfies [MessageKey, string][])
+          // The numbers above are those of this sample, so Horizons is asked for its instant.
+          [
+            'horizons.row',
+            <HorizonsLinks
+              key="horizons"
+              observer={{ latitudeDeg: site.latitude_deg, longitudeDeg: site.longitude_deg, heightM: result.query.observer_height_m }}
+              instantMs={Date.parse(now.t)}
+            />,
+          ],
+        ] satisfies [MessageKey, ReactNode][])
       : []),
     [
       'nerds.site',

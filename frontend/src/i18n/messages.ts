@@ -11,6 +11,7 @@ import { en as missEn, pt as missPt } from '../components/phase4/miss/strings'
 import * as battery from '../components/phase4/battery/strings'
 import * as cursorSun from '../components/cursorSun/strings'
 import * as reach from '../components/phase4/reach/strings'
+import * as horizons from '../components/horizons/strings'
 
 export type Locale = 'en' | 'pt'
 
@@ -27,6 +28,7 @@ export const en = {
   ...battery.en,
   ...cursorSun.en,
   ...reach.en,
+  ...horizons.en,
   'app.name': 'Lunar Landing Site Navigator',
   'app.place': 'south pole of the Moon',
   'lang.en': 'English',
@@ -154,6 +156,7 @@ export const pt: Record<MessageKey, string> = {
   ...battery.pt,
   ...cursorSun.pt,
   ...reach.pt,
+  ...horizons.pt,
   'app.name': 'Lunar Landing Site Navigator',
   'app.place': 'polo sul da Lua',
   'lang.en': 'English',
