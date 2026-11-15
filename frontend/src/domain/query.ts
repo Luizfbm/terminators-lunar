@@ -108,8 +108,12 @@ function readView(value: string | null): View {
 
 export type View = 'orbit' | 'map' | 'ground'
 
-/** The answer screen, or the Proof page in its place. */
-export type Page = 'answer' | 'proof'
+function readPage(value: string | null): Page {
+  return value === 'proof' || value === 'brief' ? value : 'answer'
+}
+
+/** The answer screen, or the Proof page or the printable brief in its place. */
+export type Page = 'answer' | 'proof' | 'brief'
 
 /**
  * The second plan of the Plan A x Plan B comparison. A null field means "as in Plan A", so the link
@@ -169,7 +173,7 @@ export function readLink(search: string): LinkState {
     cursorMs: Number.isFinite(cursorMs) ? cursorMs : null,
     language: language === 'en' || language === 'pt' ? language : null,
     view: readView(params.get('view')),
-    page: params.get('page') === 'proof' ? 'proof' : 'answer',
+    page: readPage(params.get('page')),
     stats: params.get('stats') === '1',
     // Only when the link has one, so a link without it reads back exactly as before.
     ...(Number.isFinite(radius) && radius >= RADIUS_MIN_M && radius <= RADIUS_MAX_M ? { radiusM: radius } : {}),
@@ -227,7 +231,7 @@ export function writeLink(state: LinkState, keep = ''): string {
   if (state.heightM !== null) params.set('height', String(state.heightM))
   if (state.stats) params.set('stats', '1')
   if (state.radiusM != null) params.set('radius', String(state.radiusM))
-  if (state.page === 'proof') params.set('page', 'proof')
+  if (state.page !== 'answer') params.set('page', state.page)
   if (state.planB) {
     const b = state.planB
     params.set('compare', '1')

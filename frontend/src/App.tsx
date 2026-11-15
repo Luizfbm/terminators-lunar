@@ -1,5 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { Answer, occluderLabel } from './components/Answer'
+import { Brief } from './components/brief/Brief'
+import { briefText } from './components/brief/strings'
 import { Assistant } from './components/phase4/assistant/Assistant'
 import { StageLoading } from './components/StageLoading'
 import { Cover, coverSeen, rememberCover } from './components/Cover'
@@ -14,6 +16,7 @@ import { siteName } from './components/siteName'
 import { Where } from './components/Where'
 import {
   clampCursor,
+  goToPage,
   initialCursor,
   isCoordinate,
   isCustomSite,
@@ -275,6 +278,15 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
           >
             {t('bar.about')}
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              setGuideStep(null)
+              goToPage('brief')
+            }}
+          >
+            {briefText(i18n)('brief.open')}
+          </button>
           <Assistant result={result} />
         </p>
         <p className="bar__lang">
@@ -293,7 +305,18 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
 
       {page === 'proof' && <Proof />}
 
-      <section className="stage" hidden={page === 'proof'} inert={coverOpen}>
+      {/* The printable brief takes the Proof page's place: the Query on screen, as one sheet. */}
+      {page === 'brief' && result && answer && (
+        <Brief
+          result={result}
+          meta={answer.meta}
+          cursorMs={cursorMs}
+          baseUrl={`${window.location.origin}${window.location.pathname}`}
+          loading={state.status === 'loading'}
+        />
+      )}
+
+      <section className="stage" hidden={page !== 'answer'} inert={coverOpen}>
         {result && site && globeSite && globeMounted && (
           // Under the view from the ground the globe waits, hidden and paused, for the way back up.
           <div className="stage__globe" hidden={!scenes.globeShown}>
@@ -352,7 +375,7 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
       </section>
 
       {/* While the next Site is asked for, the last answer stays, dimmed: never a blank column. */}
-      <main className="answer" hidden={page === 'proof'} inert={coverOpen} data-stale={state.status === 'loading' && answer !== null} aria-busy={state.status === 'loading'}>
+      <main className="answer" hidden={page === 'proof' || (page === 'brief' && result !== null)} inert={coverOpen} data-stale={state.status === 'loading' && answer !== null} aria-busy={state.status === 'loading'}>
         {result?.provenance.synthetic && <p className="demo">{t('demo')}</p>}
         {state.status === 'loading' && (
           <p className="status" role="status">
@@ -379,7 +402,7 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
             )}
           </div>
         )}
-        {result && answer && (
+        {result && answer && page !== 'brief' && (
           <Answer
             result={result}
             cursorMs={cursorMs}
