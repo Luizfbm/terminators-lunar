@@ -1,0 +1,10 @@
+degrau,rota_media_pct
+D0 rover ingênuo (60 m),17.5
+D1a + escudo,74.2
+D1b + Simplex,74.2
+D1c + Mérito (Newton/KKT),76.4
+D2 + multirresolução 60→5 m,96.6
+D3 + pesos aprendidos,97.3
+D4a + MLP neuroevoluída,93.6
+D4b + IA Híbrida,92.6
+C2r multirresolução sem Mérito,96.2

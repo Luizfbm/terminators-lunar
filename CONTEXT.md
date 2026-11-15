@@ -44,10 +44,9 @@ c:\NASA PROJETO 2026\
 │   └── js\                           ← rover_tese_engine.js, route_sim_v18.js, surface_3d_terrain.js, tese_ui.js
 ├── docs\
 │   ├── PLANO_INTEGRACAO_COCKPIT_TESE.md                  ← Especificação completa + instruções p/ cockpit e terminators-lunar
-│   ├── Relatorio_Consolidado_Tese_2026.md                ← Consolidação científica integral (MC, SfS, LROC NAC, POP=100)
-│   ├── Tese_Versao_Simplificada.md/.docx                 ← Síntese enxuta focada na tese
-│   ├── Tese_Apresentacao_Dados_e_Variaveis.md/.docx      ← Documento técnico completo + Apêndice A (130 sítios)
-│   ├── Tese_Apresentacao_Dados_e_Variaveis_atualizada.docx
+│   ├── Relatorio_Consolidado_Tese_2026.md/.docx          ← Consolidação científica integral formatada (MC, SfS, LROC NAC, POP=100)
+│   ├── Tese_Versao_Simplificada.md                       ← Síntese enxuta focada na tese
+│   ├── Tese_Apresentacao_Dados_e_Variaveis.md            ← Documento técnico completo + Apêndice A (130 sítios)
 │   ├── Plano_Mestre_Otimizacao_e_Probabilidade_5m_Eduardo.md
 │   ├── Tese_Notas_Arquitetura_Dados.md                   ← Contornos permanentes de sensores + log
 │   ├── figuras_tese\                                     ← PNGs 180 DPI gerados pelos scripts

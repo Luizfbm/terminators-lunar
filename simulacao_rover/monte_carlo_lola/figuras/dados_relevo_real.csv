@@ -1,0 +1,10 @@
+configuracao,chegada_pct,tombamento_pct
+Grade 60 m (R60),70.3,2.8
+Rover A (original),73.4,2.8
+"Tese, margem calibrada",75.9,0.9
+"Mérito, pesos sem MC",77.5,1.2
+"Mérito, pesos fixos",78.1,1.6
+"Tese, regra (RT_nom)",78.4,0.9
+IA Híbrida 30 ger. com MC,78.4,0.9
+IA Híbrida pré-treinada,78.8,0.0
+"Mérito, pesos com MC",78.8,0.6
