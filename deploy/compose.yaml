@@ -23,6 +23,13 @@ services:
       # 40 behind one NAT, each opening a Site every 4 s, is 600; the page itself opens
       # one /visibility per Site, so no real visitor gets near it.
       LUNAR_IP_LIMIT_PER_MINUTE: "600"
+      # Engine runs at once (backend/app/cache.py, default 2). The VPS has 5 cores and is
+      # shared only with ai-memory, so four leave one core for it, Caddy and the tunnel. More
+      # visitors get an engine at once; a Landing scatter still holds one slot at a time.
+      LUNAR_ENGINE_CONCURRENCY: "4"
+      # Answer cache in MB (default 320): about 1,400 default-Window answers, so two days
+      # of every Curated Site plus the visitors' own Queries stay warm.
+      LUNAR_CACHE_MAX_MB: "1200"
       # The assistant (the requirement) reaches its model through OpenRouter. The key and the
       # model id come from .env on the server; with either one empty the route answers in
       # offline mode, so the stack starts without them. The credit limit set on the key
@@ -37,10 +44,12 @@ services:
     # Site. Four cold engine runs asked at once took it to 1.1 GiB, and another day's
     # Window adds about 110 MB when it warms. The phase 4 routes run the engine many times
     # per request (19 for a Landing scatter, a year of months for the Windows by start
-    # day), so the cap goes from 1.5 to 2.5 GB. The machine has 7.9 GB and about 6 GB
-    # available. A runaway still gets killed and restarted instead of taking the machine
-    # down with the other services on it.
-    mem_limit: 2560m
+    # day), so the cap went from 1.5 to 2.5 GB. On 15/11/2026 the backend sat at 714 MiB
+    # and ai-memory at 470 MB, with 6.3 GB of the 7.9 GB free. With four engine slots
+    # (about 280 MB each cold) and a 1.2 GB answer cache the cap goes to 4.5 GB, which
+    # still leaves ai-memory and the system about 3 GB. A runaway still gets killed and
+    # restarted instead of taking the machine down with the other services on it.
+    mem_limit: 4608m
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
       interval: 10s
