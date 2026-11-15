@@ -1354,3 +1354,37 @@ def test_sites_near_the_sldem_seam_answer_with_a_horizon_that_matches_the_dem(
             sample["elevation_deg"],
             independent,
         )
+
+
+def test_every_route_that_answers_422_lets_schemathesis_expect_it() -> None:
+    # Found on 15/11/2026 in the integration branch: /visibility/uncertainty (ADR 0006)
+    # answers 422 for a Window outside the engine's coverage, as /visibility does, and the
+    # contract documents it, but schemathesis.toml had no entry for the new route. JSON
+    # Schema can't say "2025 to 2032", so schemathesis sent a Window in 2000, got the 422
+    # and failed ST202 on CI. Every route whose contract documents the 422 needs the entry.
+    import tomllib
+
+    root = Path(__file__).resolve().parents[2]
+    paths = (root / "contract" / "openapi.yaml").read_text("utf-8")
+    paths = paths.split("\npaths:\n", 1)[1].split("\ncomponents:\n", 1)[0]
+    documented: set[str] = set()
+    path = method = ""
+    for line in paths.splitlines():
+        if line.startswith("  /") and line.endswith(":"):
+            path = line.strip()[:-1]
+        elif re.fullmatch(r"    (get|post|put|patch|delete):", line):
+            method = line.strip()[:-1].upper()
+        elif "#/components/responses/Unprocessable" in line:
+            documented.add(f"{method} {path}")
+    assert "GET /visibility" in documented and "GET /visibility/uncertainty" in documented
+
+    config = tomllib.loads((root / "schemathesis.toml").read_text("utf-8"))
+    expected = {
+        operation["include-name"]: operation["checks"]["positive_data_acceptance"][
+            "expected-statuses"
+        ]
+        for operation in config.get("operations", [])
+        if "positive_data_acceptance" in operation.get("checks", {})
+    }
+    missing = sorted(name for name in documented if "422" not in expected.get(name, []))
+    assert missing == []

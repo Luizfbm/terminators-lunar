@@ -103,3 +103,12 @@ generation.max-examples = 8
 request-timeout = 100
 checks.max_response_time = 100.0
 checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422", "503"]
+
+# The DEM Uncertainty band (ADR 0006) starts 32 clones of the Query in the background and
+# answers 202 until they are done, so every new example queues real engine work; keep them
+# few. It rejects what GET /visibility rejects: a 422 for a Window outside coverage, which
+# JSON Schema doesn't express, and 404 for an unknown Site.
+[[operations]]
+include-name = "GET /visibility/uncertainty"
+generation.max-examples = 8
+checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422", "503"]
