@@ -655,16 +655,16 @@
       "pt": "cada Event: horário nominal dentro de [earliest − 15 min, latest + 15 min], com a faixa presente (pelo menos metade dos clones tem o Event); cada métrica (tempo com Sol e Terra, horas de Sol, horas de Terra visível, LCSP): nominal dentro de [low − 0,25 h, high + 0,25 h], fração média do Sol dentro de 0,25 h / 708,73 h. 15 min é o passo da linha do tempo. Esperado antes de rodar: passa. Fixada antes de avaliar"
     },
     "result": {
-      "en": "did not run",
-      "pt": "não rodou"
+      "en": "2 of 2 Events and 5 of 5 metrics inside the band; widest Event band 44 s; nominal at most 0 s outside",
+      "pt": "2 de 2 Events e 5 de 5 métricas dentro da faixa; maior faixa de Event 44 s; nominal no máximo 0 s fora"
     },
-    "status": "pending",
+    "status": "passed",
     "not_covered": {
       "en": "The method, not NASA's error maps: CI has no per-pixel error rasters, so the clones use a uniform 0.5 m. Only pixel-scale height error is varied: no landing error, no resolution drop, nothing under a pixel (the IM-2 crater is below the finest DEM). A nominal answer inside its own band says the band agrees with it, not that the band is the true error.",
       "pt": "O método, não os mapas de erro da NASA: o CI não tem os rasters de erro por pixel, então os clones usam 0,5 m uniforme. Só o erro de altura na escala do pixel varia: sem erro de pouso, sem queda de resolução, nada abaixo de um pixel (a cratera do IM-2 é menor que o DEM mais fino). Uma resposta nominal dentro da própria faixa diz que a faixa concorda com ela, não que a faixa é o erro verdadeiro."
     },
     "script_path": "validation/test_uncertainty.py",
-    "run_at": "2026-11-15T17:09:41Z"
+    "run_at": "2026-11-15T17:10:03Z"
   },
   {
     "id": "negative-control-uncertainty-band-shifted",
@@ -678,16 +678,16 @@
       "pt": "pelo menos um Event tem que cair fora de [earliest − 15 min, latest + 15 min]. Esperado antes de rodar: fora"
     },
     "result": {
-      "en": "did not run",
-      "pt": "não rodou"
+      "en": "outside as expected (2 of 2 Events moved 24 h fall outside the band)",
+      "pt": "fora, como esperado (2 de 2 Events deslocados 24 h caem fora da faixa)"
     },
-    "status": "pending",
+    "status": "passed",
     "not_covered": {
       "en": "Only shows the band is narrow enough for the check to tell a day's shift apart.",
       "pt": "Só mostra que a faixa é estreita o bastante para a checagem distinguir um deslocamento de um dia."
     },
     "script_path": "validation/test_uncertainty.py",
-    "run_at": "2026-11-15T17:09:41Z"
+    "run_at": "2026-11-15T17:10:03Z"
   },
   {
     "id": "wueller2026-sunlit-days",

@@ -150,7 +150,9 @@ def seconds_outside(event: dict[str, Any], nominal_time: datetime) -> float | No
 
 
 @proof.check(CONTAINS)
-def test_the_band_contains_the_nominal_answer(answers: tuple[dict[str, Any], dict[str, Any]]) -> None:
+def test_the_band_contains_the_nominal_answer(
+    answers: tuple[dict[str, Any], dict[str, Any]],
+) -> None:
     nominal, band = answers
     assert band["clones"] == 32
     assert [e["type"] for e in band["events"]] == [e["type"] for e in nominal["events"]]
