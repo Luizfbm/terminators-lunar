@@ -12,7 +12,7 @@
 # Two groups run at the same time, each writing its own log in a temp dir:
 #   backend   uv sync, ruff, ruff format, mypy, pytest, validation
 #   frontend  npm ci, eslint, tsc, vitest, generated types, Playwright e2e
-# The e2e runs every test but the ones tagged @timing with $LUNAR_E2E_WORKERS workers (6 unless
+# The e2e runs every test but the ones tagged @timing with $LUNAR_E2E_WORKERS workers (3 unless
 # set). The @timing tests assert how long something took, so they must not share the machine:
 # they run alone, with one worker, once both groups are done. Nothing is ever re-run until it passes.
 #
@@ -65,7 +65,9 @@ started=$(date +%s)
 # Dedicated ports, so the e2e never meets a dev server (4010 and 4173 are the usual ones).
 export E2E_MOCK_PORT=${E2E_MOCK_PORT:-4710}
 export E2E_APP_PORT=${E2E_APP_PORT:-4773}
-E2E_WORKERS=${LUNAR_E2E_WORKERS:-6}
+# 3 workers: with 6, alongside pytest and the validation suite, the Mac reached load 97 and 49 e2e
+# timed out (15/11/2026). With 3, only the known failures were left.
+E2E_WORKERS=${LUNAR_E2E_WORKERS:-3}
 
 exec 3>&1 # progress lines go to the terminal even while a group's output goes to its log
 
@@ -200,6 +202,7 @@ fi
 
 rm -rf "$LOGS"
 took=$(( $(date +%s) - started ))
-ran=$([ "$RUN_BACKEND" = 1 ] && printf 'backend ')$([ "$RUN_FRONTEND" = 1 ] && printf 'frontend+e2e ')
+# `|| true`: a group that did not run leaves the test false, and set -e would take that for a failure.
+ran=$([ "$RUN_BACKEND" = 1 ] && printf 'backend ' || true)$([ "$RUN_FRONTEND" = 1 ] && printf 'frontend+e2e ' || true)
 status success "contract lint, ${ran:-no group (docs only) }in ${took}s"
 echo "mac-gates passed for $(git rev-parse --short HEAD) in ${took}s"
