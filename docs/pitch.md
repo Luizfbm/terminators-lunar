@@ -70,7 +70,7 @@ Estes números **não são do nosso app** e não são referência da Prova. Vêm
 | LunarX (303, VoidX) | Horizonte só com relevo até uns 10 km ("more distant massifs are not in the horizon"); mostra a Terra visível às 00:00 de 01/12 | idem |
 | Sharp Navigation (time Sharpai, Vilnius) | No "lower slope", cerca de 0,2 km do Site 001, 74% de Sol e 36% de Terra no mês, contra 100% e 46,8% no ponto de cima; não há referência para dizer qual dos dois pontos acerta | 100% de Sol (708,73 h) e 46,8% de Terra e de Sol e Terra juntos (331,39 h de 708,73 h) no Site 001 [1][3] |
 | LANDERPRINT (494) | Com quatro faces de painel fixas, virar o corpo 10° passa uma semana de outubro de 2027 de energia suficiente a insuficiente (10.628,79 Wh contra 13.360 Wh de carga, declarado pelo time) | o painel da bateria usa um só azimute fixo [7] |
-| Lunar Sightline Planner (Legazpi) | "IM-2 Athena (approx.)" em 84,800° S 29,200° E, a uns 290 m do ponto final da LROC, com LOLA de 20 m: o Sol some por 35 dias a partir de 06/03/2025 | não conferido (ver "Deixado de fora") |
+| Lunar Sightline Planner (Legazpi) | "IM-2 Athena (approx.)" em 84,800° S 29,200° E, a uns 290 m do ponto final da LROC, com LOLA de 20 m: o Sol some por 35 dias a partir de 06/03/2025 | não bate: o nosso motor dá 15,8 dias sem Sol, de 20/03 a 04/04 (ver "Deixado de fora") |
 
 Nesta tabela só o Zoriana, o Earthset, o Noctis Horizon e o Lunar Window entram como "outros times acham a mesma hora". Os demais explicam por que as respostas divergem.
 
@@ -84,7 +84,7 @@ Nesta tabela só o Zoriana, o Earthset, o Noctis Horizon e o Lunar Window entram
 
 ## Deixado de fora
 
-- **Os 35 dias de Sol apagado na Athena a 290 m** (Lunar Sightline Planner): o nosso motor não foi rodado nesse ponto nesta rodada, porque os DEMs de teste do repositório não cobrem a Athena. Só entra se alguém conferir no app em 84,800° S 29,200° E, na Window de 06/03/2025.
+- **Os 35 dias de Sol apagado na Athena a 290 m** (Lunar Sightline Planner): conferido no app em produção em 15/11/2026 e **não bate**. No mesmo ponto (84,800° S 29,200° E, 2 m, Window de 840 h a partir de 06/03/2025), o nosso motor dá Sol até 20/03/2025 00:50 UTC, quando ele se põe atrás do Mons Mouton, e de volta só em 04/04/2025 19:31 UTC: uma noite de 378,7 h (15,8 dias), e 461 h de Sol nas 840 h. No ponto final da LROC, a Athena tem Sol nas 48 h. Para o pitch, o argumento continua de pé com o nosso número: "a 290 m de onde a Athena parou, o Sol some por quase 16 dias". Os 35 dias do outro time não entram.
 - **"Quatro cálculos independentes" no nascer da Terra:** o texto da pesquisa usa "independentes", mas aqui "independente" é palavra da Prova. Dizemos "outros times, com outro código".
 - **Os Sites do Wueller, o português e o nome do relevo como diferencial:** o app tem os três, mas deixaram de ser exclusivos (outros times usam os 130 Sites, estão em português e nomeiam o relevo). Aparecem como fato, nunca como "só nós".
 - **A faixa de incerteza do DEM (ADR 0003):** o README diz que ainda não está pronta. Fica fora do pitch até estar.
