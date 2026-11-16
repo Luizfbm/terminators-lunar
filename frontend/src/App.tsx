@@ -596,7 +596,7 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
 
       </main>
 
-      {result && answer && page === 'answer' && view === 'ground' && (
+      {result && answer && page === 'answer' && (
         <TimeStrip
           key={vehicle?.id ?? 'no-vehicle'}
           inert={coverOpen}
