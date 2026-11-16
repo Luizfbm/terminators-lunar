@@ -82,7 +82,8 @@ function named(answer: Answered, i18n: I18n): Answered {
 /** The whole Window passes in this long while playing. */
 const PLAY_MS = 24_000
 
-export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: Locale) => void }) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- English only (#147): the props stay for the Root.
+export function App(_props: { locale: Locale; onLocale: (locale: Locale) => void }) {
   const i18n = useI18n()
   const { t } = i18n
   const link = useMemo(() => readLink(window.location.search), [])
@@ -138,7 +139,7 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
   // Whose Occluder is marked on the horizon: set by clicking the reason under a statement.
   const [marked, setMarked] = useState<Body | null>(null)
   // The language goes in the link once the visitor picks one, or when the link already had it.
-  const [linkLanguage, setLinkLanguage] = useState(link.language)
+  const [linkLanguage] = useState(link.language)
   const [openedAt] = useState(() => Date.now())
   const sites = useSites()
   const { state, retry } = useAnswer(siteRef, choice)
@@ -423,18 +424,6 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
             {briefText(i18n)('brief.open')}
           </button>
           <Assistant result={result} />
-        </p>
-        <p className="bar__lang">
-          {(['pt', 'en'] as const).map((code) => (
-            <button key={code} type="button" lang={code} aria-pressed={locale === code} aria-label={`${code.toUpperCase()} ${t(`lang.${code}`)}`}
-              onClick={() => {
-                setLinkLanguage(code)
-                onLocale(code)
-              }}
-            >
-              {code.toUpperCase()}
-            </button>
-          ))}
         </p>
       </header>
 
