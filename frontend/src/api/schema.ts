@@ -691,7 +691,7 @@ export interface components {
             source_reference: string;
             region_id: string | null;
             curated: boolean;
-            /** @description A 5 m DEM covers this Site (PGDA 78 / 90). */
+            /** @description A PGDA 5 m DEM (product 78 or 90) covers this Site. It is not the 5 m Hazard grid: that grid is a different product (LDEC_875S_5M), sits at the nearest of 103 tiles within 15 km and is described by `GET /sites/{site_id}/hazard` (`grid`), so a Site can have this DEM and no Hazard grid. */
             has_5m_dem: boolean;
         };
         /** @description The terrain that sets the Horizon mask in one direction. */
@@ -1414,7 +1414,7 @@ export interface components {
             missed_hazard: components["schemas"]["HazardInterval"];
             /** @description The share of the truly safe cells this navigation blocks. */
             false_alarm: components["schemas"]["HazardInterval"];
-            /** @description The share of the truly steep cells this navigation blocks. */
+            /** @description What the Monte Carlo stores as its coverage: the share of the checked cells whose true slope is at or under the estimated slope plus this navigation's margin. It is the share of the margin's coverage, not the share of the truly steep cells that the navigation blocks (that is 1 minus `missed_hazard`). For Normal navigation, which has no margin, it is the share of cells whose true slope is at or under the estimate. Our group's estimate: the nominal level (P50, P90, P99) is the z that was used, not a coverage that was achieved, and the value here is what it really covered. */
             coverage: components["schemas"]["HazardInterval"];
             /** @description Mean absolute error of the slope it reads, in degrees. */
             mean_abs_error_deg: components["schemas"]["HazardInterval"];
@@ -1434,7 +1434,7 @@ export interface components {
             seed: number;
             /** @description Normal navigation, then Multiresolution at P50, P90 and P99 (nominal margin). */
             methods: components["schemas"]["HazardMethod"][];
-            /** @description Unvetoed hazard at the same false alarm (5, 10, 15, 20, 25 and 30%), with a uniform margin on each navigation: the fair comparison. */
+            /** @description Unvetoed hazard at the same false alarm (5, 10, 15, 20, 25 and 30%), the fair comparison. The Normal navigation curve sweeps one uniform margin over every cell. The Multiresolution curve is the margin by density of laser shots, scaled in size to reach each false alarm, not a uniform margin. Our group's estimate, from 20 independent draws: it may contain errors. Its gain at the same false alarm is about 20% at 15% and 20% false alarm at AR06, 38.5% in the median over our group's 26 grids and 12% when the coarse grid is 20 m, so the reduction `methods` shows between different false alarms (for example 12.86% to 2.70% at AR06, where the false alarm goes from 5.9% to 18.0%) is mostly the margin. */
             trade_off: {
                 normal: components["schemas"]["HazardTradeOffPoint"][];
                 multiresolution: components["schemas"]["HazardTradeOffPoint"][];
@@ -1443,10 +1443,13 @@ export interface components {
                 normal: number;
                 multiresolution: number;
             };
-            /** @description McNemar on the steep cells (b only Normal blocks, c only Multiresolution blocks) and Wilcoxon on the absolute errors. */
+            /** @description McNemar on the steep cells and Wilcoxon on the absolute slope errors. `mcnemar_b` and `mcnemar_c` compare Normal navigation without a margin with Multiresolution at P90 with its margin (b: only Normal navigation blocks the cell; c: only Multiresolution blocks it), so they measure the margin plus the data, not the data alone. `wilcoxon_p` compares the absolute slope errors, which have no margin in them. Our group's estimate: it may contain errors, and the same-false-alarm curves in `trade_off` are the fair comparison. */
             paired_tests: {
+                /** @description Cells only Normal navigation (without a margin) blocks, against Multiresolution at P90 with its margin. */
                 mcnemar_b: number;
+                /** @description Cells only Multiresolution at P90 (with its margin) blocks, against Normal navigation without a margin. */
                 mcnemar_c: number;
+                /** @description p of that comparison, which measures the margin plus the data. It is our group's estimate and may contain errors. */
                 mcnemar_p: number;
                 wilcoxon_p: number;
                 wilcoxon_n: number;
