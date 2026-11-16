@@ -1787,3 +1787,32 @@ def test_a_busy_route_planner_says_when_to_ask_again() -> None:
     assert busy.headers["content-type"].startswith("application/problem+json")
     assert busy.json()["code"] == "busy"
     assert int(busy.headers["Retry-After"]) >= 1
+
+
+# 15/11/2026 (review of Larissa's #149): GET /terrain/landing-area answers about 1.56 MB (658 KB
+# gzipped) from two native grids of up to 511 x 511 pixels, and went in beside /terrain/heights
+# without the per-IP cap that one has. Over the cap it answers what every capped route does:
+# 503 busy with Retry-After (there is no 429 in this API).
+def test_landing_area_is_counted_by_the_per_ip_cap(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LUNAR_IP_LIMIT_PER_MINUTE", "2")
+    one = {"CF-Connecting-IP": "198.51.100.88", "Origin": "https://lunar.luizfbm.win"}
+    params = {"latitude_deg": -89.5, "longitude_deg": 0}
+    answers = [client.get("/terrain/landing-area", params=params, headers=one) for _ in range(3)]
+    assert [a.status_code == 503 for a in answers] == [False, False, True]
+    assert answers[2].json()["code"] == "busy"
+    assert 1 <= int(answers[2].headers["Retry-After"]) <= 61
+    assert answers[2].headers["access-control-allow-origin"] == "https://lunar.luizfbm.win"
+    other = {"CF-Connecting-IP": "203.0.113.88"}
+    assert client.get("/terrain/landing-area", params=params, headers=other).status_code != 503
+
+
+# Same review: the answer is a pure function of the two coordinates and the DEM files, yet came
+# with no Cache-Control, so every visit to Level 3 downloaded 1.56 MB again.
+def test_landing_area_answer_can_be_cached_for_a_day() -> None:
+    answer = client.get("/terrain/landing-area", params={"latitude_deg": -89.5, "longitude_deg": 0})
+    assert answer.status_code == 200, answer.text
+    assert answer.headers["Cache-Control"] == "public, max-age=86400"
+    # A refusal is not cached.
+    refused = client.get("/terrain/landing-area", params={"latitude_deg": -87, "longitude_deg": 0})
+    assert refused.status_code == 422
+    assert "max-age" not in refused.headers.get("Cache-Control", "")

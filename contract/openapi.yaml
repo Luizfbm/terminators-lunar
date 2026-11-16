@@ -51,6 +51,8 @@ paths:
         and nothing is drawn. Bounds are south polar stereographic map metres; the grids
         include border pixels so both draw the same rectangle. The answer can reach about
         1.5 MB uncompressed; the reverse proxy compresses it (gzip or zstd) for clients that accept it.
+        It counts toward the per-IP cap that `/terrain/heights` and the engine routes share: over
+        the cap the answer is a 503 `busy` with `Retry-After`.
       parameters:
         - name: latitude_deg
           in: query
@@ -63,11 +65,19 @@ paths:
       responses:
         '200':
           description: Complete native coverage at both resolutions
+          headers:
+            Cache-Control:
+              description: >-
+                `public, max-age=86400`: the answer depends only on the two coordinates and
+                the DEM files, so it can be kept for a day.
+              schema: {type: string}
           content:
             application/json:
               schema: {$ref: '#/components/schemas/LandingArea'}
         '422':
           $ref: "#/components/responses/Unprocessable"
+        '503':
+          $ref: "#/components/responses/Busy"
   /routes/plan:
     post:
       operationId: planRoute

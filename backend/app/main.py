@@ -504,8 +504,11 @@ def get_landing_area(
     longitude_deg: float = Query(..., ge=-180, le=180),
 ) -> Response:
     body = landing_area.area(latitude_deg, longitude_deg)
+    # A pure function of the two coordinates and the DEM files, so a client or the proxy may keep it.
     return Response(
-        json.dumps(body, separators=(",", ":"), allow_nan=False), media_type="application/json"
+        json.dumps(body, separators=(",", ":"), allow_nan=False),
+        media_type="application/json",
+        headers={"Cache-Control": "public, max-age=86400"},
     )
 
 

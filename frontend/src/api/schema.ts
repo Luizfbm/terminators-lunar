@@ -19,6 +19,8 @@ export interface paths {
          *     and nothing is drawn. Bounds are south polar stereographic map metres; the grids
          *     include border pixels so both draw the same rectangle. The answer can reach about
          *     1.5 MB uncompressed; the reverse proxy compresses it (gzip or zstd) for clients that accept it.
+         *     It counts toward the per-IP cap that `/terrain/heights` and the engine routes share: over
+         *     the cap the answer is a 503 `busy` with `Retry-After`.
          */
         get: operations["getLandingArea"];
         put?: never;
@@ -1915,6 +1917,8 @@ export interface operations {
             /** @description Complete native coverage at both resolutions */
             200: {
                 headers: {
+                    /** @description `public, max-age=86400`: the answer depends only on the two coordinates and the DEM files, so it can be kept for a day. */
+                    "Cache-Control"?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1922,6 +1926,7 @@ export interface operations {
                 };
             };
             422: components["responses"]["Unprocessable"];
+            503: components["responses"]["Busy"];
         };
     };
     planRoute: {
