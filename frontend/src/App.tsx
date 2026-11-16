@@ -529,7 +529,8 @@ export function App(_props: { locale: Locale; onLocale: (locale: Locale) => void
         )}
         {/* Larissa's layout (the default) has no column: the landing panel presents the answer at Levels 1 and 2,
             and it is the only panel there is (domain/presentation.ts). Level 3 has its own panels. */}
-        {result && presented.panel !== 'none' && page === 'answer' && (
+        {/* Only on the ground: the orbit and the map open with the Moon alone, as in Larissa's design. */}
+        {result && presented.panel !== 'none' && page === 'answer' && view === 'ground' && (
           <LandingPanel result={result} siteName={result.query.site.name} variant={presented.panel} vehicle={presented.vehicleFields ? vehicle : null} cursorMs={cursorMs}
             marked={marked} onMark={onMark} stale={state.status === 'loading'}
             onCursor={(ms) => { setPlaying(false); setMovedCursor(clampCursor(ms, startMs, endMs)) }} />
@@ -584,7 +585,7 @@ export function App(_props: { locale: Locale; onLocale: (locale: Locale) => void
 
       </main>
 
-      {result && answer && page === 'answer' && (
+      {result && answer && page === 'answer' && view === 'ground' && (
         <TimeStrip
           advanced={presented.advanced}
           key={presented.vehicleFields ? (vehicle?.id ?? 'no-vehicle') : 'no-vehicle'}
