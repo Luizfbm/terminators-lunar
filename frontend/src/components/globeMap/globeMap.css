@@ -48,32 +48,39 @@
   place-items: center;
   width: 100%;
   height: 100%;
-  border: 1.5px solid var(--fg);
+  border: 1px solid rgba(236, 230, 218, 0.7);
   border-radius: 50%;
-  background: color-mix(in srgb, var(--bg) 72%, transparent);
-  font-family: var(--mono);
-  font-size: 11px;
+  background: rgba(48, 48, 48, 0.78);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+  color: var(--mark);
+  font-family: var(--label-font);
+  font-size: 10px;
+  font-weight: 500;
   line-height: 1;
-  transition: transform 0.15s ease;
+  transition: transform var(--t-fast) var(--ease);
 }
 
 /* The Region that holds the chosen Site is filled in. */
 .globe__region[data-chosen='true'] .globe__count {
-  background: var(--fg);
-  color: var(--bg);
+  border-color: rgba(255, 255, 255, 0.3);
+  background: var(--stone);
+  color: #000;
 }
 
 .globe__name {
   position: absolute;
   left: 26px;
-  top: 2px;
-  color: var(--fg);
-  font-size: var(--small);
-  line-height: 18px;
+  top: 3px;
+  color: var(--mark);
+  font-family: var(--label-font);
+  font-size: var(--label);
+  font-weight: 500;
+  letter-spacing: var(--label-track);
+  line-height: 16px;
   white-space: nowrap;
   text-shadow:
-    0 0 6px var(--bg),
-    0 0 2px var(--bg);
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 0 6px rgba(0, 0, 0, 0.6);
 }
 
 /* A name with no room beside its marker waits for the hover or the focus. */
@@ -121,12 +128,12 @@
 .globe__site::before {
   content: '';
   position: absolute;
-  inset: 5px;
+  inset: 6px;
   border-radius: 50%;
   /* The colour of the Sites layer in orbit (domain/markers.ts), so a Site looks the same at both levels. */
-  background: #5ef2c8;
-  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.75);
-  transition: transform 0.15s ease;
+  background: #b9d3c4;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
+  transition: transform var(--t-fast) var(--ease);
 }
 
 .globe__site:hover::before,
@@ -142,13 +149,13 @@
 /* A mission's landing on the map: its own colour, and its name in view, as in orbit. */
 .globe__site[data-mission='true']::before {
   background: #fff;
-  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.75);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
 }
 
 .globe__site[data-mission='true'] .globe__name {
-  color: #fff;
-  font-size: 11px;
-  font-weight: 400;
+  color: var(--mark);
+  font-size: 10px;
+  font-weight: 500;
   line-height: 14px;
   visibility: visible;
 }
@@ -161,13 +168,14 @@
 /* The chosen Site: a ring and a dot, amber while the Sun is up there. */
 .globe__chosen {
   position: absolute;
-  width: 24px;
-  height: 24px;
-  border: 2px solid var(--fg);
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--mark);
   border-radius: 50%;
+  /* A soft dark halo instead of hard edges: the ring reads over the grey Moon without a black outline. */
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--bg) 60%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--bg) 60%, transparent);
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 0 8px rgba(0, 0, 0, 0.45);
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
@@ -175,9 +183,10 @@
 .globe__chosen::after {
   content: '';
   position: absolute;
-  inset: 5px;
+  inset: 6px;
   border-radius: 50%;
-  background: var(--fg);
+  background: var(--mark);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
 }
 
 .globe__chosen[data-lit='true'] {
@@ -193,19 +202,24 @@
   right: var(--gutter);
   bottom: 12px;
   min-height: 32px;
-  padding: 0 12px;
-  border: 1px solid var(--edge);
-  border-radius: 9px;
-  background: color-mix(in srgb, var(--bg) 80%, transparent);
-  backdrop-filter: blur(6px);
-  color: var(--fg);
-  font-size: var(--small);
+  padding: 0 14px;
+  border: 1px solid var(--glass-edge);
+  border-radius: 8px;
+  background: var(--glass);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  color: var(--mark);
+  font-family: var(--label-font);
+  font-size: var(--label);
+  font-weight: 500;
+  letter-spacing: var(--label-track);
   cursor: pointer;
   pointer-events: auto;
 }
 
 .globe__back:hover {
-  background: var(--chosen);
+  background: rgba(80, 76, 70, 0.8);
 }
 
 @media (pointer: coarse) {
@@ -216,10 +230,11 @@
 
 .globe__readout {
   position: absolute;
-  padding: 2px 8px;
-  border: 1px solid var(--edge);
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  padding: 3px 8px;
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius-control);
+  background: rgba(48, 48, 48, 0.86);
+  box-shadow: var(--glass-shadow);
   color: var(--fg);
   font-family: var(--mono);
   font-size: 12px;

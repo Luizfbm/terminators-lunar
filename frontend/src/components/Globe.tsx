@@ -131,17 +131,18 @@ const EQUATOR_DOTS = 140
 /** Sizes of the marks as shares of the Moon's radius on screen. */
 const EQUATOR_BASE_WIDTH = 1 / (0.36 * 110)
 const EQUATOR_WIDTH = 1 / (0.36 * 170)
-const POLE_LETTER_SIZE = 0.062 / 0.36
-const POLE_LETTER_OUTLINE = 1 / (0.36 * 95)
-const POLE_STROKE_WIDTH = 1 / (0.36 * 330)
+// Quiet marks, like a map's graticule: about half the old size, a hairline halo and a hairline stem.
+const POLE_LETTER_SIZE = 0.032 / 0.36
+const POLE_LETTER_OUTLINE = 1 / (0.36 * 260)
+const POLE_STROKE_WIDTH = 1 / (0.36 * 520)
 const POLE_DOT = 1 / (0.36 * 190)
-/** The circle of latitude round the south pole: a white line of 2 px over a darker one of 4 px, whatever the zoom. */
+/** The circle of latitude round the south pole: a warm white line of 2 px over a faint darker one of 3 px, whatever the zoom. */
 const CIRCLE_WIDTH_PX = 2
-const CIRCLE_BASE_WIDTH_PX = 4
+const CIRCLE_BASE_WIDTH_PX = 3
 /** The dots of the Sites and the missions sit this far out, in Moon radii, just over the ground. */
 const MARK_RADIUS = 1.002
 /** The ring of the chosen Site, as the map's CSS draws it (`.globe__chosen`), for the mission names to keep clear of. */
-const CHOSEN_RING_PX = 12
+const CHOSEN_RING_PX = 11
 const FIELD_OF_VIEW_DEG = 32
 /** The Sun's halo reaches this many times the radius of its disc. */
 const HALO_REACH = 7
@@ -188,12 +189,13 @@ function dotTexture(): THREE.Texture | null {
   paper.width = paper.height = 64
   const pen = paper.getContext('2d')
   if (!pen) return null
+  // A thin, half-dark edge: enough to lift the dot off the grey Moon without a black outline.
   pen.beginPath()
   pen.arc(32, 32, 30, 0, Math.PI * 2)
-  pen.fillStyle = '#000'
+  pen.fillStyle = 'rgba(0, 0, 0, 0.55)'
   pen.fill()
   pen.beginPath()
-  pen.arc(32, 32, 21, 0, Math.PI * 2)
+  pen.arc(32, 32, 25, 0, Math.PI * 2)
   pen.fillStyle = '#fff'
   pen.fill()
   return new THREE.CanvasTexture(paper)
@@ -503,11 +505,13 @@ export function Globe(props: GlobeProps) {
     // The circle of latitude round the south pole, every degree of longitude, on the same sphere as the Equator.
     const polarRing = latitudeCircle(POLAR_CIRCLE_LATITUDE).map((point) => vector(point.latitude_deg, point.longitude_deg, 1.002))
     const poleSpots = POLES.map((pole) => vector(pole.latitude, 0, 1.002))
+    // The Equator stays as Larissa drew it. The circle and the poles are softened: warm white over a faint
+    // dark base rather than pure white over a black one (docs/design/ui-direction.md).
     const equatorBase = markDots(equatorRing, 0x000000, 0.55, 1)
     const equatorDots = markDots(equatorRing, 0xffd400, 1, 2)
-    const circleBase = markDots(polarRing, 0x000000, 0.55, 1)
-    const circleDots = markDots(polarRing, 0xffffff, 1, 2)
-    const poleDots = markDots(poleSpots, 0xffffff, 1, 2)
+    const circleBase = markDots(polarRing, 0x000000, 0.25, 1)
+    const circleDots = markDots(polarRing, 0xece6da, 0.6, 2)
+    const poleDots = markDots(poleSpots, 0xece6da, 0.8, 2)
 
     // The marked Occluder: a ring on it and a line from the Site.
     const toOccluder = stroke(SUN)

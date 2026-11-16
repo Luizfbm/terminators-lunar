@@ -6,6 +6,9 @@ import { readLink } from './domain/query'
 import { I18nProvider } from './i18n/I18nContext'
 import { pickLocale } from './i18n/i18n'
 import type { Locale } from './i18n/messages'
+// Orbitron is Larissa's face (her menu); the rest of the app takes its small labels from it too.
+import '@fontsource/orbitron/latin-500.css'
+import '@fontsource/orbitron/latin-600.css'
 import './index.css'
 
 const TAGS: Record<Locale, string> = { en: 'en-GB', pt: 'pt-BR' }
