@@ -8,7 +8,9 @@ At the pole the Sun stays within about ±1.5° of the horizon and circles it onc
 
 ## Try it
 
-The repository includes the web interface under `frontend/` and the backend API under `backend/`. A deployment may expose the API at:
+**Open the app: <https://lunar.luizfbm.win>.** No login, and the whole Query lives in the link.
+
+The web interface is under `frontend/` and the backend API under `backend/`. The API is public at:
 
 `https://lunar-api.luizfbm.win` (the contract is [contract/openapi.yaml](contract/openapi.yaml), and a guide to it is in [docs/frontend-api-guide.md](docs/frontend-api-guide.md)).
 
@@ -196,7 +198,7 @@ Schemathesis needs the API from the step above running (with `LUNAR_ASSISTANT_IP
 
 ## In production
 
-The stack in `deploy/compose.yaml` runs three containers with Docker Compose on one VPS: the backend, Caddy (which also serves the built frontend) and a Cloudflare Tunnel. `lunar.luizfbm.win` serves the frontend and `lunar-api.luizfbm.win` the backend. The full DEMs and SPICE kernels live on the server, not in the repo, and `deploy/fetch-data.sh` puts them there. GitHub Actions deploys on every merge to `main`.
+The stack in `deploy/compose.yaml` runs three containers with Docker Compose on one VPS: the backend, Caddy (which also serves the built frontend) and a Cloudflare Tunnel. `lunar.luizfbm.win` serves the frontend and `lunar-api.luizfbm.win` the backend. The full DEMs and SPICE kernels live on the server, not in the repo, and `deploy/fetch-data.sh` puts them there. Deploys are manual: once every check is green on `main`, we update the server by SSH with the same steps and smoke test as `.github/workflows/deploy.yml`, which only runs by hand.
 
 The backend's limits, set in `deploy/compose.yaml`:
 
@@ -224,3 +226,15 @@ A request that waits more than 25 s for an engine slot, or an address over its c
 ## How it was built
 
 The project is implemented with Python, FastAPI, React, TypeScript and the NASA SPICE and LOLA data products described above.
+
+## Use of AI
+
+We used AI coding agents throughout, mainly Claude (Anthropic) through Claude Code. The work was split into GitHub issues, agents wrote most of the code, tests and documentation on their own branches, and a pull request was merged only after its diff was read and the lint, type, unit, regression and validation checks were green. AI also helped with the research: reading papers and data documentation, and looking at other teams' public entries.
+
+The team chose the question, the data, the models and the tolerances, reviewed what was merged and tested the app by hand. The numbers the app shows come from NASA data run through our code (SPICE ephemerides, LOLA terrain), not from a language model. The validation against JPL Horizons and real landers was not tuned: no tolerance, reference value or test was changed to make a check pass.
+
+Inside the app, the assistant (`/assistant`) uses a language model reached through OpenRouter. The model picks which of our API's routes to read and writes the sentences around the engine's numbers. Without a model configured, it answers in an offline mode with fixed phrasing.
+
+## Licence
+
+Our code and documentation are released under the [Apache License 2.0](LICENSE). The data and images listed under [Data and credits](#data-and-credits) keep their own licences.

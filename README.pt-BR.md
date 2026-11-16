@@ -8,7 +8,9 @@ No polo, o Sol fica a cerca de ±1,5° do horizonte e dá uma volta nele por mê
 
 ## Experimente
 
-O repositório inclui a interface web em `frontend/` e a API em `backend/`. Um deploy pode expor a API em:
+**Abra o app: <https://lunar.luizfbm.win>.** Não precisa de login, e a Query inteira fica no link.
+
+A interface web está em `frontend/` e a API em `backend/`. A API é pública em:
 
 `https://lunar-api.luizfbm.win` (contrato em [contract/openapi.yaml](contract/openapi.yaml), guia em [docs/frontend-api-guide.md](docs/frontend-api-guide.md)).
 
@@ -112,7 +114,7 @@ Os detalhes estão no [README em inglês](README.md#how-it-works):
 
 ## Em produção
 
-A stack de `deploy/compose.yaml` roda três containers com Docker Compose num VPS: o backend, o Caddy (que também serve o frontend já compilado) e um Cloudflare Tunnel. `lunar.luizfbm.win` serve o frontend e `lunar-api.luizfbm.win` o backend. Os DEMs completos e os kernels SPICE ficam no servidor, não no repositório, e `deploy/fetch-data.sh` os coloca lá. O GitHub Actions faz o deploy a cada merge em `main`.
+A stack de `deploy/compose.yaml` roda três containers com Docker Compose num VPS: o backend, o Caddy (que também serve o frontend já compilado) e um Cloudflare Tunnel. `lunar.luizfbm.win` serve o frontend e `lunar-api.luizfbm.win` o backend. Os DEMs completos e os kernels SPICE ficam no servidor, não no repositório, e `deploy/fetch-data.sh` os coloca lá. O deploy é manual: com todos os checks verdes em `main`, atualizamos o servidor por SSH com os mesmos passos e o mesmo smoke test de `.github/workflows/deploy.yml`, que só roda à mão.
 
 Os limites do backend, definidos em `deploy/compose.yaml`:
 
@@ -128,3 +130,15 @@ Um pedido que espera mais de 25 s por uma vaga do motor, ou um endereço acima d
 ## Como foi feito
 
 O projeto é implementado com Python, FastAPI, React, TypeScript e os produtos de dados NASA SPICE e LOLA descritos acima.
+
+## Uso de IA
+
+Usamos agentes de IA para programar o tempo todo, principalmente o Claude (Anthropic) pelo Claude Code. O trabalho foi dividido em issues no GitHub, os agentes escreveram a maior parte do código, dos testes e da documentação em branches próprias, e um pull request só entrou depois de o diff ser lido e de os checks de lint, tipos, testes unitários, testes de regressão e validação passarem. A IA também ajudou na pesquisa: leitura de artigos e da documentação dos dados, e o levantamento das entregas públicas de outros times.
+
+O time escolheu a pergunta, os dados, os modelos e as tolerâncias, revisou o que entrou e testou o app à mão. Os números que o app mostra vêm dos dados da NASA passados pelo nosso código (efemérides SPICE, relevo LOLA), não de um modelo de linguagem. A validação contra o JPL Horizons e os landers reais não foi ajustada: nenhuma tolerância, valor de referência ou teste foi mudado para um check passar.
+
+Dentro do app, o assistente (`/assistant`) usa um modelo de linguagem acessado pelo OpenRouter. O modelo escolhe quais rotas da nossa API ler e escreve as frases em volta dos números do motor. Sem modelo configurado, ele responde num modo offline com frases fixas.
+
+## Licença
+
+O nosso código e a documentação estão sob a [Apache License 2.0](LICENSE). Os dados e imagens listados em [Data and credits](README.md#data-and-credits) mantêm as licenças deles.
