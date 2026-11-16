@@ -21,6 +21,8 @@ servers:
     description: Production
 security: []
 tags:
+  - name: terrain
+    description: Native terrain route scenarios.
   - name: service
     description: Health and metadata.
   - name: sites
@@ -37,6 +39,79 @@ tags:
       their drives (our group's multiresolution work).
 
 paths:
+  /terrain/landing-area:
+    get:
+      tags: [sites]
+      operationId: getLandingArea
+      summary: Native Level 3 before/after terrain in a shared 10 km square
+      description: |
+        Selection centres are limited to 87.5–90 degrees south. Before/after compares native
+        80 m and 20 m LOLA detail (the PGDA 90 products), not dates. No fallback and no
+        resampling: both DEMs must cover the whole 10 × 10 km square, or the answer is a 422
+        and nothing is drawn. Bounds are south polar stereographic map metres; the grids
+        include border pixels so both draw the same rectangle. The answer can reach about
+        1.5 MB uncompressed; the reverse proxy compresses it (gzip or zstd) for clients that accept it.
+        It counts toward the per-IP cap that `/terrain/heights` and the engine routes share: over
+        the cap the answer is a 503 `busy` with `Retry-After`.
+      parameters:
+        - name: latitude_deg
+          in: query
+          required: true
+          schema: {type: number, minimum: -90, maximum: -87.5}
+        - name: longitude_deg
+          in: query
+          required: true
+          schema: {type: number, minimum: -180, maximum: 180}
+      responses:
+        '200':
+          description: Complete native coverage at both resolutions
+          headers:
+            Cache-Control:
+              description: >-
+                `public, max-age=86400`: the answer depends only on the two coordinates and
+                the DEM files, so it can be kept for a day.
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LandingArea'}
+        '422':
+          $ref: "#/components/responses/Unprocessable"
+        '503':
+          $ref: "#/components/responses/Busy"
+  /routes/plan:
+    post:
+      operationId: planRoute
+      tags:
+      - terrain
+      summary: Plan a bounded native-DEM route and optional moving power scenario
+      description: |
+        The shortest path on the native pixel centres of one DEM (20, 80 or 240 m, the finest
+        one at or above `minimum_resolution_m`), cropped to 129 pixels per side without
+        resampling. Motion is evaluated at 64 samples at most; the energy is a scenario with
+        the speed, load and panel power given in the request, not rover safety validation.
+        A Window outside 2025-2032, a destination outside the cropped grid, a point with no
+        DEM pixel, or an end that is not after the start is a 422; a route that is already
+        being planned is a 503.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RouteRequest'
+      responses:
+        '200':
+          description: Spatial path and optional motion evaluation; inspect motion_status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RouteResponse'
+              examples:
+                synthetic:
+                  $ref: ./examples/route-plan.example.json
+        '422':
+          $ref: "#/components/responses/Unprocessable"
+        '503':
+          $ref: "#/components/responses/Busy"
   /health:
     get:
       tags: [service]
@@ -1382,6 +1457,263 @@ components:
             code: no_hazard_grid
 
   schemas:
+    Coordinates:
+      additionalProperties: false
+      properties:
+        latitude_deg:
+          maximum: 90
+          minimum: -90
+          title: Latitude Deg
+          type: number
+        longitude_deg:
+          maximum: 180
+          minimum: -180
+          title: Longitude Deg
+          type: number
+      required:
+      - latitude_deg
+      - longitude_deg
+      title: Coordinates
+      type: object
+    MotionScenario:
+      additionalProperties: false
+      properties:
+        speed_m_s:
+          minimum: 0.0001
+          maximum: 10
+          title: Speed M S
+          type: number
+        load_w:
+          description: Total constant electrical load while moving
+          exclusiveMinimum: 0
+          maximum: 1000000
+          title: Load W
+          type: number
+        battery_wh:
+          exclusiveMinimum: 0
+          maximum: 100000000
+          title: Battery Wh
+          type: number
+        initial_charge_fraction:
+          maximum: 1
+          minimum: 0
+          title: Initial Charge Fraction
+          type: number
+        panel_power_w:
+          maximum: 1000000
+          minimum: 0
+          title: Panel Power W
+          type: number
+      required:
+      - speed_m_s
+      - load_w
+      - battery_wh
+      - initial_charge_fraction
+      - panel_power_w
+      title: MotionScenario
+      type: object
+    RouteRequest:
+      additionalProperties: false
+      properties:
+        origin:
+          $ref: '#/components/schemas/Coordinates'
+        destination:
+          $ref: '#/components/schemas/Coordinates'
+        start:
+          format: date-time
+          title: Start
+          type: string
+        end:
+          format: date-time
+          title: End
+          type: string
+        observer_height_m:
+          default: 2
+          maximum: 50
+          minimum: 0
+          title: Observer Height M
+          type: number
+        max_slope_deg:
+          exclusiveMinimum: 0
+          maximum: 45
+          title: Max Slope Deg
+          type: number
+        half_extent_m:
+          default: 1000
+          maximum: 3000
+          minimum: 1000
+          title: Half Extent M
+          type: number
+        minimum_resolution_m:
+          default: 20
+          enum:
+          - 20
+          - 80
+          - 240
+          title: Minimum Resolution M
+          type: integer
+        motion:
+          anyOf:
+          - $ref: '#/components/schemas/MotionScenario'
+          - type: 'null'
+          default: null
+      required:
+      - origin
+      - destination
+      - start
+      - end
+      - max_slope_deg
+      title: RouteRequest
+      type: object
+    MotionSample:
+      properties:
+        t:
+          title: T
+          type: string
+        latitude_deg:
+          title: Latitude Deg
+          type: number
+        longitude_deg:
+          title: Longitude Deg
+          type: number
+        distance_m:
+          title: Distance M
+          type: number
+        sun_fraction:
+          title: Sun Fraction
+          type: number
+        earth_visible:
+          title: Earth Visible
+          type: boolean
+        charge_fraction:
+          title: Charge Fraction
+          type: number
+      required:
+      - t
+      - latitude_deg
+      - longitude_deg
+      - distance_m
+      - sun_fraction
+      - earth_visible
+      - charge_fraction
+      title: MotionSample
+      type: object
+    RoutePoint:
+      properties:
+        row:
+          title: Row
+          type: integer
+        column:
+          title: Column
+          type: integer
+        latitude_deg:
+          title: Latitude Deg
+          type: number
+        longitude_deg:
+          title: Longitude Deg
+          type: number
+        elevation_m:
+          title: Elevation M
+          type: number
+        distance_m:
+          title: Distance M
+          type: number
+      required:
+      - row
+      - column
+      - latitude_deg
+      - longitude_deg
+      - elevation_m
+      - distance_m
+      title: RoutePoint
+      type: object
+    RouteResponse:
+      properties:
+        status:
+          enum:
+          - found
+          - no_path_in_window
+          title: Status
+          type: string
+        points:
+          items:
+            $ref: '#/components/schemas/RoutePoint'
+          title: Points
+          type: array
+        length_m:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Length M
+        max_segment_slope_deg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Max Segment Slope Deg
+        terrain:
+          $ref: '#/components/schemas/TerrainHeights'
+        origin_snap_m:
+          title: Origin Snap M
+          type: number
+        destination_snap_m:
+          title: Destination Snap M
+          type: number
+        motion_status:
+          enum:
+          - not_requested
+          - evaluated
+          - outside_window
+          - sample_limit
+          - outside_coverage
+          title: Motion Status
+          type: string
+        duration_seconds:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Duration Seconds
+        samples:
+          items:
+            $ref: '#/components/schemas/MotionSample'
+          title: Samples
+          type: array
+        unmet_wh:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Unmet Wh
+        horizon_products:
+          items:
+            type: string
+          title: Horizon Products
+          type: array
+        kernels:
+          items:
+            type: string
+          title: Kernels
+          type: array
+        limitations:
+          items:
+            type: string
+          title: Limitations
+          type: array
+      required:
+      - status
+      - points
+      - length_m
+      - max_segment_slope_deg
+      - terrain
+      - origin_snap_m
+      - destination_snap_m
+      - motion_status
+      - duration_seconds
+      - samples
+      - unmet_wh
+      - horizon_products
+      - kernels
+      - limitations
+      title: RouteResponse
+      type: object
     Problem:
       type: object
       description: RFC 9457 problem details.
@@ -2303,6 +2635,23 @@ components:
             - $ref: "#/components/schemas/PermanentShadow"
             - type: "null"
 
+    LandingArea:
+      type: object
+      required: [site, selection_max_latitude_deg, width_m, bounds, before, after]
+      properties:
+        site: {$ref: '#/components/schemas/Site'}
+        selection_max_latitude_deg: {type: number, const: -87.5}
+        width_m: {type: number, const: 10000}
+        bounds:
+          type: object
+          required: [x_min_m, x_max_m, y_min_m, y_max_m]
+          properties:
+            x_min_m: {type: number}
+            x_max_m: {type: number}
+            y_min_m: {type: number}
+            y_max_m: {type: number}
+        before: {$ref: '#/components/schemas/TerrainHeights'}
+        after: {$ref: '#/components/schemas/TerrainHeights'}
     TerrainHeights:
       type: object
       description: |

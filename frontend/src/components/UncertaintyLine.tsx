@@ -14,10 +14,13 @@ export function UncertaintyLine({
   uncertainty,
   event,
   events,
+  measured = true,
 }: {
   uncertainty: UncertaintyState
   event: VisibilityEvent
   events: readonly VisibilityEvent[]
+  /** The share of the ground the laser measured goes under the window (the column); the landing panel leaves it to Level 3. */
+  measured?: boolean
 }) {
   const i18n = useI18n()
   if (uncertainty.status === 'none') return null
@@ -34,7 +37,7 @@ export function UncertaintyLine({
   return (
     <>
       {spread && <p className="band-line">{spreadText(i18n, spread, Date.parse(event.t))}</p>}
-      <MeasuredShare site={siteRefOf(uncertainty.data.query.site)} />
+      {measured && <MeasuredShare site={siteRefOf(uncertainty.data.query.site)} />}
     </>
   )
 }

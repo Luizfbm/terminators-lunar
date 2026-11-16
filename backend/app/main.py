@@ -25,8 +25,10 @@ from . import (
     hazard,
     heights,
     horizon,
+    landing_area,
     neighbours,
     route,
+    route_plan,
     rovers,
     scatter,
     slope,
@@ -494,6 +496,26 @@ def get_terrain_heights(
     """The DEM's own heights around a Site, for the 3D view from the ground (see heights.py)."""
     selected = ground.site_for(site_id, latitude_deg, longitude_deg)
     return Response(ground.terrain_heights(selected, half_extent_m), media_type="application/json")
+
+
+@app.get("/terrain/landing-area")
+def get_landing_area(
+    latitude_deg: float = Query(..., ge=-90, le=-87.5),
+    longitude_deg: float = Query(..., ge=-180, le=180),
+) -> Response:
+    body = landing_area.area(latitude_deg, longitude_deg)
+    # A pure function of the two coordinates and the DEM files, so a client or the proxy may keep it.
+    return Response(
+        json.dumps(body, separators=(",", ":"), allow_nan=False),
+        media_type="application/json",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
+@app.post("/routes/plan", response_model=route_plan.RouteResponse)
+def post_route_plan(request: route_plan.RouteRequest) -> route_plan.RouteResponse:
+    """Bounded native-DEM route and optional moving power scenario."""
+    return route_plan.plan(request)
 
 
 @app.post("/assistant")

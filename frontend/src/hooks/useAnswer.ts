@@ -28,8 +28,8 @@ function errorCode(error: unknown): string {
  */
 export function useAnswer(site: SiteRef | null, choice: Choice = DEFAULT_CHOICE): { state: LoadState; retry: () => void } {
   const [attempt, setAttempt] = useState(0)
-  const { startDay, hours, heightM } = choice
-  const key = `${siteKey(site)}|${startDay ?? ''}|${hours ?? ''}|${heightM ?? ''}#${attempt}`
+  const { startDay, startTime = null, hours, heightM } = choice
+  const key = `${siteKey(site)}|${startDay ?? ''}|${startTime ?? ''}|${hours ?? ''}|${heightM ?? ''}#${attempt}`
   const [settled, setSettled] = useState<{ key: string; outcome: Outcome } | null>(null)
   const [last, setLast] = useState<Answer | null>(null)
   const meta = useRef<Meta | null>(null)
@@ -39,7 +39,7 @@ export function useAnswer(site: SiteRef | null, choice: Choice = DEFAULT_CHOICE)
     const run = async (): Promise<Answer> => {
       meta.current ??= await getMeta(controller.signal)
       const result = await getVisibility(
-        buildQuery(meta.current, new Date(), site, { startDay, hours, heightM }),
+        buildQuery(meta.current, new Date(), site, { startDay, startTime, hours, heightM }),
         controller.signal,
       )
       return { meta: meta.current, result }

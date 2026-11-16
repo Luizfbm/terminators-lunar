@@ -26,6 +26,30 @@
   /* The statements are set in a serif: the voice of the app, apart from its controls and numbers. */
   --serif: 'Instrument Serif', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
   --gutter: clamp(16px, 2.4vw, 32px);
+  /*
+   * Larissa's menu is the reference for the whole look (docs/design/ui-direction.md): these tokens are read
+   * off it, so the rest of the app matches her panel, never the other way round.
+   */
+  --label-font: Orbitron, system-ui, sans-serif;
+  --label: 0.75rem;
+  --label-track: 0.08em;
+  --glass: rgba(60, 60, 60, 0.72);
+  --glass-blur: blur(4px);
+  --glass-edge: rgba(255, 255, 255, 0.16);
+  --glass-rule: rgba(255, 255, 255, 0.28);
+  --glass-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  --stone: #857b6c;
+  --stone-hover: #908676;
+  --stone-deep: #464139;
+  --stone-ink: #bdbdbd;
+  /* Warm white for the hairlines and names drawn over the Moon. */
+  --mark: #ece6da;
+  --radius-control: 3px;
+  --radius-panel: 10px;
+  --radius-pill: 999px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --t-fast: 160ms;
+  --t-swap: 240ms;
   font-family: 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   font-size: var(--body);
   line-height: 1.5;
@@ -441,12 +465,16 @@ footer[data-guide='true'] {
 .globe__pin {
   position: absolute;
   transform: translate(12px, -50%);
-  font-size: var(--small);
+  color: var(--mark);
+  font-family: var(--label-font);
+  font-size: var(--label);
+  font-weight: 500;
+  letter-spacing: var(--label-track);
   white-space: nowrap;
   pointer-events: none;
   text-shadow:
-    0 0 6px var(--bg),
-    0 0 2px var(--bg);
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 0 8px rgba(0, 0, 0, 0.6);
 }
 
 .globe__planets {
@@ -460,12 +488,13 @@ footer[data-guide='true'] {
   position: absolute;
   transform: translate(0, -50%);
   color: var(--dim);
-  font-size: 11px;
+  font-family: var(--label-font);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: var(--label-track);
   line-height: 14px;
   white-space: nowrap;
-  text-shadow:
-    0 0 6px var(--bg),
-    0 0 2px var(--bg);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
 }
 
 .globe__planets span[data-side='left'] {
@@ -480,7 +509,8 @@ footer[data-guide='true'] {
   white-space: normal;
 }
 
-/* The letters N and S of the poles of the Moon, over the stage; the Equator, the circle and the dots are drawn in the scene. */
+/* The letters N and S of the poles of the Moon, over the stage; the Equator, the circle and the dots are drawn in the scene.
+   Quiet marks, like a map's graticule: small, thin, warm white, a faint halo instead of a black outline. */
 .globe__poles {
   position: absolute;
   inset: 0;
@@ -491,16 +521,19 @@ footer[data-guide='true'] {
 }
 
 .globe__poles line {
-  stroke: rgba(255, 255, 255, 0.75);
+  stroke: rgba(236, 230, 218, 0.4);
 }
 
 .globe__poles text {
-  fill: #fff;
-  font-weight: 700;
+  fill: var(--mark);
+  fill-opacity: 0.88;
+  font-family: var(--label-font);
+  font-weight: 500;
+  letter-spacing: 0.04em;
   text-anchor: middle;
   dominant-baseline: central;
   paint-order: stroke;
-  stroke: #000;
+  stroke: rgba(8, 9, 10, 0.45);
   stroke-linejoin: round;
 }
 
@@ -534,36 +567,56 @@ footer[data-guide='true'] {
   pointer-events: auto;
 }
 
-/* The three views are one control: a row of segments, the chosen one filled in (the requirement). */
+/* The three views are one control: a row of segments, the chosen one filled in (the requirement).
+   Dressed as Larissa's menu: her smoky glass, her Orbitron, the chosen view in her stone with her bevel. */
 .views {
   display: flex;
   gap: 2px;
   margin: 0;
   padding: 3px;
-  border: 1px solid var(--edge);
-  border-radius: 9px;
-  background: color-mix(in srgb, var(--bg) 80%, transparent);
-  backdrop-filter: blur(6px);
-  font-size: var(--small);
+  border: 1px solid var(--glass-edge);
+  border-radius: 8px;
+  background: var(--glass);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  font-family: var(--label-font);
+  font-size: var(--label);
+  font-weight: 500;
+  letter-spacing: var(--label-track);
 }
 
 .views button {
-  min-height: 32px;
+  min-height: 30px;
   padding: 0 12px;
-  border: 0;
-  border-radius: 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
   background: transparent;
-  color: var(--dim);
+  /* #e2ddd3 on the glass over black is 9:1 or better. */
+  color: #e2ddd3;
+  letter-spacing: inherit;
   cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease),
+    color var(--t-fast) var(--ease);
 }
 
-.views button:hover {
-  color: var(--fg);
+.views button:hover:not([aria-pressed='true']) {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
 }
 
 .views button[aria-pressed='true'] {
-  background: var(--chosen);
-  color: var(--fg);
+  border-color: rgba(255, 255, 255, 0.16);
+  border-top-color: rgba(255, 255, 255, 0.3);
+  border-bottom-color: rgba(0, 0, 0, 0.4);
+  background: var(--stone);
+  /* Black on her stone, as on her buttons (5.0:1). */
+  color: #000;
+  font-weight: 600;
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 /* A finger needs a bigger target than a mouse does. */
@@ -1201,29 +1254,58 @@ footer[data-guide='true'] {
   grid-template-columns: auto minmax(0, 1fr);
   column-gap: 20px;
   align-items: center;
-  padding: 12px var(--gutter) 16px;
-  border-top: 1px solid var(--line);
+  padding: 12px var(--gutter) 14px;
+  /* The bottom of Larissa's panel: her smoky glass over the page, with her hairline rule on top. */
+  border-top: 1px solid var(--glass-edge);
+  background: linear-gradient(to bottom, rgba(60, 60, 60, 0.32), rgba(60, 60, 60, 0.18));
 }
 
+/* Round, in her stone, with her bevel: the one control of the strip. */
 .strip__play {
   grid-row: 1 / span 3;
-  width: 44px;
-  height: 44px;
-  border: 1px solid var(--dim);
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-top-color: rgba(255, 255, 255, 0.3);
+  border-bottom-color: rgba(0, 0, 0, 0.4);
   border-radius: 50%;
-  background: none;
-  font-size: 14px;
+  background: var(--stone);
+  color: #000;
+  font-size: 12px;
+  line-height: 1;
   cursor: pointer;
+  box-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition: background var(--t-fast) var(--ease);
+}
+
+.strip__play:hover {
+  background: var(--stone-hover);
+}
+
+.strip__play:active {
+  background: var(--stone-deep);
+  color: var(--stone-ink);
+  box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.7);
 }
 
 .strip__now {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   font-family: var(--mono);
   font-size: var(--small);
+  color: var(--fg);
 }
 
 .strip__now span {
-  font-family: 'Archivo', system-ui, sans-serif;
+  margin-right: 0.4em;
+  font-family: var(--label-font);
+  font-size: var(--label);
+  font-weight: 500;
+  letter-spacing: var(--label-track);
   color: var(--dim);
 }
 
@@ -1237,22 +1319,28 @@ footer[data-guide='true'] {
   display: grid;
   grid-template-columns: 3.5rem minmax(0, 1fr);
   align-items: center;
-  height: 12px;
+  height: 10px;
 }
 
 .strip__row + .strip__row {
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
 .strip__name {
-  font-size: var(--small);
+  font-family: var(--label-font);
+  font-size: var(--label);
+  font-weight: 500;
+  letter-spacing: var(--label-track);
   line-height: 1;
   color: var(--dim);
 }
 
+/* A thin rounded rail; the bands inside it take its round ends. */
 .strip__bar {
   position: relative;
-  height: 100%;
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
   background: var(--track);
 }
 
@@ -1260,6 +1348,7 @@ footer[data-guide='true'] {
   position: absolute;
   top: 0;
   bottom: 0;
+  border-radius: 1px;
 }
 
 .strip__band--sun {
@@ -1271,28 +1360,47 @@ footer[data-guide='true'] {
 }
 
 .strip__band--shortShadow {
-  background: repeating-linear-gradient(135deg, var(--hatch) 0 3px, var(--track) 3px 6px);
+  background: repeating-linear-gradient(135deg, var(--hatch) 0 2px, var(--track) 2px 5px);
 }
 
-/* The Cursor runs over the bars only, so its position reads against the dates below. */
+/* The Cursor runs over the bars only, so its position reads against the dates below: a hairline with a
+   small round knob at its foot, both with a dark edge so they show over the amber band (1.5:1 alone). */
 .strip__cursor {
   position: absolute;
-  top: -6px;
-  bottom: -6px;
+  top: -5px;
+  bottom: -5px;
   width: 2px;
   margin-left: calc(3.5rem - 1px);
-  background: var(--fg);
-  /* White on the amber band is 1.5:1; the dark edge keeps the bar visible over any band. */
+  border-radius: 1px;
+  background: var(--mark);
+  /* The edge is the page's own colour (e2e/regressions.spec.ts), so the bar shows over every band. */
   box-shadow: 0 0 0 1px var(--bg);
   pointer-events: none;
+}
+
+.strip__cursor::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--mark);
+  box-shadow:
+    0 0 0 1px var(--bg),
+    0 1px 4px rgba(0, 0, 0, 0.6);
+  transform: translateX(-50%);
 }
 
 .strip__ticks {
   position: relative;
   height: 18px;
-  margin: 6px 0 0 3.5rem;
-  font-family: var(--mono);
-  font-size: var(--small);
+  margin: 10px 0 0 3.5rem;
+  font-family: var(--label-font);
+  font-size: var(--label);
+  font-weight: 500;
+  letter-spacing: var(--label-track);
   color: var(--dim);
 }
 
@@ -1383,7 +1491,7 @@ footer[data-guide='true'] {
     position: sticky;
     bottom: 0;
     column-gap: 12px;
-    background: var(--bg);
+    background: linear-gradient(to bottom, rgba(60, 60, 60, 0.32), rgba(60, 60, 60, 0.18)), var(--bg);
   }
 
   /* Five dates do not fit side by side on a phone. */

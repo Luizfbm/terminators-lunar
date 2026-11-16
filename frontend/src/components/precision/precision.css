@@ -1,0 +1,28 @@
+.precision { width: min(850px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); box-sizing: border-box; overflow: auto; padding: 24px; border: 1px solid #777; border-radius: 12px; background: #14161c; color: #eee; }
+.precision::backdrop { background: #000b; }
+.precision__head { display: flex; gap: 20px; align-items: center; justify-content: space-between; }
+.precision__head h2 { font-size: 20px; }
+.precision p { margin: 12px 0; line-height: 1.5; overflow-wrap: anywhere; }
+.precision button { padding: 8px 12px; border: 1px solid #777; border-radius: 5px; color: inherit; background: #242832; cursor: pointer; }
+.precision button[aria-pressed='true'] { background: #435570; }
+.precision button:focus-visible { outline: 2px solid white; outline-offset: 3px; }
+.precision__sections { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0; }
+.precision__limit { color: #c4c9d2; font-size: 13px; }
+.stage__precision { position: absolute; top: 16px; left: 120px; z-index: 8; padding: 10px; border: 1px solid #ffffff70; border-radius: 6px; background: #000c; color: white; cursor: pointer; }
+.route-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 12px; margin: 12px 0; }
+.route-fields label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; }
+.route-fields input, .route-fields select { box-sizing: border-box; width: 100%; padding: 8px; color: #eee; background: #242832; border: 1px solid #777; border-radius: 4px; }
+.route-check { display: flex; gap: 8px; align-items: center; margin: 16px 0; }
+.route-panel fieldset { min-width: 0; border: 1px solid #777; margin: 16px 0; }
+.route-panel button { margin-right: 8px; }
+.route-panel button:disabled { opacity: .6; cursor: wait; }
+.route-map { position: relative; width: min(100%, 440px); aspect-ratio: 1; margin: 12px auto; border: 1px solid #777; }
+.route-map canvas, .route-map svg { position: absolute; width: 100%; height: 100%; inset: 0; }
+.route-map canvas { image-rendering: pixelated; }
+.route-result input[type='range'] { display: block; width: 100%; margin: 10px 0; }
+.route-comparison { overflow-x: auto; margin-top: 20px; }
+.route-comparison table { border-collapse: collapse; width: 100%; font-size: 12px; }
+.route-comparison th, .route-comparison td { padding: 8px; border: 1px solid #777; text-align: left; overflow-wrap: anywhere; }
+.route-terrain { width: 100%; height: 320px; overflow: hidden; border: 1px solid #777; box-sizing: border-box; }
+.route-terrain canvas { display: block; touch-action: none; }
+.precision__head { position: sticky; top: -24px; z-index: 3; padding: 10px 0; background: #14161c; }

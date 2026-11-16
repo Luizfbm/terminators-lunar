@@ -88,7 +88,8 @@ export function Where({
 
   // A value equal to the default goes back to null, so the link stays plain.
   const pick = (patch: Partial<Choice>) => {
-    const next = { ...choice, ...patch }
+    // A day picked here starts at 00:00 UTC: a time set before a landing goes with it.
+    const next = { ...choice, ...patch, ...('startDay' in patch ? { startTime: null } : {}) }
     if (next.startDay === utcDay(Date.now())) next.startDay = null
     if (next.hours !== null && Math.abs(next.hours - meta.defaults.duration_hours) < 1e-6) next.hours = null
     if (next.heightM !== null && next.heightM === meta.defaults.observer_height_m) next.heightM = null

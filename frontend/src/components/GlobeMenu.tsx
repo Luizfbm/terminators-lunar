@@ -17,6 +17,8 @@ export interface GlobeMenuProps {
   level: LevelId | null
   /** A level was clicked: the view to ask the app for. */
   onLevel?: (view: View) => void
+  onPrecision?: () => void
+  precisionActive?: boolean
   onView: (view: MoonView) => void
   /** The switches that show and hide the dots, told on every change. */
   onLayers: (layers: Layers) => void
@@ -30,7 +32,7 @@ export interface GlobeMenuProps {
  * clicked again, and the switches are the same in both views. The state is not kept between visits. On a phone the panel does not fit beside the Moon: it folds into a button in the
  * corner that opens it (the stylesheet decides where; on a wide screen the button is not there).
  */
-export function GlobeMenu({ mode, level, onLevel, onView, onLayers }: GlobeMenuProps) {
+export function GlobeMenu({ mode, level, onLevel, onView, onLayers, onPrecision, precisionActive }: GlobeMenuProps) {
   const [pressed, setPressed] = useState<MenuState>(initialMenu)
   const [open, setOpen] = useState(false)
   // The camera goes its own way when the view changes, so no turn of the Moon is left pressed.
@@ -63,11 +65,11 @@ export function GlobeMenu({ mode, level, onLevel, onView, onLayers }: GlobeMenuP
               key={item.id}
               type="button"
               className="globe-menu__button"
-              aria-pressed={level === item.id}
+              aria-pressed={!precisionActive && level === item.id}
               onClick={() => {
                 const view = levelPressed(level, item.id)
-                if (view) {
-                  onLevel?.(view)
+                if (view || precisionActive) {
+                  onLevel?.(view ?? item.view)
                   setOpen(false)
                 }
               }}
@@ -76,6 +78,7 @@ export function GlobeMenu({ mode, level, onLevel, onView, onLayers }: GlobeMenuP
             </button>
           ))}
         </div>
+        {onPrecision && <button type="button" className="globe-menu__button" aria-pressed={!!precisionActive} onClick={() => { onPrecision(); setOpen(false) }}>Level 3 · Explore</button>}
         <hr className="globe-menu__rule" />
         {menuItemsFor(mode).map((item) => (
           <button key={item.id} type="button" className="globe-menu__button" aria-pressed={pressed[item.id]} onClick={() => press(item.id)}>

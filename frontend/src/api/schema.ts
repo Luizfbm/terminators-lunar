@@ -4,6 +4,59 @@
  */
 
 export interface paths {
+    "/terrain/landing-area": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Native Level 3 before/after terrain in a shared 10 km square
+         * @description Selection centres are limited to 87.5–90 degrees south. Before/after compares native
+         *     80 m and 20 m LOLA detail (the PGDA 90 products), not dates. No fallback and no
+         *     resampling: both DEMs must cover the whole 10 × 10 km square, or the answer is a 422
+         *     and nothing is drawn. Bounds are south polar stereographic map metres; the grids
+         *     include border pixels so both draw the same rectangle. The answer can reach about
+         *     1.5 MB uncompressed; the reverse proxy compresses it (gzip or zstd) for clients that accept it.
+         *     It counts toward the per-IP cap that `/terrain/heights` and the engine routes share: over
+         *     the cap the answer is a 503 `busy` with `Retry-After`.
+         */
+        get: operations["getLandingArea"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/routes/plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Plan a bounded native-DEM route and optional moving power scenario
+         * @description The shortest path on the native pixel centres of one DEM (20, 80 or 240 m, the finest
+         *     one at or above `minimum_resolution_m`), cropped to 129 pixels per side without
+         *     resampling. Motion is evaluated at 64 samples at most; the energy is a scenario with
+         *     the speed, load and panel power given in the request, not rover safety validation.
+         *     A Window outside 2025-2032, a destination outside the cropped grid, a point with no
+         *     DEM pixel, or an end that is not after the start is a 422; a route that is already
+         *     being planned is a 503.
+         */
+        post: operations["planRoute"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -627,6 +680,132 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Coordinates */
+        Coordinates: {
+            /** Latitude Deg */
+            latitude_deg: number;
+            /** Longitude Deg */
+            longitude_deg: number;
+        };
+        /** MotionScenario */
+        MotionScenario: {
+            /** Speed M S */
+            speed_m_s: number;
+            /**
+             * Load W
+             * @description Total constant electrical load while moving
+             */
+            load_w: number;
+            /** Battery Wh */
+            battery_wh: number;
+            /** Initial Charge Fraction */
+            initial_charge_fraction: number;
+            /** Panel Power W */
+            panel_power_w: number;
+        };
+        /** RouteRequest */
+        RouteRequest: {
+            origin: components["schemas"]["Coordinates"];
+            destination: components["schemas"]["Coordinates"];
+            /**
+             * Start
+             * Format: date-time
+             */
+            start: string;
+            /**
+             * End
+             * Format: date-time
+             */
+            end: string;
+            /**
+             * Observer Height M
+             * @default 2
+             */
+            observer_height_m: number;
+            /** Max Slope Deg */
+            max_slope_deg: number;
+            /**
+             * Half Extent M
+             * @default 1000
+             */
+            half_extent_m: number;
+            /**
+             * Minimum Resolution M
+             * @default 20
+             * @enum {integer}
+             */
+            minimum_resolution_m: 20 | 80 | 240;
+            /** @default null */
+            motion: components["schemas"]["MotionScenario"] | null;
+        };
+        /** MotionSample */
+        MotionSample: {
+            /** T */
+            t: string;
+            /** Latitude Deg */
+            latitude_deg: number;
+            /** Longitude Deg */
+            longitude_deg: number;
+            /** Distance M */
+            distance_m: number;
+            /** Sun Fraction */
+            sun_fraction: number;
+            /** Earth Visible */
+            earth_visible: boolean;
+            /** Charge Fraction */
+            charge_fraction: number;
+        };
+        /** RoutePoint */
+        RoutePoint: {
+            /** Row */
+            row: number;
+            /** Column */
+            column: number;
+            /** Latitude Deg */
+            latitude_deg: number;
+            /** Longitude Deg */
+            longitude_deg: number;
+            /** Elevation M */
+            elevation_m: number;
+            /** Distance M */
+            distance_m: number;
+        };
+        /** RouteResponse */
+        RouteResponse: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "found" | "no_path_in_window";
+            /** Points */
+            points: components["schemas"]["RoutePoint"][];
+            /** Length M */
+            length_m: number | null;
+            /** Max Segment Slope Deg */
+            max_segment_slope_deg: number | null;
+            terrain: components["schemas"]["TerrainHeights"];
+            /** Origin Snap M */
+            origin_snap_m: number;
+            /** Destination Snap M */
+            destination_snap_m: number;
+            /**
+             * Motion Status
+             * @enum {string}
+             */
+            motion_status: "not_requested" | "evaluated" | "outside_window" | "sample_limit" | "outside_coverage";
+            /** Duration Seconds */
+            duration_seconds: number | null;
+            /** Samples */
+            samples: components["schemas"]["MotionSample"][];
+            /** Unmet Wh */
+            unmet_wh: number | null;
+            /** Horizon Products */
+            horizon_products: string[];
+            /** Kernels */
+            kernels: string[];
+            /** Limitations */
+            limitations: string[];
+        };
         /** @description RFC 9457 problem details. */
         Problem: {
             /** Format: uri */
@@ -1175,6 +1354,21 @@ export interface components {
             /** @description Left out until the map of permanently shadowed regions is on the server; null when the map has no shadowed cell in range of the Site. */
             permanent_shadow?: components["schemas"]["PermanentShadow"] | null;
         };
+        LandingArea: {
+            site: components["schemas"]["Site"];
+            /** @constant */
+            selection_max_latitude_deg: -87.5;
+            /** @constant */
+            width_m: 10000;
+            bounds: {
+                x_min_m: number;
+                x_max_m: number;
+                y_min_m: number;
+                y_max_m: number;
+            };
+            before: components["schemas"]["TerrainHeights"];
+            after: components["schemas"]["TerrainHeights"];
+        };
         /**
          * @description A square of DEM pixels on the DEM's own map. Pixel (column c, row r), counted from the
          *     top left, has its centre at x = `x_min_m` + (c + 0.5) `metres_per_pixel` and
@@ -1708,6 +1902,59 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getLandingArea: {
+        parameters: {
+            query: {
+                latitude_deg: number;
+                longitude_deg: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Complete native coverage at both resolutions */
+            200: {
+                headers: {
+                    /** @description `public, max-age=86400`: the answer depends only on the two coordinates and the DEM files, so it can be kept for a day. */
+                    "Cache-Control"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LandingArea"];
+                };
+            };
+            422: components["responses"]["Unprocessable"];
+            503: components["responses"]["Busy"];
+        };
+    };
+    planRoute: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RouteRequest"];
+            };
+        };
+        responses: {
+            /** @description Spatial path and optional motion evaluation; inspect motion_status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouteResponse"];
+                };
+            };
+            422: components["responses"]["Unprocessable"];
+            503: components["responses"]["Busy"];
+        };
+    };
     getHealth: {
         parameters: {
             query?: never;

@@ -251,6 +251,8 @@ test.describe('on the polar map', () => {
     await expect(layer(page)).toBeVisible()
     const request = page.waitForRequest((r) => r.url().includes('/visibility?') && r.url().includes('latitude_deg='))
     await page.mouse.click(x, y)
+    // From the polar map a landing first asks for the Rover and the days (#149); the pick asks the Query.
+    await page.locator('.vehicle-picker__pick').click()
     const url = new URL((await request).url())
     expect(Number(url.searchParams.get('latitude_deg'))).toBeLessThanOrEqual(-80)
     await expect(page.locator('.stage__ground')).toBeVisible({ timeout: 15_000 })
@@ -265,6 +267,7 @@ test.describe('on the polar map', () => {
     await page.mouse.move(x, y)
     await expect(layer(page)).toBeVisible()
     await page.mouse.click(x, y)
+    await page.locator('.vehicle-picker__pick').click()
     await expect(page.locator('.stage__ground')).toBeVisible({ timeout: 15_000 })
     await page.getByRole('button', { name: 'Back', exact: true }).click()
     await expect(page.locator('.views').getByRole('button', { name: 'Map', exact: true })).toHaveAttribute('aria-pressed', 'true')

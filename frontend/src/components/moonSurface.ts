@@ -1,4 +1,6 @@
 import * as THREE from 'three'
+import { capAtLevel1, takesLargeImages, textureLimitFor, type MoonTier } from './moonBudget'
+import { fitTexture } from './textureBudget'
 import { capLatLon, capPoint, isCapProjection, type CapProjection } from '../domain/cap'
 import { lunarLambert } from '../domain/regolith'
 import { toVector } from '../domain/sky'
@@ -81,40 +83,86 @@ function capGeometry(cap: CapProjection, lift: number): THREE.BufferGeometry {
   return geometry
 }
 
+/** What `dressMoon` hands back: the way to free everything, and the switch for the polar level. */
+export interface MoonDress {
+  /** Frees every texture, geometry and material it made, and takes its meshes off the scene. */
+  dispose(): void
+  /**
+   * Tells the Moon whether the view is at the polar level (level 2, "South Pole in detail"). Entering it loads
+   * the fine patch of the pole (and, on the low tier, the cap); leaving it frees them. Idempotent: it is called every frame.
+   */
+  setPolar(on: boolean): void
+}
+
+export interface MoonOptions {
+  /** Which images this device takes and how far they are fitted (`moonBudget.ts`). */
+  tier: MoonTier
+  /** The GPU's MAX_TEXTURE_SIZE; the tier's limit never goes above it. */
+  maxTextureSize?: number
+  /** Called once the first whole-Moon colour and relief have arrived, or turned out to be missing. */
+  onDressed?: () => void
+  /** Told which whole-Moon colour is on the sphere each time it changes: the 4096 px one, then the 8192 px one. */
+  onColour?: (size: '4k' | '8k') => void
+  /** Told when the fine patch of the pole is on the Moon (true) and when it has been freed (false). */
+  onPolar?: (shown: boolean) => void
+}
+
+/** What one level made, to free when the level is left. A load that ends after that frees what it brings. */
+interface Made {
+  gone: boolean
+  things: { dispose(): void }[]
+  meshes: THREE.Object3D[]
+}
+
 /**
  * Dresses the grey sphere with what the orbiters measured: LROC colour and LOLA relief on the whole
- * Moon, and a finer patch over the south pole. Every image is optional; a missing one changes nothing.
- * Returns the function that frees it all.
+ * Moon, and patches over the south pole. Every image is optional; a missing one changes nothing.
+ * Which images, and how far each is fitted before its first GPU upload, is the tier's (`moonBudget.ts`).
+ *
+ * Level 1 (always on): the whole-Moon pair, and the 148 m cap unless the tier is low. Level 2
+ * (`setPolar(true)`): the 22.5 m fine pole, and the cap for the low tier; freed by `setPolar(false)`.
  */
 export function dressMoon(
   scene: THREE.Scene,
   material: THREE.MeshLambertMaterial,
   anisotropy: number,
-  /** Whether this device can take the 8192 px image of the fine level; a phone gets the 4096 px one. */
-  large: boolean,
-  /** Called once the first whole-Moon colour and relief have arrived, or turned out to be missing. */
-  onDressed?: () => void,
-  /** Told which whole-Moon colour is on the sphere each time it changes: the 4096 px one, then the 8192 px one. */
-  onColour?: (size: '4k' | '8k') => void,
-): () => void {
-  let gone = false
-  const made: { dispose(): void }[] = []
+  options: MoonOptions,
+): MoonDress {
+  const { tier, onDressed, onColour, onPolar } = options
+  const large = takesLargeImages(tier)
+  // Support for an 8192-pixel texture is not evidence that enough memory is available: images are bounded
+  // by the tier before upload, whatever the GPU says it can hold.
+  const textureLimit = textureLimitFor(tier, options.maxTextureSize ?? 16384)
+  const base: Made = { gone: false, things: [], meshes: [] }
   const loader = new THREE.TextureLoader()
   loader.setCrossOrigin('anonymous')
 
-  const image = (file: string, colour: boolean) =>
+  const free = (made: Made) => {
+    made.gone = true
+    for (const mesh of made.meshes) scene.remove(mesh)
+    for (const thing of made.things) thing.dispose()
+    made.meshes = []
+    made.things = []
+  }
+
+  const image = (made: Made, file: string, colour: boolean) =>
     new Promise<THREE.Texture | null>((resolve) => {
       loader.load(
         versioned(file),
         (texture) => {
-          if (gone) {
+          if (made.gone) {
+            texture.dispose()
+            resolve(null)
+            return
+          }
+          if (!fitTexture(texture, textureLimit)) {
             texture.dispose()
             resolve(null)
             return
           }
           texture.colorSpace = colour ? THREE.SRGBColorSpace : THREE.NoColorSpace
           texture.anisotropy = anisotropy
-          made.push(texture)
+          made.things.push(texture)
           resolve(texture)
         },
         undefined,
@@ -123,43 +171,47 @@ export function dressMoon(
     })
 
   const putColour = (map: THREE.Texture, size: '4k' | '8k') => {
+    if (base.gone) return
     material.map = map
     material.color.set(0xffffff)
     material.needsUpdate = true
     onColour?.(size)
   }
   const putRelief = (normal: THREE.Texture) => {
+    if (base.gone) return
     material.normalMap = normal
     material.normalScale.set(RELIEF, RELIEF)
     material.needsUpdate = true
   }
 
   // Everyone gets the 4096 px colour and relief first, about 2.5 MB, and the Moon shows with them.
-  // A desktop then swaps in the 8192 px ones, about 10.5 MB, when they arrive. During a cold
-  // cache took 28 s to serve the 8192 px colour: the Moon waited for it, then showed grey.
-  const colour = image('moon_color_4k.webp', true)
-  const relief = image('moon_normal_4k.webp', false)
+  // A strong device then swaps in the 8192 px ones, about 10.5 MB, when they arrive. During a cold
+  // cache the server took 28 s to serve the 8192 px colour: the Moon waited for it, then showed grey.
+  const colour = image(base, 'moon_color_4k.webp', true)
+  const relief = image(base, 'moon_normal_4k.webp', false)
   void colour.then((map) => map && putColour(map, '4k'))
   void relief.then((normal) => normal && putRelief(normal))
   void Promise.all([colour, relief]).then(([smallColour, smallRelief]) => {
-    if (gone) return
+    if (base.gone) return
     onDressed?.()
     if (!large) return
     // The finer pair is asked for only now, so it never slows the first one down.
-    void image('moon_color_8k.webp', true).then((map) => {
-      if (!map || gone) return
+    void image(base, 'moon_color_8k.webp', true).then((map) => {
+      if (!map || base.gone) return
       putColour(map, '8k')
       smallColour?.dispose()
     })
-    void image('moon_normal_8k.webp', false).then((normal) => {
-      if (!normal || gone) return
+    void image(base, 'moon_normal_8k.webp', false).then((normal) => {
+      if (!normal || base.gone) return
       putRelief(normal)
       smallRelief?.dispose()
     })
   })
 
-  // A patch of finer relief laid over the sphere: its projection file, its normals and its grey.
+  // A patch of finer relief laid over the sphere: its projection file, its normals and its grey. What it
+  // makes belongs to `made`, so whoever owns the level can free it.
   const patch = (
+    made: Made,
     projectionFile: string,
     files: (doc: CapProjection) => { normal: string; albedo: string },
     lift: number,
@@ -170,10 +222,10 @@ export function dressMoon(
       .then((doc: unknown) => (isCapProjection(doc) ? doc : null))
       .catch(() => null)
       .then(async (cap) => {
-        if (!cap) return
+        if (made.gone || !cap) return
         const names = files(cap)
-        const [normal, albedo] = await Promise.all([image(names.normal, false), image(names.albedo, true)])
-        if (gone || !normal) return
+        const [normal, albedo] = await Promise.all([image(made, names.normal, false), image(made, names.albedo, true)])
+        if (made.gone || !normal) return
         const geometry = capGeometry(cap, lift)
         const skin = regolithMaterial({
           map: albedo,
@@ -188,24 +240,49 @@ export function dressMoon(
         const mesh = new THREE.Mesh(geometry, skin)
         mesh.renderOrder = order
         scene.add(mesh)
-        made.push(geometry, skin)
+        made.meshes.push(mesh)
+        made.things.push(geometry, skin)
+        if (order === 2) onPolar?.(true)
       })
   }
 
-  // 148 m per pixel down to 80°S, then 22.5 m per pixel around the Sites, south of about 87°S.
-  patch('south_cap.json', () => ({ normal: 'south_cap_normal.webp', albedo: 'south_cap_albedo.webp' }), CAP_LIFT, 1)
-  patch(
-    'south_pole_fine.json',
-    (doc) => ({
-      normal: (large ? doc.files?.normal : doc.files?.normal_small) ?? 'south_pole_fine_normal_4k.webp',
-      albedo: doc.files?.albedo ?? 'south_pole_fine_albedo.webp',
-    }),
-    FINE_LIFT,
-    2,
-  )
+  // 148 m per pixel down to 80°S: level 1's, unless the tier is low (then level 2's, with the fine pole).
+  const loadCap = (made: Made) =>
+    patch(made, 'south_cap.json', () => ({ normal: 'south_cap_normal.webp', albedo: 'south_cap_albedo.webp' }), CAP_LIFT, 1)
+  if (capAtLevel1(tier)) loadCap(base)
 
-  return () => {
-    gone = true
-    for (const thing of made) thing.dispose()
+  // 22.5 m per pixel around the Sites, south of about 87°S: level 2's, for as long as the view is there.
+  let polar: Made | null = null
+  const setPolar = (on: boolean) => {
+    if (base.gone) return
+    if (on && !polar) {
+      const made: Made = { gone: false, things: [], meshes: [] }
+      polar = made
+      if (!capAtLevel1(tier)) loadCap(made)
+      patch(
+        made,
+        'south_pole_fine.json',
+        (doc) => ({
+          normal: (large ? doc.files?.normal : doc.files?.normal_small) ?? 'south_pole_fine_normal_4k.webp',
+          albedo: doc.files?.albedo ?? 'south_pole_fine_albedo.webp',
+        }),
+        FINE_LIFT,
+        2,
+      )
+    } else if (!on && polar) {
+      const shown = polar.meshes.some((mesh) => mesh.renderOrder === 2)
+      free(polar)
+      polar = null
+      if (shown) onPolar?.(false)
+    }
+  }
+
+  return {
+    setPolar,
+    dispose: () => {
+      if (polar) free(polar)
+      polar = null
+      free(base)
+    },
   }
 }

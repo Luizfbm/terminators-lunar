@@ -312,7 +312,21 @@ export function ChargePanel({
  * The Charge as a row of the time strip, under the Earth: the same time axis and the same Cursor as
  * the Sun and Earth rows. Built to sit inside `.strip__track`, with the strip's label column.
  */
-export function ChargeRow({ data, startMs, endMs }: { data: EnergyResult; startMs: number; endMs: number }) {
+export function ChargeRow({
+  data,
+  startMs,
+  endMs,
+  name,
+  aside,
+}: {
+  data: EnergyResult
+  startMs: number
+  endMs: number
+  /** The row's label; the Charge by default. */
+  name?: ReactNode
+  /** A reading beside the row, in the strip's right-hand column after a landing. */
+  aside?: ReactNode
+}) {
   const { t, formatPercent } = useI18n()
   const values = data.charge_fraction
   const stepMs = data.step_minutes * 60_000
@@ -329,7 +343,7 @@ export function ChargeRow({ data, startMs, endMs }: { data: EnergyResult; startM
   })
   return (
     <div className="strip__row charge-row" role="img" aria-label={t('charge.rowLabel', { min: formatPercent(data.min_charge_fraction) })}>
-      <span className="strip__name">{t('charge.row')}</span>
+      <span className="strip__name">{name ?? t('charge.row')}</span>
       <div className="charge-row__plot">
         {empty.map((band, index) => (
           <i key={index} className="charge-row__empty" style={{ left: `${band.left}%`, width: `${band.width}%` }} />
@@ -339,6 +353,7 @@ export function ChargeRow({ data, startMs, endMs }: { data: EnergyResult; startM
           <polyline className="charge-row__line" points={line} vectorEffect="non-scaling-stroke" />
         </svg>
       </div>
+      {aside}
     </div>
   )
 }

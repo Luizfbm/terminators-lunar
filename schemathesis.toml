@@ -138,3 +138,21 @@ checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422"]
 include-name = "GET /sites/{site_id}/route"
 generation.max-examples = 8
 checks.positive_data_acceptance.expected-statuses = ["2xx", "404", "422"]
+
+# Larissa's Level 3 (#149). /terrain/landing-area reads two native DEMs (80 and 20 m) and is a 422
+# outside_coverage whenever either does not hold the whole 10 km square, which JSON Schema can't
+# express: a longitude anywhere in -180..180 on the 87.5°S cap is often not covered.
+[[operations]]
+include-name = "GET /terrain/landing-area"
+generation.max-examples = 8
+checks.positive_data_acceptance.expected-statuses = ["2xx", "422"]
+
+# /routes/plan: a 422 for a Window outside 2025-2032, an end that is not after the start, a
+# 60-day limit, an origin with no DEM or a destination outside the 129 pixel crop (none of it
+# expressible in JSON Schema), and a 503 with Retry-After while another route is being planned.
+[[operations]]
+include-name = "POST /routes/plan"
+generation.max-examples = 8
+request-timeout = 60
+checks.max_response_time = 60.0
+checks.positive_data_acceptance.expected-statuses = ["2xx", "422", "503"]

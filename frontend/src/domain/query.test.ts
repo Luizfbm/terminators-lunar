@@ -77,6 +77,22 @@ describe('the chosen Window and height', () => {
     expect(readLink('?start=yesterday&hours=lots&height=')).toMatchObject({ startDay: null, hours: null, heightM: null })
   })
 
+  // 15/11/2026: the vehicle window before a landing asks for a start time, not only a day.
+  it('start at the time picked before a landing, in UTC, and carry it in the link', () => {
+    const query = buildQuery(meta, new Date('2026-11-14T17:00:00Z'), 'CR05', { startDay: '2027-03-01', startTime: '13:45', hours: 6.5, heightM: null })
+    expect(query.start.toISOString()).toBe('2027-03-01T13:45:00.000Z')
+    expect(query.durationHours).toBe(6.5)
+    const state = { site: '001', cursorMs: null, language: null, view: 'map', startDay: '2027-03-01', startTime: '13:45', hours: 6.5, heightM: null, page: 'answer', stats: false } as const
+    expect(writeLink(state)).toBe('?site=001&view=map&start=2027-03-01&time=13%3A45&hours=6.5')
+    expect(readLink(writeLink(state))).toEqual(state)
+  })
+
+  it('read a link without a time, or with a broken one, as 00:00 UTC exactly as before', () => {
+    expect(readLink('?start=2027-03-01')).not.toHaveProperty('startTime')
+    expect(readLink('?start=2027-03-01&time=24:00')).not.toHaveProperty('startTime')
+    expect(readLink('?time=10:00')).not.toHaveProperty('startTime')
+  })
+
   it('keep the Window inside the coverage', () => {
     expect(maxDays(meta.coverage)).toBe(60)
     expect(startDayRange(meta.coverage, 708.73)).toEqual({ min: '2025-01-01', max: '2032-12-02' })
@@ -254,39 +270,10 @@ describe('the layout in the link', () => {
   })
 })
 
-describe('the details drawer in the link', () => {
-  const plain = { site: null, cursorMs: null, language: null, view: 'orbit', startDay: null, hours: null, heightM: null, page: 'answer', stats: false } as const
-
-  it('is closed without the parameter, and the plain link stays plain', () => {
-    expect(readLink('')).not.toHaveProperty('details')
-    expect(readLink('?site=CR05&stats=1')).not.toHaveProperty('details')
-    expect(writeLink(plain)).toBe('')
-    expect(writeLink({ ...plain, details: undefined })).toBe('')
-  })
-
-  it('goes in the link when open, and comes back', () => {
-    expect(writeLink({ ...plain, details: true })).toBe('?details=1')
-    expect(readLink('?details=1')).toEqual({ ...plain, details: true })
-    expect(readLink(writeLink({ ...plain, details: true, site: 'CR05', view: 'ground', stats: true }))).toEqual({
-      ...plain,
-      details: true,
-      site: 'CR05',
-      view: 'ground',
-      stats: true,
-    })
-  })
-
-  it('is closed for any other value', () => {
-    for (const value of ['', '0', 'yes', 'true']) expect(readLink(`?details=${value}`)).not.toHaveProperty('details')
-  })
-
-  it('is dropped when the state says closed, so closing the drawer cleans the link', () => {
-    const open = '?site=CR05&details=1'
-    expect(writeLink({ ...readLink(open), details: undefined }, open)).toBe('?site=CR05')
-    expect(writeLink({ ...readLink(open), site: 'CR07' }, open)).toBe('?site=CR07&details=1')
-  })
-
-  it('is read in either layout', () => {
-    expect(readLink('?layout=classic&details=1')).toMatchObject({ classic: true, details: true })
+describe('the retired details drawer in the link (#151)', () => {
+  it('is not read as part of the state, and writing the link drops it from an old address', () => {
+    const old = '?site=CR05&details=1'
+    expect(readLink(old)).not.toHaveProperty('details')
+    expect(writeLink(readLink(old), old)).toBe('?site=CR05')
   })
 })
