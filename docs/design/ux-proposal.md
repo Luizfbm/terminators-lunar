@@ -195,3 +195,91 @@ A sensible first batch (one day, no contract change, parallel-safe once #151 lan
 - **D7. Illumination and PSR layer** from NASA PGDA product 69 on the VPS: data fetch, tile size, attribution. It is a **deploy and data change**.
 - **D8. A door to the Proof page** in the default layout (a small "How we know" link). Without it, the Validity story is invisible to judges.
 - **D9. Remove the bottom view pill** as proposed (§3)? It changes muscle memory, and an e2e spec (`identity.spec.ts`) asserts it.
+
+---
+
+## 10. Simplicity first (update, 15/11/2026, about 22:05 BRT, seen on https://lunar.luizfbm.win)
+
+Luiz's goal, now the rule for everything above: **someone who knows nothing about the Moon gets the whole experience without help.** One idea per screen, plain words, one obvious next step, no jargon on screen. Re-read through that lens, the proposal changes like this.
+
+- **Cut from the first pass:** 5.9 (illumination and PSR layer), 5.10 ("the pole right now"), the slip chips and the Compare door. They are good for a planner and noise for a child. They move to "Advanced" (pattern P5 below).
+- **Keep and move up:** 5.1 (one-sentence orientation card), the breadcrumb, removing the bottom pill, and 5.3 with 5.4 (the Sun going round). That last pair is the single picture that explains the pole without words.
+- **Rename on screen** (the GLOSSARY terms stay in code; on screen they get plain words or a one-line explanation, which is **decision D10**):
+  - "Window" becomes "your dates";
+  - "Cursor" becomes "the moment you are looking at";
+  - "Horizon mask" becomes "the hills around the lander";
+  - "Occluder" becomes "what hides it";
+  - LCIP, LCSP, DEM, P90, Multiresolution and "vetoed" only appear in an Advanced view;
+  - coordinates come after the name and the plain sentence, never first.
+
+### Patterns from the competitors, on intuition only
+
+| # | Pattern | Where | What it looks like |
+|---|---|---|---|
+| P1 | **One sentence, one button.** The first thing you see says why the pole is special in words a child understands, with one primary action and one quiet alternative. | Lunar South Pole Mission Planner, https://lunar-mission-planner-alpha.vercel.app ("Here the Sun never climbs high." with "Show me (1 minute)" or "pick a site", `img/c-mission-planner.jpg`) | A small card: 3 lines, 1 button |
+| P2 | **Three numbers a child can feel** instead of tables: "1.6° highest Sun", "358 m shadow of a 10 m mast", "29.5 d one turn of the Sun". | Long Shadows, https://hvozdzvera.github.io/long-shadows/ (`img/c-longshadows-cover.jpg`) | Big number, three-word caption |
+| P3 | **"How it works" in 3 steps**: pick a site, pick a date, read your result, plus "There is no limit of tries". It lowers the fear of clicking. | LunaWindow, https://lunawindow.vercel.app (`img/c-lunawindow-howitworks.jpg`) | One modal on demand, never forced |
+| P4 | **Ready-made questions as buttons** instead of empty fields: "IM-2's site", "Best region on this date", "Land 2 days early". | Penumbra, https://penumbra-lunar.pages.dev (`img/c-penumbra.jpg`) | 3 chips over the map |
+| P5 | **Plain by default, exact on demand**: a Standard/Advanced (or Simple/Expert) switch. Plain words first; the tables, P90s and coordinates live behind it. | Long Shadows ("Standard / Advanced"); steppex, https://steppex.vercel.app ("Simple / Expert", `img/c-steppex.jpg`); Mission Planner ("Mission planner" toggle) | One switch, top right |
+
+### Level 3: inconsistencies against the tokens of `ui-direction.md`
+
+Seen in production and in these files on `main` (db9a9f3): `frontend/src/components/exploration/exploration.css`, `hazard/inspector/inspector.css`, `hazard/safety/safety.css` and `rover/rover.css`.
+
+| # | Where | Today | Tokens say | Changes Larissa's layout? |
+|---|---|---|---|---|
+| L1 | `.exploration-eyebrow` ("LEVEL 3 · SOUTH POLAR CORE", "LEVEL 3 · ON THE SURFACE") | Archivo 10 px, weight 700, tracking 0.14em, cyan `#6aafc9` | Orbitron (`--label-font`) 500, `--label`, `--label-track`, `--dim` | No |
+| L2 | `.exploration-select` card | A blue-teal palette of its own: background `#101a20f2`, border `#36515e`, 16 px radius, 14 px text | `--glass`, `--glass-edge`, `--radius-panel` (10 px), `--small` or `--body` | No (colours and radius only) |
+| L3 | Buttons in the select card and the inspector | Pale cyan fill `#d7f2fa`, 7 px radius; "Land & explore" in navy `#183845` | Stone, like the menu: `--stone`, black text, bevel, `--radius-control` | No |
+| L4 | Inputs | White fields `#fff` with dark text inside a dark card | `--field` and `--edge`, as in the rest of the app | No |
+| L5 | `.landing-inspector` dialog ("Your 10 × 10 km landing area") | **Light theme** (`#f3f5f6`, dark text, 18 px radius): the only light screen in the app | Dark glass | **Yes**, it is Larissa's dialog: **decision D11** |
+| L6 | `hazard/inspector` | `--mono` for labels as well as values; neon green `#5dff9b`, reds `#f8443a` and `#9a3a35`, blue `#3f7f9a` | Mono for numbers only. The only meaning colours are Sun amber, Earth blue and `--error`; a muted green would need a new token | No |
+| L7 | `hazard/safety` ("Hazard not vetoed", Normal navigation / Multiresolution P90) | Mono, a HUD-style box over the sky, jargon | Archivo, plain words, a collapsed chip (§4, Ground) | Chip placement: D11 |
+| L8 | `rover/rover.css` | `--mono` on four label blocks (around lines 110, 180, 210, 240); serif headings | Mono for numbers only; Orbitron labels; serif only for statements | No |
+| L9 | `terrain-curtain` (the 80 m / 20 m comparison) | Background `#18232b`, text `#bdd4df`, cyan accent `#91cde7` | `--glass`, `--dim`, accent `--stone` or `--mark` | No |
+
+### (a) Quick wins for tonight (about 15 min for one person, copy and CSS only, low risk)
+
+Each item names the test that has to change in the same commit, where there is one.
+
+1. **A plain explanation in the landing panel.** In `frontend/src/components/landing/panelStrings.ts`, replace `en['landingPanel.noteSite']` with *"Sun: part of the Sun is above the hills around the lander. Earth: the Earth is above them, so the lander can talk to home."* Replace `en['landingPanel.note']` with *"Sun: part of the Sun is above the hills around the lander. Earth: the Earth is above them, so the lander can talk to home. Link means only that the Earth is in view; a real call also needs a dish on Earth pointed at the Moon."* No test asserts either string.
+2. **Panel title** (`panelStrings.ts`): `'landingPanel.label': 'Landing information'` becomes `'Your landing'`. No test asserts it.
+3. **Panel hint** (`panelStrings.ts`): `'landingPanel.hint': 'Choose a period to move the Cursor to its start.'` becomes `'Tap a period to jump there on the timeline.'` No test asserts it.
+4. **Strip legend** (`frontend/src/i18n/messages.ts`, key `strip.shortShadow`): `'Hatched: Short shadow (under {hours} h)'` becomes `'Striped: a short shadow, under {hours} h'`. Change `e2e/default-query.spec.ts:56` to `'Striped: a short shadow, under 12 h'` in the same commit.
+5. **Level 3 eyebrow in the house font** (`frontend/src/components/exploration/exploration.css`, line 2): `.exploration-eyebrow{font-family:var(--label-font);font-size:var(--label);letter-spacing:var(--label-track);font-weight:500;color:var(--dim)}`. No layout change and no test.
+6. **Level 3 select card on the house glass** (same file, line 1). In `.exploration-select`, swap `border:1px solid #36515e` for `border:1px solid var(--glass-edge)`, `border-radius:16px` for `border-radius:var(--radius-panel)`, and `background:#101a20f2` for `background:rgba(48,48,48,.92)`. Colours and radius only. Check that axe stays green.
+
+**Do not touch tonight** anything these tests assert:
+- `uncertainty.spec.ts` and `uncertainty.test.ts`: the "height error" lines;
+- `safety.test.ts`: "Hazard not vetoed";
+- `level3.spec.ts`: "Choose your landing area" and "Inspect 10 × 10 km";
+- `transitions.spec.ts`: "From the ground".
+
+They are all simplicity wins, but each one needs its tests rewritten.
+
+### (b) If it does not ship: what to say and show in the pitch and the video
+
+- Open with our version of P2: *"At the Moon's south pole the Sun never climbs higher than your hand held flat. It goes round the sky once a month. A hill the size of a house can switch a lander off."* Then the globe turns to the pole.
+- Say the whole product in one line: *"Pick a spot, pick your dates, and we tell you when your lander has sunlight and can call home, and which hill takes them away."*
+- Show three clicks only: South Pole in detail, a spot, "Land". Then Larissa's vehicle picker. Then the panel's two sentences, read aloud.
+- Show the strip being dragged while the Sun goes down behind a named ridge. That is the "aha"; keep numbers off screen while it plays.
+- End on IM-2: *"Athena landed a few hundred metres off target and lost its mission in 13 hours. That crater is smaller than any map we have. Near the pole, small things decide a mission."*
+- Leave level 3, the hazard box and the Advanced numbers out of the 30 s video. Keep them for the "for engineers" slide.
+
+### (c) The rest, ranked by impact on simplicity
+
+1. **Plain words on screen per D10** (Window, Cursor, Horizon mask, Occluder), with their tests. M.
+2. **P1 orientation card at levels 1 and 2** (§5.1): one sentence and one button. S.
+3. **Remove the bottom pill, add the breadcrumb and the landed-Site toggle** (§3). M.
+4. **P5 Simple/Advanced switch.** Coordinates, P90, Multiresolution, "height error", LCIP/LCSP and the hazard box all go behind Advanced. M.
+5. **The Sun going round the compass ring and lighting the map** (5.3, 5.4). M.
+6. **Land only from the bubble, a default end date, no auto-jump to the ground** (§4). S–M.
+7. **P4 ready-made questions** over the map: "Where IM-2 tipped over", "The sunniest ridge", "Land a week later". S.
+8. **Level 3 token alignment L1–L9** beyond the quick wins, and **D11** for the light dialog. M.
+9. **P3 "How it works" in 3 steps**, on demand (D1). S.
+10. Everything else in §5–6 (layers, the pole right now, Compare, slip chips), behind Advanced. L.
+
+### New decisions
+
+- **D10. Plain words on screen** for the GLOSSARY terms (Window, Cursor, Horizon mask, Occluder). CLAUDE.md asks for the glossary terms exactly as written in the UI; simplicity asks for plain words. Proposal: plain words on screen, glossary terms in code and in Advanced.
+- **D11. Level 3 dialogs in the dark glass** like the rest of the app, and the hazard box as a chip. Both change Larissa's level 3 screens.
