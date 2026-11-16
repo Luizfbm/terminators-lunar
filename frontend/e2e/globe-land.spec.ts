@@ -94,7 +94,7 @@ test('they go while the Moon is dragged and come back when the mouse is let go',
   await expect(layer(page)).toBeVisible()
 })
 
-test('a click without dragging asks once about that point and goes down to the ground there', async ({ page }) => {
+test('a click without dragging asks once about that point and goes down to the ground there', { tag: '@smoke' }, async ({ page }) => {
   const { asked, before, middle } = await open(page)
   await page.mouse.move(middle.x, middle.y)
   await expect(layer(page)).toBeVisible()

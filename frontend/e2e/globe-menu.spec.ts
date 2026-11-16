@@ -15,7 +15,7 @@ const MAP_LABELS = [...LEVELS, 'Lunar Missions', 'Sites']
 const button = (page: Page, name: string) => page.getByRole('button', { name, exact: true })
 const pressed = async (page: Page, name: string) => (await button(page, name).getAttribute('aria-pressed')) === 'true'
 
-test('has the nine buttons, in English and in this order, with Explore the Moon, Sites and Planets pressed', async ({ page }) => {
+test('has the nine buttons, in English and in this order, with Explore the Moon, Sites and Planets pressed', { tag: '@smoke' }, async ({ page }) => {
   await page.goto('/')
   const menu = page.getByRole('group', { name: 'Globe menu' })
   await expect(menu).toBeVisible()

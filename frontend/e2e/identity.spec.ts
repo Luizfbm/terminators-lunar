@@ -39,7 +39,7 @@ test('a slow network does not hold the Moon back for ever', async ({ page }) => 
   await expect(page.locator('.globe')).toHaveAttribute('data-dressed', 'true', { timeout: 60_000 })
 })
 
-test('the Query line and the views look like controls, not like text', async ({ page }) => {
+test('the Query line and the views look like controls, not like text', { tag: '@smoke' }, async ({ page }) => {
   // Luiz: "it is not clear where to click". They were dotted or plain text.
   await page.goto('/')
   await expect(page.getByRole('slider', { name: 'Cursor' })).toBeVisible()

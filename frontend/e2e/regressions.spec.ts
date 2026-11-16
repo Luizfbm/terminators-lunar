@@ -31,7 +31,7 @@ test.describe('on a phone, 390 px wide', () => {
     }
   })
 
-  test('the page does not scroll sideways', async ({ page }) => {
+  test('the page does not scroll sideways', { tag: '@smoke' }, async ({ page }) => {
     await open(page)
     const { scrollWidth, innerWidth } = await page.evaluate(() => ({
       scrollWidth: document.documentElement.scrollWidth,

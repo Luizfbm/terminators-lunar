@@ -29,7 +29,7 @@ async function findNamedPlanet(page: Page) {
   expect(await names(page)).not.toBe('')
 }
 
-test('Planets is pressed when the page opens, and releasing it hides the planets and their names, pressing it brings them back', async ({ page }) => {
+test('Planets is pressed when the page opens, and releasing it hides the planets and their names, pressing it brings them back', { tag: '@smoke' }, async ({ page }) => {
   await findNamedPlanet(page)
   const on = await planets(page)
   await expect(page.getByRole('button', { name: 'Planets', exact: true })).toHaveAttribute('aria-pressed', 'true')

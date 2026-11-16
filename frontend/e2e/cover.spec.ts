@@ -9,7 +9,7 @@ test.use({ storageState: { cookies: [], origins: [] }, locale: 'en-US' })
 const cover = (page: Page) => page.getByRole('dialog', { name: 'Will your lander see the Sun?' })
 const guide = (page: Page) => page.getByRole('dialog', { name: 'Guide' })
 
-test('the plain address opens on the cover: the question and two ways in', async ({ page }) => {
+test('the plain address opens on the cover: the question and two ways in', { tag: '@smoke' }, async ({ page }) => {
   await page.goto('/')
   await expect(cover(page)).toBeVisible()
   await expect(cover(page).getByRole('heading', { level: 1 })).toHaveText('Will your lander see the Sun?')
@@ -104,7 +104,7 @@ test.describe('in a Portuguese browser', () => {
 test.describe('on a phone, 390 px wide', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
-  test('the cover and each tip fit the screen', async ({ page }) => {
+  test('the cover and each tip fit the screen', { tag: '@smoke' }, async ({ page }) => {
     await page.goto('/')
     const inside = async (selector: string) => {
       const box = (await page.locator(selector).boundingBox())!
