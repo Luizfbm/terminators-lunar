@@ -52,7 +52,7 @@ import { planetBackdrop, planetWay } from './planetBackdrop'
 import { earthMaterial as makeEarthMaterial, EARTH, glowTexture, loadEarthMap, SUN } from './spaceBodies'
 import { StageLoading } from './StageLoading'
 import { needsMenuBoxes } from '../domain/menuBoxes'
-import { LIGHT_GRAPHICS, lightGraphicsSearch } from '../domain/graphicsMode'
+import { LIGHT_GRAPHICS, SHARP_GRAPHICS, lightGraphicsSearch } from '../domain/graphicsMode'
 
 import { DIVE_MS } from '../domain/stageMove'
 import { canDraw } from './webgl'
@@ -359,8 +359,9 @@ export function Globe(props: GlobeProps) {
     const moon = new THREE.Mesh(new THREE.SphereGeometry(1, 192, 96), material)
     scene.add(moon)
     // The tier decides which images the Moon takes and how far they are fitted (`moonBudget.ts`): the 8192 px
-    // ones only on a strong device (`moonDevice.ts`), a software renderer and `graphics=low` get the small ones.
-    const tier = moonTier(renderer.getContext(), LIGHT_GRAPHICS)
+    // ones only when the link asks (`?graphics=high`) on a strong device (`moonDevice.ts`); everyone else gets
+    // the 2048 px ones, and `graphics=low` the 1024 px ones.
+    const tier = moonTier(renderer.getContext(), LIGHT_GRAPHICS, SHARP_GRAPHICS)
     // The Moon is shown once it has its colour and relief, never as a plain grey ball. A slow
     // network does not hold it back for ever: after DRESS_WAIT_MS it shows as it is.
     const show = () => setDressed(true)

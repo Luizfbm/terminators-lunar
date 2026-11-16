@@ -83,9 +83,12 @@ export function moonIsLarge(gl: WebGLRenderingContext | WebGL2RenderingContext):
 
 /**
  * The tier of this device for the page's own renderer context. `?graphics=low` is the low tier whatever
- * the hardware, and then nothing is probed.
+ * the hardware, and then nothing is probed. The strong tier is only for a link that asks for it
+ * (`?graphics=high`) on a device that can take it: a desktop card with 16384 px textures passed every
+ * check here and still ran out of memory at 936 MiB (GL_OUT_OF_MEMORY, then a lost context and a
+ * blocked page), because the texture limit says how wide an image may be, not how much memory is free.
  */
-export function moonTier(gl: WebGLRenderingContext | WebGL2RenderingContext, light: boolean): MoonTier {
+export function moonTier(gl: WebGLRenderingContext | WebGL2RenderingContext, light: boolean, sharp = false): MoonTier {
   if (light) return 'low'
-  return moonIsLarge(gl) ? 'strong' : 'weak'
+  return sharp && moonIsLarge(gl) ? 'strong' : 'weak'
 }

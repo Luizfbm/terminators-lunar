@@ -126,11 +126,23 @@ describe('the tier of the page’s own context', () => {
     expect(createElement).not.toHaveBeenCalled()
   })
 
-  it('a strong device is the strong tier, a refused hardware probe the weak one', () => {
+  it('a strong device asked for the sharp Moon is the strong tier, a refused hardware probe the weak one', () => {
     vi.stubGlobal('window', { matchMedia: () => ({ matches: false }) })
     vi.stubGlobal('document', { createElement: () => ({ getContext: () => ({ getExtension: () => null }) }) })
-    expect(moonTier(gl, false)).toBe('strong')
+    expect(moonTier(gl, false, true)).toBe('strong')
     vi.stubGlobal('document', { createElement: () => ({ getContext: () => null }) })
+    expect(moonTier(gl, false, true)).toBe('weak')
+  })
+
+  it('a strong device that did not ask stays on the 2048 px images, and is not even probed', () => {
+    // Found on 15/11/2026: a desktop Radeon with 16384 px textures was the strong tier, took 936 MiB at
+    // level 2 and lost its context (GL_OUT_OF_MEMORY, then the browser blocked the page). The texture
+    // limit is a width, not free memory, so no device gets the 8192 px images without ?graphics=high.
+    const createElement = vi.fn(() => ({ getContext: () => ({ getExtension: () => null }) }))
+    vi.stubGlobal('window', { matchMedia: () => ({ matches: false }) })
+    vi.stubGlobal('document', { createElement })
     expect(moonTier(gl, false)).toBe('weak')
+    expect(moonTier(gl, false, false)).toBe('weak')
+    expect(createElement).not.toHaveBeenCalled()
   })
 })

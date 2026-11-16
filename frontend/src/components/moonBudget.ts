@@ -6,9 +6,9 @@ import { textureSize } from './textureBudget'
  * mipmaps three builds for every map here: 4/3, written 1.33.
  *
  * Three tiers (`moonDevice.ts` decides which one a device is in):
- *   strong  a fine pointer, MAX_TEXTURE_SIZE of 8192 or more and hardware rendering: the images as they
- *           are served, the 8192 px whole-Moon pair included (a desktop Moon as sharp as it always was);
- *   weak    everyone else (a phone, a small GPU, a software renderer): every image fitted to 2048 px;
+ *   strong  only when the link asks with `?graphics=high`, on a fine pointer, MAX_TEXTURE_SIZE of 8192 or
+ *           more and hardware rendering: the images as they are served, the 8192 px whole-Moon pair included;
+ *   weak    everyone else, which is every visitor who did not ask: every image fitted to 2048 px;
  *   low     `?graphics=low`: every image fitted to 1024 px, and the polar cap only at level 2.
  *
  * Two levels: 1 is Explore the Moon (the orbit), 2 is South Pole in detail (the map). What each loads:
