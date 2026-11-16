@@ -247,7 +247,7 @@ for (const language of LANGUAGES) {
       })
     }
 
-    test('on a phone with no time strip, the Proof page, the button stays in the top bar and covers nothing', async ({ page }) => {
+    test('on a phone with no time strip, the Proof page, the button stays in the top bar and covers nothing', { tag: language.locale === 'en-GB' ? '@smoke' : [] }, async ({ page }) => {
       await page.setViewportSize(PHONE)
       await page.goto('/?page=proof')
       const button = page.getByRole('button', { name: language.button })

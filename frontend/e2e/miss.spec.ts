@@ -29,7 +29,7 @@ async function open(page: Page, path = '/') {
 test.describe('in English', () => {
   test.use({ locale: 'en-GB' })
 
-  test('names the worst direction, the range of each metric and the Slope against NASA’s limit', async ({ page }) => {
+  test('names the worst direction, the range of each metric and the Slope against NASA’s limit', { tag: '@smoke' }, async ({ page }) => {
     const asked: URL[] = []
     page.on('request', (request) => {
       if (request.url().includes('/visibility/scatter')) asked.push(new URL(request.url()))

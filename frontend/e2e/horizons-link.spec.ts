@@ -9,7 +9,7 @@ test.use({ locale: 'en-US' })
 const facts = (page: Page) => page.getByRole('table', { name: /Where the Sun and the Earth are at the Cursor/ })
 const check = (page: Page) => facts(page).getByRole('row', { name: /Check in JPL Horizons/ })
 
-test('each body has a link that opens JPL Horizons in a new tab for this Site, height and the instant of the numbers shown', async ({ page }) => {
+test('each body has a link that opens JPL Horizons in a new tab for this Site, height and the instant of the numbers shown', { tag: '@smoke' }, async ({ page }) => {
   const answered = page.waitForResponse((response) => new URL(response.url()).pathname === '/visibility')
   await page.goto('/?stats=1')
   const body = await (await answered).json()

@@ -54,7 +54,7 @@ test('values outside the range are pulled back in', async ({ page }) => {
   expect(param(await asked, 'observer_height_m')).toBe('50')
 })
 
-test('a copied link reopens the same Query, and "back to today" returns to the default Window', async ({ page }) => {
+test('a copied link reopens the same Query, and "back to today" returns to the default Window', { tag: '@smoke' }, async ({ page }) => {
   const first = await open(page, '/?start=2027-03-01&hours=120&height=10')
   expect(param(first, 'start')).toBe('2027-03-01T00:00:00Z')
   expect(param(first, 'duration_hours')).toBe('120')

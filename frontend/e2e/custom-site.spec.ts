@@ -59,7 +59,7 @@ const form = (page: Page) => page.getByRole('form', { name: /south of 80/ })
 test.describe('in English', () => {
   test.use({ locale: 'en-GB' })
 
-  test('a typed coordinate is asked, named on screen and carried by the link', async ({ page }) => {
+  test('a typed coordinate is asked, named on screen and carried by the link', { tag: '@smoke' }, async ({ page }) => {
     const asked = await serve(page)
     await page.goto('/')
     await expect(trigger(page)).toHaveAccessibleName(/^Site: Connecting Ridge/)
