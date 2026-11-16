@@ -1,7 +1,8 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import example from '../../../../contract/examples/route-plan.example.json'
 import { routeGeometry } from './routeGeometry'
 import type { RouteResponse } from './routeApi'
+const example = JSON.parse(readFileSync(new URL('../../../../contract/examples/route-plan.example.json', import.meta.url), 'utf8'))
 
 const answer = example.value as RouteResponse
 

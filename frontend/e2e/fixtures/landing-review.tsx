@@ -5,7 +5,7 @@ import { TimeStrip } from '../../src/components/TimeStrip'
 import { PrecisionPanel } from '../../src/components/precision/PrecisionPanel'
 import { VEHICLES } from '../../src/components/vehiclePicker/vehicles'
 import type { VisibilityResult } from '../../src/api/client'
-import example from '../../../contract/examples/visibility-cr01.example.json'
+import example from './visibility-cr01.example.json'
 import '../../src/index.css'
 
 const result = example.value as VisibilityResult

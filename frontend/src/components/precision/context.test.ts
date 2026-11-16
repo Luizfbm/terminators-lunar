@@ -1,7 +1,8 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import result from '../../../../contract/examples/visibility-cr01.example.json'
 import type { VisibilityResult } from '../../api/client'
 import { precisionContext } from './context'
+const result = JSON.parse(readFileSync(new URL('../../../../contract/examples/visibility-cr01.example.json', import.meta.url), 'utf8'))
 
 const query = result.value.query as VisibilityResult['query']
 describe('precision analysis context', () => {
