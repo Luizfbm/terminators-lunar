@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
-import { Answer, occluderLabel } from './components/Answer'
+import { Answer, occluderLabel, type AnswerProps } from './components/Answer'
+import { AnswerLayer } from './components/answerCard/AnswerLayer'
 import { Brief } from './components/brief/Brief'
 import { briefText } from './components/brief/strings'
 import { Assistant } from './components/phase4/assistant/Assistant'
@@ -97,6 +98,8 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
   const globeMounted = globeSeen || scenes.globeShown
   const [page, setPage] = useState<Page>(link.page)
   const [stats, setStats] = useState(link.stats)
+  // The drawer of details, in Larissa's layout (the default): its open state goes in the link as `details=1`.
+  const [detailsOpen, setDetailsOpen] = useState(link.classic !== true && link.details === true)
   // The cover is for the plain address, once per browser: a link with a Query goes to its answer.
   // The plain address opens the cover. `layout=classic` says only which layout, not which Query, so it does not count as a link.
   // Larissa's layout (the default) has no cover and no guide (Luiz, 15/11/2026): only `layout=classic` opens them.
@@ -224,11 +227,11 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
     if (playing) return
     const timer = window.setTimeout(() => {
       // What the App does not own (a panel's own setting) passes through from the current link.
-      const query = writeLink({ ...readLink(window.location.search), site: siteRef, cursorMs: movedCursor, language: linkLanguage, view, ...choice, page, stats }, window.location.search)
+      const query = writeLink({ ...readLink(window.location.search), site: siteRef, cursorMs: movedCursor, language: linkLanguage, view, ...choice, page, stats, details: detailsOpen ? true : undefined }, window.location.search)
       window.history.replaceState(null, '', `${window.location.pathname}${query}`)
     }, 300)
     return () => window.clearTimeout(timer)
-  }, [playing, siteRef, movedCursor, linkLanguage, view, choice, page, stats])
+  }, [playing, siteRef, movedCursor, linkLanguage, view, choice, page, stats, detailsOpen])
 
   const play = () => {
     if (!playing && result && cursorMs >= endMs) setMovedCursor(startMs)
@@ -287,6 +290,36 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
 
   // A link can carry a point north of the polar maps: say so, and offer the way back.
   const customOutside = state.status === 'error' && state.code === 'outside_coverage' && isCoordinate(siteRef)
+
+  // What the answer column and the answer card take, the same for both: the column is the classic layout's, the
+  // card and its drawer are the default layout's.
+  const answerProps: AnswerProps | null =
+    result && answer
+      ? {
+          result,
+          cursorMs,
+          where: <Where result={result} meta={answer.meta} sites={sites} choice={choice} onSite={setSiteRef} onCoordinate={setSiteRef} onChoice={setChoice} />,
+          // A Window starts on a whole UTC day in the Query, so a best Window opens from its first day.
+          marked,
+          onMark,
+          onWindow: (best) => setChoice({ ...choice, startDay: best.start.slice(0, 10), hours: best.durationHours }),
+          stats,
+          onStats: setStats,
+          landing: {
+            href: writeLink({ site: IM2_LANDING.site, cursorMs: null, language: linkLanguage, view, ...IM2_LANDING.choice, page: 'answer', stats, classic: link.classic }),
+            open: () => {
+              setSiteRef(IM2_LANDING.site)
+              setChoice(IM2_LANDING.choice)
+              // The Cursor goes back to the start of the new Window.
+              setMovedCursor(null)
+              // The link sits under the numbers; the new answer is read from its first line.
+              document.querySelector('main.answer')?.scrollTo({ top: 0 })
+              document.querySelector('.details__body')?.scrollTo({ top: 0 })
+              window.scrollTo({ top: 0 })
+            },
+          },
+        }
+      : null
 
   return (
     <div className="screen" data-layout={link.classic ? 'classic' : undefined}>
@@ -421,6 +454,10 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
             {STAGE_STRINGS[i18n.locale].back}
           </button>
         )}
+        {/* Larissa's layout (the default) has no column: the answer is a card, and a drawer holds the rest of the column. */}
+        {answerProps && link.classic !== true && (
+          <AnswerLayer {...answerProps} open={detailsOpen && page === 'answer'} onOpen={setDetailsOpen} stale={state.status === 'loading'} />
+        )}
         {/* Under 900 px wide the foot sits below the picture, never on it (the requirement). */}
         <div className="stage__foot">
           <p className="views">
@@ -462,33 +499,7 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
             )}
           </div>
         )}
-        {result && answer && page !== 'brief' && (
-          <Answer
-            result={result}
-            cursorMs={cursorMs}
-            where={
-              <Where result={result} meta={answer.meta} sites={sites} choice={choice} onSite={setSiteRef} onCoordinate={setSiteRef} onChoice={setChoice} />
-            }
-            // A Window starts on a whole UTC day in the Query, so a best Window opens from its first day.
-            marked={marked}
-            onMark={onMark}
-            onWindow={(best) => setChoice({ ...choice, startDay: best.start.slice(0, 10), hours: best.durationHours })}
-            stats={stats}
-            onStats={setStats}
-            landing={{
-              href: writeLink({ site: IM2_LANDING.site, cursorMs: null, language: linkLanguage, view, ...IM2_LANDING.choice, page: 'answer', stats, classic: link.classic }),
-              open: () => {
-                setSiteRef(IM2_LANDING.site)
-                setChoice(IM2_LANDING.choice)
-                // The Cursor goes back to the start of the new Window.
-                setMovedCursor(null)
-                // The link sits under the numbers; the new answer is read from its first line.
-                document.querySelector('main.answer')?.scrollTo({ top: 0 })
-                window.scrollTo({ top: 0 })
-              },
-            }}
-          />
-        )}
+        {answerProps && page !== 'brief' && link.classic === true && <Answer {...answerProps} />}
       </main>
 
       {result && answer && page === 'answer' && (
