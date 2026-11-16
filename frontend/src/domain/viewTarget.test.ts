@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { toVector } from './sky'
-import { VIEW_DISTANCE, viewTarget } from './viewTarget'
+import { moonRadiusPx } from './moonDisc'
+import { EARTH_ANGULAR_RADIUS_DEG, projectedRadiusPx, SUN_ANGULAR_RADIUS_DEG } from './spaceScale'
+import { GLOBE_FIELD_OF_VIEW_DEG, MAX_FRAMING_DISTANCE, MOON_WIDTH_SHARE, VIEW_DISTANCE, viewDistanceFor, viewTarget } from './viewTarget'
 
 const length = (p: readonly [number, number, number]) => Math.hypot(...p)
 const dot = (a: readonly [number, number, number], b: readonly number[]) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
@@ -48,5 +50,61 @@ describe('where the menu turns the Moon', () => {
 
   it('has nowhere to turn to for the night side while it does not know where the Sun is', () => {
     expect(viewTarget('dark', null)).toBeNull()
+  })
+})
+
+describe('how far the camera stands to frame the Moon (issue 150)', () => {
+  /** What share of the stage's width and height the Moon's disc takes, from the camera distance the framing gives. */
+  const shares = (width: number, height: number) => {
+    const distance = viewDistanceFor(width / height)
+    const radius = moonRadiusPx(distance, GLOBE_FIELD_OF_VIEW_DEG, height)
+    return { distance, ofWidth: (2 * radius) / width, ofHeight: (2 * radius) / height }
+  }
+
+  it('keeps the distance of 5 radii on a desktop stage, where the height is the limit', () => {
+    for (const [width, height] of [[1440, 723], [1920, 900], [1024, 768]]) expect(viewDistanceFor(width / height)).toBe(VIEW_DISTANCE)
+  })
+
+  it('stands farther on a phone upright: at 5 radii the Moon spanned 92% of a 390 by 506 stage, edge to edge', () => {
+    expect((moonRadiusPx(VIEW_DISTANCE, GLOBE_FIELD_OF_VIEW_DEG, 506) * 2) / 390).toBeGreaterThan(0.9)
+    const framed = shares(390, 506)
+    expect(framed.distance).toBeGreaterThan(5.5)
+    expect(framed.ofWidth).toBeCloseTo(MOON_WIDTH_SHARE, 2)
+  })
+
+  it('never lets the Moon take more of the width than the share, or more of the height than at 5 radii, at any aspect', () => {
+    const atFive = (2 * moonRadiusPx(VIEW_DISTANCE, GLOBE_FIELD_OF_VIEW_DEG, 1000)) / 1000
+    for (const aspect of [0.4, 0.5, 0.77, 1, 1.3, 2, 3]) {
+      const distance = viewDistanceFor(aspect)
+      const ofHeight = (2 * moonRadiusPx(distance, GLOBE_FIELD_OF_VIEW_DEG, 1000)) / 1000
+      expect(ofHeight).toBeLessThanOrEqual(atFive + 1e-9)
+      // Only a stage so narrow that the farthest framing is still too near may go over the share.
+      if (distance < MAX_FRAMING_DISTANCE) expect(ofHeight / aspect).toBeLessThanOrEqual(MOON_WIDTH_SHARE + 1e-9)
+    }
+  })
+
+  it('stands farther the narrower the stage is, and never nearer than the opening distance', () => {
+    const distances = [2, 1.3, 1, 0.77, 0.6, 0.5].map((aspect) => viewDistanceFor(aspect))
+    distances.forEach((distance, at) => {
+      expect(distance).toBeGreaterThanOrEqual(VIEW_DISTANCE)
+      if (at > 0) expect(distance).toBeGreaterThanOrEqual(distances[at - 1])
+    })
+    expect(Math.max(...distances)).toBeLessThanOrEqual(MAX_FRAMING_DISTANCE)
+  })
+
+  it('falls back to the opening distance for a stage that has no size yet', () => {
+    for (const aspect of [0, -1, NaN, Infinity]) expect(viewDistanceFor(aspect)).toBe(VIEW_DISTANCE)
+  })
+
+  it('is only the camera: the Sun and the Earth keep the angles of the ephemeris, and the framing is not an input of their size', () => {
+    expect(SUN_ANGULAR_RADIUS_DEG).toBeCloseTo(0.2665, 3)
+    expect(EARTH_ANGULAR_RADIUS_DEG).toBeCloseTo(0.9497, 3)
+    expect(projectedRadiusPx(SUN_ANGULAR_RADIUS_DEG, GLOBE_FIELD_OF_VIEW_DEG, 723)).toBeCloseTo(5.9, 1)
+    expect(projectedRadiusPx(EARTH_ANGULAR_RADIUS_DEG, GLOBE_FIELD_OF_VIEW_DEG, 723)).toBeCloseTo(20.9, 0)
+  })
+
+  it('has the camera over each place at the distance asked, so the menu views frame the Moon like the opening one', () => {
+    const distance = viewDistanceFor(390 / 506)
+    for (const view of ['dark', 'north', 'south'] as const) expect(length(viewTarget(view, { latitude_deg: 0, longitude_deg: 10 }, distance)!)).toBeCloseTo(distance, 12)
   })
 })
