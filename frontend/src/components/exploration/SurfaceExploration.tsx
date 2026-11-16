@@ -1,3 +1,4 @@
+import { solarPathDirections } from '../../domain/solarPath'
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { ownRenderer, releaseRenderer } from '../rendererLifetime'
@@ -55,6 +56,9 @@ export function SurfaceExploration({ pick, result, cursorMs, paused=false }: {
     const bodies={sun:new THREE.Mesh(new THREE.CircleGeometry(1,48),new THREE.MeshBasicMaterial({color:'#fff3c3',side:THREE.DoubleSide})),
       earth:new THREE.Mesh(new THREE.SphereGeometry(1,40,24),earthMaterial)}
     scene.add(bodies.sun,bodies.earth)
+    const pathGeometry=new THREE.BufferGeometry(),pathMaterial=new THREE.PointsMaterial({color:'#f5bd3a',size:2,sizeAttenuation:false,transparent:true,opacity:.5})
+    const sunPath=new THREE.Points(pathGeometry,pathMaterial);scene.add(sunPath)
+    let pathResult:VisibilityResult|null=null
     const starPositions=new Float32Array(1800)
     // A deterministic decorative star field; not a stellar catalogue.
     for(let i=0;i<600;i++){const a=i*2.3999632297,z=1-2*(i+.5)/600,r=Math.sqrt(1-z*z);starPositions.set([r*Math.cos(a)*80000,z*80000,r*Math.sin(a)*80000],i*3)}
@@ -118,6 +122,11 @@ export function SurfaceExploration({ pick, result, cursorMs, paused=false }: {
       const near=drive(position,180-orbit*180/Math.PI,12,pick.area)
       camera.position.y=Math.max(camera.position.y,data.at(near.x,near.y)[1]+2)
       camera.lookAt(hereVector.clone().add(new THREE.Vector3(0,1.2,0)))
+      if(pathResult!==latest.current.result){
+        pathResult=latest.current.result
+        const dots=solarPathDirections(pathResult.timeline.samples).flatMap(point=>point.map(value=>value*100000))
+        pathGeometry.setAttribute('position',new THREE.Float32BufferAttribute(dots,3));pathGeometry.computeBoundingSphere()
+      }
       const sample=sampleAt(latest.current.result.timeline.samples,latest.current.cursorMs)
       if(sample){
         if(lookingAt){
@@ -151,6 +160,7 @@ export function SurfaceExploration({ pick, result, cursorMs, paused=false }: {
           }
         }
       }
+      sunPath.position.copy(camera.position)
       renderer.render(scene,camera)
       canvas.dataset.ready='true';canvas.dataset.landed=String(descent===0);canvas.dataset.heading=position.heading.toFixed(2);canvas.dataset.roverX=position.x.toFixed(2);canvas.dataset.roverY=position.y.toFixed(2)
       if(now-lastHud>120){
@@ -172,6 +182,7 @@ export function SurfaceExploration({ pick, result, cursorMs, paused=false }: {
       gone=true;cancelAnimationFrame(raf);clear();reset.current=null;lookAtBody.current=null;observer.disconnect()
       window.removeEventListener('keydown',keyDown);window.removeEventListener('keyup',keyUp);window.removeEventListener('blur',clear);document.removeEventListener('visibilitychange',clear)
       canvas.removeEventListener('pointerdown',down);canvas.removeEventListener('pointermove',move);canvas.removeEventListener('pointerup',up);canvas.removeEventListener('pointercancel',up);canvas.removeEventListener('webglcontextlost',lost)
+      pathGeometry.dispose();pathMaterial.dispose();
       geometry.dispose();material.dispose();grain.dispose();fleet.dispose();earthMap?.dispose();starsGeometry.dispose();starsMaterial.dispose()
       Object.values(bodies).forEach(b=>{b.geometry.dispose();b.material.dispose()});releaseRenderer(renderer);canvas.remove()
     }

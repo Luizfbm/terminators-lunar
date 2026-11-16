@@ -342,3 +342,11 @@
     transition: none;
   }
 }
+
+.battery-gauge { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font: 12px/1.3 system-ui; color: #b6c3d2; }
+.battery-gauge[data-state='discharging'] { color: #ff7171; }
+.battery-gauge[data-state='charging'], .battery-gauge[data-state='full'] { color: #83dfac; }
+.battery-gauge__case { display: block; position: relative; width: 30px; height: 15px; border: 1px solid currentColor; border-radius: 3px; padding: 2px; }
+.battery-gauge__case::after { content: ''; position: absolute; right: -4px; top: 4px; width: 2px; height: 5px; background: currentColor; }
+.battery-gauge__case i { display: block; height: 100%; background: currentColor; border-radius: 1px; }
+.battery-gauge__state { text-transform: capitalize; }

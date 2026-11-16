@@ -10,6 +10,7 @@ import { coordinate } from '../siteName'
 import type { Vehicle } from '../vehiclePicker/vehicles'
 import { currentRow, durationParts, oneDecimal, periodRows, sectionsOf, summarise, type PanelVariant, type PeriodRow } from './panelData'
 import type { en } from './panelStrings'
+import { BatteryGauge } from './BatteryGauge'
 import './landingPanel.css'
 
 type PanelKey = keyof typeof en
@@ -159,6 +160,7 @@ export function LandingPanel({ result, siteName, variant, vehicle, cursorMs, onC
       </button>
       <aside id={panelId} className="landing-panel__body" aria-labelledby={titleId}>
         <header>
+          {has('vehicle') && vehicle && <BatteryGauge result={result} vehicle={vehicle} cursorMs={cursorMs} />}
           <h2 id={titleId} className="landing-panel__title">
             <span className="visually-hidden">{t('landingPanel.label')}: </span>
             {siteName}

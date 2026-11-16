@@ -113,7 +113,7 @@ export function VehicleBatteryNote({ vehicle, energy, onRetry }: { vehicle: Vehi
   if (energy.status !== 'ready') return null
   return (
     <p className="strip__legend strip-note">
-      {t('timeline.battery.note', { rover: vehicle.name })}
+      {t('timeline.battery.note', { rover: vehicle.name })} Red: discharging · Green: charging · No fill: empty.
       {estimated.length > 0 && (
         <>
           {' '}

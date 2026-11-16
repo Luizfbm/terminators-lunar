@@ -1,3 +1,4 @@
+import { AmericanDateInput } from './vehiclePicker/AmericanDateInput'
 import { useState, type KeyboardEvent } from 'react'
 import type { Meta, Site, VisibilityResult } from '../api/client'
 import {
@@ -106,15 +107,14 @@ export function Where({
         onCoordinate={onCoordinate}
       />
       <span>
-        <input
+        <AmericanDateInput
           className="site where__date"
-          type="date"
+          withTime={false}
           aria-label={t('window.start')}
           min={range.min}
           max={range.max}
           value={utcDay(startMs)}
-          onChange={(event) => {
-            const day = event.target.value
+          onChange={(day) => {
             if (day && day >= range.min && day <= range.max) pick({ startDay: day })
           }}
         />{' '}

@@ -709,6 +709,9 @@ export function Sky({
       // An arrow for each of the Sun and the Earth while it is out of frame or below the horizon:
       // it points the way and, pressed, turns the view to the body.
       camera.updateMatrixWorld()
+      const openPanel = host.closest('.stage')?.querySelector('.landing-panel[data-collapsed="false"]')
+      const panelLeft = openPanel ? openPanel.getBoundingClientRect().left - host.getBoundingClientRect().left : target.clientWidth
+      const guideRight = Math.max(105, Math.min(target.clientWidth - 105, panelLeft - 105))
       for (const body of ['sun', 'earth'] as const) {
         const guide = bodyGuides.current[body]
         if (!guide) continue
@@ -721,7 +724,7 @@ export function Sky({
         const projected = position.clone().project(camera)
         const inFrame = local.z < 0 && Math.abs(projected.x) < GUIDE_FRAME_X && Math.abs(projected.y) < GUIDE_FRAME_Y
         const below = belowHorizonMask(now[body], state.result.horizon.samples)
-        guide.hidden = inFrame && !below
+        guide.hidden = (inFrame && !below) || (Boolean(openPanel) && panelLeft < 250)
         guideAim.current[body] = { yaw: yaw + turnBetween(yaw, now[body].azimuth_deg), pitch: stretched(now[body].elevation_deg, state.stretch) }
         // The direction in the camera's own axes also works behind the Observer, where projection reverses sign.
         let dx = local.x
@@ -730,7 +733,7 @@ export function Sky({
         const norm = Math.max(Math.abs(dx), Math.abs(dy))
         const width = target.clientWidth
         const height = target.clientHeight
-        guide.style.left = `${width / 2 + (dx / norm) * Math.max(0, width / 2 - GUIDE_INSET_X_PX)}px`
+        guide.style.left = `${Math.min(guideRight, width / 2 + (dx / norm) * Math.max(0, width / 2 - GUIDE_INSET_X_PX))}px`
         guide.style.top = `${height / 2 + (dy / norm) * Math.max(0, height / 2 - GUIDE_INSET_Y_PX) + (body === 'sun' ? -GUIDE_STACK_PX : GUIDE_STACK_PX)}px`
         const arrow = guide.firstElementChild as HTMLElement
         arrow.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`

@@ -21,9 +21,7 @@ import {
   BACKDROP_NEAR,
   BACKDROP_SUN_DISTANCE,
   discRadius,
-  EARTH_ANGULAR_RADIUS_DEG,
   moonHides,
-  SUN_ANGULAR_RADIUS_DEG,
   sphereRadius,
 } from '../domain/spaceScale'
 import { useRegions } from '../hooks/useRegions'
@@ -77,6 +75,8 @@ export interface GlobeProps {
   earth?: LatLon | null
   /** The Cursor's instant: which face of the Earth is turned to the Moon. */
   cursorMs?: number
+  sunRadiusDeg?: number
+  earthRadiusDeg?: number
   sunAzimuthDeg: number | null
   earthAzimuthDeg: number | null
   sunUp: boolean
@@ -1009,9 +1009,11 @@ export function Globe(props: GlobeProps) {
       skyCamera.updateMatrixWorld()
       const sunWay = state.sun ? vector(state.sun.latitude_deg, state.sun.longitude_deg).normalize() : null
       const earthWay = state.earth ? vector(state.earth.latitude_deg, state.earth.longitude_deg).normalize() : null
-      sunDisc.visible = sunHalo.visible = sunWay !== null
+      const orbitalSky = mode === 'orbit' && !state.dive && !dive && !shownDive
+      const sunRadius = state.sunRadiusDeg ?? 0, earthRadius = state.earthRadiusDeg ?? 0
+      sunDisc.visible = sunHalo.visible = orbitalSky && sunWay !== null && sunRadius > 0
       if (sunWay) {
-        const radius = discRadius(BACKDROP_SUN_DISTANCE, SUN_ANGULAR_RADIUS_DEG)
+        const radius = discRadius(BACKDROP_SUN_DISTANCE, sunRadius)
         sunDisc.position.copy(sunWay).multiplyScalar(BACKDROP_SUN_DISTANCE)
         // The halo sits a little behind the disc, so the two never fight for the same depth.
         sunHalo.position.copy(sunDisc.position).multiplyScalar(1.02)
@@ -1019,10 +1021,10 @@ export function Globe(props: GlobeProps) {
         sunHalo.scale.setScalar(radius * 2 * HALO_REACH)
         sunDisc.lookAt(0, 0, 0)
       }
-      earthBall.visible = earthWay !== null
+      earthBall.visible = orbitalSky && earthWay !== null && earthRadius > 0
       if (earthWay && state.earth) {
         earthBall.position.copy(earthWay).multiplyScalar(BACKDROP_EARTH_DISTANCE)
-        earthBall.scale.setScalar(sphereRadius(BACKDROP_EARTH_DISTANCE, EARTH_ANGULAR_RADIUS_DEG))
+        earthBall.scale.setScalar(sphereRadius(BACKDROP_EARTH_DISTANCE, earthRadius))
         // Lit from where the Sun is, so it shows the phase it has from the Moon.
         if (sunWay) earthShade.uniforms.sunDirection.value.copy(sunWay)
         // The face turned to the Moon at the Cursor faces the Moon. Which way north leans is only
@@ -1041,7 +1043,7 @@ export function Globe(props: GlobeProps) {
       const across = new THREE.Vector3().setFromMatrixColumn(skyCamera.matrixWorld, 0)
       const ahead = skyCamera.getWorldDirection(new THREE.Vector3())
       const placed = (body: THREE.Object3D, way: THREE.Vector3 | null, radius: number) => {
-        if (!way || way.dot(ahead) <= 0) return null
+        if (!body.visible || !way || way.dot(ahead) <= 0) return null
         // The Moon is in front of it when the line from the camera along its direction goes through the Moon.
         const far = way.clone().multiplyScalar(1e6).add(camera.position)
         if (moonHides(camera.position.toArray(), far.toArray())) return null
@@ -1052,15 +1054,15 @@ export function Globe(props: GlobeProps) {
         if (x < 0 || x > host.clientWidth || y < 0 || y > host.clientHeight) return null
         return { x, y, r: (Math.abs(edge.x - centre.x) / 2) * host.clientWidth }
       }
-      const sunSpot = placed(sunDisc, sunWay, discRadius(BACKDROP_SUN_DISTANCE, SUN_ANGULAR_RADIUS_DEG))
-      const earthSpot = placed(earthBall, earthWay, sphereRadius(BACKDROP_EARTH_DISTANCE, EARTH_ANGULAR_RADIUS_DEG))
+      const sunSpot = placed(sunDisc, sunWay, discRadius(BACKDROP_SUN_DISTANCE, sunRadius))
+      const earthSpot = placed(earthBall, earthWay, sphereRadius(BACKDROP_EARTH_DISTANCE, earthRadius))
       publish('sun', sunSpot)
       publish('earth', earthSpot)
       // The planets, where they are at the Cursor in the same frame as the Sun and the Earth, and which of
       // them are on the stage and not behind the Moon.
       planetSky.place(state.cursorMs, state.earth, state.sun)
       // The "Planets" switch of the menu: released, the points and their names are not drawn.
-      const planetsOn = layersLive.current.planets
+      const planetsOn = orbitalSky && layersLive.current.planets
       for (const [id, point] of planetSky.points) point.visible = planetsOn && planetSky.planets.some((planet) => planet.id === id)
       const planetSpots: { id: (typeof PLANETS)[number]['id']; x: number; y: number; magnitude: number }[] = []
       for (const planet of planetsOn ? planetSky.planets : []) {

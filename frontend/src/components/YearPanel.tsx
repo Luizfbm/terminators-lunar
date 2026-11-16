@@ -14,7 +14,7 @@ export interface WindowChoice {
 }
 
 function monthName(locale: string, month: number, style: 'short' | 'long'): string {
-  const tag = locale === 'pt' ? 'pt-BR' : 'en-GB'
+  const tag = locale === 'pt' ? 'pt-BR' : 'en-US'
   return new Intl.DateTimeFormat(tag, { month: style, timeZone: 'UTC' }).format(Date.UTC(2000, month - 1, 1))
 }
 

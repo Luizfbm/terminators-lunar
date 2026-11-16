@@ -46,9 +46,11 @@ export function TimeStrip({
   onPlay,
   inert = false,
   vehicle = null,
+  advanced = false,
 }: {
   result: VisibilityResult
   vehicle?: Vehicle | null
+  advanced?: boolean
   cursorMs: number
   playing: boolean
   shortShadowMaxHours: number
@@ -116,8 +118,8 @@ export function TimeStrip({
       >
         <Row kind="sun" items={rows.sun} label={t('strip.sun')} aside={<CountdownAside line={sunCountdown} body="sun" />} />
         <Row kind="earth" items={rows.earth} label={t('strip.earth')} aside={<CountdownAside line={earthCountdown} body="earth" />} />
-        <DsnBand result={result} />
-        {vehicle ? <VehicleBatteryRow result={result} vehicle={vehicle} energy={energy.state} reading={reading} /> : <ChargeStrip result={result} />}
+        {advanced && <DsnBand result={result} />}
+        {vehicle ? <VehicleBatteryRow result={result} vehicle={vehicle} energy={energy.state} reading={reading} /> : advanced ? <ChargeStrip result={result} /> : null}
         <div className="strip__cursor-axis"><span className="strip__cursor" style={{ left: percent(fractionOf(cursorMs, startMs, endMs)) }} /></div>
       </div>
       <div className="strip__ticks" aria-hidden="true">

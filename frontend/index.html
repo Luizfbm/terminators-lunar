@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-US">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -22,16 +22,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=IBM+Plex+Mono:wght@400&family=Instrument+Serif&display=swap" rel="stylesheet" />
-    <!-- The page speaks the visitor's language before any code arrives, by the rule the app uses
-         (src/main.tsx): the link's lang= when it names one, otherwise the browser's language. -->
-    <script id="earthrise-lang">
-      (function () {
-        var named = new URLSearchParams(location.search).get('lang')
-        var spoken = (navigator.language || '').toLowerCase().indexOf('pt') === 0 ? 'pt' : 'en'
-        var locale = named === 'pt' || named === 'en' ? named : spoken
-        document.documentElement.lang = locale === 'pt' ? 'pt-BR' : 'en-GB'
-      })()
-    </script>
+    <!-- The loading screen uses the same American English as the app, even before React starts. -->
+    <script id="earthrise-lang">document.documentElement.lang = 'en-US'</script>
     <!-- earthrise:css:start
          The Earthrise (the requirement): what the page shows before any code, while the Moon loads. It is
          plain CSS and inline SVG with its own colours, so it can be lifted out whole (the 30 s video). -->
@@ -254,10 +246,6 @@
         font-size: 0.8125rem;
         line-height: 1.5;
       }
-      html:not(:lang(pt)) .earthrise [data-lang='pt'],
-      html:lang(pt) .earthrise [data-lang='en'] {
-        display: none;
-      }
       /* The hand over: the ridge sinks, the words go, the Earth stays in the sky, and the page
          fades onto the app, whose Moon has faded in under it. */
       .earthrise[data-state='leaving'] {
@@ -427,13 +415,13 @@
         </div>
       </div>
       <div class="earthrise__text">
-        <p class="earthrise__title"><span data-lang="en" lang="en">Loading the Moon…</span><span data-lang="pt" lang="pt">Carregando a Lua…</span></p>
+        <p class="earthrise__title"><span data-lang="en" lang="en">Loading the Moon…</span></p>
         <ol class="earthrise__steps">
-          <li class="earthrise__step" data-step="terrain" data-state="waiting"><span data-lang="en" lang="en">The terrain</span><span data-lang="pt" lang="pt">O relevo</span></li>
-          <li class="earthrise__step" data-step="sun" data-state="waiting"><span data-lang="en" lang="en">The Sun's path</span><span data-lang="pt" lang="pt">O caminho do Sol</span></li>
-          <li class="earthrise__step" data-step="earth" data-state="waiting"><span data-lang="en" lang="en">The Earth's path</span><span data-lang="pt" lang="pt">O caminho da Terra</span></li>
+          <li class="earthrise__step" data-step="terrain" data-state="waiting"><span data-lang="en" lang="en">The terrain</span></li>
+          <li class="earthrise__step" data-step="sun" data-state="waiting"><span data-lang="en" lang="en">The Sun's path</span></li>
+          <li class="earthrise__step" data-step="earth" data-state="waiting"><span data-lang="en" lang="en">The Earth's path</span></li>
         </ol>
-        <p class="earthrise__story"><span data-lang="en" lang="en">In March 2025 IM-2 Athena tipped over in a crater about 20&nbsp;m across, its panels facing away from the Sun. The mission was lost in under 13&nbsp;hours.</span><span data-lang="pt" lang="pt">Em março de 2025 o IM-2 Athena tombou numa cratera de uns 20&nbsp;m, com os painéis de costas para o Sol. A missão se perdeu em menos de 13&nbsp;horas.</span></p>
+        <p class="earthrise__story"><span data-lang="en" lang="en">In March 2025 IM-2 Athena tipped over in a crater about 20&nbsp;m across, its panels facing away from the Sun. The mission was lost in under 13&nbsp;hours.</span></p>
       </div>
     </div>
     <!-- earthrise:markup:end -->
