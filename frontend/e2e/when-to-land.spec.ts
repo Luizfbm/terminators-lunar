@@ -93,7 +93,7 @@ const visibilityAsked = (page: Page) =>
 test.describe('in English', () => {
   test.use({ locale: 'en-GB' })
 
-  test('the day to land says the best, typical and worst day of the year, as the route ranked them', async ({ page }) => {
+  test('the day to land says the best, typical and worst day of the year, as the route ranked them', { tag: '@smoke' }, async ({ page }) => {
     await echoQuery(page)
     const asked = await serveWindows(page)
     await page.goto('/?site=001&start=2027-03-12&hours=336')

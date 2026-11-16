@@ -15,7 +15,7 @@ async function open(page: Page, path = '/') {
 test.describe('default Query, English browser', () => {
   test.use({ locale: 'en-GB' })
 
-  test('opens already answering, and says what hides the Sun and the Earth', async ({ page }) => {
+  test('opens already answering, and says what hides the Sun and the Earth', { tag: '@smoke' }, async ({ page }) => {
     await open(page)
 
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('The Sun sets in 4 h 21 min.')
@@ -104,7 +104,7 @@ test.describe('default Query, English browser', () => {
 test.describe('default Query, Portuguese browser', () => {
   test.use({ locale: 'pt-BR' })
 
-  test('gives the same answer in Portuguese', async ({ page }) => {
+  test('gives the same answer in Portuguese', { tag: '@smoke' }, async ({ page }) => {
     await open(page)
 
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('O Sol se põe em 4 h 21 min.')

@@ -60,7 +60,7 @@ const pressed = (page: Page, name: 'Sites' | 'Lunar Missions', yes: boolean) =>
   expect(page.getByRole('button', { name, exact: true })).toHaveAttribute('aria-pressed', String(yes))
 const level = (page: Page, name: 'Explore the Moon' | 'South Pole in detail') => page.getByRole('button', { name, exact: true }).click()
 
-test('opens with the three Artemis Sites drawn and the three missions not', async ({ page }) => {
+test('opens with the three Artemis Sites drawn and the three missions not', { tag: '@smoke' }, async ({ page }) => {
   await open(page)
   await dots(page, 3)
   await pressed(page, 'Sites', true)

@@ -89,7 +89,7 @@ for (const viewport of [
 test.describe('on a phone, 390×844', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, locale: 'en-US' })
 
-  test('the picture takes half the screen, and at least 300 px of sky are free under the one-line hint', async ({ page }) => {
+  test('the picture takes half the screen, and at least 300 px of sky are free under the one-line hint', { tag: '@smoke' }, async ({ page }) => {
     await open(page)
     const stage = await box(page, '.stage')
     const sky = await box(page, '.sky canvas')

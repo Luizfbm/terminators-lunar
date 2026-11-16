@@ -34,7 +34,7 @@ const plansTable = (region: Locator) => region.locator('table:not(.hazard-compar
 test.describe('in English', () => {
   test.use({ locale: 'en-GB' })
 
-  test('opens two plans, marks the better value in each row, and the link reopens both', async ({ page }) => {
+  test('opens two plans, marks the better value in each row, and the link reopens both', { tag: '@smoke' }, async ({ page }) => {
     await movePlanB(page, moreEarthLongerNight)
     const first = page.waitForResponse((response) => visibility(response.request()))
     await page.goto('/')

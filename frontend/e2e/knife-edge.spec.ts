@@ -32,7 +32,7 @@ function stable() {
 test.describe('in English', () => {
   test.use({ locale: 'en-GB' })
 
-  test('warns that the Site is sensitive and takes the reader to the miss panel', async ({ page }) => {
+  test('warns that the Site is sensitive and takes the reader to the miss panel', { tag: '@smoke' }, async ({ page }) => {
     await open(page)
     await expect(warning(page)).toContainText(/This Site is sensitive: 250\sm to the south, the Sun is hidden for 19\sd \d+\sh more than at the Site\./)
     await expect(page.getByRole('region', { name: 'If the lander misses' })).toBeVisible()

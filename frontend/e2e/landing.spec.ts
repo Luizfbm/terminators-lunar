@@ -20,7 +20,7 @@ async function serve(page: Page) {
 const entry = (page: Page, name: string) => page.getByRole('link', { name })
 const note = (page: Page) => page.locator('.landing-note')
 
-test('the line under the numbers opens the IM-2 landing, where a note says what the map cannot see', async ({ page }) => {
+test('the line under the numbers opens the IM-2 landing, where a note says what the map cannot see', { tag: '@smoke' }, async ({ page }) => {
   await serve(page)
   await page.goto('/?lang=en')
   const link = entry(page, 'A real landing: IM-2 Athena, March 2025')
