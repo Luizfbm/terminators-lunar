@@ -9,6 +9,12 @@ export type MoonView = 'initial' | 'dark' | 'north' | 'south'
  * Larissa by trying it.
  */
 export const VIEW_DISTANCE = 5
+
+/** Fit the Moon in the shorter viewport dimension; camera framing, never a physical size change. */
+export function orbitDistance(aspect: number, verticalFovDeg = 32): number {
+  const halfAngle = Math.atan(Math.tan(verticalFovDeg * Math.PI / 360) * Math.min(1, Math.max(.1, aspect)) * .72)
+  return Math.max(VIEW_DISTANCE, 1 / Math.sin(halfAngle))
+}
 /**
  * The poles are looked at from this far off them, a hair, so the pole is in the middle of the disc and the
  * camera's up (the Moon's axis) is not along the way it looks, which has no sense at the pole itself.

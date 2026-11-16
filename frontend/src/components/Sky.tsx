@@ -1,3 +1,6 @@
+import { solarPathDirections } from '../domain/solarPath'
+import { createEarthMaterial } from './earthMaterial'
+import { ownRenderer, releaseRenderer } from './rendererLifetime'
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import type { VisibilityResult } from '../api/client'
@@ -73,7 +76,6 @@ const DIAL_TICK_IN_MAJOR = 34
 const DIAL_TICK_IN_MINOR = 38
 /** Below this change of yaw, in degrees, the dial is not redrawn. */
 const DIAL_STEP_DEG = 0.05
-const PATH_POINTS = 320
 /** The map of the Earth, served beside the page: NASA's Blue Marble, without clouds. */
 const EARTH_MAP = `${import.meta.env.BASE_URL}earth_2k.jpg`
 
@@ -191,6 +193,7 @@ export function Sky({
       // The ground starts two metres from the eye and the stars are far beyond the horizon:
       // a logarithmic depth buffer keeps both sharp.
       renderer = new THREE.WebGLRenderer({ canvas: target, antialias: true, logarithmicDepthBuffer: true })
+      ownRenderer(renderer)
     } catch {
       // The check for WebGL passed and the context still failed: the ground view falls back to its flat drawing.
       latest.current.onFailed?.()
@@ -216,51 +219,7 @@ export function Sky({
     // The Earth is a ball lit from where the Sun is, so it shows the phase it has from here.
     // Its own small shader: the Earth is in sunlight whatever the terrain hides from the Site,
     // while the lights of the scene dim with the Sun's disc and are for the ground.
-    const earthMaterial = new THREE.ShaderMaterial({
-      uniforms: {
-        sunDirection: { value: new THREE.Vector3(0, 1, 0) },
-        colour: { value: new THREE.Color(EARTH) },
-        map: { value: null as THREE.Texture | null },
-        mapped: { value: 0 },
-      },
-      vertexShader: `
-        #include <common>
-        #include <logdepthbuf_pars_vertex>
-        varying vec3 facing;
-        varying vec3 toEye;
-        varying vec2 place;
-        void main() {
-          facing = normalize(mat3(modelMatrix) * normal);
-          toEye = normalize(cameraPosition - (modelMatrix * vec4(position, 1.0)).xyz);
-          place = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          #include <logdepthbuf_vertex>
-        }`,
-      fragmentShader: `
-        #include <common>
-        #include <logdepthbuf_pars_fragment>
-        uniform vec3 sunDirection;
-        uniform vec3 colour;
-        uniform sampler2D map;
-        uniform float mapped;
-        varying vec3 facing;
-        varying vec3 toEye;
-        varying vec2 place;
-        void main() {
-          #include <logdepthbuf_fragment>
-          vec3 out_ = normalize(facing);
-          // Daylight fades over a few degrees at the terminator, as it does through the air.
-          float lit = smoothstep(-0.06, 0.25, dot(out_, sunDirection));
-          vec3 land = mix(colour, texture2D(map, place).rgb, mapped);
-          // The night side keeps a little light, more than it has: enough to tell the continents apart.
-          vec3 shade = land * (0.035 + 1.15 * lit);
-          // The air: a thin blue edge, brightest where the limb is in daylight.
-          float edge = pow(1.0 - max(dot(out_, normalize(toEye)), 0.0), 3.0);
-          shade += vec3(0.35, 0.55, 1.0) * edge * (0.08 + 0.9 * lit);
-          gl_FragColor = vec4(shade, 1.0);
-          #include <colorspace_fragment>
-        }`,
-    })
+    const earthMaterial = createEarthMaterial()
     // The map arrives after the first frames; until then, and without it, the Earth is its plain blue.
     let earthMap: THREE.Texture | null = null
     new THREE.TextureLoader().load(EARTH_MAP, (texture) => {
@@ -609,14 +568,7 @@ export function Sky({
       ridge.geometry.dispose()
       ridge.geometry = new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(line, 3))
 
-      const samples = data.timeline.samples
-      const every = Math.max(1, Math.floor(samples.length / PATH_POINTS))
-      const dots: number[] = []
-      samples.forEach((sample, at) => {
-        if (at % every !== 0) return
-        const spot = vector(sample.sun.azimuth_deg, stretched(sample.sun.elevation_deg, by), BODIES)
-        dots.push(spot.x, spot.y, spot.z)
-      })
+      const dots = solarPathDirections(data.timeline.samples).flatMap(point => point.map(value => value * BODIES))
       path.geometry.dispose()
       path.geometry = new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(dots, 3))
 
@@ -764,6 +716,9 @@ export function Sky({
       }
 
       camera.updateMatrixWorld()
+      const openPanel = host.closest('.stage')?.querySelector('.landing-panel[data-collapsed="false"]')
+      const panelLeft = openPanel ? openPanel.getBoundingClientRect().left - host.getBoundingClientRect().left : target.clientWidth
+      const guideRight = Math.max(105, Math.min(target.clientWidth - 105, panelLeft - 105))
       for (const body of ['sun', 'earth'] as const) {
         const guide = bodyGuides.current[body]
         if (!guide) continue
@@ -773,7 +728,7 @@ export function Sky({
         const projected = position.clone().project(camera)
         const inFrame = local.z < 0 && Math.abs(projected.x) < 0.92 && Math.abs(projected.y) < 0.88
         const behindTerrain = body === 'sun' ? now.sun.fraction === 0 : now.earth.elevation_deg <= maskElevationAt(state.result.horizon.samples, now.earth.azimuth_deg)
-        guide.hidden = inFrame && !behindTerrain
+        guide.hidden = (inFrame && !behindTerrain) || (Boolean(openPanel) && panelLeft < 250)
         const azimuth = now[body].azimuth_deg
         const elevation = stretched(now[body].elevation_deg, state.stretch)
         guideAim.current[body] = { yaw: yaw + turnBetween(yaw, azimuth), pitch: elevation }
@@ -784,8 +739,8 @@ export function Sky({
         const norm = Math.max(Math.abs(dx), Math.abs(dy))
         const width = target.clientWidth
         const height = target.clientHeight
-        guide.style.left = `${width / 2 + (dx / norm) * Math.max(0, width / 2 - 105)}px`
-        guide.style.top = `${height / 2 + (dy / norm) * Math.max(0, height / 2 - 90) + (body === 'sun' ? -16 : 16)}px`
+        guide.style.left = `${Math.min(guideRight, width / 2 + (dx / norm) * Math.max(0, width / 2 - 105))}px`
+        guide.style.top = `${Math.max(140, Math.min(height - 90, height / 2 + (dy / norm) * Math.max(0, height / 2 - 140))) + (body === 'sun' ? -22 : 22)}px`
         const arrow = guide.firstElementChild as HTMLElement
         arrow.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`
         const label = guide.lastElementChild as HTMLElement
@@ -841,7 +796,7 @@ export function Sky({
       earthMap?.dispose()
       glow.material.map?.dispose()
       glow.material.dispose()
-      renderer.dispose()
+      releaseRenderer(renderer)
     }
   }, [])
 

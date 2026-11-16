@@ -77,6 +77,22 @@ describe('the chosen Window and height', () => {
     expect(readLink('?start=yesterday&hours=lots&height=')).toMatchObject({ startDay: null, hours: null, heightM: null })
   })
 
+  // 15/11/2026: the vehicle window before a landing asks for a start time, not only a day.
+  it('start at the time picked before a landing, in UTC, and carry it in the link', () => {
+    const query = buildQuery(meta, new Date('2026-11-14T17:00:00Z'), 'CR05', { startDay: '2027-03-01', startTime: '13:45', hours: 6.5, heightM: null })
+    expect(query.start.toISOString()).toBe('2027-03-01T13:45:00.000Z')
+    expect(query.durationHours).toBe(6.5)
+    const state = { site: '001', cursorMs: null, language: null, view: 'map', startDay: '2027-03-01', startTime: '13:45', hours: 6.5, heightM: null, page: 'answer', stats: false } as const
+    expect(writeLink(state)).toBe('?site=001&view=map&start=2027-03-01&time=13%3A45&hours=6.5')
+    expect(readLink(writeLink(state))).toEqual(state)
+  })
+
+  it('read a link without a time, or with a broken one, as 00:00 UTC exactly as before', () => {
+    expect(readLink('?start=2027-03-01')).not.toHaveProperty('startTime')
+    expect(readLink('?start=2027-03-01&time=24:00')).not.toHaveProperty('startTime')
+    expect(readLink('?time=10:00')).not.toHaveProperty('startTime')
+  })
+
   it('keep the Window inside the coverage', () => {
     expect(maxDays(meta.coverage)).toBe(60)
     expect(startDayRange(meta.coverage, 708.73)).toEqual({ min: '2025-01-01', max: '2032-12-02' })

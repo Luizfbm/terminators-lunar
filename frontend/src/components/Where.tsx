@@ -1,3 +1,4 @@
+import { AmericanDateInput } from './vehiclePicker/AmericanDateInput'
 import { useState, type KeyboardEvent } from 'react'
 import type { Meta, Site, VisibilityResult } from '../api/client'
 import {
@@ -88,7 +89,8 @@ export function Where({
 
   // A value equal to the default goes back to null, so the link stays plain.
   const pick = (patch: Partial<Choice>) => {
-    const next = { ...choice, ...patch }
+    // A day picked here starts at 00:00 UTC: a time set before a landing goes with it.
+    const next = { ...choice, ...patch, ...('startDay' in patch ? { startTime: null } : {}) }
     if (next.startDay === utcDay(Date.now())) next.startDay = null
     if (next.hours !== null && Math.abs(next.hours - meta.defaults.duration_hours) < 1e-6) next.hours = null
     if (next.heightM !== null && next.heightM === meta.defaults.observer_height_m) next.heightM = null
@@ -105,15 +107,14 @@ export function Where({
         onCoordinate={onCoordinate}
       />
       <span>
-        <input
+        <AmericanDateInput
           className="site where__date"
-          type="date"
+          withTime={false}
           aria-label={t('window.start')}
           min={range.min}
           max={range.max}
           value={utcDay(startMs)}
-          onChange={(event) => {
-            const day = event.target.value
+          onChange={(day) => {
             if (day && day >= range.min && day <= range.max) pick({ startDay: day })
           }}
         />{' '}

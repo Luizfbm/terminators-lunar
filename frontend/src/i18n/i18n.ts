@@ -16,7 +16,7 @@ export interface I18n {
 }
 
 /** Catalogue fallbacks, used when the browser language is not a valid BCP 47 tag. */
-const FALLBACK_TAGS: Record<Locale, string> = { en: 'en-GB', pt: 'pt-BR' }
+const FALLBACK_TAGS: Record<Locale, string> = { en: 'en-US', pt: 'pt-BR' }
 const CATALOGUES: Record<Locale, Record<MessageKey, string>> = { en, pt }
 
 /** pt* browsers get Portuguese; everything else gets English. */
@@ -35,12 +35,12 @@ export function dateLocaleFor(language: string, fallback: string): string {
 
 export function createI18n(locale: Locale, language: string): I18n {
   // Dates follow the browser's own tag while it speaks the chosen language; after a switch, the catalogue's.
-  const tag = pickLocale(language) === locale ? dateLocaleFor(language, FALLBACK_TAGS[locale]) : FALLBACK_TAGS[locale]
+  const tag = locale === 'en' ? 'en-US' : dateLocaleFor(language, FALLBACK_TAGS[locale])
   const catalogue = CATALOGUES[locale]
-  // Always UTC and always 24-hour, so a Time reads the same in every browser.
-  const date = new Intl.DateTimeFormat(tag, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
-  const time = new Intl.DateTimeFormat(tag, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'UTC' })
-  const day = new Intl.DateTimeFormat(tag, { day: 'numeric', month: 'short', timeZone: 'UTC' })
+  // Display UTC explicitly; English dates and times always use the American convention.
+  const date = new Intl.DateTimeFormat(tag, { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' })
+  const time = new Intl.DateTimeFormat(tag, { hour: '2-digit', minute: '2-digit', hourCycle: locale === 'en' ? 'h12' : 'h23', timeZone: 'UTC' })
+  const day = new Intl.DateTimeFormat(tag, { day: '2-digit', month: '2-digit', timeZone: 'UTC' })
   const numbers = new Intl.NumberFormat(tag)
   const percent = new Intl.NumberFormat(tag, { style: 'percent', maximumFractionDigits: 0 })
 

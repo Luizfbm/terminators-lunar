@@ -1,4 +1,4 @@
-import type { KeyboardEvent, PointerEvent } from 'react'
+import type { KeyboardEvent, PointerEvent, ReactNode } from 'react'
 import type { VisibilityResult } from '../api/client'
 import { bands, evenTicks, fractionOf, type Band } from '../domain/timeline'
 import { sampleAt } from '../domain/sky'
@@ -7,10 +7,17 @@ import { CursorSun } from './cursorSun/CursorSun'
 import { ChargeStrip } from './phase4/battery/Battery'
 import { DsnBand } from './phase4/dsn/DsnBand'
 
+import type { Vehicle } from './vehiclePicker/vehicles'
+import { timeAtPointer } from '../domain/timelinePointer'
+import { intervalsOf } from '../domain/intervals'
+import { countdownLine } from './landing/countdownText'
+import { batteryAt, seriesTimes } from './landing/batteryAtCursor'
+import { CountdownAside, useVehicleEnergy, VehicleBatteryRow, VehicleBatteryNote } from './landing/TimelineReadouts'
+
 const HOUR_MS = 3_600_000
 const percent = (fraction: number) => `${(fraction * 100).toFixed(3)}%`
 
-function Row({ kind, items, label }: { kind: 'sun' | 'earth'; items: Band[]; label: string }) {
+function Row({ kind, items, label, aside }: { kind: 'sun' | 'earth'; items: Band[]; label: string; aside?: ReactNode }) {
   return (
     <div className={`strip__row strip__row--${kind}`}>
       <span className="strip__name">{label}</span>
@@ -24,6 +31,7 @@ function Row({ kind, items, label }: { kind: 'sun' | 'earth'; items: Band[]; lab
           />
         ))}
       </div>
+      {aside}
     </div>
   )
 }
@@ -37,8 +45,12 @@ export function TimeStrip({
   onCursor,
   onPlay,
   inert = false,
+  vehicle = null,
+  advanced = false,
 }: {
   result: VisibilityResult
+  vehicle?: Vehicle | null
+  advanced?: boolean
   cursorMs: number
   playing: boolean
   shortShadowMaxHours: number
@@ -50,14 +62,20 @@ export function TimeStrip({
   const { t, formatDay, formatDateTime, formatNumber } = useI18n()
   const startMs = Date.parse(result.query.start)
   const endMs = Date.parse(result.query.end)
+  const energy = useVehicleEnergy(result.query, vehicle)
+  const charge = energy.state.status === 'ready' ? energy.state.data : null
+  const reading = charge ? batteryAt(charge.charge_fraction, seriesTimes(result.timeline.samples.map((sample) => sample.t), charge.charge_fraction.length, startMs, endMs, charge.step_minutes), cursorMs) : null
+  const sunCountdown = countdownLine(intervalsOf(result.periods, 'sun', 'visible', startMs, endMs), cursorMs, endMs)
+  const earthCountdown = countdownLine(intervalsOf(result.periods, 'earth', 'visible', startMs, endMs), cursorMs, endMs)
   const rows = bands(result.periods, startMs, endMs)
   const sunFraction = sampleAt(result.timeline.samples, cursorMs)?.sun.fraction ?? null
   const hasShortShadow = rows.sun.some((band) => band.kind === 'shortShadow')
 
   const fromPointer = (event: PointerEvent<HTMLDivElement>) => {
-    const box = event.currentTarget.getBoundingClientRect()
-    const fraction = Math.min(1, Math.max(0, (event.clientX - box.left) / box.width))
-    onCursor(startMs + fraction * (endMs - startMs))
+    const plot = event.currentTarget.querySelector('.strip__bar')
+    if (!plot) return
+    const box = plot.getBoundingClientRect()
+    onCursor(timeAtPointer(event.clientX, box.left, box.width, startMs, endMs))
   }
   const onKey = (event: KeyboardEvent<HTMLDivElement>) => {
     const step = (event.shiftKey ? 24 : 1) * HOUR_MS
@@ -95,11 +113,11 @@ export function TimeStrip({
           if (event.currentTarget.hasPointerCapture(event.pointerId)) fromPointer(event)
         }}
       >
-        <Row kind="sun" items={rows.sun} label={t('strip.sun')} />
-        <Row kind="earth" items={rows.earth} label={t('strip.earth')} />
-        <DsnBand result={result} />
-        <ChargeStrip result={result} />
-        <span className="strip__cursor" style={{ left: percent(fractionOf(cursorMs, startMs, endMs)) }} />
+        <Row kind="sun" items={rows.sun} label={t('strip.sun')} aside={<CountdownAside line={sunCountdown} body="sun" />} />
+        <Row kind="earth" items={rows.earth} label={t('strip.earth')} aside={<CountdownAside line={earthCountdown} body="earth" />} />
+        {advanced && <DsnBand result={result} />}
+        {vehicle ? <VehicleBatteryRow result={result} vehicle={vehicle} energy={energy.state} reading={reading} /> : advanced ? <ChargeStrip result={result} /> : null}
+        <div className="strip__cursor-axis"><span className="strip__cursor" style={{ left: percent(fractionOf(cursorMs, startMs, endMs)) }} /></div>
       </div>
       <div className="strip__ticks" aria-hidden="true">
         {evenTicks(startMs, endMs, 4).map((tick, index) => (
@@ -108,6 +126,7 @@ export function TimeStrip({
           </span>
         ))}
       </div>
+      {vehicle && <VehicleBatteryNote vehicle={vehicle} energy={energy.state} onRetry={energy.retry} />}
       {hasShortShadow && <p className="strip__legend">{t('strip.shortShadow', { hours: formatNumber(shortShadowMaxHours) })}</p>}
     </footer>
   )

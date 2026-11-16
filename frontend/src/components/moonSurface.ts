@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { fitTexture } from './textureBudget'
 import { capLatLon, capPoint, isCapProjection, type CapProjection } from '../domain/cap'
 import { toVector } from '../domain/sky'
 
@@ -74,9 +75,13 @@ export function dressMoon(
   onDressed?: () => void,
   /** Told which whole-Moon colour is on the sphere each time it changes: the 4096 px one, then the 8192 px one. */
   onColour?: (size: '4k' | '8k') => void,
-): () => void {
+  polarOverlays = true,
+  textureLimit = 2048,
+  onPolar?: () => void,
+): (() => void) & { loadPolar: () => void } {
   let gone = false
   const made: { dispose(): void }[] = []
+  const overlays: THREE.Mesh[] = []
   const loader = new THREE.TextureLoader()
   loader.setCrossOrigin('anonymous')
 
@@ -86,6 +91,11 @@ export function dressMoon(
         versioned(file),
         (texture) => {
           if (gone) {
+            texture.dispose()
+            resolve(null)
+            return
+          }
+          if (!fitTexture(texture, textureLimit)) {
             texture.dispose()
             resolve(null)
             return
@@ -101,20 +111,21 @@ export function dressMoon(
     })
 
   const putColour = (map: THREE.Texture, size: '4k' | '8k') => {
+    if (gone) return
     material.map = map
     material.color.set(0xffffff)
     material.needsUpdate = true
     onColour?.(size)
   }
   const putRelief = (normal: THREE.Texture) => {
+    if (gone) return
     material.normalMap = normal
     material.normalScale.set(RELIEF, RELIEF)
     material.needsUpdate = true
   }
 
-  // Everyone gets the 4096 px colour and relief first, about 2.5 MB, and the Moon shows with them.
-  // A desktop then swaps in the 8192 px ones, about 10.5 MB, when they arrive. During a cold
-  // cache took 28 s to serve the 8192 px colour: the Moon waited for it, then showed grey.
+  // Download size is not GPU memory: images are bounded before upload. In particular,
+  // support for an 8192-pixel texture is not evidence that enough memory is available.
   const colour = image('moon_color_4k.webp', true)
   const relief = image('moon_normal_4k.webp', false)
   void colour.then((map) => map && putColour(map, '4k'))
@@ -148,7 +159,7 @@ export function dressMoon(
       .then((doc: unknown) => (isCapProjection(doc) ? doc : null))
       .catch(() => null)
       .then(async (cap) => {
-        if (!cap) return
+        if (gone || !cap) return
         const names = files(cap)
         const [normal, albedo] = await Promise.all([image(names.normal, false), image(names.albedo, true)])
         if (gone || !normal) return
@@ -168,24 +179,38 @@ export function dressMoon(
         const mesh = new THREE.Mesh(geometry, skin)
         mesh.renderOrder = order
         scene.add(mesh)
+        overlays.push(mesh)
         made.push(geometry, skin)
+        if (order === 2) onPolar?.()
       })
   }
 
   // 148 m per pixel down to 80°S, then 22.5 m per pixel around the Sites, south of about 87°S.
-  patch('south_cap.json', () => ({ normal: 'south_cap_normal.webp', albedo: 'south_cap_albedo.webp' }), CAP_LIFT, 1)
-  patch(
-    'south_pole_fine.json',
-    (doc) => ({
-      normal: (large ? doc.files?.normal : doc.files?.normal_small) ?? 'south_pole_fine_normal_4k.webp',
-      albedo: doc.files?.albedo ?? 'south_pole_fine_albedo.webp',
-    }),
-    FINE_LIFT,
-    2,
-  )
+  let polarStarted = false
+  const loadPolar = () => {
+    if (gone || polarStarted) return
+    polarStarted = true
+    patch('south_cap.json', () => ({ normal: 'south_cap_normal.webp', albedo: 'south_cap_albedo.webp' }), CAP_LIFT, 1)
+    patch(
+      'south_pole_fine.json',
+      (doc) => ({
+        normal: (large ? doc.files?.normal : doc.files?.normal_small) ?? 'south_pole_fine_normal_4k.webp',
+        albedo: doc.files?.albedo ?? 'south_pole_fine_albedo.webp',
+      }),
+      FINE_LIFT,
+      2,
+    )
 
-  return () => {
-    gone = true
-    for (const thing of made) thing.dispose()
   }
+  if (polarOverlays) loadPolar()
+  const dispose = () => {
+    gone = true
+    material.map = null
+    material.normalMap = null
+    for (const mesh of overlays) scene.remove(mesh)
+    for (const thing of made) thing.dispose()
+    overlays.length = 0
+    made.length = 0
+  }
+  return Object.assign(dispose, { loadPolar })
 }

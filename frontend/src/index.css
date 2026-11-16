@@ -2124,3 +2124,31 @@ button.site {
 .sky__body-guide[hidden] { display: none; }
 .sky__body-guide:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .sky__body-guide span { display: inline-block; margin-right: 5px; }
+
+/* Landing controls and captions have separate space in both exploration levels. */
+.ground-view__caption { top: 72px; left: 20px; right: 360px; max-width: none; }
+@media (max-width: 700px) {
+  .ground-view__caption { top: 68px; left: 16px; right: 54px; max-width: min(45ch, 80vw); font-size: 11px; }
+}
+.globe__body[hidden] { display: none; }
+
+/* Orbit markers indicate direction, not an artificially enlarged celestial disc. */
+.globe__body::before { content: '→'; width: 16px; height: auto; border-radius: 0; background: none; box-shadow: none; transform: rotate(var(--body-angle, 0rad)); }
+.globe__body--sun { color: var(--sun); }
+.globe__body--earth { color: var(--earth); }
+
+.globe-menu-toggle { display: none; }
+@media (max-width: 700px) {
+  .globe-menu-toggle { display: block; position: absolute; top: 12px; left: 12px; z-index: 6; padding: 10px 14px; border: 1px solid #777; border-radius: 6px; color: white; background: #111e; }
+  .globe-menu { top: 58px; max-height: calc(100% - 64px); }
+  .globe-menu:not([data-open='true']) { display: none; }
+}
+
+.globe__graphics-status { position: absolute; right: 12px; bottom: 12px; z-index: 2; color: var(--dim); font-size: 11px; pointer-events: none; }
+
+/* Orbital labels recovered independently of all landing overlays. */
+.globe__planets { position: absolute; inset: 0; pointer-events: none; }
+.globe__planets span { position: absolute; transform: translate(0, -50%); color: var(--dim); font-size: 11px; line-height: 14px; white-space: nowrap; text-shadow: 0 0 6px var(--bg), 0 0 2px var(--bg); }
+.globe__planets span[hidden] { display: none; }
+.globe__planets span[data-side='left'] { transform: translate(-100%, -50%); }
+.globe[data-dressed='false'] .globe__planets { visibility: hidden; }

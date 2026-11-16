@@ -47,6 +47,12 @@ const DAY_MS = 86_400_000
 export interface Choice {
   /** First day of the Window, `YYYY-MM-DD` in UTC. */
   startDay: string | null
+  /**
+   * Time of day the Window starts, `HH:MM` in UTC, only with `startDay`; missing or null is 00:00 UTC.
+   * Set by the vehicle window before a landing, which asks for a time. A start off 00:00 UTC is a Query
+   * the cache of the day has not seen (ADR 0004), so its first answer can take longer.
+   */
+  startTime?: string | null
   hours: number | null
   heightM: number | null
 }
@@ -70,7 +76,7 @@ export function utcDay(ms: number): string {
 export function buildQuery(meta: Meta, now: Date, site: SiteRef | null = null, choice: Choice = DEFAULT_CHOICE): Query {
   return {
     site: isCoordinate(site) ? site : site || meta.defaults.site_id,
-    start: choice.startDay ? new Date(`${choice.startDay}T00:00:00Z`) : new Date(Math.floor(now.getTime() / DAY_MS) * DAY_MS),
+    start: choice.startDay ? new Date(`${choice.startDay}T${choice.startTime ?? '00:00'}:00Z`) : new Date(Math.floor(now.getTime() / DAY_MS) * DAY_MS),
     durationHours: choice.hours ?? meta.defaults.duration_hours,
     observerHeightM: choice.heightM ?? meta.defaults.observer_height_m,
   }
@@ -145,6 +151,7 @@ export function readLink(search: string): LinkState {
   const cursorMs = stamp ? Date.parse(stamp) : NaN
   const language = params.get('lang')
   const startDay = params.get('start')
+  const startTime = params.get('time')
   // An empty value is no value: Number('') would read as 0.
   const numberParam = (name: string) => {
     const raw = params.get(name)?.trim()
@@ -163,6 +170,8 @@ export function readLink(search: string): LinkState {
   const planB = readPlanB(params, numberParam)
   return {
     startDay: startDay && /^\d{4}-\d{2}-\d{2}$/.test(startDay) && Number.isFinite(Date.parse(startDay)) ? startDay : null,
+    // Only when the link has one, with a start day, so a link without it reads back exactly as before.
+    ...(startDay && startTime && /^([01]\d|2[0-3]):[0-5]\d$/.test(startTime) ? { startTime } : {}),
     hours: Number.isFinite(hours) && hours > 0 ? hours : null,
     heightM: Number.isFinite(height) && height >= HEIGHT_MIN_M && height <= HEIGHT_MAX_M ? height : null,
     site: params.get('site') || coordinate,
@@ -199,7 +208,7 @@ function readPlanB(params: URLSearchParams, numberParam: (name: string) => numbe
 
 /** The parameters `writeLink` owns. Any other one belongs to a panel and is carried over by `keep`. */
 const LINK_KEYS = new Set([
-  'lat', 'lon', 'site', 't', 'lang', 'view', 'start', 'hours', 'height', 'stats', 'page', 'radius',
+  'lat', 'lon', 'site', 't', 'lang', 'view', 'start', 'time', 'hours', 'height', 'stats', 'page', 'radius',
   // Plan B of the comparison, carried by `planB` in the state.
   'compare', 'bsite', 'blat', 'blon', 'bstart', 'bhours', 'bheight',
 ])
@@ -223,6 +232,7 @@ export function writeLink(state: LinkState, keep = ''): string {
   if (state.language) params.set('lang', state.language)
   if (state.view !== 'orbit') params.set('view', state.view)
   if (state.startDay) params.set('start', state.startDay)
+  if (state.startDay && state.startTime) params.set('time', state.startTime)
   if (state.hours !== null) params.set('hours', String(state.hours))
   if (state.heightM !== null) params.set('height', String(state.heightM))
   if (state.stats) params.set('stats', '1')

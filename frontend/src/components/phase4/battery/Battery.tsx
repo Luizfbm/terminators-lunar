@@ -1,3 +1,4 @@
+import { chargeSegments } from '../../landing/chargeSegments'
 import { useId, useState, type ReactNode } from 'react'
 import type { VisibilityResult } from '../../../api/client'
 import type { PanelState } from '../../../hooks/useLadder'
@@ -312,33 +313,35 @@ export function ChargePanel({
  * The Charge as a row of the time strip, under the Earth: the same time axis and the same Cursor as
  * the Sun and Earth rows. Built to sit inside `.strip__track`, with the strip's label column.
  */
-export function ChargeRow({ data, startMs, endMs }: { data: EnergyResult; startMs: number; endMs: number }) {
+export function ChargeRow({
+  data,
+  startMs,
+  endMs,
+  name,
+  aside,
+}: {
+  data: EnergyResult
+  startMs: number
+  endMs: number
+  /** The row's label; the Charge by default. */
+  name?: ReactNode
+  /** A reading beside the row, in the strip's right-hand column after a landing. */
+  aside?: ReactNode
+}) {
   const { t, formatPercent } = useI18n()
-  const values = data.charge_fraction
-  const stepMs = data.step_minutes * 60_000
-  const x = (index: number) => Math.min(100, ((index * stepMs) / (endMs - startMs)) * 100)
-  const line = values.map((value, index) => `${x(index).toFixed(3)},${((1 - value) * 100).toFixed(2)}`).join(' ')
-  const area = `0,100 ${line} ${x(values.length - 1).toFixed(3)},100`
-  // Where the battery is empty: the same hatch the strip uses for a Short shadow, so it reads as a gap.
-  const empty: { left: number; width: number }[] = []
-  values.forEach((value, index) => {
-    if (value > 0) return
-    const last = empty[empty.length - 1]
-    if (last && Math.abs(last.left + last.width - x(index - 1)) < 1e-6) last.width = x(index) - last.left
-    else empty.push({ left: x(Math.max(0, index - 1)), width: x(index) - x(Math.max(0, index - 1)) })
-  })
+  const segments = chargeSegments(data.charge_fraction, data.step_minutes * 60_000, endMs - startMs)
   return (
     <div className="strip__row charge-row" role="img" aria-label={t('charge.rowLabel', { min: formatPercent(data.min_charge_fraction) })}>
-      <span className="strip__name">{t('charge.row')}</span>
+      <span className="strip__name">{name ?? t('charge.row')}</span>
       <div className="charge-row__plot">
-        {empty.map((band, index) => (
-          <i key={index} className="charge-row__empty" style={{ left: `${band.left}%`, width: `${band.width}%` }} />
-        ))}
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-          <polygon className="charge-row__area" points={area} />
-          <polyline className="charge-row__line" points={line} vectorEffect="non-scaling-stroke" />
+          {segments.map((segment, index) => <g key={index} data-charge-state={segment.state}>
+            {segment.state !== 'empty' && <polygon className="charge-row__area" points={segment.area} />}
+            <polyline className="charge-row__line" points={segment.line} vectorEffect="non-scaling-stroke" />
+          </g>)}
         </svg>
       </div>
+      {aside}
     </div>
   )
 }

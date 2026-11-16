@@ -1,3 +1,4 @@
+import { ownRenderer, releaseRenderer } from './rendererLifetime'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
@@ -9,9 +10,9 @@ import { bubbleOnLeft, landPlace, latLonOfVector, type LandPlace } from '../doma
 import { POLE_LETTER_RADII, poleMark, visibleRuns } from '../domain/poleMark'
 import type { View } from '../domain/query'
 import { layerOf, layerShown, selectionShown, siteShown, type Layers, type Scope } from '../domain/siteLayers'
-import { VIEW_DISTANCE, viewTarget, type MoonView } from '../domain/viewTarget'
+import { orbitDistance, viewTarget, type MoonView } from '../domain/viewTarget'
 import { groundDirection, toVector, type LatLon } from '../domain/sky'
-import { bodyMarker, moonRadiusPx } from '../domain/stageMarkers'
+import { moonRadiusPx } from '../domain/stageMarkers'
 import { useRegions } from '../hooks/useRegions'
 import { useI18n } from '../i18n/I18nContext'
 import { MAP_EDGE_LATITUDE, mapPlaces, mapStep, placeLabels, pointOnMap, regionHeight, type Box, type MapEvent, type MapRegion, type MapSite, type MapView } from './globeMap/map'
@@ -21,9 +22,11 @@ import { positionMap, type NameSizes } from './globeMap/position'
 import { readoutText } from './globeMap/readout'
 import './globeMap/globeMap.css'
 import { dressMoon } from './moonSurface'
+import { orbitSky } from './orbitSky'
+import { PLANETS } from '../domain/planets'
 import { StageLoading } from './StageLoading'
+import { LIGHT_GRAPHICS, lightGraphicsSearch } from '../domain/graphicsMode'
 import { DIVE_MS } from '../domain/stageMove'
-import { canDraw } from './webgl'
 
 export interface GlobeSite extends LatLon {
   id: string
@@ -41,6 +44,9 @@ export interface GlobeProps {
   sun: LatLon | null
   /** The sub-Earth point at the Cursor: the Earth is straight above it. */
   earth?: LatLon | null
+  cursorMs?: number
+  sunRadiusDeg?: number
+  earthRadiusDeg?: number
   /** The words for the two markers on the edge of the Moon's disc. */
   sunLabel?: string
   earthLabel?: string
@@ -73,6 +79,9 @@ export interface GlobeProps {
   level?: LevelId | null
   /** A level of the menu was clicked: the view to go to. */
   onLevel?: (view: View) => void
+  onPrecision?: () => void
+  precisionActive?: boolean
+  selectionMaxLatitudeDeg?: number
   /** The two switches of the menu, kept by the app so they survive the map, the ground and back. */
   layers: Layers
   onLayers: (layers: Layers) => void
@@ -116,7 +125,6 @@ const CHOSEN_RING_PX = 12
 const FIELD_OF_VIEW_DEG = 32
 /** The Sun and Earth markers sit this far outside the Moon's disc, and keep clear of the caption and the view buttons. */
 const MARKER_GAP_PX = 22
-const MARKER_INSET = { top: 56, right: 44, bottom: 72, left: 44 }
 /** How long the stage waits for the images of the Moon before showing it without them. */
 const DRESS_WAIT_MS = 6000
 /** The Site name starts this far from its dot and keeps this far from the edge of the stage. */
@@ -142,7 +150,7 @@ const vector = (lat: number, lon: number, radius = 1) => new THREE.Vector3(...to
  * Straight down on the pole, with the 80° S circle inside the shorter side of the stage. A hair off
  * the pole towards 0° of longitude, so that meridian points up and the view has no singular point.
  */
-const mapPoint = (aspect: number) => vector(-89.9, 0, 0.99 + 0.2 / (Math.tan((16 * Math.PI) / 180) * Math.min(1, aspect)))
+const mapPoint = (aspect: number, edge = MAP_EDGE_LATITUDE) => vector(edge === MAP_EDGE_LATITUDE ? -89.9 : -89.999, 0, 0.99 + (edge === MAP_EDGE_LATITUDE ? 0.2 : Math.sin((90 + edge) * Math.PI / 180) * 1.25) / (Math.tan((16 * Math.PI) / 180) * Math.min(1, aspect)))
 
 /** Straight down on the Site, close enough that it fills the stage. */
 const divePoint = (site: LatLon) => vector(site.latitude_deg, site.longitude_deg, 1 + DIVE_HEIGHT)
@@ -192,8 +200,9 @@ export function Globe(props: GlobeProps) {
   const frame = useRef<HTMLDivElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
   const pin = useRef<HTMLSpanElement>(null)
-  const sunMark = useRef<HTMLSpanElement>(null)
-  const earthMark = useRef<HTMLSpanElement>(null)
+  const skyLabels = useRef<HTMLDivElement>(null)
+  const [planetsOn, setPlanetsOn] = useState(true)
+  const planetsLive = useRef(planetsOn)
   const [dressed, setDressed] = useState(false)
   /** The name on the pin and its size on one line, measured once per name. */
   const pinText = useRef({ text: '', width: 0, height: 0 })
@@ -201,7 +210,7 @@ export function Globe(props: GlobeProps) {
   const poleMarks = useRef<SVGSVGElement>(null)
   /** A turn of the Moon asked for by the menu; the draw loop takes it up on its next frame. */
   const turnAsked = useRef<MoonView | null>(null)
-  const { locale } = useI18n()
+  const { locale, t } = useI18n()
   const live = useRef(props)
   // "Land": the point under the cursor and its bubble. A click gives one place to the app, which asks
   // about it and goes down to the ground there.
@@ -218,7 +227,8 @@ export function Globe(props: GlobeProps) {
   const marksLayer = useRef<HTMLDivElement>(null)
   const [markElements] = useState(() => new Map<string, HTMLButtonElement>())
   const missions = useMemo(() => props.sites.filter((site) => layerOf(site.source) === 'missions'), [props.sites])
-  const [supported, setSupported] = useState(canDraw)
+  const [supported, setSupported] = useState(true)
+  const [blocked, setBlocked] = useState(false)
 
   // The map: one marker per Region from the pole, the Sites of one Region once flown into it.
   const names = useRegions()
@@ -250,6 +260,7 @@ export function Globe(props: GlobeProps) {
   )
 
   useEffect(() => {
+    planetsLive.current = planetsOn
     live.current = props
     layersLive.current = layers
     mapLive.current = { places, region, locale }
@@ -260,18 +271,30 @@ export function Globe(props: GlobeProps) {
     const target = canvas.current
     if (!host || !target) return
 
+    let failureReason = ''
+    const creationError = (event: Event) => { failureReason = (event as WebGLContextEvent).statusMessage }
+    target.addEventListener('webglcontextcreationerror', creationError)
     let renderer: THREE.WebGLRenderer
     try {
-      renderer = new THREE.WebGLRenderer({ canvas: target, antialias: true })
+      renderer = new THREE.WebGLRenderer({ canvas: target, antialias: !LIGHT_GRAPHICS })
+      ownRenderer(renderer)
     } catch {
-      // `canDraw` said yes and the context still failed, as it does when the graphics process
-      // is out of room: say so, like a browser that cannot draw at all, instead of loading for ever.
-      // After this effect, not inside it: the effect only reports what it found.
-      queueMicrotask(() => setSupported(false))
-      return
+      // A transient graphics failure must remain retryable. Ignore an obsolete StrictMode setup.
+      let active = true
+      queueMicrotask(() => { if (active) { setBlocked(/blocked/i.test(failureReason)); setSupported(false) } })
+      return () => { active = false }
+    } finally {
+      target.removeEventListener('webglcontextcreationerror', creationError)
     }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    const onContextLost = (event: Event) => {
+      event.preventDefault()
+      setSupported(false)
+    }
+    target.addEventListener('webglcontextlost', onContextLost)
+    renderer.setPixelRatio(LIGHT_GRAPHICS ? 1 : Math.min(window.devicePixelRatio, 2))
 
+    renderer.autoClear = false
+    const backdrop = orbitSky(renderer, host, skyLabels.current!)
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(FIELD_OF_VIEW_DEG, 1, 0.01, 50)
     // Stars behind the Moon, the same on every visit.
@@ -295,13 +318,15 @@ export function Globe(props: GlobeProps) {
     const material = new THREE.MeshStandardMaterial({ color: 0x9a9891, roughness: 1, metalness: 0 })
     const moon = new THREE.Mesh(new THREE.SphereGeometry(1, 192, 96), material)
     scene.add(moon)
-    const large = renderer.capabilities.maxTextureSize >= 8192 && !window.matchMedia('(pointer: coarse)').matches
+    // maxTextureSize is a dimensional limit, not an available-memory budget.
+    const large = false
+    const textureLimit = Math.min(renderer.capabilities.maxTextureSize, LIGHT_GRAPHICS ? 1024 : 2048)
     // The Moon is shown once it has its colour and relief, never as a plain grey ball. A slow
     // network does not hold it back for ever: after DRESS_WAIT_MS it shows as it is.
     const show = () => setDressed(true)
     const undress = dressMoon(scene, material, renderer.capabilities.getMaxAnisotropy(), large, show, (size) => {
       target.dataset.moon = size
-    })
+    }, !LIGHT_GRAPHICS, textureLimit, () => { target.dataset.polar = 'true' })
     // Earthshine and a little more: the night side stays dark, and its relief can still be read.
     scene.add(new THREE.AmbientLight(0xffffff, 0.085))
     const sunlight = new THREE.DirectionalLight(0xfff4e0, 3.2)
@@ -369,6 +394,13 @@ export function Globe(props: GlobeProps) {
     }
     grid.visible = false
     scene.add(grid)
+    const selectionBoundaryGeometry = new THREE.BufferGeometry().setFromPoints(
+      latitudeCircle(-87.5).map(p => vector(p.latitude_deg, p.longitude_deg, 1.0017)))
+    const selectionBoundaryMaterial = new THREE.LineBasicMaterial({ color: '#83d9ff', depthTest: false, transparent: true })
+    const selectionBoundary = new THREE.LineLoop(selectionBoundaryGeometry, selectionBoundaryMaterial)
+    selectionBoundary.renderOrder = 3
+    scene.add(selectionBoundary)
+    let shownEdge: number | undefined
 
     // The circle of latitude round the south pole, every degree of longitude, on the same sphere as the Equator.
     const polarCircle = latitudeCircle(POLAR_CIRCLE_LATITUDE).map((point) => vector(point.latitude_deg, point.longitude_deg, 1.002))
@@ -420,7 +452,14 @@ export function Globe(props: GlobeProps) {
       const { clientWidth: width, clientHeight: height } = host
       if (width === 0 || height === 0) return
       renderer.setSize(width, height, false)
-      camera.aspect = width / height
+      const aspect = width / height
+      if (live.current.mode === 'orbit' && !live.current.dive) {
+        const factor = orbitDistance(aspect) / orbitDistance(camera.aspect)
+        camera.position.multiplyScalar(factor)
+        if (flight && !flight.toMap) { flight.from.multiplyScalar(factor); flight.to.multiplyScalar(factor) }
+      }
+      controls.maxDistance = Math.max(12, orbitDistance(aspect) * 1.8)
+      camera.aspect = aspect
       camera.updateProjectionMatrix()
     }
     const observer = new ResizeObserver(resize)
@@ -488,8 +527,9 @@ export function Globe(props: GlobeProps) {
       cancelMapClick()
       if ((live.current.mode ?? 'orbit') !== 'map' || !live.current.onPoint) return
       const place = groundAt(event)
-      if (!place) return
-      const round = (value: number) => Math.round(value * 100) / 100
+      if (!place || place.latitude_deg > (live.current.selectionMaxLatitudeDeg ?? MAP_EDGE_LATITUDE)) return
+      const precision = live.current.precisionActive ? 1e6 : 100
+      const round = (value: number) => Math.round(value * precision) / precision
       live.current.onPoint({ latitude_deg: round(place.latitude_deg), longitude_deg: round(place.longitude_deg) })
     }
     // The point under the pointer, so people find out a double click asks about it. A finger has
@@ -536,10 +576,10 @@ export function Globe(props: GlobeProps) {
       const hit = caster.intersectObject(moon, false)[0]
       if (!hit) return null
       const ground = latLonOfVector(hit.point.x, hit.point.y, hit.point.z)
-      if ((live.current.mode ?? 'orbit') === 'map' && ground.latitude_deg > MAP_EDGE_LATITUDE) return null
+      if ((live.current.mode ?? 'orbit') === 'map' && ground.latitude_deg > (live.current.selectionMaxLatitudeDeg ?? MAP_EDGE_LATITUDE)) return null
       const snapped = nearestMarker(snapTargets(), { x, y }, hitRadius(pointerType))
       if (snapped) return { ...landPlace(snapped.site, catalogueId(snapped.site.id)), x: snapped.x, y: snapped.y, name: snapped.site.name }
-      return { ...landPlace(ground), x, y, name: null }
+      return { ...(live.current.precisionActive ? { lat: ground.latitude_deg, lon: ground.longitude_deg } : landPlace(ground)), x, y, name: null }
     }
     const landAt = (place: GlobeLanding) => live.current.onLand?.(toLanding(place))
     const onLandDown = (event: PointerEvent) => {
@@ -636,7 +676,7 @@ export function Globe(props: GlobeProps) {
       // view's own flights wait. Coming back up lands where the view puts it.
       const wantDive = Boolean(state.dive) && !still
       if (wantDive !== shownDive) {
-        const back = mode === 'map' ? (region ? regionPoint(region, camera.aspect) : mapPoint(camera.aspect)) : viewpoint(state.site)
+        const back = mode === 'map' ? (region ? regionPoint(region, camera.aspect) : mapPoint(camera.aspect, state.selectionMaxLatitudeDeg)) : viewpoint(state.site)
         dive = {
           from: camera.position.clone(),
           to: wantDive ? divePoint(state.site) : back,
@@ -659,6 +699,7 @@ export function Globe(props: GlobeProps) {
         if (!wantDive) {
           shownSite = state.site.id
           shownMode = mode
+        shownEdge = state.selectionMaxLatitudeDeg
           shownRegion = region?.id ?? null
         }
         target.dataset.dive = dive ? (wantDive ? 'down' : 'up') : 'at-site'
@@ -667,7 +708,7 @@ export function Globe(props: GlobeProps) {
       const asked = turnAsked.current
       if (asked) {
         turnAsked.current = null
-        const place = viewTarget(asked, state.sun)
+        const place = asked === 'initial' ? viewpoint(state.site).setLength(orbitDistance(camera.aspect)).toArray() : viewTarget(asked, state.sun, orbitDistance(camera.aspect))
         if (place && mode === 'orbit' && !state.dive) {
           const to = new THREE.Vector3(...place)
           fade = null
@@ -681,16 +722,15 @@ export function Globe(props: GlobeProps) {
           }
         }
       }
-      // On load the globe waits for the Sun to be known, to start on the day side, from where the camera begins.
+      // Wait for the answer before framing the selected side and its orbital sky.
       const waitForSun = mode === 'orbit' && shownSite === null && !state.sun
       // The camera flies when the view changes, in orbit when the Site does, and on the map when a
       // Region is flown into or out of. Choosing a Site on the map leaves the camera where it is.
       if (wantDive || dive) {
         // The view's own flights wait for the dive.
-      } else if (!waitForSun && (shownMode !== mode || (mode === 'orbit' && shownSite !== state.site.id) || regionChanged)) {
-        // The first placement in orbit is the initial position, the day side; after it, a Site flies to its own view.
-        const first = mode === 'orbit' && shownSite === null ? viewTarget('initial', state.sun) : null
-        const to = mode === 'map' ? (region ? regionPoint(region, camera.aspect) : mapPoint(camera.aspect)) : first ? new THREE.Vector3(...first) : viewpoint(state.site).setLength(VIEW_DISTANCE)
+      } else if (!waitForSun && (shownMode !== mode || shownEdge !== state.selectionMaxLatitudeDeg || (mode === 'orbit' && shownSite !== state.site.id) || regionChanged)) {
+        // The pull's initial framing: the Site's side, so the Sun is not always behind the camera.
+        const to = mode === 'map' ? (region ? regionPoint(region, camera.aspect) : mapPoint(camera.aspect, state.selectionMaxLatitudeDeg)) : viewpoint(state.site).setLength(orbitDistance(camera.aspect))
         const up = mode === 'map' ? MAP_UP : ORBIT_UP
         if (still && regionChanged) {
           flight = null
@@ -716,11 +756,15 @@ export function Globe(props: GlobeProps) {
       if (!wantDive && !dive && !waitForSun) {
         shownSite = state.site.id
         shownMode = mode
+        shownEdge = state.selectionMaxLatitudeDeg
         shownRegion = region?.id ?? null
       }
       // No free zoom on the map: it is flown by its Regions, not by the wheel.
       controls.enabled = mode === 'orbit' && flight === null && fade === null && dive === null && !wantDive
+      if (mode === 'map') undress.loadPolar()
       grid.visible = mode === 'map'
+      selectionBoundary.visible = mode === 'map' && !!state.precisionActive
+      target.dataset.selectionReady = String(selectionBoundary.visible && flight === null && fade === null)
       // On the map the Sites are buttons of their own (`MapLayer`), so the dots are for the orbit.
       siteDots.visible = missionDots.visible = mode !== 'map'
       if (dive) {
@@ -794,6 +838,9 @@ export function Globe(props: GlobeProps) {
       // The ring of the chosen Site is no dot and does not count.
       const dotCount = String(siteDots.visible ? dotsDrawn : 0)
       if (target.dataset.dots !== dotCount) target.dataset.dots = dotCount
+      renderer.clear()
+      backdrop.draw(camera, state, mode === 'orbit' && !wantDive && !dive && !shownDive, planetsLive.current, !flight && !fade)
+      renderer.clearDepth()
       renderer.render(scene, camera)
       target.dataset.ready = 'true'
 
@@ -931,24 +978,9 @@ export function Globe(props: GlobeProps) {
           )
         }
       }
-      // The Sun and the Earth are far outside the picture: each gets a marker on the side where it
-      // lies, just outside the Moon's disc. It says which way, not how far.
-      const moonAt = new THREE.Vector3(0, 0, 0).project(camera)
-      const markCentre = { x: ((moonAt.x + 1) / 2) * host.clientWidth, y: ((1 - moonAt.y) / 2) * host.clientHeight }
+      const moonAt = new THREE.Vector3().project(camera)
+      const markCentre = { x: (moonAt.x + 1) / 2 * host.clientWidth, y: (1 - moonAt.y) / 2 * host.clientHeight }
       const markRing = moonRadiusPx(camera.position.length(), FIELD_OF_VIEW_DEG, host.clientHeight) + MARKER_GAP_PX
-      const markStage = { width: host.clientWidth, height: host.clientHeight, inset: MARKER_INSET }
-      for (const [mark, place] of [[sunMark.current, state.sun], [earthMark.current, state.earth ?? null]] as const) {
-        if (!mark) continue
-        const seen = place ? vector(place.latitude_deg, place.longitude_deg).transformDirection(camera.matrixWorldInverse) : null
-        const at = seen ? bodyMarker(seen.x, seen.y, markCentre, markRing, markStage) : null
-        mark.hidden = !at || flight !== null
-        if (at) {
-          mark.style.left = `${at.x}px`
-          mark.style.top = `${at.y}px`
-          // The word goes on the inner side of the dot when the dot is against the right edge.
-          mark.classList.toggle('globe__body--left', at.x > host.clientWidth * 0.6)
-        }
-      }
 
       // The Equator and the poles, drawn over the Moon each frame (see `globo_hemisferios.html`). The
       // Equator is dotted, only the half turned to the eye; the letters N and S belong to the poles of
@@ -1052,6 +1084,7 @@ export function Globe(props: GlobeProps) {
     return () => {
       cancelAnimationFrame(handle)
       observer.disconnect()
+      target.removeEventListener('webglcontextlost', onContextLost)
       target.removeEventListener('dblclick', onDouble)
       target.removeEventListener('pointerdown', onDown)
       target.removeEventListener('pointermove', onMove)
@@ -1063,6 +1096,7 @@ export function Globe(props: GlobeProps) {
       cancelMapClick()
       window.clearTimeout(readoutTimer)
       controls.dispose()
+      backdrop.dispose()
       for (const points of [siteDots, missionDots]) {
         points.geometry.dispose()
         points.material.dispose()
@@ -1073,6 +1107,7 @@ export function Globe(props: GlobeProps) {
       material.dispose()
       for (const shape of gridShapes) shape.dispose()
       gridLine.dispose()
+      selectionBoundaryGeometry.dispose(); selectionBoundaryMaterial.dispose()
       ringShape.dispose()
       ;(ring.material as THREE.Material).dispose()
       stars.geometry.dispose()
@@ -1081,10 +1116,10 @@ export function Globe(props: GlobeProps) {
         line.geometry.dispose()
         ;(line.material as THREE.Material).dispose()
       }
-      renderer.dispose()
+      releaseRenderer(renderer)
     }
-    // `elements` and `markElements` are made once and never replaced, so the scene is still set up once.
-  }, [elements, markElements])
+    // Marker maps are stable; retrying graphics support rebuilds the scene after cleanup.
+  }, [elements, markElements, supported])
 
   // The wait that ends the loading is on its own, so nothing that goes wrong while the scene is
   // set up can leave the stage loading for ever.
@@ -1093,10 +1128,15 @@ export function Globe(props: GlobeProps) {
     return () => window.clearTimeout(waited)
   }, [])
 
-  if (!supported) return <p className="stage__note">{props.unavailable}</p>
+  if (!supported) return <div className="stage__note" role="status">
+    <p>{blocked ? t('globe.blocked') : props.unavailable}</p>
+    {!blocked && <button type="button" onClick={() => setSupported(true)}>{t('error.retry')}</button>}
+    <p><a href={`${window.location.pathname}${lightGraphicsSearch(window.location.search)}`}>{t('globe.light')}</a></p>
+  </div>
 
   return (
     <div className="globe" ref={frame} data-dressed={dressed} data-mode={mode}>
+      {LIGHT_GRAPHICS && <span className="globe__graphics-status">{t('globe.light.active')}</span>}
       {!dressed && <StageLoading />}
       <canvas ref={canvas} role="img" aria-label={props.label} data-lit={props.sunUp} />
       <span className="globe__chosen" ref={chosenRing} aria-hidden="true" hidden />
@@ -1115,12 +1155,11 @@ export function Globe(props: GlobeProps) {
         />
       )}
       <span className="globe__readout" ref={readout} aria-hidden="true" hidden />
-      <span className="globe__body globe__body--sun" ref={sunMark} aria-hidden="true" hidden>
-        {props.sunLabel}
-      </span>
-      <span className="globe__body globe__body--earth" ref={earthMark} aria-hidden="true" hidden>
-        {props.earthLabel}
-      </span>
+      <div className="globe__planets" ref={skyLabels} aria-hidden="true">
+        <span data-body="sun" hidden>Sun</span>
+        <span data-body="earth" hidden>Earth</span>
+        {PLANETS.map(({ id }) => <span key={id} data-planet={id} hidden>{id[0].toUpperCase() + id.slice(1)}</span>)}
+      </div>
       <svg className="globe__poles" ref={poleMarks} aria-hidden="true" style={{ display: 'none' }}>
         <path className="globe__equator globe__equator--base" fill="none" />
         <path className="globe__equator" fill="none" />
@@ -1173,11 +1212,15 @@ export function Globe(props: GlobeProps) {
         mode={mode}
         level={props.level === undefined ? levelOfView(mode) : props.level}
         onLevel={props.onLevel}
+        onPrecision={props.onPrecision}
+        precisionActive={props.precisionActive}
         onView={(view) => {
           turnAsked.current = view
         }}
         layers={props.layers}
         onLayers={props.onLayers}
+        planetsOn={planetsOn}
+        onPlanets={() => setPlanetsOn(value => !value)}
       />
     </div>
   )
