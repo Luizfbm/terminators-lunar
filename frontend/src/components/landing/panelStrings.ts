@@ -5,7 +5,7 @@
 // and of GLOSSARY.md (Earth visible, DSN link), so it says no more than the backend does.
 
 export const en = {
-  'landingPanel.label': 'Landing information',
+  'landingPanel.label': 'Your landing',
   'landingPanel.hide': 'Hide the landing panel',
   'landingPanel.show': 'Show the landing panel',
   'landingPanel.vehicle': 'Vehicle: {name}',
@@ -24,14 +24,14 @@ export const en = {
   'landingPanel.link': 'Link',
   'landingPanel.noLink': 'No link',
   'landingPanel.span': '{start} → {end}',
-  'landingPanel.hint': 'Choose a period to move the Cursor to its start.',
+  'landingPanel.hint': 'Tap a period to jump there on the timeline.',
   'landingPanel.hours': '{hours} h',
   'landingPanel.hoursDays': '{hours} h ({days} d)',
   'landingPanel.countdown': 'Countdown',
   'landingPanel.noteSite':
-    'The Countdowns are read at the Cursor. Sun visible: some part of the Sun’s disc is above the Horizon mask, the horizon of the relief. Earth visible: the Earth’s centre is above the Horizon mask, so direct-to-Earth communication is geometrically possible.',
+    'Sun: part of the Sun is above the hills around the lander. Earth: the Earth is above them, so the lander can talk to home.',
   'landingPanel.note':
-    'The periods come from the backend. Sun visible: some part of the Sun’s disc is above the Horizon mask, the horizon of the relief. Earth visible: the Earth’s centre is above the Horizon mask, so direct-to-Earth communication is geometrically possible. “Link” is that geometry only; a DSN link also needs an antenna with the Moon in view.',
+    'Sun: part of the Sun is above the hills around the lander. Earth: the Earth is above them, so the lander can talk to home. Link means only that the Earth is in view; a real call also needs a dish on Earth pointed at the Moon.',
 }
 
 export const pt: Record<keyof typeof en, string> = {

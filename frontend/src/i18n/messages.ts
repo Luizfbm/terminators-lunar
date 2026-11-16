@@ -114,7 +114,7 @@ export const en = {
   'strip.cursor': 'Cursor',
   'strip.play': 'Play the Window',
   'strip.pause': 'Pause',
-  'strip.shortShadow': 'Hatched: Short shadow (under {hours}\u00a0h)',
+  'strip.shortShadow': 'Striped: a short shadow, under {hours}\u00a0h',
   'globe.label': 'The Moon, seen from below its south pole. {site} is {state}.',
   'globe.lit': 'in sunlight',
   'planet.mercury': 'Mercury',
