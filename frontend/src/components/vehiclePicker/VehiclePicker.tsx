@@ -15,7 +15,7 @@ import {
 import { createPortal } from 'react-dom'
 import { en } from './strings'
 import { VEHICLES, wrapIndex, DEFAULT_VEHICLE_INDEX, darkHours, type RoverFigure, type Vehicle } from './vehicles'
-import { checkPickWindow, inputBounds, type Coverage, type PickWindowError } from './pickWindow'
+import { checkPickWindow, defaultEnd, inputBounds, type Coverage, type PickWindowError } from './pickWindow'
 // Types only: the module itself (and three with it) is loaded on demand below.
 import type { RoverModel, RoverStage } from './rover3d'
 
@@ -220,7 +220,8 @@ function LanderSvg({ tint }: { tint: string }) {
 export default function VehiclePicker({ coverage, initialStart, onConfirm, onClose }: VehiclePickerProps) {
   const [index, setIndex] = useState(DEFAULT_VEHICLE_INDEX)
   const [start, setStart] = useState(initialStart ?? '')
-  const [end, setEnd] = useState('')
+  // The end comes filled in like the start, so a landing is one click and nobody has to type a date.
+  const [end, setEnd] = useState(() => (initialStart ? defaultEnd(initialStart, coverage) : ''))
   const [art, setArt] = useState<Art>('loading')
   const [snaps, setSnaps] = useState<Partial<Record<RoverModel, string>>>({})
   const windowRef = useRef<HTMLDivElement>(null)

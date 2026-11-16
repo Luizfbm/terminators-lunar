@@ -89,3 +89,24 @@ describe('stepping through the vehicles', () => {
     expect(wrapIndex(1, 3)).toBe(1)
   })
 })
+
+describe('the end offered with the start', () => {
+  // Found on 15/11/2026, minutes before the deadline: the rover picker opened with the start filled in
+  // and the end empty, so nobody could land without typing a date by hand.
+  const coverage = { window_min: '2023-08-01T00:00:00Z', window_max: '2032-12-31T23:59:00Z', max_duration_hours: 1440 }
+
+  it('is ten days after the start and passes the same check the Confirm button uses', async () => {
+    const { checkPickWindow, defaultEnd, toChoiceWindow } = await import('./pickWindow')
+    const end = defaultEnd('2026-11-15T23:33', coverage)
+    expect(end).toBe('2026-11-25T23:33')
+    expect(checkPickWindow('2026-11-15T23:33', end, coverage)).toBeNull()
+    expect(toChoiceWindow('2026-11-15T23:33', end).hours).toBe(240)
+  })
+
+  it('stops at the longest Window and stays empty without a start', async () => {
+    const { defaultEnd, toChoiceWindow } = await import('./pickWindow')
+    expect(toChoiceWindow('2026-11-15T12:00', defaultEnd('2026-11-15T12:00', { ...coverage, max_duration_hours: 48 })).hours).toBe(48)
+    expect(defaultEnd('', coverage)).toBe('')
+    expect(defaultEnd('not a date', coverage)).toBe('')
+  })
+})

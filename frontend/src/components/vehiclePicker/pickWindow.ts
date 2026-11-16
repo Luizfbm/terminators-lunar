@@ -36,6 +36,22 @@ export function toLocalInput(ms: number): string {
   return `${day}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
+/** How long the Window offered for a landing is, before the visitor changes it. */
+export const DEFAULT_PICK_DAYS = 10
+
+/**
+ * The end to offer for a start: DEFAULT_PICK_DAYS later, never past the longest Window or the end of
+ * the coverage. Empty when the start is no value, so the field stays empty with it.
+ */
+export function defaultEnd(start: string, coverage: Coverage): string {
+  const startMs = localMs(start)
+  if (Number.isNaN(startMs)) return ''
+  const hours = Math.min(DEFAULT_PICK_DAYS * 24, coverage.max_duration_hours)
+  const lastMs = Math.floor(Date.parse(coverage.window_max) / MINUTE_MS) * MINUTE_MS
+  const endMs = Math.min(startMs + hours * HOUR_MS, lastMs)
+  return endMs > startMs ? toLocalInput(endMs) : ''
+}
+
 /**
  * The min/max attributes of both inputs: the coverage in local time. The inputs only take whole
  * minutes, so min is rounded up and max down, and every value between them is inside the coverage
