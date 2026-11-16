@@ -51,9 +51,9 @@ it('does not reattach textures after disposal when their Promise settles late', 
   const pending = loader()
   const material = new THREE.MeshLambertMaterial()
   const colour = vi.fn()
-  const dispose = dressMoon(new THREE.Scene(), material, 1, false, undefined, colour, false)
+  const dress = dressMoon(new THREE.Scene(), material, 1, { tier: 'low', onColour: colour })
   pending.forEach(item => item.finish())
-  dispose()
+  dress.dispose()
   await flush()
   expect(material.map).toBeNull()
   expect(material.normalMap).toBeNull()
@@ -64,8 +64,8 @@ it('does not start polar image loads after a late metadata response on a dispose
   let release: (value: unknown) => void = () => {}
   const delayed = new Promise(resolve => { release = resolve })
   vi.stubGlobal('fetch', vi.fn(() => delayed))
-  const dispose = dressMoon(new THREE.Scene(), new THREE.MeshLambertMaterial(), 1, false)
-  dispose()
+  const dress = dressMoon(new THREE.Scene(), new THREE.MeshLambertMaterial(), 1, { tier: 'weak' })
+  dress.dispose()
   release({ ok: true, json: async () => cap })
   await flush()
   expect(pending).toHaveLength(2)
@@ -74,26 +74,94 @@ it('removes polar meshes and releases owned textures on scene teardown', async (
   const pending = loader()
   vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => cap })))
   const scene = new THREE.Scene()
-  const dispose = dressMoon(scene, new THREE.MeshLambertMaterial(), 1, false)
+  const dress = dressMoon(scene, new THREE.MeshLambertMaterial(), 1, { tier: 'weak' })
   await flush()
   const released = pending.map(item => vi.spyOn(item.texture, 'dispose'))
   pending.forEach(item => item.finish())
   await flush()
-  expect(scene.children).toHaveLength(2)
-  dispose()
+  expect(scene.children).toHaveLength(1)
+  dress.dispose()
   expect(scene.children).toHaveLength(0)
   released.forEach(spy => expect(spy).toHaveBeenCalledOnce())
 })
 
-it('loads polar overlays only on demand in light orbit, once, and never after disposal', async () => {
+it('loads polar overlays only on demand on the low tier, once, and never after disposal', async () => {
   loader()
-  const fetcher=vi.fn(async () => ({ ok:true, json:async () => cap }))
-  vi.stubGlobal('fetch',fetcher)
-  const dispose=dressMoon(new THREE.Scene(),new THREE.MeshLambertMaterial(),1,false,undefined,undefined,false,1024)
+  const fetcher = vi.fn(async () => ({ ok: true, json: async () => cap }))
+  vi.stubGlobal('fetch', fetcher)
+  const dress = dressMoon(new THREE.Scene(), new THREE.MeshLambertMaterial(), 1, { tier: 'low' })
   expect(fetcher).not.toHaveBeenCalled()
-  dispose.loadPolar();dispose.loadPolar()
+  dress.setPolar(true); dress.setPolar(true)
   await flush()
   expect(fetcher).toHaveBeenCalledTimes(2)
-  dispose();dispose.loadPolar()
+  dress.dispose(); dress.setPolar(true)
   expect(fetcher).toHaveBeenCalledTimes(2)
+})
+
+describe('every image is fitted to its tier before the first upload', () => {
+  const drawn: { width: number; height: number }[] = []
+  const stubCanvas = () => {
+    drawn.length = 0
+    vi.stubGlobal('document', {
+      createElement: () => {
+        const canvas = { width: 0, height: 0, getContext: () => ({ drawImage: () => drawn.push({ width: canvas.width, height: canvas.height }) }) }
+        return canvas
+      },
+    })
+  }
+  const loaderOf = (width: number, height: number) => {
+    const made: THREE.Texture[] = []
+    vi.spyOn(THREE.TextureLoader.prototype, 'load').mockImplementation((_url, loaded) => {
+      const texture = new THREE.Texture({ width, height } as unknown as HTMLImageElement)
+      made.push(texture)
+      queueMicrotask(() => loaded?.(texture))
+      return texture
+    })
+    return made
+  }
+
+  it('the weak tier fits a 4096 x 2048 Moon to 2048 x 1024', async () => {
+    stubCanvas()
+    loaderOf(4096, 2048)
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false })))
+    const material = new THREE.MeshLambertMaterial()
+    const dress = dressMoon(new THREE.Scene(), material, 1, { tier: 'weak' })
+    await vi.waitFor(() => expect(material.map).not.toBeNull())
+    expect(drawn.length).toBeGreaterThanOrEqual(2)
+    expect(drawn.every(size => size.width === 2048 && size.height === 1024)).toBe(true)
+    dress.dispose()
+  })
+
+  it('the low tier fits to 1024 x 512', async () => {
+    stubCanvas()
+    loaderOf(4096, 2048)
+    const material = new THREE.MeshLambertMaterial()
+    const dress = dressMoon(new THREE.Scene(), material, 1, { tier: 'low' })
+    await vi.waitFor(() => expect(material.map).not.toBeNull())
+    expect(drawn.every(size => size.width === 1024 && size.height === 512)).toBe(true)
+    dress.dispose()
+  })
+
+  it('the strong tier leaves a 4096 x 2048 image and the 8192 x 4096 one as they are, then swaps in the 8k pair', async () => {
+    stubCanvas()
+    const made = loaderOf(8192, 4096)
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false })))
+    const material = new THREE.MeshLambertMaterial()
+    const sizes: string[] = []
+    const dress = dressMoon(new THREE.Scene(), material, 1, { tier: 'strong', onColour: size => sizes.push(size) })
+    await vi.waitFor(() => expect(sizes).toEqual(['4k', '8k']))
+    expect(drawn).toEqual([])
+    expect(made.length).toBeGreaterThanOrEqual(4)
+    dress.dispose()
+  })
+
+  it('the tier’s limit never goes above the GPU’s: a 4096 px GPU fits the strong tier to 4096', async () => {
+    stubCanvas()
+    loaderOf(8192, 4096)
+    const material = new THREE.MeshLambertMaterial()
+    const dress = dressMoon(new THREE.Scene(), material, 1, { tier: 'strong', maxTextureSize: 4096 })
+    await vi.waitFor(() => expect(material.map).not.toBeNull())
+    expect(drawn.every(size => size.width === 4096 && size.height === 2048)).toBe(true)
+    dress.dispose()
+  })
 })

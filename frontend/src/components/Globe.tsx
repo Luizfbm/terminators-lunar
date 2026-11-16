@@ -48,6 +48,7 @@ import { fill } from './globeMap/strings'
 import { STRINGS as LAND_STRINGS } from './stageStatus/strings'
 import './globeMap/globeMap.css'
 import './globeLand.css'
+import { moonTier } from './moonDevice'
 import { dressMoon, MOON_SUN_STRENGTH, moonMaterial } from './moonSurface'
 import { planetBackdrop, planetWay } from './planetBackdrop'
 import { earthMaterial as makeEarthMaterial, EARTH, glowTexture, loadEarthMap, SUN } from './spaceBodies'
@@ -355,15 +356,19 @@ export function Globe(props: GlobeProps) {
     const material = moonMaterial()
     const moon = new THREE.Mesh(new THREE.SphereGeometry(1, 192, 96), material)
     scene.add(moon)
-    // maxTextureSize is a dimensional limit, not an available-memory budget.
-    const large = false
-    const textureLimit = Math.min(renderer.capabilities.maxTextureSize, LIGHT_GRAPHICS ? 1024 : 2048)
+    // The tier decides which images the Moon takes and how far they are fitted (`moonBudget.ts`): the 8192 px
+    // ones only on a strong device (`moonDevice.ts`), a software renderer and `graphics=low` get the small ones.
+    const tier = moonTier(renderer.getContext(), LIGHT_GRAPHICS)
     // The Moon is shown once it has its colour and relief, never as a plain grey ball. A slow
     // network does not hold it back for ever: after DRESS_WAIT_MS it shows as it is.
     const show = () => setDressed(true)
-    const undress = dressMoon(scene, material, renderer.capabilities.getMaxAnisotropy(), large, show, (size) => {
-      target.dataset.moon = size
-    }, !LIGHT_GRAPHICS, textureLimit, () => { target.dataset.polar = 'true' })
+    const dress = dressMoon(scene, material, renderer.capabilities.getMaxAnisotropy(), {
+      tier,
+      maxTextureSize: renderer.capabilities.maxTextureSize,
+      onDressed: show,
+      onColour: (size) => { target.dataset.moon = size },
+      onPolar: (shown) => { if (shown) target.dataset.polar = 'true'; else delete target.dataset.polar },
+    })
     // Earthshine and a little more: the night side stays dark, and its relief can still be read.
     scene.add(new THREE.AmbientLight(0xffffff, 0.085))
     const sunlight = new THREE.DirectionalLight(0xfff4e0, MOON_SUN_STRENGTH)
@@ -860,7 +865,8 @@ export function Globe(props: GlobeProps) {
       }
       // No free zoom on the map: it is flown by its Regions, not by the wheel.
       controls.enabled = mode === 'orbit' && flight === null && fade === null && dive === null && !wantDive
-      if (mode === 'map') undress.loadPolar()
+      // The fine patch of the pole belongs to the polar level: loaded when the view reaches it, freed when it leaves.
+      dress.setPolar(mode === 'map')
       grid.visible = mode === 'map'
       selectionBoundary.visible = mode === 'map' && !!state.precisionActive
       target.dataset.selectionReady = String(selectionBoundary.visible && flight === null && fade === null)
@@ -1334,7 +1340,7 @@ export function Globe(props: GlobeProps) {
       }
       dotLook?.dispose()
       moon.geometry.dispose()
-      undress()
+      dress.dispose()
       material.dispose()
       for (const shape of gridShapes) shape.dispose()
       for (const shape of markShapes) shape.dispose()
