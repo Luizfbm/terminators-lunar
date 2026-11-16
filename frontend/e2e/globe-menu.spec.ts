@@ -7,15 +7,17 @@ test.use({ locale: 'en-US' })
 
 const LEVELS = ['Explore the Moon', 'South Pole in detail']
 const BUTTONS = ['Initial position', 'Dark side', 'Northern Hemisphere', 'Southern Hemisphere', 'Lunar Missions', 'Sites', 'Planets']
-const LABELS = [...LEVELS, ...BUTTONS]
+// #149 adds a third level button under the two, in the same group.
+const LEVEL3 = 'Level 3 · Explore'
+const LABELS = [...LEVELS, LEVEL3, ...BUTTONS]
 /** The buttons pressed when the page opens: the level of the orbit view, Sites and Planets. Lunar Missions starts released. */
 const OPENS_PRESSED = ['Explore the Moon', 'Sites', 'Planets']
 /** On the polar map the menu keeps the two levels and the two switches of the dots. */
-const MAP_LABELS = [...LEVELS, 'Lunar Missions', 'Sites']
+const MAP_LABELS = [...LEVELS, LEVEL3, 'Lunar Missions', 'Sites']
 const button = (page: Page, name: string) => page.getByRole('button', { name, exact: true })
 const pressed = async (page: Page, name: string) => (await button(page, name).getAttribute('aria-pressed')) === 'true'
 
-test('has the nine buttons, in English and in this order, with Explore the Moon, Sites and Planets pressed', async ({ page }) => {
+test('has the ten buttons, in English and in this order, with Explore the Moon, Sites and Planets pressed', async ({ page }) => {
   await page.goto('/')
   const menu = page.getByRole('group', { name: 'Globe menu' })
   await expect(menu).toBeVisible()
@@ -73,7 +75,7 @@ test('sits in the very top left corner of the globe, at 85% of a fifth of the wi
     const one = button(page, label)
     const own = (await one.boundingBox())!
     expect(own.height).toBeGreaterThanOrEqual(40)
-    // All nine fit inside the stage: the menu is not cut off at the bottom.
+    // All ten fit inside the stage: the menu is not cut off at the bottom.
     expect(own.y + own.height).toBeLessThanOrEqual(globe.y + globe.height)
     await expect(one).toHaveCSS('font-weight', '600')
     await expect(one).toHaveCSS('white-space', 'nowrap')

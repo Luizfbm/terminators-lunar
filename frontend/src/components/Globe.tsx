@@ -56,6 +56,7 @@ import { needsMenuBoxes } from '../domain/menuBoxes'
 import { LIGHT_GRAPHICS, lightGraphicsSearch } from '../domain/graphicsMode'
 
 import { DIVE_MS } from '../domain/stageMove'
+import { canDraw } from './webgl'
 
 export interface GlobeSite extends LatLon {
   id: string
@@ -262,7 +263,8 @@ export function Globe(props: GlobeProps) {
   // The switches of the menu: the dots of the Sites, the dots of the missions, and the planets of the sky.
   const [layers, setLayers] = useState<Layers>(initialLayers)
   const layersLive = useRef(layers)
-  const [supported, setSupported] = useState(true)
+  // As on main: a browser with no WebGL at all says so at once, before any scene is built.
+  const [supported, setSupported] = useState(canDraw)
   const [blocked, setBlocked] = useState(false)
 
 

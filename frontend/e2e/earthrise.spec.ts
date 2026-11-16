@@ -149,7 +149,7 @@ test.describe('the hand over', () => {
       } as typeof real
     })
     await page.goto('/')
-    await expect(page.getByText('This browser cannot draw the 3D Moon. The answer beside it is complete.')).toBeVisible()
+    await expect(page.getByText('The 3D Moon could not start. Try again or reload the page.')).toBeVisible()
     await expect(scene(page)).toHaveCount(0)
   })
 })

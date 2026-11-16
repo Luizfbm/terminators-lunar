@@ -250,7 +250,7 @@ test.describe('a browser that says it can draw 3D and then cannot', () => {
 
   test('says the Moon cannot be drawn, instead of loading for ever', async ({ page }) => {
     await open(page)
-    await expect(page.getByText('This browser cannot draw the 3D Moon. The answer beside it is complete.')).toBeVisible()
+    await expect(page.getByText('The 3D Moon could not start. Try again or reload the page.')).toBeVisible()
     await expect(page.locator('.stage__loading')).toHaveCount(0)
     // The answer is all there.
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
