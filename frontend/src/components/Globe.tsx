@@ -13,7 +13,7 @@ import { bubbleOnLeft, landPlace, latLonOfVector, type LandPlace } from '../doma
 import { letterClear, POLE_LETTER_RADII, poleMark, type Disc } from '../domain/poleMark'
 import type { View } from '../domain/query'
 import { initialLayers, layerOf, siteShown, type Layers } from '../domain/siteLayers'
-import { VIEW_DISTANCE, viewTarget, type MoonPlace, type MoonView } from '../domain/viewTarget'
+import { GLOBE_FIELD_OF_VIEW_DEG, viewDistanceFor, viewTarget, type MoonPlace, type MoonView } from '../domain/viewTarget'
 import { groundDirection, toVector, type LatLon } from '../domain/sky'
 import {
   BACKDROP_EARTH_DISTANCE,
@@ -143,7 +143,7 @@ const CIRCLE_BASE_WIDTH_PX = 4
 const MARK_RADIUS = 1.002
 /** The ring of the chosen Site, as the map's CSS draws it (`.globe__chosen`), for the mission names to keep clear of. */
 const CHOSEN_RING_PX = 12
-const FIELD_OF_VIEW_DEG = 32
+const FIELD_OF_VIEW_DEG = GLOBE_FIELD_OF_VIEW_DEG
 /** The Sun's halo reaches this many times the radius of its disc. */
 const HALO_REACH = 7
 /** How long the stage waits for the images of the Moon before showing it without them. */
@@ -523,7 +523,7 @@ export function Globe(props: GlobeProps) {
     controls.enablePan = false
     // Close enough to read the 22.5 m level around the Sites.
     controls.minDistance = 1.04
-    controls.maxDistance = 6
+    controls.maxDistance = Math.max(6, viewDistanceFor(1))
     controls.enabled = false
 
     // The one orchestrated moment: from the whole Moon down to the south pole and the Site.
@@ -554,12 +554,31 @@ export function Globe(props: GlobeProps) {
     camera.position.set(5.2, 0.6, 4.4)
     camera.lookAt(0, 0, 0)
 
+    // How far the camera stands to frame the whole Moon on this stage (a phone upright needs more than a desktop),
+    // and the distance the camera was last put at for it, so a resize can tell a camera nobody has zoomed.
+    const framing = () => viewDistanceFor(camera.aspect)
+    let framedAt: number | null = null
     const resize = () => {
       const { clientWidth: width, clientHeight: height } = host
       if (width === 0 || height === 0) return
       renderer.setSize(width, height, false)
       camera.aspect = width / height
       camera.updateProjectionMatrix()
+      // A rotated phone or a resized window refits the Moon, in the orbit view and where the camera has not been zoomed or is not flying.
+      const fit = framing()
+      controls.maxDistance = Math.max(6, fit)
+      if (framedAt !== null && shownMode === 'orbit' && !dive && !fade) {
+        if (flight) {
+          // On its way to the framing: it lands at the new one.
+          if (flight.kind === 'view' && !flight.toMap && Math.abs(flight.to.length() - framedAt) < 0.01) {
+            flight.to.setLength(fit)
+            framedAt = fit
+          }
+        } else if (Math.abs(camera.position.length() - framedAt) < 0.01) {
+          camera.position.setLength(fit)
+          framedAt = fit
+        }
+      }
     }
     const observer = new ResizeObserver(resize)
     observer.observe(host)
@@ -807,9 +826,10 @@ export function Globe(props: GlobeProps) {
       if (asked) {
         turnAsked.current = null
         // Initial position is the opening framing, on the side of the chosen Site; the others are places on the Moon.
-        const place = asked === 'initial' ? viewpoint(state.site).setLength(VIEW_DISTANCE).toArray() : viewTarget(asked as MoonPlace, state.sun)
+        const place = asked === 'initial' ? viewpoint(state.site).setLength(framing()).toArray() : viewTarget(asked as MoonPlace, state.sun, framing())
         if (place && mode === 'orbit' && !state.dive) {
           const to = new THREE.Vector3(...place)
+          framedAt = to.length()
           fade = null
           if (still) {
             flight = null
@@ -828,9 +848,10 @@ export function Globe(props: GlobeProps) {
       } else if ((shownMode !== mode || shownEdge !== state.selectionMaxLatitudeDeg || (mode === 'orbit' && shownSite !== state.site.id) || regionChanged)) {
         // The opening framing is the Site's own side, as before, at the menu's 5 radii. It is not the point under the
         // Sun: from there the Sun is behind the camera and the backdrop would not show it.
-        const to = mode === 'map' ? (region ? regionPoint(region, camera.aspect) : mapPoint(camera.aspect, state.selectionMaxLatitudeDeg)) : viewpoint(state.site).setLength(VIEW_DISTANCE)
+        const to = mode === 'map' ? (region ? regionPoint(region, camera.aspect) : mapPoint(camera.aspect, state.selectionMaxLatitudeDeg)) : viewpoint(state.site).setLength(framing())
 
         const up = mode === 'map' ? MAP_UP : ORBIT_UP
+        framedAt = mode === 'orbit' ? to.length() : null
         if (still && regionChanged) {
           flight = null
           fade = { to, up, start: now, jumped: false }
