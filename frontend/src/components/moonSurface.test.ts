@@ -31,13 +31,15 @@ describe('the globe at level 1 is lit as dry regolith, like the ground view', ()
 
 import { afterEach, vi } from 'vitest'
 import { dressMoon } from './moonSurface'
-import cap from '../../public/moon/south_cap.json'
+// The shape of public/moon/south_cap.json. That folder is built on the VPS and is not in git, so
+// a test cannot import the real file.
+const cap = { sphere_radius_m: 1737400, size_px: 512, x_min_m: -378000, y_max_m: 378000, metres_per_pixel: 1476 }
 
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals() })
 function loader() {
   const pending: { file: string; texture: THREE.Texture; finish: () => void }[] = []
   vi.spyOn(THREE.TextureLoader.prototype, 'load').mockImplementation((url, loaded) => {
-    const texture = new THREE.Texture({ width: 512, height: 512 })
+    const texture = new THREE.Texture({ width: 512, height: 512 } as unknown as HTMLImageElement)
     pending.push({ file: url, texture, finish: () => loaded?.(texture) })
     return texture
   })

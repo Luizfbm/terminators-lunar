@@ -24,13 +24,12 @@ from . import (
     ground,
     hazard,
     heights,
-    landing_area,
     horizon,
+    landing_area,
     neighbours,
     route,
-    rovers,
     route_plan,
-
+    rovers,
     scatter,
     slope,
     uncertainty,
@@ -505,7 +504,9 @@ def get_landing_area(
     longitude_deg: float = Query(..., ge=-180, le=180),
 ) -> Response:
     body = landing_area.area(latitude_deg, longitude_deg)
-    return Response(json.dumps(body, separators=(",", ":"), allow_nan=False), media_type="application/json")
+    return Response(
+        json.dumps(body, separators=(",", ":"), allow_nan=False), media_type="application/json"
+    )
 
 
 @app.post("/routes/plan", response_model=route_plan.RouteResponse)

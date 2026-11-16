@@ -196,7 +196,7 @@ test('globe recovers after a failed graphics context instead of remaining blank'
     const original = HTMLCanvasElement.prototype.getContext
     const state = window as unknown as { allowGraphics: boolean }
     state.allowGraphics = false
-    HTMLCanvasElement.prototype.getContext = function (...args: Parameters<typeof original>) {
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, ...args: Parameters<typeof original>) {
       if (!state.allowGraphics && String(args[0]).startsWith('webgl')) return null
       return original.apply(this, args)
     } as typeof original
@@ -232,7 +232,7 @@ test('globe browser block explains recovery and offers a lightweight navigation'
   await page.addInitScript(() => {
     const deny = new URLSearchParams(location.search).get('graphics') !== 'low'
     const original = HTMLCanvasElement.prototype.getContext
-    HTMLCanvasElement.prototype.getContext = function (...args: Parameters<typeof original>) {
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, ...args: Parameters<typeof original>) {
       if (deny && String(args[0]).startsWith('webgl')) {
         this.dispatchEvent(new WebGLContextEvent('webglcontextcreationerror', { statusMessage: 'Web page caused context loss and was blocked' }))
         return null

@@ -104,7 +104,7 @@ export function RoutePanel({ result, vehicle }: { result: VisibilityResult; vehi
   return <section className="route-panel" aria-label={words('Rover route scenario', 'Cenário de rota do rover')}>
     <p>{words('Plan from this Site to a nearby coordinate on native terrain. The path joins pixel centres; hazards smaller than a pixel and lateral slopes are unresolved.', 'Planeje deste sítio até uma coordenada próxima sobre o relevo nativo. O caminho une centros dos pixels; perigos menores que um pixel e declives laterais não são resolvidos.')}</p>
     <form onSubmit={submit} onChange={event => {
-      if ((event.target as HTMLInputElement).name !== 'resolution') setComparison(null)
+      if ((event.target as unknown as HTMLInputElement | HTMLSelectElement).name !== 'resolution') setComparison(null)
       invalidate()
     }}>
       <div className="route-fields">

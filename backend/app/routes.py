@@ -43,14 +43,21 @@ def shortest_path(grid: Grid, start: Cell, goal: Cell, max_slope_deg: float) -> 
         raise ValueError("Expected a nonempty 2D grid of at most 511 squared cells")
     if not math.isfinite(max_slope_deg) or not 0 <= max_slope_deg < 90:
         raise ValueError("Segment slope limit must be finite and in [0, 90)")
-    if not all(math.isfinite(v) for v in (
-        grid.metres_per_pixel, grid.x_min_m, grid.y_max_m, grid.resolution_m
-    )) or min(grid.metres_per_pixel, grid.resolution_m) <= 0:
+    if (
+        not all(
+            math.isfinite(v)
+            for v in (grid.metres_per_pixel, grid.x_min_m, grid.y_max_m, grid.resolution_m)
+        )
+        or min(grid.metres_per_pixel, grid.resolution_m) <= 0
+    ):
         raise ValueError("Invalid grid geometry or resolution")
     rows, cols = z.shape
     for cell in (start, goal):
-        if (len(cell) != 2 or any(type(v) is not int for v in cell)
-                or not (0 <= cell[0] < rows and 0 <= cell[1] < cols)):
+        if (
+            len(cell) != 2
+            or any(type(v) is not int for v in cell)
+            or not (0 <= cell[0] < rows and 0 <= cell[1] < cols)
+        ):
             raise ValueError("Endpoint outside grid or not an integer pixel index")
         if not np.isfinite(z[cell]):
             raise ValueError("Endpoint has no measured elevation")
@@ -73,8 +80,7 @@ def shortest_path(grid: Grid, start: Cell, goal: Cell, max_slope_deg: float) -> 
         lon = np.arctan2(x, -y if north else y)
     else:
         raise ValueError("Unsupported DEM projection")
-    vectors = np.stack((np.cos(lat) * np.cos(lon), np.cos(lat) * np.sin(lon),
-                        np.sin(lat)), axis=-1)
+    vectors = np.stack((np.cos(lat) * np.cos(lon), np.cos(lat) * np.sin(lon), np.sin(lat)), axis=-1)
 
     def edge(a: Cell, b: Cell) -> tuple[float, float] | None:
         if not valid[a] or not valid[b]:
@@ -103,22 +109,23 @@ def shortest_path(grid: Grid, start: Cell, goal: Cell, max_slope_deg: float) -> 
                 parent, grade = previous[path[-1]]
                 peak = max(peak, grade)
                 path.append(parent)
-            return SpatialRoute("found", tuple(reversed(path)), distance, peak,
-                                grid.product, grid.resolution_m)
+            return SpatialRoute(
+                "found", tuple(reversed(path)), distance, peak, grid.product, grid.resolution_m
+            )
         r, c = cell
         for dr in (-1, 0, 1):
             for dc in (-1, 0, 1):
                 target = (r + dr, c + dc)
-                if (not (dr or dc) or not 0 <= target[0] < rows
-                        or not 0 <= target[1] < cols):
+                if not (dr or dc) or not 0 <= target[0] < rows or not 0 <= target[1] < cols:
                     continue
                 segment = edge(cell, target)
                 if segment is None:
                     continue
                 if dr and dc:
                     sides = ((r + dr, c), (r, c + dc))
-                    if any(edge(cell, side) is None or edge(side, target) is None
-                           for side in sides):
+                    if any(
+                        edge(cell, side) is None or edge(side, target) is None for side in sides
+                    ):
                         continue
                 candidate = distance + segment[0]
                 if candidate < distances.get(target, math.inf):

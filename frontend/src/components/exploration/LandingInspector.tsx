@@ -12,7 +12,10 @@ export function LandingInspector({ place, coverage, initialStart, initialEnd, in
   onClose:()=>void;onConfirm:(pick:ExplorationPick)=>void
 }) {
   const dialog=useRef<HTMLDialogElement>(null)
-  const [area,setArea]=useState<LandingArea|null>(null),[error,setError]=useState<string|null>(null),[attempt,retry]=useState(0)
+  const [loaded,setLoaded]=useState<{key:string;area:LandingArea|null;error:string|null}|null>(null),[attempt,retry]=useState(0)
+  // The answer belongs to the place and attempt it was asked for; any other key is still loading.
+  const key=`${place.lat},${place.lon},${attempt}`
+  const area=loaded?.key===key?loaded.area:null, error=loaded?.key===key?loaded.error:null
   const [vehicle,setVehicle]=useState(initialVehicle??VEHICLES[1]),[heading,setHeading]=useState('0')
   const [start,setStart]=useState(initialStart),[end,setEnd]=useState(initialEnd)
   const bounds=inputBounds(coverage), windowError=checkPickWindow(start,end,coverage)
@@ -24,11 +27,10 @@ export function LandingInspector({ place, coverage, initialStart, initialEnd, in
   },[])
   useEffect(()=>{
     const controller=new AbortController()
-    setArea(null);setError(null)
-    void fetchArea(place.lat,place.lon,controller.signal).then(result=>{if(!controller.signal.aborted)setArea(result)})
-      .catch(reason=>{if(!controller.signal.aborted)setError(reason instanceof Error?reason.message:'Could not load terrain.')})
+    void fetchArea(place.lat,place.lon,controller.signal).then(result=>{if(!controller.signal.aborted)setLoaded({key,area:result,error:null})})
+      .catch(reason=>{if(!controller.signal.aborted)setLoaded({key,area:null,error:reason instanceof Error?reason.message:'Could not load terrain.'})})
     return ()=>controller.abort()
-  },[place.lat,place.lon,attempt])
+  },[place.lat,place.lon,key])
   return <dialog ref={dialog} className="landing-inspector" aria-labelledby="landing-inspector-title" lang="en" onCancel={onClose}>
     <header><div><span className="exploration-eyebrow">LEVEL 3 · PREPARE TO LAND</span><h2 id="landing-inspector-title">Your 10 × 10 km landing area</h2></div><button type="button" onClick={onClose} aria-label="Back to landing map">← Back</button></header>
     <p>{place.name??'South polar surface'} · {place.lat.toFixed(5)}°, {place.lon.toFixed(5)}°</p>

@@ -16,10 +16,11 @@ export function RouteTerrain({ answer, selected }: { answer: RouteResponse; sele
     const element = host.current
     if (!element) return
     const data = routeGeometry(answer)
-    if (!data) { setUnavailable(true); return }
+    // Not a synchronous setState in the effect body: the page has not painted this mount yet.
+    if (!data) { queueMicrotask(() => setUnavailable(true)); return }
     let renderer: THREE.WebGLRenderer
     try { renderer = new THREE.WebGLRenderer({ antialias: true }); ownRenderer(renderer) }
-    catch { setUnavailable(true); return }
+    catch { queueMicrotask(() => setUnavailable(true)); return }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.setClearColor('#090b10')
     element.appendChild(renderer.domElement)

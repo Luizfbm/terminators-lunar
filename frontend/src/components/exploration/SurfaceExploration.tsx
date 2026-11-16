@@ -28,7 +28,7 @@ export function SurfaceExploration({ pick, result, cursorMs, paused=false }: {
     const element=host.current;if(!element)return
     const data=surfaceGeometry(pick.area)
     let renderer:THREE.WebGLRenderer
-    try{renderer=new THREE.WebGLRenderer({antialias:!LIGHT_GRAPHICS});ownRenderer(renderer)}catch{setFailed(true);return}
+    try{renderer=new THREE.WebGLRenderer({antialias:!LIGHT_GRAPHICS});ownRenderer(renderer)}catch{queueMicrotask(()=>setFailed(true));return}
     renderer.setPixelRatio(Math.min(window.devicePixelRatio,LIGHT_GRAPHICS?1:1.5))
     renderer.setClearColor('#030508');element.appendChild(renderer.domElement)
     const canvas=renderer.domElement;canvas.tabIndex=0;canvas.setAttribute('aria-label','Lunar rover surface. Arrow keys or W A S D to drive.')
