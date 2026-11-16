@@ -84,3 +84,19 @@ export function oneDecimal(value: number, formatNumber: (value: number) => strin
   const sign = formatNumber(0.5).slice(zero.length, -formatNumber(5).length)
   return `${text}${sign}${zero}`
 }
+
+/** Which panel it is: 'site' holds what exists without a vehicle, 'vehicle' is the landing panel of Level 2. */
+export type PanelVariant = 'site' | 'vehicle'
+
+export type PanelSection = 'vehicle' | 'countdown' | 'sentence' | 'summary' | 'hint' | 'energy' | 'comms' | 'note'
+
+/**
+ * What each panel holds, in order. The one without a vehicle has no vehicle line and no energy periods
+ * (their "Battery" and "Solar charge" belong to a vehicle that was never chosen), and no hint about them.
+ * Everything in it comes from the same `/visibility` answer as the rest.
+ */
+export function sectionsOf(variant: PanelVariant): readonly PanelSection[] {
+  return variant === 'vehicle'
+    ? ['vehicle', 'summary', 'hint', 'energy', 'comms', 'note']
+    : ['countdown', 'sentence', 'summary', 'note']
+}

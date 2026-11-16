@@ -51,6 +51,7 @@ export function GroundView({
   mark = null,
   pose = 'stay',
   classic = false,
+  hazard = false,
 }: {
   result: VisibilityResult
   cursorMs: number
@@ -59,6 +60,8 @@ export function GroundView({
   pose?: 'arrive' | 'leave' | 'stay'
   /** `layout=classic`: the unrolled horizon stays under the sky, as before Larissa's layout. */
   classic?: boolean
+  /** Level 3 only (domain/presentation.ts): the safety circle with its seal. Off at Levels 1 and 2. */
+  hazard?: boolean
 }) {
   const { t, formatNumber } = useI18n()
   const [supported, setSupported] = useState(canDraw)
@@ -114,7 +117,7 @@ export function GroundView({
             {about}
           </p>
         </div>
-        <SafetyCircle result={result} />
+        {hazard && <SafetyCircle result={result} />}
       </div>
       {classic && (
         <div className="ground-view__strip">

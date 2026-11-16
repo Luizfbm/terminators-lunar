@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { currentRow, durationParts, oneDecimal, periodRows, summarise } from './panelData'
+import { currentRow, durationParts, oneDecimal, periodRows, sectionsOf, summarise } from './panelData'
 
 const H = 3_600_000
 const start = Date.UTC(2026, 10, 15)
@@ -85,5 +85,17 @@ describe('oneDecimal', () => {
     expect(oneDecimal(3.46, en)).toBe('3.5')
     expect(oneDecimal(3.46, pt)).toBe('3,5')
     expect(oneDecimal(1234.5, pt)).toBe('1.234,5')
+  })
+})
+
+describe('sectionsOf', () => {
+  it('gives the panel without a vehicle only what exists without one (Level 1, issue #151)', () => {
+    const site = sectionsOf('site')
+    expect(site).toEqual(['countdown', 'sentence', 'summary', 'note'])
+    for (const vehicleOnly of ['vehicle', 'energy', 'comms', 'hint'] as const) expect(site).not.toContain(vehicleOnly)
+  })
+
+  it('keeps the landing panel of Level 2 as it was made, in its order', () => {
+    expect(sectionsOf('vehicle')).toEqual(['vehicle', 'summary', 'hint', 'energy', 'comms', 'note'])
   })
 })

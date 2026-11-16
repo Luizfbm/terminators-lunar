@@ -27,6 +27,9 @@ export const en = {
   'landingPanel.hint': 'Choose a period to move the Cursor to its start.',
   'landingPanel.hours': '{hours} h',
   'landingPanel.hoursDays': '{hours} h ({days} d)',
+  'landingPanel.countdown': 'Countdown',
+  'landingPanel.noteSite':
+    'The Countdowns are read at the Cursor. Sun visible: some part of the Sun’s disc is above the Horizon mask, the horizon of the relief. Earth visible: the Earth’s centre is above the Horizon mask, so direct-to-Earth communication is geometrically possible.',
   'landingPanel.note':
     'The periods come from the backend. Sun visible: some part of the Sun’s disc is above the Horizon mask, the horizon of the relief. Earth visible: the Earth’s centre is above the Horizon mask, so direct-to-Earth communication is geometrically possible. “Link” is that geometry only; a DSN link also needs an antenna with the Moon in view.',
 }
@@ -54,6 +57,9 @@ export const pt: Record<keyof typeof en, string> = {
   'landingPanel.hint': 'Escolha um período para levar o Cursor ao início dele.',
   'landingPanel.hours': '{hours} h',
   'landingPanel.hoursDays': '{hours} h ({days} d)',
+  'landingPanel.countdown': 'Contagem regressiva',
+  'landingPanel.noteSite':
+    'As contagens regressivas são lidas no Cursor. Sol visível: alguma parte do disco do Sol está acima da máscara do horizonte, o horizonte do relevo. Terra visível: o centro da Terra está acima da máscara do horizonte, então a comunicação direta com a Terra é geometricamente possível.',
   'landingPanel.note':
     'Os períodos vêm do backend. Sol visível: alguma parte do disco do Sol está acima da máscara do horizonte, o horizonte do relevo. Terra visível: o centro da Terra está acima da máscara do horizonte, então a comunicação direta com a Terra é geometricamente possível. “Com link” é só essa geometria; um link DSN também precisa de uma antena com a Lua à vista.',
 }

@@ -1,6 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { Answer, occluderLabel, type AnswerProps } from './components/Answer'
-import { AnswerLayer } from './components/answerCard/AnswerLayer'
 import { Brief } from './components/brief/Brief'
 import { briefText } from './components/brief/strings'
 import { Assistant } from './components/phase4/assistant/Assistant'
@@ -47,6 +46,7 @@ import { IM2_LANDING } from './domain/landing'
 import { DIVE_MS, fadeMs, scenesOf, startStage, stepStage } from './domain/stageMove'
 import { chosenGlobeSite } from './domain/chosenSite'
 import { levelOfView } from './domain/globeLevels'
+import { presentationOf } from './domain/presentation'
 import { landingPhase, landRef, startLanding, type Landing } from './domain/land'
 import { sampleAt, subPointsAt, type LatLon } from './domain/sky'
 import { isUp, statement, type Body } from './domain/statement'
@@ -113,8 +113,6 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
   const [page, setPage] = useState<Page>(link.page)
   const [precisionOpen, setPrecisionOpen] = useState<string | null>(null)
   const [stats, setStats] = useState(link.stats)
-  // The drawer of details, in Larissa's layout (the default): its open state goes in the link as `details=1`.
-  const [detailsOpen, setDetailsOpen] = useState(link.classic !== true && link.details === true)
   // The cover is for the plain address, once per browser: a link with a Query goes to its answer.
   // The plain address opens the cover. `layout=classic` says only which layout, not which Query, so it does not count as a link.
   // Larissa's layout (the default) has no cover and no guide (Luiz, 15/11/2026): only `layout=classic` opens them.
@@ -288,11 +286,11 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
     if (playing) return
     const timer = window.setTimeout(() => {
       // What the App does not own (a panel's own setting) passes through from the current link.
-      const query = writeLink({ ...readLink(window.location.search), site: siteRef, cursorMs: movedCursor, language: linkLanguage, view, ...choice, page, stats, details: detailsOpen ? true : undefined }, window.location.search)
+      const query = writeLink({ ...readLink(window.location.search), site: siteRef, cursorMs: movedCursor, language: linkLanguage, view, ...choice, page, stats }, window.location.search)
       window.history.replaceState(null, '', `${window.location.pathname}${query}`)
     }, 300)
     return () => window.clearTimeout(timer)
-  }, [playing, siteRef, movedCursor, linkLanguage, view, choice, page, stats, detailsOpen])
+  }, [playing, siteRef, movedCursor, linkLanguage, view, choice, page, stats])
 
   const play = () => {
     if (!playing && result && cursorMs >= endMs) setMovedCursor(startMs)
@@ -323,6 +321,9 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
   const surfacePick = level3 && explorationPick && site &&
     Math.abs(site.latitude_deg - explorationPick.area.site.latitude_deg) < 0.00001 &&
     Math.abs(site.longitude_deg - explorationPick.area.site.longitude_deg) < 0.00001 ? explorationPick : null
+  // What presents the answer at the level the visitor is in: one panel, or none, and the hazard elements
+  // only at Level 3. Decided here and nowhere else (domain/presentation.ts).
+  const presented = presentationOf({ view, level3, vehicle: vehicle !== null, answer: result !== null, classic: link.classic === true })
   const sky = result ? sampleAt(result.timeline.samples, cursorMs) : null
   const overhead = result?.sub_points ? subPointsAt(result.sub_points.samples, cursorMs) : null
   const sunUp = result ? isUp('sun', result.periods, result.events, cursorMs) : false
@@ -356,8 +357,7 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
   // A link can carry a point north of the polar maps: say so, and offer the way back.
   const customOutside = state.status === 'error' && state.code === 'outside_coverage' && isCoordinate(siteRef)
 
-  // What the answer column and the answer card take, the same for both: the column is the classic layout's, the
-  // card and its drawer are the default layout's.
+  // What the answer column takes (the classic layout's). The default layout presents the answer in the landing panel.
   const answerProps: AnswerProps | null =
     result && answer
       ? {
@@ -379,7 +379,6 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
               setMovedCursor(null)
               // The link sits under the numbers; the new answer is read from its first line.
               document.querySelector('main.answer')?.scrollTo({ top: 0 })
-              document.querySelector('.details__body')?.scrollTo({ top: 0 })
               window.scrollTo({ top: 0 })
             },
           },
@@ -528,7 +527,7 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
         {result && scenes.groundMounted && (
           <div className="stage__ground" data-fade={scenes.groundFade ?? undefined} style={{ animationDuration: `${fadeMs(still)}ms` }}>
             {surfacePick ? <Suspense fallback={<StageLoading />}><SurfaceExploration pick={surfacePick} result={result} cursorMs={cursorMs} paused={precisionOpen !== null || view !== 'ground'} /></Suspense>
-              : <GroundView result={result} cursorMs={cursorMs} mark={mark} pose={scenes.skyPose} classic={link.classic === true} />}
+              : <GroundView result={result} cursorMs={cursorMs} mark={mark} pose={scenes.skyPose} classic={link.classic === true} hazard={presented.hazard} />}
 
           </div>
         )}
@@ -538,12 +537,11 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
             {STAGE_STRINGS[i18n.locale].back}
           </button>
         )}
-        {/* Larissa's layout (the default) has no column: the answer is a card, and a drawer holds the rest of the column. */}
-        {answerProps && link.classic !== true && (
-          <AnswerLayer {...answerProps} open={detailsOpen && page === 'answer'} onOpen={setDetailsOpen} stale={state.status === 'loading'} />
-        )}
-        {!surfacePick && result && vehicle && view === 'ground' && state.status === 'ready' && (
-          <LandingPanel result={result} siteName={result.query.site.name} vehicle={vehicle} cursorMs={cursorMs}
+        {/* Larissa's layout (the default) has no column: the landing panel presents the answer at Levels 1 and 2,
+            and it is the only panel there is (domain/presentation.ts). Level 3 has its own panels. */}
+        {result && presented.panel !== 'none' && page === 'answer' && (
+          <LandingPanel result={result} siteName={result.query.site.name} variant={presented.panel} vehicle={presented.vehicleFields ? vehicle : null} cursorMs={cursorMs}
+            marked={marked} onMark={onMark} stale={state.status === 'loading'}
             onCursor={(ms) => { setPlaying(false); setMovedCursor(clampCursor(ms, startMs, endMs)) }} />
         )}
         {result && state.status === 'ready' && view === 'ground' && <button type="button" className="stage__precision" onClick={surfacePick ? () => { setPlaying(false); setPrecisionOpen(precisionContext(result.query, view)) } : enterLevel3}>{surfacePick ? 'Advanced analysis' : 'Level 3 · Explore'}</button>}
@@ -598,9 +596,9 @@ export function App({ locale, onLocale }: { locale: Locale; onLocale: (locale: L
 
       {result && answer && page === 'answer' && (
         <TimeStrip
-          key={vehicle?.id ?? 'no-vehicle'}
+          key={presented.vehicleFields ? (vehicle?.id ?? 'no-vehicle') : 'no-vehicle'}
           inert={coverOpen}
-          vehicle={state.status === 'ready' && !surfacePick ? vehicle : null}
+          vehicle={state.status === 'ready' && presented.vehicleFields ? vehicle : null}
           result={result}
           cursorMs={cursorMs}
           playing={playing}
