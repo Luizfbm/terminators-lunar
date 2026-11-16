@@ -3,20 +3,47 @@ import { useId, useMemo, useState, type JSX } from 'react'
 import type { VisibilityResult } from '../../api/client'
 import { useI18n } from '../../i18n/I18nContext'
 import type { MessageKey } from '../../i18n/messages'
+import { useUncertainty } from '../../hooks/useUncertainty'
+import type { Body } from '../../domain/statement'
+import { BodyStatement, summaryKey } from '../Answer'
 import { coordinate } from '../siteName'
 import type { Vehicle } from '../vehiclePicker/vehicles'
-import { currentRow, durationParts, oneDecimal, periodRows, summarise, type PeriodRow } from './panelData'
+import { currentRow, durationParts, oneDecimal, periodRows, sectionsOf, summarise, type PanelVariant, type PeriodRow } from './panelData'
 import type { en } from './panelStrings'
 import './landingPanel.css'
 
 type PanelKey = keyof typeof en
 
+const HOUR_MS = 3_600_000
+
 export interface LandingPanelProps {
   result: VisibilityResult // the /visibility answer for the landing Site and Window
   siteName: string
-  vehicle: Vehicle | null // chosen before landing; null on Level 1 landings
+  /**
+   * 'vehicle' is the panel of a Level 2 landing, with the vehicle and its energy periods. 'site' is the one
+   * for every place without a vehicle (Level 1, and the maps before a landing): only what exists there.
+   */
+  variant: PanelVariant
+  vehicle: Vehicle | null // chosen before landing; only the 'vehicle' panel shows it
   cursorMs: number
   onCursor: (ms: number) => void
+  /** Whose Occluder is marked on the horizon, and the way to mark one (the reason under a Countdown). */
+  marked?: Body | null
+  onMark?: (body: Body) => void
+  /** The next Site is being asked for: the last answer stays, dimmed. */
+  stale?: boolean
+}
+
+/** The Countdowns of the Cursor: the sentence about the Sun and the one about the Earth, each with its Occluder and the DEM band. */
+function Countdowns({ result, cursorMs, marked, onMark, label }: { result: VisibilityResult; cursorMs: number; marked: Body | null; onMark?: (body: Body) => void; label: string }) {
+  // Asked once the answer is here, and never waited for.
+  const uncertainty = useUncertainty(result)
+  return (
+    <section className="landing-panel__card landing-panel__countdown" aria-label={label}>
+      <BodyStatement body="sun" result={result} cursorMs={cursorMs} heading="h3" marked={marked === 'sun'} onMark={onMark} uncertainty={uncertainty} measured={false} />
+      <BodyStatement body="earth" result={result} cursorMs={cursorMs} heading="h3" marked={marked === 'earth'} onMark={onMark} uncertainty={uncertainty} measured={false} />
+    </section>
+  )
 }
 
 const STORAGE_KEY = 'landingPanel.collapsed'
@@ -80,7 +107,7 @@ function PeriodList({ rows, cursorMs, onLabel, offLabel, kind, span, duration, o
   )
 }
 
-export function LandingPanel({ result, siteName, vehicle, cursorMs, onCursor }: LandingPanelProps): JSX.Element {
+export function LandingPanel({ result, siteName, variant, vehicle, cursorMs, onCursor, marked = null, onMark, stale = false }: LandingPanelProps): JSX.Element {
   const i18n = useI18n()
   const { formatNumber, formatDate, formatDay, formatTime, formatPercent } = i18n
   // The keys reach MessageKey once messages.ts spreads panelStrings; until then the cast bridges them.
@@ -89,6 +116,8 @@ export function LandingPanel({ result, siteName, vehicle, cursorMs, onCursor }: 
   const titleId = useId()
   const hintId = useId()
   const [collapsed, setCollapsed] = useState(initialCollapsed)
+  const sections = sectionsOf(variant)
+  const has = (section: (typeof sections)[number]) => sections.includes(section)
 
   const startMs = Date.parse(result.query.start)
   const endMs = Date.parse(result.query.end)
@@ -117,7 +146,7 @@ export function LandingPanel({ result, siteName, vehicle, cursorMs, onCursor }: 
   }
 
   return (
-    <div className="landing-panel" data-collapsed={collapsed}>
+    <div className="landing-panel" data-collapsed={collapsed} data-variant={variant} data-stale={stale}>
       <button
         type="button"
         className="landing-panel__toggle"
@@ -136,7 +165,7 @@ export function LandingPanel({ result, siteName, vehicle, cursorMs, onCursor }: 
           </h2>
           <p className="landing-panel__sub">
             {coordinate(result.query.site, i18n)}
-            {vehicle && (
+            {has('vehicle') && vehicle && (
               <>
                 <br />
                 {t('landingPanel.vehicle', { name: vehicle.name })}
@@ -146,6 +175,18 @@ export function LandingPanel({ result, siteName, vehicle, cursorMs, onCursor }: 
             {windowText}
           </p>
         </header>
+
+        {has('countdown') && <Countdowns result={result} cursorMs={cursorMs} marked={marked} onMark={onMark} label={t('landingPanel.countdown')} />}
+
+        {has('sentence') && (
+          <p className="landing-panel__sentence">
+            {i18n.t(summaryKey(result.metrics), {
+              both: i18n.formatSpan(result.metrics.sun_and_earth_hours * HOUR_MS),
+              lit: i18n.formatSpan(result.metrics.lcip_hours * HOUR_MS),
+              dark: i18n.formatSpan(result.metrics.lcsp_hours * HOUR_MS),
+            })}
+          </p>
+        )}
 
         <section className="landing-panel__card">
           <h3>{t('landingPanel.summary')}</h3>
@@ -172,39 +213,45 @@ export function LandingPanel({ result, siteName, vehicle, cursorMs, onCursor }: 
           </dl>
         </section>
 
-        <p id={hintId} className="landing-panel__note">
-          {t('landingPanel.hint')}
-        </p>
+        {has('hint') && (
+          <p id={hintId} className="landing-panel__note">
+            {t('landingPanel.hint')}
+          </p>
+        )}
 
-        <section className="landing-panel__card" aria-describedby={hintId}>
-          <h3>{t('landingPanel.energy')}</h3>
-          <PeriodList
-            rows={energy}
-            cursorMs={cursorMs}
-            onLabel={t('landingPanel.charge')}
-            offLabel={t('landingPanel.battery')}
-            kind="sun"
-            span={span}
-            duration={duration}
-            onCursor={onCursor}
-          />
-        </section>
+        {has('energy') && (
+          <section className="landing-panel__card" aria-describedby={hintId}>
+            <h3>{t('landingPanel.energy')}</h3>
+            <PeriodList
+              rows={energy}
+              cursorMs={cursorMs}
+              onLabel={t('landingPanel.charge')}
+              offLabel={t('landingPanel.battery')}
+              kind="sun"
+              span={span}
+              duration={duration}
+              onCursor={onCursor}
+            />
+          </section>
+        )}
 
-        <section className="landing-panel__card" aria-describedby={hintId}>
-          <h3>{t('landingPanel.comms')}</h3>
-          <PeriodList
-            rows={comms}
-            cursorMs={cursorMs}
-            onLabel={t('landingPanel.link')}
-            offLabel={t('landingPanel.noLink')}
-            kind="earth"
-            span={span}
-            duration={duration}
-            onCursor={onCursor}
-          />
-        </section>
+        {has('comms') && (
+          <section className="landing-panel__card" aria-describedby={hintId}>
+            <h3>{t('landingPanel.comms')}</h3>
+            <PeriodList
+              rows={comms}
+              cursorMs={cursorMs}
+              onLabel={t('landingPanel.link')}
+              offLabel={t('landingPanel.noLink')}
+              kind="earth"
+              span={span}
+              duration={duration}
+              onCursor={onCursor}
+            />
+          </section>
+        )}
 
-        <p className="landing-panel__note">{t('landingPanel.note')}</p>
+        <p className="landing-panel__note">{t(variant === 'vehicle' ? 'landingPanel.note' : 'landingPanel.noteSite')}</p>
       </aside>
     </div>
   )

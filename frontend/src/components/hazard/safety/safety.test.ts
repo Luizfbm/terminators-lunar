@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { I18nProvider } from '../../../i18n/I18nContext'
 import type { Locale } from '../../../i18n/messages'
-import { changeOf, formatChange, formatShare, sealOf, viewOf, type View } from './logic'
+import { changeOf, formatChange, formatShare, sealOf, showsCircle, viewOf, type View } from './logic'
 import { SafetyView } from './SafetyCircle'
 import { en, pt } from './strings'
 import type { HazardAround, SiteHazard } from './types'
@@ -145,5 +145,20 @@ describe('a Site without a grid', () => {
     const html = draw(viewOf(false, { status: 'loading' }, { status: 'idle' }), 'en')
     expect(html).toContain('safety__ring')
     expect(html).not.toContain('safety__seal')
+  })
+})
+
+describe('when the circle is drawn at all (Level 3, issue #151)', () => {
+  const noGrid: SiteHazard = { ...hazard, grid: null, stats: null, runs: [] }
+
+  it('is with a seal only: real numbers for a Site with a grid', () => {
+    expect(showsCircle(viewOf(false, ready(hazard), { status: 'idle' }))).toBe(true)
+  })
+
+  it('is never for a custom point, a Site without a grid, a failed request or one still loading', () => {
+    expect(showsCircle(viewOf(true, { status: 'idle' }, { status: 'idle' }))).toBe(false)
+    expect(showsCircle(viewOf(false, ready(noGrid), { status: 'idle' }))).toBe(false)
+    expect(showsCircle(viewOf(false, { status: 'error', code: 'network' }, { status: 'idle' }))).toBe(false)
+    expect(showsCircle(viewOf(false, { status: 'loading' }, { status: 'idle' }))).toBe(false)
   })
 })

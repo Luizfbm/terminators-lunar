@@ -79,3 +79,12 @@ export function viewOf(custom: boolean, hazard: PanelState<SiteHazard>, around: 
   // The count is a second line under the seal: without it (still loading, or the Site outside the grid) the seal stands.
   return { kind: 'seal', seal, around: around.status === 'ready' ? around.data : null }
 }
+
+/**
+ * Whether the circle is drawn at all. It belongs to Level 3 (the caller decides that), and there it shows
+ * only with real numbers: while they load, or when there is no grid, nothing is drawn, so the absence of a
+ * percentage never reads as "safe" nor as a note about a place the visitor is not exploring.
+ */
+export function showsCircle(view: View): boolean {
+  return view.kind === 'seal'
+}

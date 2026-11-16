@@ -29,7 +29,7 @@ Decisão do Luiz, 15/11/2026: o app passa a abrir no seu layout.
 
 ## O que fica escondido por enquanto
 
-Atualização (#55, 15/11/2026): a forma de trazer esses pontos de volta é um cartão com a resposta no canto do globo (a frase do Sol e da Terra, o Occluder de cada uma e a faixa de incerteza) e uma gaveta de detalhes, aberta pelo botão Detalhes (`details=1` no link), com o resto da lista abaixo. O layout clássico continua como era.
+Atualização (#55, 15/11/2026): a forma de trazer esses pontos de volta era um cartão com a resposta no canto do globo e uma gaveta de detalhes (`details=1` no link). Atualização (#151, 15/11/2026): o cartão e a gaveta saíram. A resposta passa a ser apresentada só pelo painel de pouso da Larissa nos níveis 1 e 2: no nível 1 ele traz o Local, a Janela, o Sol, a Terra, o tempo com os dois, a duração das indisponibilidades, a frase e as contagens regressivas com o Occluder de cada uma, sem veículo nem bateria; no nível 2 fica como ela fez. O círculo de precisão e os avisos de perigo são só do nível 3. O layout clássico continua como era, e é nele que ficam, por enquanto, o resto da lista abaixo.
 
 Nada disso foi apagado. Os componentes continuam no código, só não aparecem no seu layout. Vamos pensar em outra forma de trazer esses pontos de volta:
 

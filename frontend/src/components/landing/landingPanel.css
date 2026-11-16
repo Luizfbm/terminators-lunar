@@ -242,6 +242,69 @@
   color: var(--lp-muted);
 }
 
+/* The panel without a vehicle (Level 1): the Countdowns and the plain sentence, in the panel's own sizes.
+   The sentences keep the serif of the answer, set to the width of the panel; the reason under each is the
+   button that marks the Occluder on the horizon. */
+.landing-panel .say {
+  font: 400 1.2rem / 1.15 var(--serif);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--lp-text);
+}
+
+/* Three classes: the answer's own margins (.say + .say, .why, .band-line) are set for the column. */
+.landing-panel .landing-panel__countdown .say {
+  margin: 0;
+}
+
+.landing-panel .landing-panel__countdown .say--earth {
+  margin-top: 14px;
+}
+
+.landing-panel .landing-panel__countdown .why,
+.landing-panel .landing-panel__countdown .band-line {
+  max-width: none;
+  margin: 4px 0 0;
+  color: var(--lp-muted);
+  font: 400 11.5px / 1.45 var(--mono);
+}
+
+.landing-panel .why__show:hover,
+.landing-panel .why__show[aria-pressed='true'] {
+  color: var(--lp-text);
+}
+
+.landing-panel .why__show:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.landing-panel__sentence {
+  font: 400 12px / 1.5 var(--mono);
+  color: var(--lp-text);
+}
+
+/* The next Site is being asked for: the last answer stays, dimmed, and is not touched meanwhile. */
+.landing-panel[data-stale='true'] .landing-panel__body {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* On a wide screen the foot of the stage (the view buttons, the hill link) is at the bottom of the picture:
+   a tall panel stops above it instead of over it. */
+@media (min-width: 900px) {
+  .landing-panel {
+    --landing-panel-bottom: 64px;
+  }
+}
+
+/* The caption of the stage ("Drag to look around", the map's hint) keeps clear of the panel on a narrow window. */
+@media (min-width: 900px) and (max-width: 1199px) {
+  .screen:not([data-layout='classic']) .stage__caption {
+    max-width: calc(100% - var(--menu-w) - 16px - 20rem - 3 * var(--gutter));
+  }
+}
+
 /* A phone: a bottom sheet at most half the stage high, and closed by default (LandingPanel.tsx), so the
    view from the ground stays in sight. The toggle stays at the top right and turns to point down/up. */
 @media (max-width: 560px) {

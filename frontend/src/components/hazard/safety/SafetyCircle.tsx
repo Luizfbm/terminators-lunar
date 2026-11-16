@@ -1,6 +1,6 @@
 import type { VisibilityResult } from '../../../api/client'
 import { useI18n } from '../../../i18n/I18nContext'
-import { formatChange, formatShare, LEVEL, RADIUS_M, type View } from './logic'
+import { formatChange, formatShare, LEVEL, RADIUS_M, showsCircle, type View } from './logic'
 import { fill, stringsFor } from './strings'
 import { useSafety } from './useSafety'
 import './safety.css'
@@ -8,11 +8,14 @@ import './safety.css'
 /**
  * The safety circle on the view from the ground, with its seal: the hazard not vetoed by Normal
  * navigation on the 60 m grid against Multiresolution at P90, and how many 50 m cells within 250 m are
- * over the slope limit at 5 m and at 60 m. Without a grid the seal goes and says why. It lets every
- * pointer through, so the sky under it still turns.
+ * over the slope limit at 5 m and at 60 m. It lets every pointer through, so the sky under it still turns.
+ *
+ * It is a Level 3 element: whoever mounts it has already checked the level (domain/presentation.ts). Here
+ * it is drawn only with real numbers; with no grid, a custom point or a failed request it draws nothing.
  */
 export function SafetyCircle({ result }: { result: VisibilityResult }) {
-  return <SafetyView view={useSafety(result)} />
+  const view = useSafety(result)
+  return showsCircle(view) ? <SafetyView view={view} /> : null
 }
 
 /** The circle for a given state of the two answers; the part tests draw without asking the API. */

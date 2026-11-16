@@ -68,14 +68,17 @@ export function BodyStatement({
   marked,
   onMark,
   uncertainty,
+  measured = true,
 }: {
   body: Body
   result: VisibilityResult
   cursorMs: number
-  heading: 'h1' | 'h2'
+  heading: 'h1' | 'h2' | 'h3'
   marked: boolean
   onMark?: (body: Body) => void
   uncertainty: UncertaintyState
+  /** Whether the share of the ground the laser measured goes under the band (the column does; the panel does not). */
+  measured?: boolean
 }) {
   const i18n = useI18n()
   const { t, formatDay, formatTime, formatSpan } = i18n
@@ -103,13 +106,13 @@ export function BodyStatement({
           t('why', { date: formatDay(at), time: formatTime(at), where })
         )}
       </p>
-      <UncertaintyLine uncertainty={uncertainty} event={said.event} events={result.events} />
+      <UncertaintyLine uncertainty={uncertainty} event={said.event} events={result.events} measured={measured} />
     </>
   )
 }
 
 /** Which summary sentence fits the Window: a zero is said in words, never as "0 min". */
-function summaryKey(metrics: VisibilityResult['metrics']): MessageKey {
+export function summaryKey(metrics: VisibilityResult['metrics']): MessageKey {
   if (metrics.sunlit_hours === 0) return 'summary.noSun'
   if (metrics.sun_and_earth_hours === 0) return 'summary.apart'
   if (metrics.lcsp_hours === 0) return 'summary.noNight'
@@ -135,32 +138,12 @@ export interface AnswerProps {
 }
 
 /** The whole column (the classic layout). It asks for the DEM Uncertainty band itself. */
-export function Answer(props: AnswerProps) {
-  // The DEM Uncertainty band, asked once the answer is here; the answer never waits on it.
-  const uncertainty = useUncertainty(props.result)
-  return <AnswerBody {...props} uncertainty={uncertainty} part="all" />
-}
-
-/**
- * The column, or only what goes under the card in the default layout (`details`): the Sun and Earth
- * statements are the card's then. The band is asked by whoever draws both, once, and handed in.
- */
-export function AnswerBody({
-  result,
-  cursorMs,
-  where,
-  onWindow,
-  marked = null,
-  onMark,
-  landing,
-  stats = false,
-  onStats,
-  uncertainty,
-  part,
-}: AnswerProps & { uncertainty: UncertaintyState; part: 'all' | 'details' }) {
+export function Answer({ result, cursorMs, where, onWindow, marked = null, onMark, landing, stats = false, onStats }: AnswerProps) {
   const i18n = useI18n()
   const { t, formatSpan } = i18n
   const { metrics } = result
+  // The DEM Uncertainty band, asked once the answer is here; the answer never waits on it.
+  const uncertainty = useUncertainty(result)
   const atLanding = result.query.site.id === IM2_SITE_ID
   // The Landing scatter is asked here so the knife-edge warning and the miss panel read the same answer.
   const radius = useRadius()
@@ -168,9 +151,9 @@ export function AnswerBody({
   return (
     <>
       {where}
-      {part === 'all' && <BodyStatement body="sun" result={result} cursorMs={cursorMs} heading="h1" marked={marked === 'sun'} onMark={onMark} uncertainty={uncertainty} />}
+      <BodyStatement body="sun" result={result} cursorMs={cursorMs} heading="h1" marked={marked === 'sun'} onMark={onMark} uncertainty={uncertainty} />
       <FlatLine result={result} cursorMs={cursorMs} />
-      {part === 'all' && <BodyStatement body="earth" result={result} cursorMs={cursorMs} heading="h2" marked={marked === 'earth'} onMark={onMark} uncertainty={uncertainty} />}
+      <BodyStatement body="earth" result={result} cursorMs={cursorMs} heading="h2" marked={marked === 'earth'} onMark={onMark} uncertainty={uncertainty} />
       {/* The engine sees this point sunlit, and the mission still ended: say why, here. */}
       {atLanding && <p className="landing-note">{t('landing.im2.note')}</p>}
       <KnifeEdgeWarning scatter={scatter.state} />
