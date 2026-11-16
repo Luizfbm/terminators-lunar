@@ -1740,3 +1740,50 @@ def test_the_sun_and_earth_radius_matches_an_independent_ephemeris_computation(
         # The contract names the equatorial radius; the mean one is 0.11% smaller.
         assert earth == pytest.approx(equatorial, abs=1e-5), sample["t"]
         assert earth == pytest.approx(mean, rel=2e-3), sample["t"]
+
+
+def test_a_route_from_the_north_pole_is_a_422_not_a_crash() -> None:
+    # PR #149 review, found by fuzzing /routes/plan with the contract's own bounds (latitude
+    # -90 to 90): an origin at 90°N, which the contract allows, was read on the south polar
+    # map, whose scale is 2 / (1 - sin 90°), a division by zero, and the API answered 500.
+    # /terrain/heights refuses a point north of the coverage with a 422; so must the route.
+    # Checked against that sibling: it gives the same answer for the same point.
+    safe = TestClient(app, raise_server_exceptions=False)
+    body = {
+        "origin": {"latitude_deg": 90, "longitude_deg": -90},
+        "destination": {"latitude_deg": 90, "longitude_deg": 0},
+        "start": "2026-11-15T00:00:00Z",
+        "end": "2026-12-15T00:00:00Z",
+        "max_slope_deg": 5,
+        "minimum_resolution_m": 80,
+    }
+    route = safe.post("/routes/plan", json=body)
+    heights = safe.get("/terrain/heights", params={"latitude_deg": 90, "longitude_deg": -90})
+    assert heights.status_code == 422
+    assert route.status_code == 422, route.text
+    assert route.json()["code"] == heights.json()["code"] == "outside_coverage"
+
+
+def test_a_busy_route_planner_says_when_to_ask_again() -> None:
+    # PR #149 review (/routes/plan): the contract answers 503 with the shared Busy response,
+    # whose Retry-After header every other busy answer carries, but the planner raised its own
+    # 503 with no header, so a client had no wait to follow. The planner plans one route at a
+    # time, so the way to meet the answer is to hold its slot, as another visitor's route would.
+    from app import route_plan
+
+    body = {
+        "origin": {"latitude_deg": -89.9, "longitude_deg": 30},
+        "destination": {"latitude_deg": -89.9, "longitude_deg": 31},
+        "start": "2026-11-15T00:00:00Z",
+        "end": "2026-11-16T00:00:00Z",
+        "max_slope_deg": 15,
+    }
+    assert route_plan._SLOT.acquire(blocking=False)
+    try:
+        busy = client.post("/routes/plan", json=body)
+    finally:
+        route_plan._SLOT.release()
+    assert busy.status_code == 503
+    assert busy.headers["content-type"].startswith("application/problem+json")
+    assert busy.json()["code"] == "busy"
+    assert int(busy.headers["Retry-After"]) >= 1

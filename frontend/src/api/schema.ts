@@ -13,38 +13,14 @@ export interface paths {
         };
         /**
          * Native Level 3 before/after terrain in a shared 10 km square
-         * @description Selection centres are limited to 87.5–90 degrees south. Before/after compares native 80 m and 20 m LOLA detail, not dates. No fallback or resampling. Bounds are south polar stereographic map metres; grids include border pixels for drawing the same rectangle.
+         * @description Selection centres are limited to 87.5–90 degrees south. Before/after compares native
+         *     80 m and 20 m LOLA detail (the PGDA 90 products), not dates. No fallback and no
+         *     resampling: both DEMs must cover the whole 10 × 10 km square, or the answer is a 422
+         *     and nothing is drawn. Bounds are south polar stereographic map metres; the grids
+         *     include border pixels so both draw the same rectangle. The answer can reach about
+         *     1.5 MB uncompressed; the reverse proxy compresses it (gzip or zstd) for clients that accept it.
          */
-        get: {
-            parameters: {
-                query: {
-                    latitude_deg: number;
-                    longitude_deg: number;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Complete native coverage at both resolutions */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["LandingArea"];
-                    };
-                };
-                /** @description Invalid selection or incomplete native terrain coverage */
-                422: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
+        get: operations["getLandingArea"];
         put?: never;
         post?: never;
         delete?: never;
@@ -64,7 +40,13 @@ export interface paths {
         put?: never;
         /**
          * Plan a bounded native-DEM route and optional moving power scenario
-         * @description Local implementation pending contract review. Grid cropped to 129 pixels per side without resampling. Motion at most 64 samples; energy is a scenario, not rover safety validation.
+         * @description The shortest path on the native pixel centres of one DEM (20, 80 or 240 m, the finest
+         *     one at or above `minimum_resolution_m`), cropped to 129 pixels per side without
+         *     resampling. Motion is evaluated at 64 samples at most; the energy is a scenario with
+         *     the speed, load and panel power given in the request, not rover safety validation.
+         *     A Window outside 2025-2032, a destination outside the cropped grid, a point with no
+         *     DEM pixel, or an end that is not after the start is a 422; a route that is already
+         *     being planned is a 503.
          */
         post: operations["planRoute"];
         delete?: never;
@@ -1918,6 +1900,30 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getLandingArea: {
+        parameters: {
+            query: {
+                latitude_deg: number;
+                longitude_deg: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Complete native coverage at both resolutions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LandingArea"];
+                };
+            };
+            422: components["responses"]["Unprocessable"];
+        };
+    };
     planRoute: {
         parameters: {
             query?: never;
@@ -1940,24 +1946,8 @@ export interface operations {
                     "application/json": components["schemas"]["RouteResponse"];
                 };
             };
-            /** @description Invalid input or unavailable coverage */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["Problem"];
-                };
-            };
-            /** @description Route planner busy */
-            503: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["Problem"];
-                };
-            };
+            422: components["responses"]["Unprocessable"];
+            503: components["responses"]["Busy"];
         };
     };
     getHealth: {

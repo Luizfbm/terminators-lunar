@@ -39,11 +39,18 @@ tags:
       their drives (Eduardo's multiresolution work).
 
 paths:
-  # Local route integration: coordinator review required before publication.
   /terrain/landing-area:
     get:
+      tags: [sites]
+      operationId: getLandingArea
       summary: Native Level 3 before/after terrain in a shared 10 km square
-      description: Selection centres are limited to 87.5–90 degrees south. Before/after compares native 80 m and 20 m LOLA detail, not dates. No fallback or resampling. Bounds are south polar stereographic map metres; grids include border pixels for drawing the same rectangle.
+      description: |
+        Selection centres are limited to 87.5–90 degrees south. Before/after compares native
+        80 m and 20 m LOLA detail (the PGDA 90 products), not dates. No fallback and no
+        resampling: both DEMs must cover the whole 10 × 10 km square, or the answer is a 422
+        and nothing is drawn. Bounds are south polar stereographic map metres; the grids
+        include border pixels so both draw the same rectangle. The answer can reach about
+        1.5 MB uncompressed; the reverse proxy compresses it (gzip or zstd) for clients that accept it.
       parameters:
         - name: latitude_deg
           in: query
@@ -60,15 +67,21 @@ paths:
             application/json:
               schema: {$ref: '#/components/schemas/LandingArea'}
         '422':
-          description: Invalid selection or incomplete native terrain coverage
+          $ref: "#/components/responses/Unprocessable"
   /routes/plan:
     post:
       operationId: planRoute
       tags:
       - terrain
       summary: Plan a bounded native-DEM route and optional moving power scenario
-      description: Local implementation pending contract review. Grid cropped to 129 pixels per side
-        without resampling. Motion at most 64 samples; energy is a scenario, not rover safety validation.
+      description: |
+        The shortest path on the native pixel centres of one DEM (20, 80 or 240 m, the finest
+        one at or above `minimum_resolution_m`), cropped to 129 pixels per side without
+        resampling. Motion is evaluated at 64 samples at most; the energy is a scenario with
+        the speed, load and panel power given in the request, not rover safety validation.
+        A Window outside 2025-2032, a destination outside the cropped grid, a point with no
+        DEM pixel, or an end that is not after the start is a 422; a route that is already
+        being planned is a 503.
       requestBody:
         required: true
         content:
@@ -86,17 +99,9 @@ paths:
                 synthetic:
                   $ref: ./examples/route-plan.example.json
         '422':
-          description: Invalid input or unavailable coverage
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: "#/components/responses/Unprocessable"
         '503':
-          description: Route planner busy
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: "#/components/responses/Busy"
   /health:
     get:
       tags: [service]
