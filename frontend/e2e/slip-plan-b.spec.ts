@@ -82,7 +82,7 @@ test.describe('in English', () => {
     expect(asked).toHaveLength(0)
   })
 
-  test('the worst late start lists the top three nearby Sites in the route order, with their numbers', async ({ page }) => {
+  test('the worst late start lists the top three nearby Sites in the route order, with their numbers', { tag: '@smoke' }, async ({ page }) => {
     const { slip, asked, answers } = await watch(page)
     await page.goto('/?site=001&start=2026-11-14&hours=708.73')
     const panel = planB(page)

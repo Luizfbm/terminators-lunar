@@ -62,7 +62,7 @@ test.describe('error states', () => {
     await expect(alert.getByRole('button', { name: 'Try again' })).toBeVisible()
   })
 
-  test('Try again re-runs the request and shows the answer', async ({ page }) => {
+  test('Try again re-runs the request and shows the answer', { tag: '@smoke' }, async ({ page }) => {
     let calls = 0
     await page.route((url: URL) => url.pathname === '/visibility', async (route: Route) => {
       calls += 1

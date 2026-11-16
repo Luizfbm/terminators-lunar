@@ -75,7 +75,7 @@ test.describe('the assistant, English', () => {
     expect(await violations(page)).toEqual([])
   })
 
-  test('sends the conversation, the language and the Query on screen, and marks an offline answer', async ({ page }) => {
+  test('sends the conversation, the language and the Query on screen, and marks an offline answer', { tag: '@smoke' }, async ({ page }) => {
     await open(page)
     const bodies: unknown[] = []
     page.on('request', (request) => {
@@ -289,7 +289,7 @@ test.describe('the assistant on a phone', () => {
   test.use({ locale: 'en-GB', viewport: { width: 390, height: 844 } })
 
   // the requirement: it floated over the answer before, and covered the headline and the custom point's Check.
-  test('the button sits in the timeline, and the sheet takes the whole screen', async ({ page }) => {
+  test('the button sits in the timeline, and the sheet takes the whole screen', { tag: '@smoke' }, async ({ page }) => {
     await open(page)
     const button = page.locator('footer.strip').getByRole('button', { name: 'Ask the assistant' })
     await expect(button).toBeInViewport()

@@ -72,7 +72,7 @@ async function watchStage(page: Page) {
   })
 }
 
-test('the ground view is fetched right after the first answer, before any click on it', async ({ page }) => {
+test('the ground view is fetched right after the first answer, before any click on it', { tag: '@smoke' }, async ({ page }) => {
   const asked: string[] = []
   page.on('request', (request) => asked.push(new URL(request.url()).pathname))
   await openOnGlobe(page)

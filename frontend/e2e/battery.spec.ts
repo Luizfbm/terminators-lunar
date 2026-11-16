@@ -32,7 +32,7 @@ test.describe('the simple reading', () => {
     await expect(section(page)).toContainText('it has no thermal model')
   })
 
-  test('puts a typed tolerance against the longest night, and keeps it in the link', async ({ page }) => {
+  test('puts a typed tolerance against the longest night, and keeps it in the link', { tag: '@smoke' }, async ({ page }) => {
     await open(page)
     const field = page.getByRole('spinbutton', { name: 'Darkness tolerance' })
     await field.fill('200')

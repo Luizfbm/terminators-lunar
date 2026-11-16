@@ -46,7 +46,7 @@ async function violations(page: Page) {
 test.describe('DSN link, English', () => {
   test.use({ locale: 'en-GB' })
 
-  test('asks nothing until opened; when the link equals Earth visible, one line says so', async ({ page }) => {
+  test('asks nothing until opened; when the link equals Earth visible, one line says so', { tag: '@smoke' }, async ({ page }) => {
     let asked = 0
     page.on('request', (request) => {
       if (request.url().includes('/visibility/dsn')) asked += 1

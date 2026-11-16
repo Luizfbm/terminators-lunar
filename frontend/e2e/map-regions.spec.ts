@@ -72,7 +72,7 @@ test('from the pole there is one marker per Region, with its name and count, and
   await expect(page.locator('.globe__pin')).toHaveText('Connecting Ridge (NASA site 001)')
 })
 
-test('a click on a Region flies in, a click on one of its Sites asks about it, and Esc flies back out', async ({ page }) => {
+test('a click on a Region flies in, a click on one of its Sites asks about it, and Esc flies back out', { tag: '@smoke' }, async ({ page }) => {
   await openMap(page)
   await ridge(page).click()
   await expect(allRegions(page)).toBeVisible()

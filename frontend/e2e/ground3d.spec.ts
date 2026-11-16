@@ -21,7 +21,7 @@ async function open(page: Page, path = '/?view=ground') {
   return body
 }
 
-test('in the classic layout it opens looking at the Sun, where the API says it is, with the unrolled horizon as a strip under the sky', async ({ page }) => {
+test('in the classic layout it opens looking at the Sun, where the API says it is, with the unrolled horizon as a strip under the sky', { tag: '@smoke' }, async ({ page }) => {
   // The strip is only in the classic layout: Larissa's layout leaves it out (Luiz, 15/11/2026).
   const body = await open(page, classic('/?view=ground'))
   // The Cursor sits between two samples of the timeline: the view looks at the Sun of one of them.

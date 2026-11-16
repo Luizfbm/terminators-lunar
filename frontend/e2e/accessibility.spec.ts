@@ -26,7 +26,7 @@ for (const [name, viewport] of [
   test.describe(`WCAG AA on ${name}`, () => {
     test.use({ viewport })
 
-    test('the main screen, from orbit', async ({ page }) => {
+    test('the main screen, from orbit', { tag: '@smoke' }, async ({ page }) => {
       await open(page)
       expect(await violations(page)).toEqual([])
     })
