@@ -3,10 +3,11 @@ import type { Vec3 } from './sky'
 /**
  * How the dots of the two layers are drawn on the globe: a fixed size on screen, in CSS pixels, whatever
  * the zoom, and a light colour with a dark edge so they read over the grey Moon. The two layers have
- * colours of their own, and neither is the Sun's amber, the Earth's blue or the orange of "Land".
+ * colours of their own, and neither is the Sun's amber, the Earth's blue or the warm white of "Land".
  */
 export const MARKERS = {
-  sites: { color: 0x5ef2c8, css: '#5ef2c8', sizePx: 7 },
+  // A soft sage, not a bright teal: quiet over the Moon, apart from the missions' white (docs/design/ui-direction.md).
+  sites: { color: 0xb9d3c4, css: '#b9d3c4', sizePx: 6 },
   missions: { color: 0xffffff, css: '#ffffff', sizePx: 7 },
 } as const
 
