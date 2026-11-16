@@ -53,7 +53,7 @@ test.describe('default Query, English browser', () => {
     await expect(strip.locator('[data-kind="sun"]').first()).toBeVisible()
     await expect(strip.locator('[data-kind="shortShadow"]')).toHaveCount(2)
     await expect(strip.locator('[data-kind="earth"]')).toHaveCount(1)
-    await expect(page.getByText('Hatched: Short shadow (under 12 h)')).toBeVisible()
+    await expect(page.getByText('Striped: a short shadow, under 12 h')).toBeVisible()
     await expect(page.getByText('Cursor 20 Nov 2026, 12:00 UTC')).toBeVisible()
   })
 

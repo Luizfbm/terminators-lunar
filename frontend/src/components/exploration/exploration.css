@@ -1,5 +1,5 @@
-.exploration-select{position:absolute;right:24px;top:28px;z-index:12;width:300px;max-width:calc(100% - 32px);padding:22px;border:1px solid #36515e;border-radius:16px;background:#101a20f2;color:#f3f6f8;box-shadow:0 16px 55px #0005;font-size:14px}
-.exploration-eyebrow{font-size:10px;letter-spacing:.14em;font-weight:700;color:#6aafc9}
+.exploration-select{position:absolute;right:24px;top:28px;z-index:12;width:300px;max-width:calc(100% - 32px);padding:22px;border:1px solid var(--glass-edge);border-radius:var(--radius-panel);background:rgba(48,48,48,.92);color:#f3f6f8;box-shadow:0 16px 55px #0005;font-size:14px}
+.exploration-eyebrow{font-family:var(--label-font);font-size:var(--label);letter-spacing:var(--label-track);font-weight:500;color:var(--dim)}
 .exploration-select h2{font-size:22px;line-height:1.2;margin:10px 0}.exploration-select p{line-height:1.5;color:#b9c7d0}
 .exploration-fields{display:flex;gap:10px}.exploration-fields label{min-width:0;flex:1}
 .exploration-select label,.landing-inspector label{display:block;font-size:12px;font-weight:600;margin:12px 0}
