@@ -26,3 +26,25 @@ export function parseAmericanDate(text: string, withTime = true): string {
 export function localZone(): string {
   return Intl.DateTimeFormat('en-US').resolvedOptions().timeZone
 }
+
+/** What a date field shows: the text being typed, and the last value its parent gave it. */
+export interface DateDraft {
+  seen: string
+  withTime: boolean
+  text: string
+}
+
+export function draftOf(value: string, withTime: boolean): DateDraft {
+  return { seen: value, withTime, text: americanDate(value, withTime) }
+}
+
+/**
+ * The draft after a render. The text is rewritten only when the parent's value really changed to
+ * something the visitor did not type. A parent that ignores a half-typed date keeps its old value,
+ * and that must not wipe what is being typed.
+ */
+export function syncDraft(draft: DateDraft, value: string, withTime: boolean): DateDraft {
+  if (value === draft.seen && withTime === draft.withTime) return draft
+  const typed = withTime === draft.withTime && parseAmericanDate(draft.text, withTime) === value
+  return { seen: value, withTime, text: typed ? draft.text : americanDate(value, withTime) }
+}
