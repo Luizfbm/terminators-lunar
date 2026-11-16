@@ -249,20 +249,36 @@ function makeLander(): { group: THREE.Group; flame: THREE.Mesh; dispose: () => v
     group.add(mesh)
     return mesh
   }
-  part(new THREE.CylinderGeometry(0.34, 0.42, 0.3, 8), 0xd9a441).position.y = 0.47
-  part(new THREE.CylinderGeometry(0.2, 0.34, 0.24, 8), 0xc8ccd6).position.y = 0.74
-  part(new THREE.CylinderGeometry(0.43, 0.43, 0.05, 8), 0x8a6a2a).position.y = 0.31
-  part(new THREE.CylinderGeometry(0.08, 0.16, 0.14, 12), 0x555a66).position.y = 0.23
+  // Descent stage: gold foil in two tones, with a bright rim, so the flat colours still read as a shape.
+  part(new THREE.CylinderGeometry(0.4, 0.44, 0.16, 8), 0xb9862a).position.y = 0.38
+  part(new THREE.CylinderGeometry(0.36, 0.4, 0.14, 8), 0xdfae4a).position.y = 0.53
+  part(new THREE.CylinderGeometry(0.41, 0.41, 0.025, 8), 0xf3d27a).position.y = 0.46
+  part(new THREE.CylinderGeometry(0.45, 0.45, 0.03, 8), 0x6f5320).position.y = 0.3
+  // Ascent stage: a pale cabin with a dark window band and a cap.
+  part(new THREE.CylinderGeometry(0.24, 0.3, 0.2, 10), 0xdde1ea).position.y = 0.7
+  part(new THREE.CylinderGeometry(0.275, 0.285, 0.05, 10), 0x1b2433).position.y = 0.69
+  part(new THREE.CylinderGeometry(0.14, 0.24, 0.08, 10), 0xaab0be).position.y = 0.84
+  // Antenna: a mast and a small dish.
+  part(new THREE.CylinderGeometry(0.012, 0.012, 0.22, 6), 0xc8ccd6).position.set(0.12, 0.98, 0)
+  const dish = part(new THREE.ConeGeometry(0.08, 0.05, 14, 1, true), 0xf2f4f8)
+  dish.position.set(0.12, 1.1, 0)
+  dish.rotation.z = Math.PI / 5
+  // Engine bell.
+  part(new THREE.CylinderGeometry(0.07, 0.17, 0.16, 14), 0x3c4150).position.y = 0.21
   for (let leg = 0; leg < 4; leg++) {
     const angle = (leg * Math.PI) / 2 + Math.PI / 4
-    const strut = part(new THREE.CylinderGeometry(0.025, 0.025, 0.56, 6), 0xb8bcc6)
-    strut.position.set(Math.cos(angle) * 0.46, 0.24, Math.sin(angle) * 0.46)
-    strut.rotation.set(Math.sin(angle) * 0.6, 0, -Math.cos(angle) * 0.6)
-    part(new THREE.CylinderGeometry(0.09, 0.09, 0.025, 10), 0xd9a441).position.set(Math.cos(angle) * 0.62, 0.012, Math.sin(angle) * 0.62)
+    const strut = part(new THREE.CylinderGeometry(0.03, 0.022, 0.6, 6), 0x9aa0ad)
+    strut.position.set(Math.cos(angle) * 0.47, 0.25, Math.sin(angle) * 0.47)
+    strut.rotation.set(Math.sin(angle) * 0.62, 0, -Math.cos(angle) * 0.62)
+    part(new THREE.CylinderGeometry(0.1, 0.12, 0.03, 12), 0xe6bb58).position.set(Math.cos(angle) * 0.64, 0.015, Math.sin(angle) * 0.64)
   }
-  const flame = part(new THREE.ConeGeometry(0.13, 0.7, 14), 0xfff0b0, 0.85)
+  // The plume: a wide soft cone with a bright core inside it.
+  const flame = part(new THREE.ConeGeometry(0.17, 0.8, 16), 0xffa53a, 0.5)
   flame.rotation.x = Math.PI
-  flame.position.y = -0.18
+  flame.position.y = -0.2
+  const core = part(new THREE.ConeGeometry(0.07, 0.5, 12), 0xfffbe6, 0.95)
+  flame.add(core)
+  core.position.y = 0.12
   group.scale.setScalar(LANDER_SIZE)
   group.visible = false
   return { group, flame, dispose: () => made.forEach(({ geometry, material }) => { geometry.dispose(); material.dispose() }) }
