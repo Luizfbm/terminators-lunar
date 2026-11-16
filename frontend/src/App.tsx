@@ -43,7 +43,7 @@ import {
   type View,
 } from './domain/query'
 import { IM2_LANDING } from './domain/landing'
-import { DIVE_MS, fadeMs, scenesOf, startStage, stepStage } from './domain/stageMove'
+import { DIVE_MS, LANDING_MS, fadeMs, scenesOf, startStage, stepStage } from './domain/stageMove'
 import { chosenGlobeSite } from './domain/chosenSite'
 import { levelOfView } from './domain/globeLevels'
 import { presentationOf } from './domain/presentation'
@@ -240,7 +240,7 @@ export function App(_props: { locale: Locale; onLocale: (locale: Locale) => void
     }
     if (phase === 'fading-in' || phase === 'fading-out') return after(fadeMs(still), 'faded')
     if (phase === 'pulling-back') return after(DIVE_MS, 'pulled')
-    if (phase === 'diving') return after(DIVE_MS + 150, 'dived')
+    if (phase === 'diving') return after(LANDING_MS + 150, 'dived')
   }, [phase, still])
   const answer = useMemo(() => (answered ? named(answered, i18n) : null), [answered, i18n])
   const result = answer?.result ?? null

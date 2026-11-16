@@ -53,6 +53,8 @@ export type StageEvent =
   | { type: 'pulled' }
 
 export const DIVE_MS = 500
+/** The way down with the lander coming onto the Site (Globe.tsx): longer than the plain dive back up. */
+export const LANDING_MS = 1100
 export const FADE_MS = 300
 /** The lift from looking down to the horizon, eased by the Sky, starts with the fade. */
 export const LIFT_MS = 430

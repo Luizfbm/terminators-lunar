@@ -54,7 +54,7 @@ import { StageLoading } from './StageLoading'
 import { needsMenuBoxes } from '../domain/menuBoxes'
 import { LIGHT_GRAPHICS, SHARP_GRAPHICS, lightGraphicsSearch } from '../domain/graphicsMode'
 
-import { DIVE_MS } from '../domain/stageMove'
+import { DIVE_MS, LANDING_MS } from '../domain/stageMove'
 import { canDraw } from './webgl'
 
 export interface GlobeSite extends LatLon {
@@ -159,7 +159,6 @@ const DOT_FULL_SIZE_HEIGHT = 2.3
 const REGION_FLIGHT_MS = 800
 const REGION_FADE_MS = 300
 /** The dive ends this far above the Site, in Moon radii (about 21 km): the Site fills the stage. */
-const DIVE_HEIGHT = 0.012
 /** On a touch screen the readout of a tapped point stays this long. */
 const TOUCH_READOUT_MS = 2500
 /** In orbit the camera's up is the Moon's axis; on the map it is the 0° meridian, so the map never turns. */
@@ -224,7 +223,50 @@ const vector = (lat: number, lon: number, radius = 1) => new THREE.Vector3(...to
 const mapPoint = (aspect: number, edge = MAP_EDGE_LATITUDE) => vector(edge === MAP_EDGE_LATITUDE ? -89.9 : -89.999, 0, 0.99 + (edge === MAP_EDGE_LATITUDE ? 0.2 : Math.sin((90 + edge) * Math.PI / 180) * 1.25) / (Math.tan((16 * Math.PI) / 180) * Math.min(1, aspect)))
 
 /** Straight down on the Site, close enough that it fills the stage. */
-const divePoint = (site: LatLon) => vector(site.latitude_deg, site.longitude_deg, 1 + DIVE_HEIGHT)
+/** Where the camera ends on the way down: above the Site and to the side it came from, to see the relief. */
+function landingCamera(site: LatLon, from: THREE.Vector3): THREE.Vector3 {
+  const up = vector(site.latitude_deg, site.longitude_deg)
+  const aside = from.clone().addScaledVector(up, -from.dot(up))
+  if (aside.lengthSq() < 1e-6) aside.crossVectors(up, Math.abs(up.y) < 0.9 ? ORBIT_UP : MAP_UP)
+  return up.multiplyScalar(1 + LANDING_CAMERA_UP).addScaledVector(aside.normalize(), LANDING_CAMERA_ASIDE)
+}
+
+// The landing: on the way down the camera stops beside the Site, low enough to see the relief, and a
+// lander comes down on it with its engine lit. A drawing of a landing, not a simulation: the lander is
+// far larger than life so it can be seen, and its path is a straight line.
+const LANDING_CAMERA_UP = 0.035
+const LANDING_CAMERA_ASIDE = 0.06
+const LANDER_SIZE = 0.011
+const LANDER_START_HEIGHT = 0.03
+
+function makeLander(): { group: THREE.Group; flame: THREE.Mesh; dispose: () => void } {
+  const group = new THREE.Group()
+  const made: { geometry: THREE.BufferGeometry; material: THREE.Material }[] = []
+  const part = (geometry: THREE.BufferGeometry, color: number, opacity = 1) => {
+    const material = new THREE.MeshBasicMaterial({ color, transparent: opacity < 1, opacity, depthWrite: opacity === 1 })
+    made.push({ geometry, material })
+    const mesh = new THREE.Mesh(geometry, material)
+    group.add(mesh)
+    return mesh
+  }
+  part(new THREE.CylinderGeometry(0.34, 0.42, 0.3, 8), 0xd9a441).position.y = 0.47
+  part(new THREE.CylinderGeometry(0.2, 0.34, 0.24, 8), 0xc8ccd6).position.y = 0.74
+  part(new THREE.CylinderGeometry(0.43, 0.43, 0.05, 8), 0x8a6a2a).position.y = 0.31
+  part(new THREE.CylinderGeometry(0.08, 0.16, 0.14, 12), 0x555a66).position.y = 0.23
+  for (let leg = 0; leg < 4; leg++) {
+    const angle = (leg * Math.PI) / 2 + Math.PI / 4
+    const strut = part(new THREE.CylinderGeometry(0.025, 0.025, 0.56, 6), 0xb8bcc6)
+    strut.position.set(Math.cos(angle) * 0.46, 0.24, Math.sin(angle) * 0.46)
+    strut.rotation.set(Math.sin(angle) * 0.6, 0, -Math.cos(angle) * 0.6)
+    part(new THREE.CylinderGeometry(0.09, 0.09, 0.025, 10), 0xd9a441).position.set(Math.cos(angle) * 0.62, 0.012, Math.sin(angle) * 0.62)
+  }
+  const flame = part(new THREE.ConeGeometry(0.13, 0.7, 14), 0xfff0b0, 0.85)
+  flame.rotation.x = Math.PI
+  flame.position.y = -0.18
+  group.scale.setScalar(LANDER_SIZE)
+  group.visible = false
+  return { group, flame, dispose: () => made.forEach(({ geometry, material }) => { geometry.dispose(); material.dispose() }) }
+}
 
 const viewpoint = (site: LatLon) => vector(site.latitude_deg, site.longitude_deg, 3.1).add(new THREE.Vector3(1.1, 0, 0.9))
 
@@ -556,6 +598,10 @@ export function Globe(props: GlobeProps) {
     // The dive to the ground and back: a flight of its own, which the view's flights wait for.
     let dive: { from: THREE.Vector3; to: THREE.Vector3; fromUp: THREE.Vector3; toUp: THREE.Vector3; start: number; down: boolean } | null = null
     let shownDive = false
+    const lander = makeLander()
+    scene.add(lander.group)
+    // Where the camera looks at the end of the way down: the Site's own ground, not the Moon's centre.
+    const landingLook = new THREE.Vector3()
     let shownSite: string | null = null
     let shownMode: 'orbit' | 'map' | null = null
     let shownRegion: string | null = null
@@ -806,10 +852,11 @@ export function Globe(props: GlobeProps) {
         const back = mode === 'map' ? (region ? regionPoint(region, camera.aspect) : mapPoint(camera.aspect, state.selectionMaxLatitudeDeg)) : viewpoint(state.site)
         dive = {
           from: camera.position.clone(),
-          to: wantDive ? divePoint(state.site) : back,
+          to: wantDive ? landingCamera(state.site, camera.position) : back,
           fromUp: camera.up.clone(),
           // Straight down near the pole the Moon's axis is the line of sight, so the map's up is used.
-          toUp: wantDive || mode === 'map' ? MAP_UP.clone() : ORBIT_UP.clone(),
+          // Beside the Site the ground's own up keeps the horizon level.
+          toUp: wantDive ? vector(state.site.latitude_deg, state.site.longitude_deg) : mode === 'map' ? MAP_UP.clone() : ORBIT_UP.clone(),
           start: now,
           down: wantDive,
         }
@@ -820,9 +867,11 @@ export function Globe(props: GlobeProps) {
         if (wantDive && shownMode === null) {
           camera.position.copy(dive.to)
           camera.up.copy(dive.toUp)
-          camera.lookAt(0, 0, 0)
+          landingLook.copy(vector(state.site.latitude_deg, state.site.longitude_deg))
+          camera.lookAt(landingLook)
           dive = null
         }
+        if (wantDive) landingLook.copy(vector(state.site.latitude_deg, state.site.longitude_deg))
         if (!wantDive) {
           shownSite = state.site.id
           shownMode = mode
@@ -899,12 +948,24 @@ export function Globe(props: GlobeProps) {
       // On the map the Sites are buttons of their own (`MapLayer`), so the dots are for the orbit.
       siteDots.visible = missionDots.visible = mode !== 'map'
       if (dive) {
-        const progress = Math.min(1, (now - dive.start) / DIVE_MS)
-        // Down it speeds up into the ground; back up it slows into place.
-        const eased = dive.down ? progress * progress : 1 - Math.pow(1 - progress, 2)
+        const progress = Math.min(1, (now - dive.start) / (dive.down ? LANDING_MS : DIVE_MS))
+        // Down the camera is beside the Site in the first half and the lander comes down in all of it;
+        // back up it slows into place.
+        const eased = dive.down ? 1 - Math.pow(1 - Math.min(1, progress * 2), 3) : 1 - Math.pow(1 - progress, 2)
         camera.position.lerpVectors(dive.from, dive.to, eased)
         camera.up.lerpVectors(dive.fromUp, dive.toUp, eased).normalize()
-        camera.lookAt(0, 0, 0)
+        // The look goes from the Moon's centre to the Site's ground on the way down, and back on the way up.
+        camera.lookAt(landingLook.clone().multiplyScalar(dive.down ? eased : 1 - eased))
+        lander.group.visible = dive.down
+        if (dive.down) {
+          const fall = 1 - Math.pow(1 - progress, 2)
+          lander.group.position.copy(landingLook).multiplyScalar(1 + LANDER_START_HEIGHT * (1 - fall))
+          lander.group.quaternion.setFromUnitVectors(ORBIT_UP, landingLook)
+          // The engine flickers and goes out at touchdown.
+          lander.flame.visible = progress < 0.94
+          lander.flame.scale.y = 0.7 + 0.5 * Math.abs(Math.sin(now / 37)) * (1 - 0.6 * progress)
+          target.dataset.lander = progress < 1 ? 'descending' : 'landed'
+        }
         if (progress === 1) {
           target.dataset.dive = dive.down ? 'at-site' : ''
           state.onDive?.(dive.down)
@@ -1368,6 +1429,7 @@ export function Globe(props: GlobeProps) {
       }
       dotLook?.dispose()
       moon.geometry.dispose()
+      lander.dispose()
       dress.dispose()
       material.dispose()
       for (const shape of gridShapes) shape.dispose()
