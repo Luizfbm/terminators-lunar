@@ -175,7 +175,7 @@ def main() -> None:
     np.savez_compressed(OUT / "grids.npz", **arrays)
     doc = {
         "source": {
-            "branch": BRANCH,
+            "branch": "our group's research branch",
             "commit": COMMIT,
             "grids": "PGDA product 78 (Barker et al. 2021, Planetary and Space Science 203, 105119), "
             "5 m surf, ldec, slp, slperr; central 10 x 10 km at 50 m by build_map_bundle.py",

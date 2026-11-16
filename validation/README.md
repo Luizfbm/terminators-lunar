@@ -180,8 +180,8 @@ written before judging, and the explanation is in `docs/validation/independent-r
 
 | id | Reference | Tolerance | Runs |
 |---|---|---|---|
-| `larissa-athena-horizon` | Independent terrain-only silhouette at the IM-2 Athena point (-84.7906°, 29.1957°, 2 m), `data/larissa_athena_horizon.csv`, with a recorded source commit and SHA-256 | per azimuth ≤ atan(1 m / d) + 0.01°, d her blocking distance; ≥ 99% of 720 azimuths within and RMS ≤ 0.03°. Set after a first look at the numbers | server output |
-| `negative-control-larissa-horizon-rotated` | The same silhouette turned by 1° | must break both conditions | server output |
+| `independent-athena-horizon` | Independent terrain-only silhouette at the IM-2 Athena point (-84.7906°, 29.1957°, 2 m), `data/independent_athena_horizon.csv`, with a recorded source commit and SHA-256 | per azimuth ≤ atan(1 m / d) + 0.01°, d her blocking distance; ≥ 99% of 720 azimuths within and RMS ≤ 0.03°. Set after a first look at the numbers | server output |
+| `negative-control-independent-horizon-rotated` | The same silhouette turned by 1° | must break both conditions | server output |
 | `landing-im2-athena` | LROC NAC M1495922531LE and M1496181900LE: incidence and image centre from the PDS index of volume LROLRC_0062C (`INDEX.TAB`, MD5 checked against `INDEX.LBL`), mid-exposure from the image labels | ≤ 0.015° at both images. The Earth over the transmission (17:30 06/03 to 06:15 07/03/2025 UTC) is reported, not judged | CI (LROC) + server output (transmission) |
 | `negative-control-lroc-article-times` | The same at the times printed in LROC articles 1408 and 1409 | must exceed 0.015° at both | CI |
 | `eclipse-2025-local-contacts` | SPICE `gfoclt` (pck00011 ellipsoids, LT) at -89.4°, 90°, 2 m; NASA's contacts (Espenak, `data/espenak_2025mar14.json`) as intervals | each contact ≤ 30 s from gfoclt; into the umbra in [U1, U2], out in [U3, U4], all in [P1, P4] | CI; Athena on the server, for information |
@@ -280,13 +280,13 @@ the method by 5-fold cross-validation. It is slope, not Sun or Earth.
 
 | id | What | Tolerance (fixed before the first run) | Runs |
 |---|---|---|---|
-| `eduardo-mc-missed-hazard-nominal` | mean over 26 tiles of missed hazard, 60 m: Normal navigation 31.48 %, Multiresolution P90 6.38 %, -79.7 % | each number as he prints it, to half a unit of his last digit | CI (`tiles.json`) |
-| `eduardo-mc-median-error` | mean over tiles of the median slope error: 1.04° to 0.59°, -42.9 % | the same | CI |
-| `eduardo-equal-false-alarm-60`, `-20` | Normal grid with a uniform margin chosen per tile to have Multiresolution P90's false alarm, against P90: 6.45 % to 3.88 %, -38.5 %, 26 of 26 tiles, Wilcoxon p = 3e-8 (60 m); 3.57 % to 3.19 %, -12 %, 24 of 26, p = 7.5e-7 (20 m) | the same; counts exact; p at the figures he prints | CI (`tiles.json` and `data/hazard_equal_false_alarm.json`) |
-| `eduardo-tradeoff-curves` | missed hazard at a fixed false alarm of 5 to 30 % (his Table 07): medians, median reduction 29 to 42 %, 26 of 26 (25 at 30 %), p = 3e-8 (6e-8) | the same | CI |
-| `negative-control-eduardo-equal-false-alarm` | the 60 m comparison with the grade allowed a 30 % false alarm | Multiresolution P90 must no longer win in 26 of 26 tiles, and the median reduction must not be positive | CI |
-| `eduardo-mc-rerun-pgda78` | `hazard/mc_lola.py` on the PGDA 78 layers (same seed 2026), against the 52 runs in `tiles.json` | every method's mean missed hazard and false alarm within 0.5 percentage points, the median error within 0.02°, on every run | **server**, `pending` until then |
-| `eduardo-ldec-coverage` | share of cells with a laser shot at 5, 10, 20, 40, 60 m inside 87.5°S, from `LDEC_875S_5M.IMG` (`hazard/coverage.py`): 7.29, 25.90, 67.97, 95.93, 99.40 % | each within 0.005 points (the two decimals he prints) | **server**, `pending` until then |
+| `group-mc-missed-hazard-nominal` | mean over 26 tiles of missed hazard, 60 m: Normal navigation 31.48 %, Multiresolution P90 6.38 %, -79.7 % | each number as he prints it, to half a unit of his last digit | CI (`tiles.json`) |
+| `group-mc-median-error` | mean over tiles of the median slope error: 1.04° to 0.59°, -42.9 % | the same | CI |
+| `group-equal-false-alarm-60`, `-20` | Normal grid with a uniform margin chosen per tile to have Multiresolution P90's false alarm, against P90: 6.45 % to 3.88 %, -38.5 %, 26 of 26 tiles, Wilcoxon p = 3e-8 (60 m); 3.57 % to 3.19 %, -12 %, 24 of 26, p = 7.5e-7 (20 m) | the same; counts exact; p at the figures he prints | CI (`tiles.json` and `data/hazard_equal_false_alarm.json`) |
+| `group-tradeoff-curves` | missed hazard at a fixed false alarm of 5 to 30 % (his Table 07): medians, median reduction 29 to 42 %, 26 of 26 (25 at 30 %), p = 3e-8 (6e-8) | the same | CI |
+| `negative-control-group-equal-false-alarm` | the 60 m comparison with the grade allowed a 30 % false alarm | Multiresolution P90 must no longer win in 26 of 26 tiles, and the median reduction must not be positive | CI |
+| `group-mc-rerun-pgda78` | `hazard/mc_lola.py` on the PGDA 78 layers (same seed 2026), against the 52 runs in `tiles.json` | every method's mean missed hazard and false alarm within 0.5 percentage points, the median error within 0.02°, on every run | **server**, `pending` until then |
+| `group-ldec-coverage` | share of cells with a laser shot at 5, 10, 20, 40, 60 m inside 87.5°S, from `LDEC_875S_5M.IMG` (`hazard/coverage.py`): 7.29, 25.90, 67.97, 95.93, 99.40 % | each within 0.005 points (the two decimals he prints) | **server**, `pending` until then |
 
 The test used by every "equal false alarm" and "curve" claim is the **paired two-sided Wilcoxon
 signed-rank test across the 26 tiles** (the tile is the unit, N = 26), as his `rodar_todos.py`
@@ -361,15 +361,15 @@ Two sets of Eduardo's results are recomputed from scripts and data in the reposi
 
 | id | Reference | Tolerance (fixed before the first run) | Runs |
 |---|---|---|---|
-| `eduardo-photos-sfs-table` | His accuracy, false light and false shadow of five terrains on 486 LROC NAC photos (three regions), `RESULTADOS-SFS.md`, from his per-photo counts `data/sfs_fotos_todas.csv` | each of 60 numbers within 0.05 points of the one he prints; photo counts exact | CI |
-| `eduardo-photos-sfs-vs-lola20` | The photo-by-photo counts (346 and 349 of 366; 98 and 54 of 120) and the 20 m to 5 m gains his text states | counts exact; gains within 0.1 point | CI |
-| `negative-control-eduardo-photos-limb` | The same table with the Sun's upper limb instead of its centre | must break every terrain row | CI |
-| `eduardo-traverse-battery-pop100` | All 64 rows of his paired-statistics CSV, and the numbers his plan quotes for Multiresolution against Normal navigation at N0, N1 and N2, from the outcome of each simulated traverse `data/traverse_outcomes.json` | arrival and tumbling 0.005 points, r 0.0005, odds ratio 0.005, p-values a relative 1e-6, counts exact | CI |
-| `eduardo-traverse-n3-quote` | The N3 figure of his plan (40.0 % against 30.8 %, +30.0 %, p = 0.043) against his POP = 100 battery | as above | CI |
-| `negative-control-eduardo-traverse-pairing` | The same pairing with Normal navigation's outcomes shifted by one lane | the McNemar counts must change at every level | CI |
+| `group-photos-sfs-table` | His accuracy, false light and false shadow of five terrains on 486 LROC NAC photos (three regions), `RESULTADOS-SFS.md`, from his per-photo counts `data/sfs_fotos_todas.csv` | each of 60 numbers within 0.05 points of the one he prints; photo counts exact | CI |
+| `group-photos-sfs-vs-lola20` | The photo-by-photo counts (346 and 349 of 366; 98 and 54 of 120) and the 20 m to 5 m gains his text states | counts exact; gains within 0.1 point | CI |
+| `negative-control-group-photos-limb` | The same table with the Sun's upper limb instead of its centre | must break every terrain row | CI |
+| `group-traverse-battery-pop100` | All 64 rows of his paired-statistics CSV, and the numbers his plan quotes for Multiresolution against Normal navigation at N0, N1 and N2, from the outcome of each simulated traverse `data/traverse_outcomes.json` | arrival and tumbling 0.005 points, r 0.0005, odds ratio 0.005, p-values a relative 1e-6, counts exact | CI |
+| `group-traverse-n3-quote` | The N3 figure of his plan (40.0 % against 30.8 %, +30.0 %, p = 0.043) against his POP = 100 battery | as above | CI |
+| `negative-control-group-traverse-pairing` | The same pairing with Normal navigation's outcomes shifted by one lane | the McNemar counts must change at every level | CI |
 
-- The check runs on the committed data and needs neither the photos nor the elevation products nor Node.js: it shows his tables and statistics follow from his counts and outcomes, not that his counts are right. His scripts that made the data are kept byte for byte in `sfs/eduardo/`, with where they came from in `sfs/eduardo/SOURCE.json`, and are not run.
-- `eduardo-traverse-n3-quote` is `failed`, on purpose: the +30.0 % of N3 is the POP = 30 run, not the POP = 100 battery it is listed with (34.88 % against 29.62 %, +17.7 %, Wilcoxon over the 16 lanes p = 0.271). The test pins the numbers behind that verdict, so the suite stays green and the Proof page shows it. Nothing is tuned.
+- The check runs on the committed data and needs neither the photos nor the elevation products nor Node.js: it shows his tables and statistics follow from his counts and outcomes, not that his counts are right. His scripts that made the data are kept byte for byte in `sfs/group/`, with where they came from in `sfs/group/SOURCE.json`, and are not run.
+- `group-traverse-n3-quote` is `failed`, on purpose: the +30.0 % of N3 is the POP = 30 run, not the POP = 100 battery it is listed with (34.88 % against 29.62 %, +17.7 %, Wilcoxon over the 16 lanes p = 0.271). The test pins the numbers behind that verdict, so the suite stays green and the Proof page shows it. Nothing is tuned.
 - The McNemar test counts 1,600 traverses as independent although 100 share each lane, so its p-values overstate the evidence; the Wilcoxon test over the 16 lanes is the one to read.
 - The outcomes file is made from his raw files by `sfs/extract_battery.py` (it needs `git fetch origin eduardo/cockpit-multirresolucao`), which lists their SHA-256; running it again gives the same bytes.
 - Run: `uv run --project backend pytest validation/test_sfs_photos.py validation/test_traverse_battery.py`.

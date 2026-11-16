@@ -37,7 +37,7 @@ proof.declare(
         "SPICE gfoclt (Earth and Sun as pck00011 ellipsoids, LT) from the same point, -89.4°, "
         "90°, 2 m, on our own kernels; NASA's whole-Moon contacts, 'Eclipse Predictions by Fred "
         "Espenak, NASA's GSFC' (LE2025Mar14T.pdf, Danjon's rule), as intervals; the gfoclt call "
-        "follows Larissa's independent prototype (the independent work)"
+        "follows our group's independent prototype (the independent work)"
     ),
     tolerance=proof.text(
         f"each of the four contacts (Sun fraction leaves 1, reaches 0, leaves 0, returns to 1) "

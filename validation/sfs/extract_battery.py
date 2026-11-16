@@ -121,7 +121,7 @@ def main() -> None:
                 "lane, team B of each file: one outcome character per traverse, lane by lane. "
                 "Made by validation/sfs/extract_battery.py from the raw files listed in `files`"
             ),
-            "generator": "validation/sfs/eduardo/exp_dif.js, rodar_dif_multi.js",
+            "generator": "validation/sfs/group/exp_dif.js, rodar_dif_multi.js",
         },
         "lanes": LANES,
         "traverses_per_lane": PER_LANE,

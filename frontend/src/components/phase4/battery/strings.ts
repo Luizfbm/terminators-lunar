@@ -55,7 +55,7 @@ export const en = {
   'panels.flat': 'Lying flat on top',
   'panels.effect': 'The Sun is up for {sunlit} in this Window, but reaches the panels for only {lit} of it.',
   'panels.source':
-    'How the pointing changes the power follows Eduardo’s panel-geometry model, from our team: the panels give their full-Sun power times the cosine of the angle between them and the Sun, and nothing once the Sun is behind them.',
+    'How the pointing changes the power follows our group’s panel-geometry model: the panels give their full-Sun power times the cosine of the angle between them and the Sun, and nothing once the Sun is behind them.',
   'charge.row': 'Charge',
   'charge.rowLabel': 'Charge of the battery across the Window. Lowest {min}.',
   'charge.empty': 'Hatched: battery empty',
@@ -118,7 +118,7 @@ export const pt: Record<BatteryKey, string> = {
   'panels.flat': 'Deitados no topo',
   'panels.effect': 'O Sol fica acima do horizonte por {sunlit} nesta Janela, mas bate nos painéis só em {lit} disso.',
   'panels.source':
-    'Como o apontamento muda a potência segue o modelo de geometria de painéis do Eduardo, da nossa equipe: os painéis dão a potência de Sol pleno vezes o cosseno do ângulo entre eles e o Sol, e nada quando o Sol fica atrás deles.',
+    'Como o apontamento muda a potência segue o modelo de geometria de painéis do nosso grupo: os painéis dão a potência de Sol pleno vezes o cosseno do ângulo entre eles e o Sol, e nada quando o Sol fica atrás deles.',
   'charge.row': 'Carga',
   'charge.rowLabel': 'Carga da bateria ao longo da Janela. Mínima de {min}.',
   'charge.empty': 'Hachurado: bateria vazia',

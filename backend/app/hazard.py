@@ -48,14 +48,14 @@ _LAYERS = (
 
 def _provenance() -> str:
     src = hazard_data.source()
-    return f"branch {src['branch'].removeprefix('origin/')}, commit {src['commit']}"
+    return f"{src['branch']}, commit {src['commit']}"
 
 
 def hazard_reference() -> str:
     return (
-        "Eduardo's Monte Carlo mc_lola.py over PGDA product 78 (Barker et al. 2021), 5-fold "
+        "Our group's Monte Carlo mc_lola.py over PGDA product 78 (Barker et al. 2021), 5-fold "
         "cross-validation on the measured cells, 100 draws of Normal(slope, slperr), seed 2026 "
-        f"({_provenance()}); ellipse share from LDEC_875S_5M by Eduardo's "
+        f"({_provenance()}); ellipse share from LDEC_875S_5M by our group's "
         "analise_cobertura_lola.py"
     )
 
@@ -63,7 +63,7 @@ def hazard_reference() -> str:
 def grid_reference() -> str:
     return (
         "PGDA product 78 (Barker et al. 2021, Planetary and Space Science 203, 105119), 5 m "
-        "tiles surf, ldec, slp, slperr; central 10 x 10 km resampled to 50 m by Eduardo's "
+        "tiles surf, ldec, slp, slperr; central 10 x 10 km resampled to 50 m by our group's "
         f"build_map_bundle.py ({_provenance()})"
     )
 

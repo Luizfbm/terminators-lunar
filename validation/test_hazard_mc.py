@@ -46,17 +46,17 @@ def comma(value: float, decimals: int = 2) -> str:
 
 
 REFERENCE_BASE = (
-    "Eduardo's Monte Carlo on 26 PGDA 78 tiles (Barker et al. 2021, PSS 203, 105119; mc_lola.py), "
+    "Our group's Monte Carlo on 26 PGDA 78 tiles (Barker et al. 2021, PSS 203, 105119; mc_lola.py), "
     "5-fold cross-validation on cells with a laser shot, 100 draws of Normal(slp, slperr), "
-    "slope limit 15°, his commit 2195fcb; numbers from "
+    "slope limit 15°, its commit 2195fcb; numbers from "
     "backend/app/data/hazard/tiles.json and validation/data/hazard_equal_false_alarm.json. "
 )
 ROUNDING = proof.text(
-    "Reproduces when our number, rounded to the decimals he prints, is his number (half a unit "
-    "of his last digit); counts exact; p-values at the figures he prints. Fixed in "
+    "Reproduces when our number, rounded to the decimals it prints, is its number (half a unit "
+    "of its last digit); counts exact; p-values at the figures it prints. Fixed in "
     "validation/hazard/rules.py before the first run",
-    "Reproduz quando o nosso número, arredondado às casas que ele imprime, é o dele (meia "
-    "unidade do último algarismo); contagens exatas; valores p nos algarismos que ele imprime. "
+    "Reproduz quando o nosso número, arredondado às casas que o grupo imprime, é o do grupo (meia "
+    "unidade do último algarismo); contagens exatas; valores p nos algarismos que o grupo imprime. "
     "Fixado em validation/hazard/rules.py antes da primeira rodada",
 )
 NOT_COVERED_COMMON_EN = (
@@ -67,7 +67,7 @@ NOT_COVERED_COMMON_EN = (
     "whole surface, and shots cluster where orbit tracks cross, on rougher ground. The 'true' "
     "slope of each cell is drawn independently from Normal(slp, slperr); the PGDA's correlated "
     "error clones are not used. The 15° limit and the margins (sigma 0.8° near data, 2.0° far) "
-    "are Eduardo's rules, not measurements. The 26 tiles are the PGDA's, not a random sample "
+    "are our group's rules, not measurements. The 26 tiles are the PGDA's, not a random sample "
     "of the pole. "
 )
 NOT_COVERED_COMMON_PT = (
@@ -78,15 +78,15 @@ NOT_COVERED_COMMON_PT = (
     "a superfície inteira, e os disparos se concentram onde as órbitas se cruzam, em terreno "
     "mais acidentado. O declive 'verdadeiro' de cada célula é sorteado de forma independente "
     "de Normal(slp, slperr); os clones de erro correlacionado do PGDA não são usados. O limite "
-    "de 15° e as margens (sigma 0,8° perto de dado, 2,0° longe) são regras do Eduardo, não "
+    "de 15° e as margens (sigma 0,8° perto de dado, 2,0° longe) são regras do nosso grupo, não "
     "medidas. Os 26 recortes são os do PGDA, não uma amostra aleatória do polo. "
 )
 
 proof.declare(
-    "eduardo-mc-missed-hazard-nominal",
+    "group-mc-missed-hazard-nominal",
     title=proof.text(
-        "Missed hazard, Normal navigation 60 m against Multiresolution P90 (Eduardo, 26 tiles)",
-        "Perigo não vetado, Navegação Normal 60 m contra Multirresolução P90 (Eduardo, 26 recortes)",
+        "Missed hazard, Normal navigation 60 m against Multiresolution P90 (our group, 26 tiles)",
+        "Perigo não vetado, Navegação Normal 60 m contra Multirresolução P90 (nosso grupo, 26 recortes)",
     ),
     reference=REFERENCE_BASE
     + "Mean over the 26 tiles of each tile's mean missed hazard: 31.48 % (Normal navigation, "
@@ -105,10 +105,10 @@ proof.declare(
     script_path=SCRIPT,
 )
 proof.declare(
-    "eduardo-mc-median-error",
+    "group-mc-median-error",
     title=proof.text(
-        "Median slope error, Normal navigation 60 m against Multiresolution (Eduardo, 26 tiles)",
-        "Erro mediano do declive, Navegação Normal 60 m contra Multirresolução (Eduardo, 26 recortes)",
+        "Median slope error, Normal navigation 60 m against Multiresolution (our group, 26 tiles)",
+        "Erro mediano do declive, Navegação Normal 60 m contra Multirresolução (nosso grupo, 26 recortes)",
     ),
     reference=REFERENCE_BASE
     + "Mean over the 26 tiles of each tile's median |slope error| on the hidden shot cells: "
@@ -127,15 +127,15 @@ proof.declare(
 )
 for _coarse in (60, 20):
     proof.declare(
-        f"eduardo-equal-false-alarm-{_coarse}",
+        f"group-equal-false-alarm-{_coarse}",
         title=proof.text(
-            f"Missed hazard at equal false alarm, {_coarse} m to 5 m (Eduardo, 26 tiles)",
-            f"Perigo não vetado a igual falso alarme, {_coarse} m para 5 m (Eduardo, 26 recortes)",
+            f"Missed hazard at equal false alarm, {_coarse} m to 5 m (our group, 26 tiles)",
+            f"Perigo não vetado a igual falso alarme, {_coarse} m para 5 m (nosso grupo, 26 recortes)",
         ),
         reference=REFERENCE_BASE
         + f"Normal navigation {_coarse} m with a uniform margin chosen per tile (bisection on "
         "20 calibration draws) to have the false alarm of Multiresolution P90, against "
-        "Multiresolution P90; his Table 06 and MONTE_CARLO_LOLA_TESE.md 6.2: "
+        "Multiresolution P90; its Table 06 and MONTE_CARLO_LOLA_TESE.md 6.2: "
         + (
             "6.45 % to 3.88 %, -38.5 % (median of tiles), better in 26 of 26, Wilcoxon p = 3e-8"
             if _coarse == 60
@@ -150,8 +150,8 @@ for _coarse in (60, 20):
             "it can be: it says the direction is the same in every tile, not how large the "
             "effect is, and it is not a statement about other tiles. The 100 draws of a tile "
             "are not 100 tiles. 'Equal false alarm' holds per tile to about 0.02 points on "
-            "his calibration draws. Starting from 20 m, the grade with margin is already "
-            "about as good as Multiresolution from 60 m (his own correction): the gain shrinks "
+            "its calibration draws. Starting from 20 m, the grade with margin is already "
+            "about as good as Multiresolution from 60 m (its own correction): the gain shrinks "
             "as the starting map improves. Rerunning from the PGDA layers is pending on the "
             "server.",
             NOT_COVERED_COMMON_PT
@@ -160,21 +160,21 @@ for _coarse in (60, 20):
             "possível: diz que o sentido é o mesmo em todo recorte, não o tamanho do efeito, e "
             "não é uma afirmação sobre outros recortes. Os 100 sorteios de um recorte não são "
             "100 recortes. O 'igual falso alarme' vale por recorte até cerca de 0,02 ponto nos "
-            "sorteios de calibração dele. Partindo de 20 m, a grade com margem já fica quase "
-            "tão boa quanto a Multirresolução a partir de 60 m (correção do próprio Eduardo): o "
+            "sorteios de calibração do grupo. Partindo de 20 m, a grade com margem já fica quase "
+            "tão boa quanto a Multirresolução a partir de 60 m (correção do próprio grupo): o "
             "ganho encolhe quanto melhor o mapa de partida. A rodada a partir das camadas do "
             "PGDA está pendente no servidor.",
         ),
         script_path=SCRIPT,
     )
 proof.declare(
-    "eduardo-tradeoff-curves",
+    "group-tradeoff-curves",
     title=proof.text(
-        "Missed hazard at a fixed false alarm, 5 % to 30 % (Eduardo, 26 tiles, 60 m)",
-        "Perigo não vetado a falso alarme fixado, 5 % a 30 % (Eduardo, 26 recortes, 60 m)",
+        "Missed hazard at a fixed false alarm, 5 % to 30 % (our group, 26 tiles, 60 m)",
+        "Perigo não vetado a falso alarme fixado, 5 % a 30 % (nosso grupo, 26 recortes, 60 m)",
     ),
     reference=REFERENCE_BASE
-    + "His Table 07: at a fixed false alarm of 5, 10, 15, 20, 25 and 30 %, the Normal navigation "
+    + "Its Table 07: at a fixed false alarm of 5, 10, 15, 20, 25 and 30 %, the Normal navigation "
     "grid with a uniform margin against Multiresolution with a margin by data density (medians "
     "over tiles 23.3 to 16.6 % at 5 %, down to 3.5 to 2.1 % at 30 %; reduction 29 to 42 %; "
     "better in 26 of 26, 25 of 26 at 30 %; Wilcoxon p = 3e-8, 6e-8 at 30 %)",
@@ -194,7 +194,7 @@ proof.declare(
     script_path=SCRIPT,
 )
 proof.declare(
-    "negative-control-eduardo-equal-false-alarm",
+    "negative-control-group-equal-false-alarm",
     title=proof.text(
         "Negative control: the Normal grid allowed a 30 % false alarm",
         "Controle negativo: a grade Normal com 30 % de falso alarme permitido",
@@ -216,12 +216,12 @@ proof.declare(
     script_path=SCRIPT,
 )
 proof.declare(
-    "eduardo-mc-rerun-pgda78",
+    "group-mc-rerun-pgda78",
     title=proof.text(
-        "Eduardo's Monte Carlo rerun from the PGDA 78 layers (52 runs)",
-        "Monte Carlo do Eduardo re-rodado a partir das camadas do PGDA 78 (52 rodadas)",
+        "Our group's Monte Carlo rerun from the PGDA 78 layers (52 runs)",
+        "Monte Carlo do nosso grupo re-rodado a partir das camadas do PGDA 78 (52 rodadas)",
     ),
-    reference="validation/hazard/mc_lola.py (a port of his mc_lola.py, same seed 2026) run on "
+    reference="validation/hazard/mc_lola.py (a port of its mc_lola.py, same seed 2026) run on "
     "the PGDA 78 5 m layers surf, ldec, slp and slperr of the 26 tiles, 60 m and 20 m starting "
     "grids, against the 52 runs in backend/app/data/hazard/tiles.json",
     tolerance=proof.text(
@@ -235,27 +235,27 @@ proof.declare(
         "validation/hazard/rules.py antes da primeira rodada",
     ),
     not_covered=proof.text(
-        "The rerun checks that the code and the layers give his numbers, not that the "
+        "The rerun checks that the code and the layers give its numbers, not that the "
         "numbers mean what the product page says. " + NOT_COVERED_COMMON_EN,
-        "A rodada confere que o código e as camadas dão os números dele, não que os números "
+        "A rodada confere que o código e as camadas dão os números do grupo, não que os números "
         "significam o que a página do produto diz. " + NOT_COVERED_COMMON_PT,
     ),
     script_path=SCRIPT,
 )
 proof.declare(
-    "eduardo-ldec-coverage",
+    "group-ldec-coverage",
     title=proof.text(
-        "Share of cells with a laser shot, 5 m to 60 m, inside 87.5°S (Eduardo)",
-        "Fração de células com disparo do laser, 5 m a 60 m, dentro de 87,5°S (Eduardo)",
+        "Share of cells with a laser shot, 5 m to 60 m, inside 87.5°S (our group)",
+        "Fração de células com disparo do laser, 5 m a 60 m, dentro de 87,5°S (nosso grupo)",
     ),
-    reference="validation/hazard/coverage.py (a port of the coverage part of his "
+    reference="validation/hazard/coverage.py (a port of the coverage part of its "
     "analise_cobertura_lola.py) on LDEC_875S_5M.IMG (PGDA, Smith et al. LOLA 5 m): a cell of "
-    "5, 10, 20, 40 or 60 m counts when any 5 m cell inside it has a shot; his "
+    "5, 10, 20, 40 or 60 m counts when any 5 m cell inside it has a shot; its "
     "cobertura_multiescala.csv: 7.29, 25.90, 67.97, 95.93 and 99.40 %",
     tolerance=proof.text(
-        "each share within half a unit of the two decimals he prints (0.005 points). Fixed in "
+        "each share within half a unit of the two decimals it prints (0.005 points). Fixed in "
         "validation/hazard/rules.py before the first run",
-        "cada fração a meia unidade das duas casas que ele imprime (0,005 ponto). Fixado em "
+        "cada fração a meia unidade das duas casas que o grupo imprime (0,005 ponto). Fixado em "
         "validation/hazard/rules.py antes da primeira rodada",
     ),
     not_covered=proof.text(
@@ -311,9 +311,9 @@ class Claim:
     def text(self, unit: str = "") -> tuple[str, str]:
         unit = unit or self.unit
         d = max(self.decimals, 1) + (1 if self.decimals >= 1 else 0)
-        en = f"{self.label[0]}: Eduardo {self.printed:.{self.decimals}f}{unit}, ours {self.value:.{d}f}{unit}"
+        en = f"{self.label[0]}: printed {self.printed:.{self.decimals}f}{unit}, ours {self.value:.{d}f}{unit}"
         pt = (
-            f"{self.label[1]}: Eduardo {comma(self.printed, self.decimals)}{unit}, "
+            f"{self.label[1]}: impresso {comma(self.printed, self.decimals)}{unit}, "
             f"nosso {comma(self.value, d)}{unit}"
         )
         return en + (" (reproduces)" if self.ok else " (DOES NOT reproduce)"), pt + (
@@ -327,8 +327,8 @@ class Count:
         self.ok = printed == value
 
     def text(self, unit: str = "") -> tuple[str, str]:
-        en = f"{self.label[0]}: Eduardo {self.printed} of {self.total}, ours {self.value} of {self.total}"
-        pt = f"{self.label[1]}: Eduardo {self.printed} de {self.total}, nosso {self.value} de {self.total}"
+        en = f"{self.label[0]}: printed {self.printed} of {self.total}, ours {self.value} of {self.total}"
+        pt = f"{self.label[1]}: impresso {self.printed} de {self.total}, nosso {self.value} de {self.total}"
         return en + (" (reproduces)" if self.ok else " (DOES NOT reproduce)"), pt + (
             " (reproduz)" if self.ok else " (NÃO reproduz)"
         )
@@ -340,8 +340,8 @@ class PValue:
         self.ok = rules.p_reproduces(value, printed, significant)
 
     def text(self, unit: str = "") -> tuple[str, str]:
-        en = f"{self.label[0]}: Eduardo {self.printed:.2g}, ours {self.value:.2g}"
-        pt = f"{self.label[1]}: Eduardo {self.printed:.2g}, nosso {self.value:.2g}".replace(
+        en = f"{self.label[0]}: printed {self.printed:.2g}, ours {self.value:.2g}"
+        pt = f"{self.label[1]}: impresso {self.printed:.2g}, nosso {self.value:.2g}".replace(
             ".", ","
         )
         return en + (" (reproduces)" if self.ok else " (DOES NOT reproduce)"), pt + (
@@ -631,7 +631,7 @@ def test_the_equal_false_alarm_file_is_what_his_commit_holds() -> None:
 # --- The judgement ----------------------------------------------------------------------------
 
 
-@proof.check("eduardo-mc-missed-hazard-nominal")  # type: ignore[untyped-decorator]
+@proof.check("group-mc-missed-hazard-nominal")  # type: ignore[untyped-decorator]
 def test_the_missed_hazard_at_the_nominal_margin() -> None:
     a = nominal_60()
     claims = [
@@ -666,11 +666,11 @@ def test_the_missed_hazard_at_the_nominal_margin() -> None:
         + f". Para informação, falso alarme mediano {comma(a['normal_false_alarm_median'], 1)} % "
         f"e {comma(a['p90_false_alarm_median'], 1)} %: os dois métodos não vetam a mesma quantidade",
     )
-    proof.record("eduardo-mc-missed-hazard-nominal", status, result)
+    proof.record("group-mc-missed-hazard-nominal", status, result)
     assert status == "passed"
 
 
-@proof.check("eduardo-mc-median-error")  # type: ignore[untyped-decorator]
+@proof.check("group-mc-median-error")  # type: ignore[untyped-decorator]
 def test_the_median_slope_error() -> None:
     a = nominal_60()
     claims = [
@@ -691,7 +691,7 @@ def test_the_median_slope_error() -> None:
         ),
     ]
     status, result = verdict(claims, ["°", "°", " %"])
-    proof.record("eduardo-mc-median-error", status, result)
+    proof.record("group-mc-median-error", status, result)
     assert status == "passed"
 
 
@@ -768,7 +768,7 @@ def equal_false_alarm_claims(coarse: int) -> list[Any]:
     return claims
 
 
-@proof.check("eduardo-equal-false-alarm-60")  # type: ignore[untyped-decorator]
+@proof.check("group-equal-false-alarm-60")  # type: ignore[untyped-decorator]
 def test_the_equal_false_alarm_comparison_from_60_m() -> None:
     claims = in_percent(equal_false_alarm_claims(60))
     status, result = verdict(claims)
@@ -779,11 +779,11 @@ def test_the_equal_false_alarm_comparison_from_60_m() -> None:
         result["pt"]
         + f". Maior diferença de falso alarme entre os dois braços num recorte: {comma(gap, 3)} pontos",
     )
-    proof.record("eduardo-equal-false-alarm-60", status, result)
+    proof.record("group-equal-false-alarm-60", status, result)
     assert status == "passed"
 
 
-@proof.check("eduardo-equal-false-alarm-20")  # type: ignore[untyped-decorator]
+@proof.check("group-equal-false-alarm-20")  # type: ignore[untyped-decorator]
 def test_the_equal_false_alarm_comparison_from_20_m() -> None:
     claims = in_percent(equal_false_alarm_claims(20))
     status, result = verdict(claims)
@@ -794,11 +794,11 @@ def test_the_equal_false_alarm_comparison_from_20_m() -> None:
         result["pt"]
         + f". Maior diferença de falso alarme entre os dois braços num recorte: {comma(gap, 3)} pontos",
     )
-    proof.record("eduardo-equal-false-alarm-20", status, result)
+    proof.record("group-equal-false-alarm-20", status, result)
     assert status == "passed"
 
 
-@proof.check("eduardo-tradeoff-curves")  # type: ignore[untyped-decorator]
+@proof.check("group-tradeoff-curves")  # type: ignore[untyped-decorator]
 def test_the_tradeoff_curves() -> None:
     got = curves()
     claims: list[Any] = []
@@ -858,17 +858,17 @@ def test_the_tradeoff_curves() -> None:
             f"{got[5]['wins']} de 26 de 5 a 25 %, {got[30]['wins']} de 26 a 30 %; "
             f"p = {comma(got[5]['p'], 2)} e {comma(got[30]['p'], 2)}"
         ).replace("e-0", "e-")
-    proof.record("eduardo-tradeoff-curves", status, proof.text(en, pt))
+    proof.record("group-tradeoff-curves", status, proof.text(en, pt))
     assert status == "passed"
 
 
-@proof.check("negative-control-eduardo-equal-false-alarm")  # type: ignore[untyped-decorator]
+@proof.check("negative-control-group-equal-false-alarm")  # type: ignore[untyped-decorator]
 def test_the_negative_control_lets_the_grade_win() -> None:
     got = control()
     ok = got["wins"] < got["n"] and got["reduction_median"] <= 0
     status: proof.Status = "passed" if ok else "failed"
     proof.record(
-        "negative-control-eduardo-equal-false-alarm",
+        "negative-control-group-equal-false-alarm",
         status,
         proof.text(
             f"with a {rules.CONTROL_FALSE_ALARM_PCT} % false alarm the grade's median missed hazard "
@@ -998,11 +998,11 @@ def test_the_coverage_judge_follows_the_printed_digits() -> None:
     assert not all(c.ok for c in coverage_claims(far))
 
 
-@proof.check("eduardo-mc-rerun-pgda78")  # type: ignore[untyped-decorator]
+@proof.check("group-mc-rerun-pgda78")  # type: ignore[untyped-decorator]
 def test_the_rerun_against_the_committed_runs() -> None:
     if not RERUN.exists():
         pending(
-            "eduardo-mc-rerun-pgda78",
+            "group-mc-rerun-pgda78",
             "did not run: needs the PGDA 78 layers of the 26 tiles (gigabytes), so it runs on "
             "the server; see validation/README.md section 12",
             "não rodou: precisa das camadas do PGDA 78 dos 26 recortes (gigabytes), então roda "
@@ -1014,7 +1014,7 @@ def test_the_rerun_against_the_committed_runs() -> None:
     assert rerun["rule"] == rules.rule(), "the rerun was made under another rule"
     got = judge_rerun(rerun, tiles())
     proof.record(
-        "eduardo-mc-rerun-pgda78",
+        "group-mc-rerun-pgda78",
         "passed" if got["ok"] else "failed",
         proof.text(
             f"{got['runs']} of 52 runs rerun; largest difference in a mean "
@@ -1029,11 +1029,11 @@ def test_the_rerun_against_the_committed_runs() -> None:
     assert got["ok"]
 
 
-@proof.check("eduardo-ldec-coverage")  # type: ignore[untyped-decorator]
+@proof.check("group-ldec-coverage")  # type: ignore[untyped-decorator]
 def test_the_laser_coverage() -> None:
     if not COVERAGE.exists():
         pending(
-            "eduardo-ldec-coverage",
+            "group-ldec-coverage",
             "did not run: needs LDEC_875S_5M.IMG (about 1 GB), so it runs on the server; see "
             "validation/README.md section 12",
             "não rodou: precisa do LDEC_875S_5M.IMG (cerca de 1 GB), então roda no servidor; "
@@ -1044,7 +1044,7 @@ def test_the_laser_coverage() -> None:
     assert not coverage.get("smoke"), "a smoke run is not a result"
     assert coverage["rule"] == rules.rule(), "the coverage was made under another rule"
     status, result = verdict(coverage_claims(coverage), [" %"] * len(rules.D_RESOLUTIONS_M))
-    proof.record("eduardo-ldec-coverage", status, result)
+    proof.record("group-ldec-coverage", status, result)
     assert status == "passed"
 
 
@@ -1235,7 +1235,7 @@ def test_the_port_gives_the_numbers_of_his_script_on_the_same_layers(
             assert mine["resumo"][name][key] == pytest.approx(triple, abs=1e-9), (name, key)
     for key, value in his["testes"].items():
         assert mine["testes"][key] == pytest.approx(value, abs=1e-9), key
-    for key, pair in his["margens_calibradas"].items():
+    for key, pair in its["margens_calibradas"].items():
         assert mine["margens_calibradas"][key] == pytest.approx(pair, abs=1e-12), key
     for family, points in mine["curvas_no_alvo"].items():
         for target, value in points.items():

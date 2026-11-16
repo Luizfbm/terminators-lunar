@@ -1,7 +1,7 @@
 """The battery's panel pointing against Eduardo's panel-geometry model (the requirement).
 
 The reference is Eduardo's `calcular_potencia_painel` (src/solar_panel_math.py, commit 170350d), evaluated by
-`fetch_panel_incidence.py` and saved in data/eduardo_panel_incidence.json. It builds the
+`fetch_panel_incidence.py` and saved in data/group_panel_incidence.json. It builds the
 Sun's direction and the panel's normal as vectors and takes their dot product; ours
 writes the closed forms. The tolerance was fixed in the specification before implementation: 1e-9 on
 the incidence factor.
@@ -35,10 +35,10 @@ import pytest
 from app.energy import incidence_factor
 
 SCRIPT = "validation/test_panel_incidence.py"
-DATA = Path(__file__).resolve().parent / "data" / "eduardo_panel_incidence.json"
+DATA = Path(__file__).resolve().parent / "data" / "group_panel_incidence.json"
 TOLERANCE = 1e-9
 REFERENCE = (
-    "Eduardo's panel-geometry model, calcular_potencia_painel (independent reference, commit 170350d): "
+    "Our group's panel-geometry model, calcular_potencia_painel (independent reference, commit 170350d): "
     "3,000 Sun directions, elevations −2° to 10°, azimuths all round, "
     "flat, upright fixed (0°, 90°, 213.5°) and upright tracking; and the Sun's direction at "
     "Site 001 at 8 instants, through the API"
@@ -46,21 +46,21 @@ REFERENCE = (
 STEP = {"panel_power_w": 1000.0, "load_w": 2000.0, "battery_wh": 1000.0}
 
 proof.declare(
-    "eduardo-panel-incidence",
+    "group-panel-incidence",
     title=proof.text(
-        "Panel pointing vs Eduardo's panel-geometry model",
-        "Apontamento dos painéis contra o modelo de geometria de painel do Eduardo",
+        "Panel pointing vs our group's panel-geometry model",
+        "Apontamento dos painéis contra o modelo de geometria de painel do nosso grupo",
     ),
     reference=REFERENCE,
     tolerance=proof.text("≤ 1e-9 on the incidence factor", "≤ 1e-9 no fator de incidência"),
     not_covered=proof.text(
         "Only the angle between the panels and the Sun's centre. Upright panels with the Sun's "
-        "centre at or below 0° are left out: his function gates on the horizon of the bare "
+        "centre at or below 0° are left out: its function gates on the horizon of the bare "
         "sphere and ours on the terrain, through the Sun fraction, and at Connecting Ridge 001 "
         "most sunlit hours of some months have the Sun's centre below 0°. No thermal model, no "
         "tracking error, no shadow of the lander on its own panels.",
         "Só o ângulo entre os painéis e o centro do Sol. Painéis em pé com o centro do Sol a 0° "
-        "ou abaixo ficam de fora: a função dele corta no horizonte da esfera lisa e a nossa no "
+        "ou abaixo ficam de fora: a função do grupo corta no horizonte da esfera lisa e a nossa no "
         "terreno, pela fração do Sol, e na Connecting Ridge 001 a maior parte das horas de Sol "
         "de alguns meses tem o centro do Sol abaixo de 0°. Sem modelo térmico, sem erro de "
         "rastreamento, sem sombra do módulo sobre os próprios painéis.",
@@ -130,7 +130,7 @@ def api_factors(client: Any, point: dict[str, Any]) -> dict[str, float]:
     }
 
 
-@proof.check("eduardo-panel-incidence")
+@proof.check("group-panel-incidence")
 def test_panel_incidence_against_eduardos_model(test_client: Any) -> None:
     data = table()
     rows = [row for row in data["grid"] if compared(row)]
@@ -149,7 +149,7 @@ def test_panel_incidence_against_eduardos_model(test_client: Any) -> None:
     gap_en = f"{gap:.1e}"
     gap_pt = gap_en.replace(".", ",")
     proof.record(
-        "eduardo-panel-incidence",
+        "group-panel-incidence",
         "passed" if passed else "failed",
         proof.text(
             f"max error {gap_en} over {n_en} Sun directions and 8 instants through the API",

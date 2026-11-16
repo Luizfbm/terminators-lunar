@@ -38,10 +38,10 @@ proof.declare(
     "12 instants 2025-2032",
     tolerance=proof.text("≤ 0.1 % of (1 au / d)²", "≤ 0,1 % de (1 au / d)²"),
     not_covered=proof.text(
-        "Only how far the Sun is. The panel pointing has its own check against Eduardo's "
+        "Only how far the Sun is. The panel pointing has its own check against our group's "
         "model; the rest of the panel model (no heat, constant load) has no outside reference.",
         "Só a distância do Sol. O apontamento dos painéis tem a sua própria checagem contra o "
-        "modelo do Eduardo; o resto do modelo (sem calor, carga constante) não tem referência "
+        "modelo do nosso grupo; o resto do modelo (sem calor, carga constante) não tem referência "
         "externa.",
     ),
     script_path=SCRIPT,

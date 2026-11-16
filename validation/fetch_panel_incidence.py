@@ -36,7 +36,7 @@ COMMIT = "170350d6cad9adeee02f91fea358c742526d3760"
 SOURCE = "src/solar_panel_math.py"
 FUNCTION = "calcular_potencia_painel"
 DEFAULT_CLONE = Path.home() / "panel-reference"
-OUT = Path(__file__).resolve().parent / "data" / "eduardo_panel_incidence.json"
+OUT = Path(__file__).resolve().parent / "data" / "group_panel_incidence.json"
 
 ELEVATIONS = [-2.0 + 0.5 * i for i in range(25)]
 AZIMUTHS = [15.0 * i for i in range(24)]
