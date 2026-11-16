@@ -22,7 +22,19 @@
 #                  request did not run (neither @smoke nor @timing) run here, nothing else.
 # The @timing tests assert how long something took, so they must not share the machine: they run
 # alone, with one worker, once both groups are done, on a pull request and on main alike. Nothing
-# is ever re-run until it passes.
+# is ever re-run until it passes. Before the @timing tests the script waits for the machine to
+# calm down: while the 1-minute load average is above $LUNAR_TIMING_MAX_LOAD (6 on this 10-core Mac)
+# it checks every 10 s, for at most $LUNAR_TIMING_WAIT_S (300) seconds, then runs them anyway and
+# prints the load they ran at, so a failure can be read. The load is also logged at the start and
+# before the e2e. Tolerances stay as they are and nothing is retried.
+#
+# A cancelled run must not leave anything behind (#159: a pytest with 6 xdist workers outlived its
+# run by 6 minutes, load 76, and the next run's timing tests failed). Every group and step runs in
+# its own process group (`set -m`; there is no setsid on macOS), and on a cancellation or a failure
+# each group is killed by its PGID. On the runner (GITHUB_ACTIONS) the script also starts by
+# running scripts/ci-sweep.sh, which kills what earlier runs left: only the processes of this user
+# whose working directory is inside $GITHUB_WORKSPACE, never by name. mac.yml runs the same sweep as
+# its last step, `if: always()`.
 #
 # Only the groups a change can break run (LUNAR_CI_BASE, set by mac.yml on a pull request, is the
 # commit to compare with; without it everything runs, as on a push to main):
@@ -156,16 +168,77 @@ kill_tree() { # kill_tree <pid>: the process and everything under it
   for child in $(pgrep -P "$1" 2>/dev/null || true); do kill_tree "$child"; done
   kill "$1" 2>/dev/null || true
 }
+# Each group and step runs as its own process group, so one signal to the group reaches uv, python,
+# the xdist workers and the rest. PGIDS lists the groups still running (a leader's pid is its PGID).
+PGIDS=""
+forget_group() { # forget_group <pgid>: it has ended, its number may be reused
+  local g new=""
+  for g in $PGIDS; do [ "$g" = "$1" ] || new="$new $g"; done
+  PGIDS=$new
+}
+kill_groups() {
+  [ -n "${PGIDS# }" ] || return 0
+  local g
+  for g in $PGIDS; do kill -TERM -- "-$g" 2>/dev/null || true; done
+  sleep 3
+  for g in $PGIDS; do kill -KILL -- "-$g" 2>/dev/null || true; done
+  PGIDS=""
+}
+# Run a command as its own process group and wait for it: isolated <command...>
+isolated() {
+  local pid rc=0
+  set -m
+  (
+    trap - ERR
+    "$@"
+  ) </dev/null &
+  pid=$!
+  set +m
+  PGIDS="$PGIDS $pid"
+  wait "$pid" || rc=$?
+  forget_group "$pid"
+  return "$rc"
+}
+# Whatever started its own session or changed directory escapes the group: the sweep gets those.
+sweep() {
+  [ "${GITHUB_ACTIONS:-}" = true ] && [ -n "${GITHUB_WORKSPACE:-}" ] || return 0
+  "$ROOT/scripts/ci-sweep.sh" "$GITHUB_WORKSPACE" || true
+}
+load() { # load <where>: the 1-minute load average, in the log
+  echo "load at $1: $(uptime | sed 's/.*load averages*: //') ($(sysctl -n hw.ncpu) cores)" >&3
+}
+# Before the @timing tests: wait while the 1-minute load is above LUNAR_TIMING_MAX_LOAD, at most
+# LUNAR_TIMING_WAIT_S seconds, then go on anyway. Never a retry and never a looser tolerance.
+wait_for_calm() {
+  local max=${LUNAR_TIMING_MAX_LOAD:-6} limit=${LUNAR_TIMING_WAIT_S:-300} waited=0 now
+  while :; do
+    now=$(sysctl -n vm.loadavg | awk '{print $2}')
+    if awk -v l="$now" -v m="$max" 'BEGIN { exit !(l <= m) }'; then
+      echo "load $now (1 min) is at or below $max: running @timing" >&3
+      return 0
+    fi
+    if [ "$waited" -ge "$limit" ]; then
+      echo "load $now (1 min) still above $max after ${waited}s: running @timing anyway, read a failure with this load in mind" >&3
+      return 0
+    fi
+    echo "load $now (1 min) is above $max: waiting (${waited}s of $limit)" >&3
+    sleep 10 &
+    wait $! || true
+    waited=$((waited + 10))
+  done
+}
 interrupted() {
   trap - ERR INT TERM
   local job
   for job in $(jobs -p); do kill_tree "$job"; done
+  kill_groups
+  sweep
   status error "cancelled at: $step"
   echo "mac-gates cancelled at: $step" >&2
   exit 130
 }
-trap 'rm -f "$VALIDATIONS"' EXIT
-trap 'status failure "failed at: $step"; echo "mac-gates FAILED at: $step" >&2' ERR
+trap 'rm -f "$VALIDATIONS"; kill_groups' EXIT
+trap 'status failure "failed at: $step"; echo "mac-gates FAILED at: $step" >&2; kill_groups' ERR
 trap interrupted INT TERM
 
 # GROUP is set inside the two background groups, so each one remembers its current step.
@@ -246,23 +319,41 @@ group() { # group <name> <function>: runs in a subshell, everything it prints go
 }
 
 status pending "running on Luiz's Mac"
+load start
+sweep
 
-[ "$RUN_BACKEND" = 0 ] || run "DEM fixtures" bash fixtures/dem/fetch.sh
-run "contract lint" npx --yes @redocly/cli@2.77.0 lint contract/openapi.yaml
+if [ "$RUN_BACKEND" = 1 ]; then
+  step="DEM fixtures"
+  isolated run "DEM fixtures" bash fixtures/dem/fetch.sh
+fi
+step="contract lint"
+isolated run "contract lint" npx --yes @redocly/cli@2.77.0 lint contract/openapi.yaml
 
 step="backend and frontend groups"
 backend_rc=0
 frontend_rc=0
+# set -m makes each background job its own process group (PGID = the job's pid); it is off again
+# right after, so nothing else changes.
+set -m
 if [ "$RUN_BACKEND" = 1 ]; then
   group backend backend_group &
   backend_pid=$!
+  PGIDS="$PGIDS $backend_pid"
 fi
 if [ "$RUN_FRONTEND" = 1 ]; then
   group frontend frontend_group &
   frontend_pid=$!
+  PGIDS="$PGIDS $frontend_pid"
 fi
-[ "$RUN_BACKEND" = 0 ] || wait "$backend_pid" || backend_rc=$?
-[ "$RUN_FRONTEND" = 0 ] || wait "$frontend_pid" || frontend_rc=$?
+set +m
+if [ "$RUN_BACKEND" = 1 ]; then
+  wait "$backend_pid" || backend_rc=$?
+  forget_group "$backend_pid"
+fi
+if [ "$RUN_FRONTEND" = 1 ]; then
+  wait "$frontend_pid" || frontend_rc=$?
+  forget_group "$frontend_pid"
+fi
 
 failed=()
 for name in backend frontend; do
@@ -277,8 +368,9 @@ done
 
 if [ "$RUN_FRONTEND" = 1 ] && [ "$frontend_rc" = 0 ]; then
   step="e2e"
+  load "the e2e"
   e2e_rc=0
-  group e2e e2e_main || e2e_rc=$?
+  isolated group e2e e2e_main || e2e_rc=$?
   if [ "$e2e_rc" != 0 ]; then
     failed+=("frontend: e2e")
     echo "---- e2e failed, the end of its log:" >&2
@@ -289,8 +381,10 @@ fi
 if [ ${#failed[@]} -eq 0 ] && [ "$RUN_FRONTEND" = 1 ]; then
   step="e2e @timing"
   echo "== [main] $step" >&3
+  load "the @timing step"
+  wait_for_calm
   timing_rc=0
-  e2e --grep @timing --workers=1 >"$LOGS/timing.log" 2>&1 || timing_rc=$?
+  isolated e2e --grep @timing --workers=1 >"$LOGS/timing.log" 2>&1 || timing_rc=$?
   cat "$LOGS/timing.log"
   if [ "$timing_rc" != 0 ]; then
     failed+=("e2e @timing")
