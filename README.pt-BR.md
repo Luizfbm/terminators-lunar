@@ -131,6 +131,8 @@ Um pedido que espera mais de 25 s por uma vaga do motor, ou um endereço acima d
 
 O projeto é implementado com Python, FastAPI, React, TypeScript e os produtos de dados NASA SPICE e LOLA descritos acima.
 
+A pesquisa por trás do modelo de risco multirresolução (a técnica LUMEN, 240 → 60 → 20 → 5 m) está no nosso relatório técnico, em inglês: [docs/LUMEN_NASA_SPACE-APPS_2026_EN.pdf](docs/LUMEN_NASA_SPACE-APPS_2026_EN.pdf). Ele traz a auditoria de onde o LOLA tem disparos reais de laser, o Monte Carlo em 26 sites reais, a checagem independente com shape-from-shading e fotos da LROC NAC e as simulações de travessia do rover.
+
 ## Uso de IA
 
 Usamos agentes de IA para programar o tempo todo, principalmente o Claude (Anthropic) pelo Claude Code. O trabalho foi dividido em issues no GitHub, os agentes escreveram a maior parte do código, dos testes e da documentação em branches próprias, e um pull request só entrou depois de o diff ser lido e de os checks de lint, tipos, testes unitários, testes de regressão e validação passarem. A IA também ajudou na pesquisa: leitura de artigos e da documentação dos dados, e o levantamento das entregas públicas de outros times.

@@ -227,6 +227,8 @@ A request that waits more than 25 s for an engine slot, or an address over its c
 
 The project is implemented with Python, FastAPI, React, TypeScript and the NASA SPICE and LOLA data products described above.
 
+The research behind the multiresolution hazard model (the LUMEN technique, 240 → 60 → 20 → 5 m) is in our technical report, [docs/LUMEN_NASA_SPACE-APPS_2026_EN.pdf](docs/LUMEN_NASA_SPACE-APPS_2026_EN.pdf): the audit of where LOLA really has laser shots, the Monte Carlo on 26 real sites, the independent check against shape-from-shading and LROC NAC photographs, and the rover traverse simulations.
+
 ## Use of AI
 
 We used AI coding agents throughout, mainly Claude (Anthropic) through Claude Code. The work was split into GitHub issues, agents wrote most of the code, tests and documentation on their own branches, and a pull request was merged only after its diff was read and the lint, type, unit, regression and validation checks were green. AI also helped with the research: reading papers and data documentation, and looking at other teams' public entries.
