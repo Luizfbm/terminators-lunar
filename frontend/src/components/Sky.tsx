@@ -27,6 +27,7 @@ import type { GroundMark } from './Ground'
 import { regolithMaterial, SHADOW_FLOOR } from './regolith'
 import { loadGround, loadPatchGround, loadSiteGround, loadWideGround, type GroundData } from './groundData'
 import { EARTH, earthMaterial as makeEarthMaterial, loadEarthMap, SUN } from './spaceBodies'
+import { sunDashes } from './sunDashes'
 
 /** The crest of the horizon: dim all round, and warm where the Sun is behind or beside it. */
 const RIDGE = 0x55565d
@@ -236,11 +237,9 @@ export function Sky({
     const floor = new THREE.AmbientLight(0xffffff, SHADOW_FLOOR)
     scene.add(sun, earth, sunlight, floor)
 
-    const path = new THREE.Points(
-      new THREE.BufferGeometry(),
-      new THREE.PointsMaterial({ color: SUN, size: 2, sizeAttenuation: false, transparent: true, opacity: 0.5 }),
-    )
-    scene.add(path)
+    // The Sun's path: its samples, dashed a fixed number of screen pixels apart (domain/sunDashes.ts).
+    const path = sunDashes(SUN)
+    scene.add(path.object)
 
     const wall = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }))
     const ridge = new THREE.LineLoop(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ vertexColors: true }))
@@ -564,14 +563,12 @@ export function Sky({
 
       const samples = data.timeline.samples
       const every = Math.max(1, Math.floor(samples.length / PATH_POINTS))
-      const dots: number[] = []
+      const spots: THREE.Vector3[] = []
       samples.forEach((sample, at) => {
         if (at % every !== 0) return
-        const spot = vector(sample.sun.azimuth_deg, stretched(sample.sun.elevation_deg, by), BODIES)
-        dots.push(spot.x, spot.y, spot.z)
+        spots.push(vector(sample.sun.azimuth_deg, stretched(sample.sun.elevation_deg, by), BODIES))
       })
-      path.geometry.dispose()
-      path.geometry = new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(dots, 3))
+      path.setPath(spots)
 
       // The discs are sized per sample, at the Cursor, not here.
       builtFor = { result: data, stretch: by }
@@ -743,6 +740,8 @@ export function Sky({
         if (label.textContent !== text) label.textContent = text
       }
 
+      // After the camera has its pose for this frame: the dashes are spaced in the picture.
+      path.update(camera, width, height, renderer.getPixelRatio())
       renderer.render(scene, camera)
       target.dataset.ready = 'true'
       target.dataset.yaw = wrapAzimuth(yaw).toFixed(1)
@@ -782,10 +781,11 @@ export function Sky({
       target.removeEventListener('pointerup', up)
       target.removeEventListener('pointercancel', up)
       retryGround.current = null
-      for (const object of [stars, path, wall, ridge, sun, earth, pin, fine.mesh, wide.mesh, site.mesh, patch.mesh]) {
+      for (const object of [stars, wall, ridge, sun, earth, pin, fine.mesh, wide.mesh, site.mesh, patch.mesh]) {
         object.geometry.dispose()
         ;(object.material as THREE.Material).dispose()
       }
+      path.dispose()
       fine.relief?.dispose()
       wide.relief?.dispose()
       for (const on of [fine, wide, site, patch]) on.material.map?.dispose()

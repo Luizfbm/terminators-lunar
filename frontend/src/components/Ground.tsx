@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import type { VisibilityResult } from '../api/client'
 import { maskElevationAt } from '../domain/sky'
 import { sampleAt } from '../domain/sky'
+import { dashAlong, dashPattern, onStageLength, type ScreenPoint } from '../domain/sunDashes'
 import { useI18n } from '../i18n/I18nContext'
 
 const COMPASS_KEYS = ['direction.0', 'direction.2', 'direction.4', 'direction.6'] as const
-/** One path dot per this many timeline samples: enough to read the Sun's loop, light to draw. */
+/** One path sample per this many timeline samples: enough to read the Sun's loop, light to draw. */
 const PATH_POINTS = 320
 
 function useSize(): [React.RefObject<HTMLDivElement | null>, { width: number; height: number }] {
@@ -66,6 +67,18 @@ export function Ground({
   const y = (elevationDeg: number) => base - (Math.max(elevationDeg, low) - low) * scale
   const hills = mask.map((point) => `${x(point.azimuth_deg).toFixed(1)},${y(point.elevation_deg).toFixed(1)}`).join(' ')
   const every = Math.max(1, Math.floor(samples.length / PATH_POINTS))
+  // The Sun's path as dashes a fixed number of CSS pixels apart (domain/sunDashes.ts), laid on the same samples.
+  const pathSamples = samples.filter((_, index) => index % every === 0)
+  const pathPoints: ScreenPoint[] = pathSamples.map((sample) => ({ x: x(sample.sun.azimuth_deg), y: y(sample.sun.elevation_deg), visible: true }))
+  const pattern = dashPattern(onStageLength(pathPoints, width, height), typeof window === 'undefined' ? 1 : window.devicePixelRatio)
+  // The plot is cut where the azimuth wraps from 360° to 0°: a dash never reaches over the cut.
+  const reachTo = (at: number, towards: number, share: number) => {
+    const from = pathPoints[at]
+    const to = pathPoints[towards]
+    if (!to || share === 0 || Math.abs(to.x - from.x) > width / 2) return { x: from.x, y: from.y }
+    return { x: from.x + (to.x - from.x) * share, y: from.y + (to.y - from.y) * share }
+  }
+  const dashes = dashAlong(pathPoints, pattern).map((dash) => ({ index: dash.index, from: reachTo(dash.index, dash.index - 1, dash.back), to: reachTo(dash.index, dash.index + 1, dash.ahead) }))
   // The marked Occluder stands on the ridge at its own azimuth, with its name above it.
   const markX = mark ? x(mark.azimuthDeg) : 0
   const markY = mark ? y(maskElevationAt(mask, mark.azimuthDeg)) : 0
@@ -80,11 +93,20 @@ export function Ground({
           role="img"
           aria-label={t('ground.label', { site: result.query.site.name })}
         >
-          {samples
-            .filter((_, index) => index % every === 0)
-            .map((sample) => (
-              <circle key={sample.t} className="ground__path" cx={x(sample.sun.azimuth_deg)} cy={y(sample.sun.elevation_deg)} r="1.2" />
-            ))}
+          {dashes.map((dash) => (
+            <line
+              key={pathSamples[dash.index].t}
+              className="ground__path"
+              x1={dash.from.x}
+              y1={dash.from.y}
+              x2={dash.to.x}
+              y2={dash.to.y}
+              stroke="var(--sun)"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              opacity="0.6"
+            />
+          ))}
           {now && <circle className="ground__sun" cx={x(now.sun.azimuth_deg)} cy={y(now.sun.elevation_deg)} r={sunRadius} />}
           {now && <circle className="ground__earth" cx={x(now.earth.azimuth_deg)} cy={y(now.earth.elevation_deg)} r="7" />}
           <polygon className="ground__terrain" points={`0,${height} ${hills} ${width},${height}`} />
