@@ -44,3 +44,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           # On a pull request only the groups its changes can break run; a push to main runs all.
           LUNAR_CI_BASE: ${{ github.event.pull_request.base.sha }}
+      # Runs after a failure and after a cancellation too. A cancelled run leaves pytest, its xdist
+      # workers and Playwright's web servers running with PPID 1, and they load the Mac for the next
+      # run (#159). This kills every process of the runner's user whose working directory is inside
+      # this job's workspace, and nothing else: the Mac is shared with Luiz's own work, so never by
+      # name. It excludes its own shell and the runner above it. See scripts/ci-sweep.sh.
+      - name: Kill what this job left running
+        if: always()
+        timeout-minutes: 2
+        run: |
+          if [ -x scripts/ci-sweep.sh ]; then
+            scripts/ci-sweep.sh "$GITHUB_WORKSPACE"
+          else
+            echo "scripts/ci-sweep.sh is not in this checkout: nothing to sweep"
+          fi
