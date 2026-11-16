@@ -25,7 +25,7 @@ function daysOf(year: number, windows: ShiftedWindow[]): Day[] {
 }
 
 function monthName(locale: string, month: number): string {
-  return new Intl.DateTimeFormat(locale === 'pt' ? 'pt-BR' : 'en-GB', { month: 'short', timeZone: 'UTC' })
+  return new Intl.DateTimeFormat(locale === 'pt' ? 'pt-BR' : 'en-US', { month: 'short', timeZone: 'UTC' })
     .format(Date.UTC(2000, month, 1))
     .replace('.', '')
 }

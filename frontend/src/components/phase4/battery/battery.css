@@ -186,24 +186,14 @@
   overflow: visible;
 }
 
-.charge-row__area {
-  fill: var(--fg);
-  opacity: 0.16;
-}
-
-.charge-row__line {
-  fill: none;
-  stroke: var(--fg);
-  stroke-width: 1.5;
-}
-
-.charge-row__empty {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  background: repeating-linear-gradient(135deg, var(--hatch) 0 3px, transparent 3px 6px);
-  opacity: 0.6;
-}
+.charge-row__plot { background: transparent; }
+.charge-row__plot g { color: #b6c3d2; }
+.charge-row__plot g[data-charge-state='charging'] { color: #83dfac; }
+.charge-row__plot g[data-charge-state='discharging'] { color: #ff7171; }
+.charge-row__plot g[data-charge-state='empty'] { color: var(--dim); }
+.charge-row__area { fill: currentColor; opacity: .28; }
+.charge-row__line { fill: none; stroke: currentColor; stroke-width: 2; }
+.charge-row__plot g[data-charge-state='empty'] .charge-row__line { stroke-width: 1; opacity: .35; }
 
 /* Where the panels face (the implementation): three choices, the middle one with its azimuth inline. */
 .panels-choice {

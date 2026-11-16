@@ -1,7 +1,9 @@
+import { AmericanDateInput } from '../vehiclePicker/AmericanDateInput'
+import { localZone } from '../vehiclePicker/americanDate'
 import { useEffect, useRef, useState } from 'react'
 import type { GlobeLanding } from '../Globe'
 import { VEHICLES, type Vehicle } from '../vehiclePicker/vehicles'
-import { checkPickWindow, inputBounds, type Coverage } from '../vehiclePicker/pickWindow'
+import { checkPickWindow, type Coverage } from '../vehiclePicker/pickWindow'
 import { fetchArea, type LandingArea } from './area'
 import { TerrainCurtain } from './TerrainCurtain'
 import './exploration.css'
@@ -18,7 +20,7 @@ export function LandingInspector({ place, coverage, initialStart, initialEnd, in
   const area=loaded?.key===key?loaded.area:null, error=loaded?.key===key?loaded.error:null
   const [vehicle,setVehicle]=useState(initialVehicle??VEHICLES[1]),[heading,setHeading]=useState('0')
   const [start,setStart]=useState(initialStart),[end,setEnd]=useState(initialEnd)
-  const bounds=inputBounds(coverage), windowError=checkPickWindow(start,end,coverage)
+  const windowError=checkPickWindow(start,end,coverage)
   const validHeading=heading.trim()!=='' && Number.isFinite(Number(heading)) && Number(heading)>=0 && Number(heading)<360
   useEffect(()=>{
     const el=dialog.current, opener=document.activeElement as HTMLElement|null
@@ -47,8 +49,9 @@ export function LandingInspector({ place, coverage, initialStart, initialEnd, in
         <p className="exploration-note">Explore from behind your rover. Turn and drive with the arrow keys or on-screen controls.</p>
         <label>Landing heading (°)<input name="landing-heading" type="number" min="0" max="359.99" step="any" required value={heading} onChange={e=>setHeading(e.target.value)} /></label>
         <p className="exploration-note">0° North · 90° East · 180° South · 270° West</p>
-        <label>Start (local time)<input name="exploration-start" type="datetime-local" required min={bounds.min} max={bounds.max} value={start} onChange={e=>setStart(e.target.value)} /></label>
-        <label>End (local time)<input name="exploration-end" type="datetime-local" required min={bounds.min} max={bounds.max} value={end} onChange={e=>setEnd(e.target.value)} /></label>
+        <label>Start (local time)<AmericanDateInput name="exploration-start" required value={start} onChange={setStart} /></label>
+        <label>End (local time)<AmericanDateInput name="exploration-end" required value={end} onChange={setEnd} /></label>
+        <p className="exploration-note">MM/DD/YYYY · 12-hour time · {localZone()}. Sent to the server in UTC.</p>
         {windowError&&<p role="status">Choose a valid period within coverage, up to {Math.floor(coverage.max_duration_hours/24)} days.</p>}
         <button className="exploration-land" type="submit" disabled={!area||!!windowError||!validHeading}>Land & explore →</button>
       </form>

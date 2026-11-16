@@ -3,8 +3,6 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { gzipSync } from 'node:zlib'
 import { describe, expect, it } from 'vitest'
-import { readLink } from '../../domain/query'
-import { pickLocale } from '../../i18n/i18n'
 import { en as appEn, pt as appPt } from '../../i18n/messages'
 import { readyToHandOver, stepsFor, type Seen } from './handover'
 import { en, pt } from './strings'
@@ -45,9 +43,10 @@ function spans(lang: 'en' | 'pt'): string[] {
 }
 
 describe('the Earthrise in index.html', () => {
-  it('says the same words as its reference strings, in English and in Portuguese', () => {
+  it('ships only English opening copy', () => {
     expect(spans('en')).toEqual([en.title, en.terrain, en.sun, en.earth, en.story])
-    expect(spans('pt')).toEqual([pt.title, pt.terrain, pt.sun, pt.earth, pt.story])
+    expect(spans('pt')).toEqual([])
+    expect(MARKUP).not.toMatch(/Carregando|relevo|missão|caminho/)
   })
 
   it('names the wait the way the stage does once the app runs', () => {
@@ -170,7 +169,6 @@ describe('the picture: the Earth, the ground and the flag', () => {
 describe('the language of the page before the code runs', () => {
   const source = PAGE.match(/<script id="earthrise-lang">([\s\S]*?)<\/script>/)?.[1] ?? ''
   // src/main.tsx sets these tags once React runs.
-  const TAGS = { en: 'en-GB', pt: 'pt-BR' }
 
   const run = (search: string, language: string | undefined) => {
     const root = { lang: 'en' }
@@ -178,18 +176,17 @@ describe('the language of the page before the code runs', () => {
     return root.lang
   }
 
-  it('follows the rule the app uses: the link first, then the browser', () => {
+  it('always uses American English, including old Portuguese links', () => {
     expect(source).not.toBe('')
     for (const search of ['', '?lang=pt', '?lang=en', '?lang=fr', '?site=x&lang=pt']) {
       for (const language of ['pt-BR', 'pt', 'PT-pt', 'en-US', 'fr-FR', '']) {
-        const locale = readLink(search).language ?? pickLocale(language)
-        expect(run(search, language), `${search} ${language}`).toBe(TAGS[locale])
+        expect(run(search, language), `${search} ${language}`).toBe('en-US')
       }
     }
   })
 
   it('reads a browser that names no language as English', () => {
-    expect(run('', undefined)).toBe('en-GB')
+    expect(run('', undefined)).toBe('en-US')
   })
 })
 

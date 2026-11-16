@@ -100,3 +100,26 @@ describe('the hazard elements', () => {
     expect(presentationOf(facts({ answer: false })).hazard).toBe(false)
   })
 })
+
+
+describe('confirmed Level 3 controls and the shared rover picker', () => {
+  it('keeps an N1 rover landing at level 1 with the vehicle panel and no advanced UI', () => {
+    const state = presentationOf(facts({ view: 'ground', groundOrigin: 'orbit', vehicle: true }))
+    expect(state).toMatchObject({ level: 1, panel: 'vehicle', vehicleFields: true, advanced: false, hazard: false })
+  })
+
+  it('does not leak stale Level 3 confirmation into N1 or N2 after Back', () => {
+    for (const groundOrigin of ['orbit', 'map'] as const) {
+      const state = presentationOf(facts({ view: 'ground', groundOrigin, vehicle: true, confirmedSurface: true }))
+      expect(state.advanced).toBe(false)
+      expect(state.hazard).toBe(false)
+    }
+  })
+
+  it('requires the N3 ground view, a confirmed area and an answer for advanced controls', () => {
+    for (const view of VIEWS) for (const confirmedSurface of [false, true]) for (const answer of [false, true]) {
+      const state = presentationOf(facts({ view, level3: true, confirmedSurface, answer }))
+      expect(state.advanced).toBe(view === 'ground' && confirmedSurface && answer)
+    }
+  })
+})

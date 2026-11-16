@@ -99,9 +99,9 @@ export function App(_props: { locale: Locale; onLocale: (locale: Locale) => void
   const [explorationPick, setExplorationPick] = useState<ExplorationPick | null>(null)
   const view = stage.wanted
   // Back from the ground goes to the exploration view the visitor came from: the orbit or the polar map.
-  const explorationView = useRef<'orbit' | 'map'>(link.view === 'map' ? 'map' : 'orbit')
+  const [explorationView, setExplorationView] = useState<'orbit' | 'map'>(link.view === 'map' ? 'map' : 'orbit')
   const setView = useCallback((next: View) => {
-    if (next !== 'ground') explorationView.current = next
+    if (next !== 'ground') setExplorationView(next)
     if (next === 'orbit') setLevel3(false)
     move({ type: 'want', view: next })
   }, [])
@@ -139,7 +139,7 @@ export function App(_props: { locale: Locale; onLocale: (locale: Locale) => void
   // Whose Occluder is marked on the horizon: set by clicking the reason under a statement.
   const [marked, setMarked] = useState<Body | null>(null)
   // The language goes in the link once the visitor picks one, or when the link already had it.
-  const [linkLanguage] = useState(link.language)
+  const linkLanguage = 'en' as const
   const [openedAt] = useState(() => Date.now())
   const sites = useSites()
   const { state, retry } = useAnswer(siteRef, choice)
@@ -154,9 +154,8 @@ export function App(_props: { locale: Locale; onLocale: (locale: Locale) => void
     },
     [siteRef],
   )
-  // Before a landing from Level 2 (the south pole in detail), a window asks for the vehicle and the days.
-  // The selected vehicle supplies the backend energy model; the dates set the Query Window.
-  // Level 1 lands directly without carrying over the previous vehicle.
+  // Both ordinary exploration levels choose a rover and period before landing.
+  // Level 3 retains its bounded terrain inspector and surface controls.
   const [picking, setPicking] = useState<GlobeLanding | null>(null)
   const [vehicle, setVehicle] = useState<Vehicle | null>(null)
   const [beforeLanding, setBeforeLanding] = useState<{ vehicle: Vehicle | null; choice: Choice; exploration: ExplorationPick | null } | null>(null)
@@ -168,16 +167,16 @@ export function App(_props: { locale: Locale; onLocale: (locale: Locale) => void
       }
       setBeforeLanding({ vehicle, choice, exploration: explorationPick })
       setExplorationPick(null)
-      if (view === 'map') setPicking(place)
-      else { setVehicle(null); land(place) }
+      setPicking(place)
     },
-    [view, land, vehicle, choice, level3, explorationPick],
+    [vehicle, choice, level3, explorationPick],
   )
   const confirmPick = useCallback(
     (pick: VehiclePick) => {
       if (!picking) return
       setVehicle(VEHICLES.find((item) => item.id === pick.vehicle) ?? null)
       setChoice((current) => ({ ...current, ...toChoiceWindow(pick.start, pick.end) }))
+      setMovedCursor(new Date(pick.start).getTime())
       land(picking)
       setPicking(null)
     },
@@ -324,7 +323,7 @@ export function App(_props: { locale: Locale; onLocale: (locale: Locale) => void
     Math.abs(site.longitude_deg - explorationPick.area.site.longitude_deg) < 0.00001 ? explorationPick : null
   // What presents the answer at the level the visitor is in: one panel, or none, and the hazard elements
   // only at Level 3. Decided here and nowhere else (domain/presentation.ts).
-  const presented = presentationOf({ view, level3, vehicle: vehicle !== null, answer: result !== null, classic: link.classic === true })
+  const presented = presentationOf({ view, level3, confirmedSurface: Boolean(surfacePick), groundOrigin: explorationView, vehicle: vehicle !== null, answer: result !== null, classic: link.classic === true })
   const sky = result ? sampleAt(result.timeline.samples, cursorMs) : null
   const overhead = result?.sub_points ? subPointsAt(result.sub_points.samples, cursorMs) : null
   const sunUp = result ? isUp('sun', result.periods, result.events, cursorMs) : false
@@ -440,7 +439,7 @@ export function App(_props: { locale: Locale; onLocale: (locale: Locale) => void
         />
       )}
 
-      <section className="stage" hidden={page !== 'answer'} inert={coverOpen}>
+      <section className="stage" data-exploration-level={presented.level} hidden={page !== 'answer'} inert={coverOpen}>
         {result && site && globeSite && globeMounted && (
           // Under the view from the ground the globe waits, hidden and paused, for the way back up.
           <div className="stage__globe" hidden={!scenes.globeShown}>
@@ -451,6 +450,8 @@ export function App(_props: { locale: Locale; onLocale: (locale: Locale) => void
               sun={overhead?.sun ?? null}
               earth={overhead?.earth ?? null}
               cursorMs={cursorMs}
+              sunRadiusDeg={sky?.sun.angular_radius_deg}
+              earthRadiusDeg={sky?.earth.angular_radius_deg}
               sunAzimuthDeg={sky?.sun.azimuth_deg ?? null}
               earthAzimuthDeg={sky?.earth.azimuth_deg ?? null}
               sunUp={sunUp}
@@ -460,7 +461,7 @@ export function App(_props: { locale: Locale; onLocale: (locale: Locale) => void
               onSelect={setSiteRef}
               mode={stage.globeMode}
               level={levelOfView(view)}
-              onLevel={next => { setLevel3(false); setInspectPlace(null); setView(next) }}
+              onLevel={next => { setLevel3(false); setInspectPlace(null); setPrecisionOpen(null); setExplorationPick(null); setView(next) }}
               onPrecision={enterLevel3}
               precisionActive={level3}
               selectionMaxLatitudeDeg={level3 ? LEVEL3_EDGE : undefined}
@@ -521,7 +522,7 @@ export function App(_props: { locale: Locale; onLocale: (locale: Locale) => void
           </div>
         )}
         {view === 'ground' && (
-          <button type="button" className="stage__back" onClick={() => setView(explorationView.current)}>
+          <button type="button" className="stage__back" onClick={() => setView(explorationView)}>
             <span aria-hidden="true">← </span>
             {STAGE_STRINGS[i18n.locale].back}
           </button>
@@ -533,8 +534,8 @@ export function App(_props: { locale: Locale; onLocale: (locale: Locale) => void
             marked={marked} onMark={onMark} stale={state.status === 'loading'}
             onCursor={(ms) => { setPlaying(false); setMovedCursor(clampCursor(ms, startMs, endMs)) }} />
         )}
-        {result && state.status === 'ready' && view === 'ground' && <button type="button" className="stage__precision" onClick={surfacePick ? () => { setPlaying(false); setPrecisionOpen(precisionContext(result.query, view)) } : enterLevel3}>{surfacePick ? 'Advanced analysis' : 'Level 3 · Explore'}</button>}
-        {result && precisionOpen === precisionContext(result.query, view) && state.status === 'ready' && (
+        {presented.advanced && result && state.status === 'ready' && view === 'ground' && <button type="button" className="stage__precision" onClick={() => { setPlaying(false); setPrecisionOpen(precisionContext(result.query, view)) }}>Advanced analysis</button>}
+        {presented.advanced && result && precisionOpen === precisionContext(result.query, view) && state.status === 'ready' && (
           <PrecisionPanel result={result} vehicle={vehicle} onClose={() => setPrecisionOpen(null)} onProof={() => { setPrecisionOpen(null); setPage('proof') }} />
 
         )}
@@ -542,12 +543,12 @@ export function App(_props: { locale: Locale; onLocale: (locale: Locale) => void
         <div className="stage__foot">
           <p className="views">
             {(['orbit', 'map', 'ground'] as const).map((name) => (
-              <button key={name} type="button" aria-pressed={view === name} disabled={name === 'ground' && level3 && !surfacePick} onClick={() => setView(name)}>
+              <button key={name} type="button" aria-pressed={view === name} disabled={name === 'ground' && level3 && !surfacePick} onClick={() => { if (name === 'ground' && view !== 'ground' && !level3 && site) askToLand({ lat: site.latitude_deg, lon: site.longitude_deg, name: site.name, ...(isCustomSite(site) ? {} : { siteId: site.id }) }); else setView(name) }}>
                 {t(`view.${name}`)}
               </button>
             ))}
           </p>
-          {result && stage.shown === 'ground' && stage.phase === 'idle' && <ClassroomSheet />}
+          {presented.advanced && result && stage.shown === 'ground' && stage.phase === 'idle' && <ClassroomSheet />}
         </div>
       </section>
 
@@ -579,12 +580,13 @@ export function App(_props: { locale: Locale; onLocale: (locale: Locale) => void
             )}
           </div>
         )}
-        {answerProps && page !== 'brief' && link.classic === true && <Answer {...answerProps} />}
+        {answerProps && page !== 'brief' && link.classic === true && view !== 'ground' && <Answer {...answerProps} />}
 
       </main>
 
       {result && answer && page === 'answer' && (
         <TimeStrip
+          advanced={presented.advanced}
           key={presented.vehicleFields ? (vehicle?.id ?? 'no-vehicle') : 'no-vehicle'}
           inert={coverOpen}
           vehicle={state.status === 'ready' && presented.vehicleFields ? vehicle : null}

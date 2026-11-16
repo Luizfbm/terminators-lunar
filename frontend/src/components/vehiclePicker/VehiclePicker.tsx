@@ -1,3 +1,5 @@
+import { AmericanDateInput } from './AmericanDateInput'
+import { localZone } from './americanDate'
 import '@fontsource/orbitron/latin-600.css'
 import './vehiclePicker.css'
 import {
@@ -270,7 +272,7 @@ export default function VehiclePicker({ coverage, initialStart, onConfirm, onClo
   }, [])
 
   // Escape closes from anywhere while the window is open, even if focus slipped out of it.
-  useEffect(() => {
+  useLayoutEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault()
@@ -492,44 +494,37 @@ export default function VehiclePicker({ coverage, initialStart, onConfirm, onClo
           </div>
         </section>
 
-        {/* Native datetime-local fields draw their inner date and time in the browser's or OS's locale in
-            most browsers, whatever `lang` says, so inside the field the format may not be American. */}
+        {/* Controlled American date fields keep the same format in every browser. */}
         <div className="vehicle-picker__dates">
           <label className="vehicle-picker__field">
             {t('vehiclePicker.start')}
-            <input
+            <AmericanDateInput
               ref={startRef}
-              type="datetime-local"
               lang="en-US"
               className="vehicle-picker__input"
-              min={min}
-              max={max}
               value={start}
               aria-invalid={startBad || undefined}
               aria-describedby={hintId}
-              onChange={(e) => setStart(e.target.value)}
+              onChange={setStart}
             />
           </label>
           <label className="vehicle-picker__field">
             {t('vehiclePicker.end')}
-            <input
+            <AmericanDateInput
               ref={endRef}
-              type="datetime-local"
               lang="en-US"
               className="vehicle-picker__input"
-              min={min}
-              max={max}
               value={end}
               aria-invalid={endBad || undefined}
               aria-describedby={hintId}
-              onChange={(e) => setEnd(e.target.value)}
+              onChange={setEnd}
             />
           </label>
         </div>
         <p id={hintId} className={shownError ? 'vehicle-picker__hint vehicle-picker__hint--error' : 'vehicle-picker__hint'} aria-live="polite">
           {hint}
           <br />
-          <span className="vehicle-picker__zone">{t('vehiclePicker.localTime')}</span>
+          <span className="vehicle-picker__zone">{`MM/DD/YYYY · 12-hour time · ${localZone()}. Sent to the server in UTC.`}</span>
         </p>
       </div>
     </div>,

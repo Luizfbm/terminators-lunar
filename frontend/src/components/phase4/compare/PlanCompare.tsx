@@ -1,3 +1,4 @@
+import { AmericanDateInput } from '../../vehiclePicker/AmericanDateInput'
 import { useMemo } from 'react'
 import type { Site, VisibilityResult } from '../../../api/client'
 import { comparePlans, METRIC_KEYS, TIE_HOURS, TIE_SHARE, type Plan, type Row, type Side } from '../../../domain/planCompare'
@@ -179,15 +180,14 @@ function PlanBFields({ planA, query, link, onLink, text }: { planA: Query; query
         onCoordinate={(coordinate) => change({ site: coordinate })}
       />
       <span>
-        <input
+        <AmericanDateInput
           className="site where__date"
-          type="date"
+          withTime={false}
           aria-label={text.t('b.start')}
           min={range?.min}
           max={range?.max}
           value={utcDay(startMs)}
-          onChange={(event) => {
-            const day = event.target.value
+          onChange={(day) => {
             if (day && (!range || (day >= range.min && day <= range.max))) change({ startDay: day })
           }}
         />{' '}
