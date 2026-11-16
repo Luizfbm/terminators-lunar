@@ -29,6 +29,8 @@ Decisão do Luiz, 15/11/2026: o app passa a abrir no seu layout.
 
 ## O que fica escondido por enquanto
 
+Atualização (#55, 15/11/2026): a forma de trazer esses pontos de volta é um cartão com a resposta no canto do globo (a frase do Sol e da Terra, o Occluder de cada uma e a faixa de incerteza) e uma gaveta de detalhes, aberta pelo botão Detalhes (`details=1` no link), com o resto da lista abaixo. O layout clássico continua como era.
+
 Nada disso foi apagado. Os componentes continuam no código, só não aparecem no seu layout. Vamos pensar em outra forma de trazer esses pontos de volta:
 
 - o Occluder com nome e distância ("atrás de uma crista a 14 km a sudoeste");

@@ -816,6 +816,10 @@ paths:
         Artemis III landing requirement, slope under 10° over 100 m (Artemis Human Landing System
         Overview for Space Apps 2025, NTRS 20250009323).
         A DEM this coarse cannot see boulders or craters a few metres across.
+        Where the finest DEM that covers the point is coarser than the radius (LOLA's 237 m global
+        map with the default 100 m), no cell centre lies within `radius_m` and the answer is a 422
+        `dem_too_coarse`, never a made-up Slope; where no DEM covers the point it is a 422
+        `outside_coverage`.
         `permanent_shadow` is left out until the map of permanently shadowed regions is on the
         server.
         Pass either `site_id` or both coordinates, never both, as in `/visibility`.
@@ -852,7 +856,29 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
         "422":
-          $ref: "#/components/responses/Unprocessable"
+          description: >-
+            The Query is outside what the engine covers: `dem_too_coarse` when the finest DEM that
+            covers the point has no cell centre within `radius_m`, `outside_coverage` when no DEM
+            covers the point, and the Site problems of `/visibility`.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+              examples:
+                no-dem-covers-the-point:
+                  value:
+                    type: https://lunar-api.luizfbm.win/problems/outside-coverage
+                    title: Outside coverage
+                    status: 422
+                    detail: "No DEM covers 100 m around this Site (LDEM_128: LDEM_128 not found)."
+                    code: outside_coverage
+                dem-too-coarse-for-the-radius:
+                  value:
+                    type: https://lunar-api.luizfbm.win/problems/dem-too-coarse
+                    title: DEM too coarse
+                    status: 422
+                    detail: "The DEM is too coarse for this radius: no cell centre of LDEM_128 (236.9 m) lies within 100 m."
+                    code: dem_too_coarse
 
   /terrain/heights:
     get:
@@ -1367,8 +1393,11 @@ components:
         detail: { type: string }
         code:
           type: string
-          description: Stable machine code the frontend translates.
-          enum: [outside_coverage, window_out_of_range, ambiguous_site, missing_site, invalid_parameter, busy, no_hazard_grid]
+          description: |
+            Stable machine code the frontend translates. `outside_coverage`: no DEM or period
+            covers the asked point. `dem_too_coarse`: a DEM covers the point but is too coarse for
+            the asked radius (`/terrain` only: no cell centre within `radius_m`).
+          enum: [outside_coverage, dem_too_coarse, window_out_of_range, ambiguous_site, missing_site, invalid_parameter, busy, no_hazard_grid]
 
     LocalizedText:
       type: object
@@ -1454,7 +1483,11 @@ components:
         curated: { type: boolean }
         has_5m_dem:
           type: boolean
-          description: A 5 m DEM covers this Site (PGDA 78 / 90).
+          description: >-
+            A PGDA 5 m DEM (product 78 or 90) covers this Site. It is not the 5 m Hazard grid:
+            that grid is a different product (LDEC_875S_5M), sits at the nearest of 103 tiles
+            within 15 km and is described by `GET /sites/{site_id}/hazard` (`grid`), so a Site can
+            have this DEM and no Hazard grid.
 
     Occluder:
       type: object
@@ -2666,7 +2699,14 @@ components:
           allOf:
             - $ref: "#/components/schemas/HazardInterval"
         coverage:
-          description: The share of the truly steep cells this navigation blocks.
+          description: >-
+            What the Monte Carlo stores as its coverage: the share of the checked cells whose
+            true slope is at or under the estimated slope plus this navigation's margin. It is the
+            share of the margin's coverage, not the share of the truly steep cells that the
+            navigation blocks (that is 1 minus `missed_hazard`). For Normal navigation, which has
+            no margin, it is the share of cells whose true slope is at or under the estimate. Our
+            group's estimate: the nominal level (P50, P90, P99) is the z that was used, not a
+            coverage that was achieved, and the value here is what it really covered.
           allOf:
             - $ref: "#/components/schemas/HazardInterval"
         mean_abs_error_deg:
@@ -2708,8 +2748,15 @@ components:
         trade_off:
           type: object
           description: >-
-            Unvetoed hazard at the same false alarm (5, 10, 15, 20, 25 and 30%), with a uniform
-            margin on each navigation: the fair comparison.
+            Unvetoed hazard at the same false alarm (5, 10, 15, 20, 25 and 30%), the fair
+            comparison. The Normal navigation curve sweeps one uniform margin over every cell. The
+            Multiresolution curve is the margin by density of laser shots, scaled in size to reach
+            each false alarm, not a uniform margin. Our group's estimate, from 20 independent
+            draws: it may contain errors. Its gain at the same false alarm is about 20% at 15% and
+            20% false alarm at AR06, 38.5% in the median over our group's 26 grids and 12%
+            when the coarse grid is 20 m, so the reduction `methods` shows between different false
+            alarms (for example 12.86% to 2.70% at AR06, where the false alarm goes from 5.9% to
+            18.0%) is mostly the margin.
           required: [normal, multiresolution]
           properties:
             normal:
@@ -2728,12 +2775,29 @@ components:
             multiresolution: { type: number, minimum: 0 }
         paired_tests:
           type: object
-          description: McNemar on the steep cells (b only Normal blocks, c only Multiresolution blocks) and Wilcoxon on the absolute errors.
+          description: >-
+            McNemar on the steep cells and Wilcoxon on the absolute slope errors. `mcnemar_b` and
+            `mcnemar_c` compare Normal navigation without a margin with Multiresolution at P90 with
+            its margin (b: only Normal navigation blocks the cell; c: only Multiresolution blocks
+            it), so they measure the margin plus the data, not the data alone. `wilcoxon_p`
+            compares the absolute slope errors, which have no margin in them. Our group's estimate:
+            it may contain errors, and the same-false-alarm curves in `trade_off` are the fair
+            comparison.
           required: [mcnemar_b, mcnemar_c, mcnemar_p, wilcoxon_p, wilcoxon_n]
           properties:
-            mcnemar_b: { type: integer, minimum: 0 }
-            mcnemar_c: { type: integer, minimum: 0 }
-            mcnemar_p: { type: number, minimum: 0, maximum: 1 }
+            mcnemar_b:
+              type: integer
+              minimum: 0
+              description: Cells only Normal navigation (without a margin) blocks, against Multiresolution at P90 with its margin.
+            mcnemar_c:
+              type: integer
+              minimum: 0
+              description: Cells only Multiresolution at P90 (with its margin) blocks, against Normal navigation without a margin.
+            mcnemar_p:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: p of that comparison, which measures the margin plus the data. It is our group's estimate and may contain errors.
             wilcoxon_p: { type: number, minimum: 0, maximum: 1 }
             wilcoxon_n: { type: integer, minimum: 0 }
 
