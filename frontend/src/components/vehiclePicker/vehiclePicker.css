@@ -489,6 +489,40 @@
   padding: 14px 18px 6px;
 }
 
+.vehicle-picker__quick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 18px 4px;
+}
+
+.vehicle-picker__quick-label {
+  margin-left: 4px;
+  font-size: 10.5px;
+}
+
+.vehicle-picker__chip {
+  min-height: 30px;
+  padding: 5px 11px;
+  border: 1px solid var(--vp-field-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--vp-text);
+  font: 500 12px system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.vehicle-picker__chip:hover {
+  background: #eef2f8;
+}
+
+.vehicle-picker__chip[aria-pressed='true'] {
+  border-color: var(--vp-text);
+  background: var(--vp-text);
+  color: #fff;
+}
+
 .vehicle-picker__field {
   display: flex;
   flex-direction: column;

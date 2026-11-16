@@ -15,7 +15,7 @@ import {
 import { createPortal } from 'react-dom'
 import { en } from './strings'
 import { VEHICLES, wrapIndex, DEFAULT_VEHICLE_INDEX, darkHours, type RoverFigure, type Vehicle } from './vehicles'
-import { checkPickWindow, defaultEnd, inputBounds, type Coverage, type PickWindowError } from './pickWindow'
+import { checkPickWindow, DEFAULT_PICK_DAYS, defaultEnd, endAfter, inputBounds, QUICK_DAYS, toChoiceWindow, toLocalInput, type Coverage, type PickWindowError } from './pickWindow'
 // Types only: the module itself (and three with it) is loaded on demand below.
 import type { RoverModel, RoverStage } from './rover3d'
 
@@ -244,6 +244,8 @@ export default function VehiclePicker({ coverage, initialStart, onConfirm, onClo
   // Which field to mark red: the end for a bad order or span; for 'outside', the one that is out.
   // datetime-local values share one fixed layout, so they compare as strings.
   const outside = (value: string) => value !== '' && (value < min || value > max)
+  // The length picked, in hours, when both dates make a Window: lights the matching quick button.
+  const pickedHours = checkPickWindow(start, end, coverage) === null ? toChoiceWindow(start, end).hours : null
   const startBad = error === 'outside' && outside(start)
   const endBad = error === 'order' || error === 'too_long' || (error === 'outside' && outside(end))
 
@@ -521,6 +523,17 @@ export default function VehiclePicker({ coverage, initialStart, onConfirm, onClo
               onChange={setEnd}
             />
           </label>
+        </div>
+        {/* One click instead of typing: start now, and how many days the Window lasts. */}
+        <div className="vehicle-picker__quick" role="group" aria-label="Quick dates">
+          <button type="button" className="vehicle-picker__chip" onClick={() => { const now = toLocalInput(Date.now()); setStart(now); setEnd(endAfter(now, pickedHours ?? DEFAULT_PICK_DAYS * 24, coverage)) }}>Start now</button>
+          <span className="vehicle-picker__quick-label">Stay for</span>
+          {QUICK_DAYS.map((days) => (
+            <button key={days} type="button" className="vehicle-picker__chip" aria-pressed={pickedHours === days * 24}
+              onClick={() => { const from = start || toLocalInput(Date.now()); setStart(from); setEnd(endAfter(from, days * 24, coverage)) }}>
+              {days === 1 ? '1 day' : `${days} days`}
+            </button>
+          ))}
         </div>
         <p id={hintId} className={shownError ? 'vehicle-picker__hint vehicle-picker__hint--error' : 'vehicle-picker__hint'} aria-live="polite">
           {hint}

@@ -39,18 +39,23 @@ export function toLocalInput(ms: number): string {
 /** How long the Window offered for a landing is, before the visitor changes it. */
 export const DEFAULT_PICK_DAYS = 10
 
+/** Window lengths, in days, offered as one-click buttons beside the dates. */
+export const QUICK_DAYS = [1, 3, 7, 10, 14, 30] as const
+
 /**
- * The end to offer for a start: DEFAULT_PICK_DAYS later, never past the longest Window or the end of
- * the coverage. Empty when the start is no value, so the field stays empty with it.
+ * The end `hours` after a start, never past the longest Window or the end of the coverage. Empty when
+ * the start is no value, so the field stays empty with it.
  */
-export function defaultEnd(start: string, coverage: Coverage): string {
+export function endAfter(start: string, hours: number, coverage: Coverage): string {
   const startMs = localMs(start)
   if (Number.isNaN(startMs)) return ''
-  const hours = Math.min(DEFAULT_PICK_DAYS * 24, coverage.max_duration_hours)
   const lastMs = Math.floor(Date.parse(coverage.window_max) / MINUTE_MS) * MINUTE_MS
-  const endMs = Math.min(startMs + hours * HOUR_MS, lastMs)
+  const endMs = Math.min(startMs + Math.min(hours, coverage.max_duration_hours) * HOUR_MS, lastMs)
   return endMs > startMs ? toLocalInput(endMs) : ''
 }
+
+/** The end to offer for a start: DEFAULT_PICK_DAYS later. */
+export const defaultEnd = (start: string, coverage: Coverage): string => endAfter(start, DEFAULT_PICK_DAYS * 24, coverage)
 
 /**
  * The min/max attributes of both inputs: the coverage in local time. The inputs only take whole
