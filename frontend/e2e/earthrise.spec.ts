@@ -194,7 +194,7 @@ for (const [width, height] of [
   test.describe(`the Earthrise at ${width}x${height}`, () => {
     test.use({ javaScriptEnabled: false, locale: 'en-GB', reducedMotion: 'reduce', viewport: { width, height } })
 
-    test('the ridge runs edge to edge along the bottom, the Earth whole above it', async ({ page }) => {
+    test('the ridge runs edge to edge along the bottom, the Earth whole above it', { tag: width === 390 ? '@smoke' : [] }, async ({ page }) => {
       await page.goto('/')
       const ridge = await scene(page).locator('.earthrise__ridge').boundingBox()
       const earth = await scene(page).locator('.earthrise__earth').boundingBox()

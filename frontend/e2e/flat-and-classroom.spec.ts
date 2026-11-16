@@ -27,7 +27,7 @@ test.describe('the line without terrain', () => {
   test.describe('in English', () => {
     test.use({ locale: 'en-GB' })
 
-    test('says how much later the Sun would set without terrain, and asks once for both readers', async ({ page }) => {
+    test('says how much later the Sun would set without terrain, and asks once for both readers', { tag: '@smoke' }, async ({ page }) => {
       let asked = 0
       page.on('request', (request) => {
         if (request.url().includes('/visibility/flat?')) asked += 1

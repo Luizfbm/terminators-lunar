@@ -54,7 +54,7 @@ for (const viewport of [
   test.describe(`at ${viewport.width}×${viewport.height}`, () => {
     test.use({ viewport, locale: 'en-US' })
 
-    test('the compass sits in the bottom-left of the 3D view and covers nothing else', async ({ page }) => {
+    test('the compass sits in the bottom-left of the 3D view and covers nothing else', { tag: viewport.width === 390 ? '@smoke' : [] }, async ({ page }) => {
       await open(page)
       const stage = await box(sky(page))
       const compass = await box(dial(page))

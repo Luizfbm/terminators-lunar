@@ -13,7 +13,7 @@ async function open(page: Page) {
 test.describe('how far our horizon reaches, English browser', () => {
   test.use({ locale: 'en-GB' })
 
-  test('says the reach, the distance of the Occluders and the rule of the disc', async ({ page }) => {
+  test('says the reach, the distance of the Occluders and the rule of the disc', { tag: '@smoke' }, async ({ page }) => {
     await open(page)
 
     await expect(

@@ -51,7 +51,7 @@ const list = (page: Page) => page.getByRole('listbox', { name: 'Sites' })
 
 test.use({ locale: 'en-GB' })
 
-test('groups the Sites by Region, marks NASA’s nine, and keeps off-pole landers apart', async ({ page }) => {
+test('groups the Sites by Region, marks NASA’s nine, and keeps off-pole landers apart', { tag: '@smoke' }, async ({ page }) => {
   await serve(page)
   await page.goto('/')
   await trigger(page).click()

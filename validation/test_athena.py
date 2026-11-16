@@ -23,8 +23,8 @@ import pytest
 
 SCRIPT = "validation/test_athena.py"
 DATA = Path(__file__).resolve().parent / "data"
-LARISSA = DATA / "larissa_athena_horizon.csv"
-LARISSA_META = DATA / "larissa_athena_horizon.json"
+LARISSA = DATA / "independent_athena_horizon.csv"
+LARISSA_META = DATA / "independent_athena_horizon.json"
 LROC = DATA / "lroc_athena.json"
 ENGINE = DATA / "athena_engine.json"
 PENDING_ENGINE = proof.text(
@@ -35,51 +35,51 @@ PENDING_ENGINE = proof.text(
 )
 
 HORIZON_TOLERANCE = proof.text(
-    f"per azimuth |ours − hers| ≤ atan({athena.HEIGHT_ERROR_M:g} m / d) + "
-    f"{athena.WALK_FLOOR_DEG:g}°, d her blocking distance; at least "
+    f"per azimuth |ours − theirs| ≤ atan({athena.HEIGHT_ERROR_M:g} m / d) + "
+    f"{athena.WALK_FLOOR_DEG:g}°, d their blocking distance; at least "
     f"{athena.MIN_SHARE_WITHIN:.0%} of our 720 azimuths within it and RMS ≤ "
     f"{athena.RMS_MAX_DEG:g}°. 1 m: the adjusted LOLA maps' 0.3–0.5 m RMS (Barker et al. 2021) "
     "and the unadjusted map's ~0.5 m radial orbit error (Mazarico et al. 2018), in "
     "quadrature. Fixed before evaluating the comparison",
-    f"por azimute |nosso − dela| ≤ atan({athena.HEIGHT_ERROR_M:g} m / d) + "
+    f"por azimute |nosso − deles| ≤ atan({athena.HEIGHT_ERROR_M:g} m / d) + "
     f"{athena.WALK_FLOOR_DEG:g}°".replace(".", ",")
-    + ", d a distância de bloqueio dela; pelo menos 99% dos nossos 720 azimutes dentro disso "
+    + ", d a distância de bloqueio deles; pelo menos 99% dos nossos 720 azimutes dentro disso "
     "e RMS ≤ 0,03°. 1 m: o RMS de 0,3–0,5 m dos mapas LOLA ajustados (Barker et al. 2021) e o "
     "erro radial de órbita de ~0,5 m do mapa não ajustado (Mazarico et al. 2018), em "
     "quadratura. Fixada antes de avaliar a comparação",
 )
 HORIZON_REFERENCE = (
-    "An independent study by Larissa (the independent work, not merged): her terrain-only silhouette at "
-    "the IM-2 Athena point (-84.7906°, 29.1957°, 2 m), her own code over LOLA "
-    "LDEM_80S_20M + LDEM_75S_30M (GDR, 2017), data/larissa_athena_horizon.csv "
+    "An independent study by our group (the independent work, not merged): their terrain-only silhouette at "
+    "the IM-2 Athena point (-84.7906°, 29.1957°, 2 m), their own code over LOLA "
+    "LDEM_80S_20M + LDEM_75S_30M (GDR, 2017), data/independent_athena_horizon.csv "
     "(commit 5766403, SHA-256 d9cd6761…); ours over LDEM_80S_*_ADJ (Barker et al. 2023)"
 )
 
 proof.declare(
-    "larissa-athena-horizon",
+    "independent-athena-horizon",
     title=proof.text(
-        "Horizon mask at IM-2 Athena, against Larissa's independent silhouette",
-        "Máscara de horizonte no IM-2 Athena, contra a silhueta independente da Larissa",
+        "Horizon mask at IM-2 Athena, against our group's independent silhouette",
+        "Máscara de horizonte no IM-2 Athena, contra a silhueta independente do nosso grupo",
     ),
     reference=HORIZON_REFERENCE,
     tolerance=HORIZON_TOLERANCE,
     not_covered=proof.text(
         "Both sides are LOLA altimetry, so errors common to LOLA don't show. Athena tipped "
-        "over in a crater about 20 m across, smaller than either DEM. Her rays start 40 m out, "
+        "over in a crater about 20 m across, smaller than either DEM. Their rays start 40 m out, "
         "so an Occluder closer than that would show on our side only.",
         "Os dois lados são altimetria do LOLA, então erros comuns ao LOLA não aparecem. O "
-        "Athena tombou numa cratera de uns 20 m, menor que os dois DEMs. Os raios dela começam "
+        "Athena tombou numa cratera de uns 20 m, menor que os dois DEMs. Os raios deles começam "
         "a 40 m, então um Occluder mais perto que isso só apareceria do nosso lado.",
     ),
     script_path=SCRIPT,
 )
 proof.declare(
-    "negative-control-larissa-horizon-rotated",
+    "negative-control-independent-horizon-rotated",
     title=proof.text(
-        "Negative control: Larissa's silhouette turned by 1°",
-        "Controle negativo: a silhueta da Larissa girada 1°",
+        "Negative control: our group's silhouette turned by 1°",
+        "Controle negativo: a silhueta do nosso grupo girada 1°",
     ),
-    reference="The Athena horizon check with her silhouette rotated by 1° in azimuth",
+    reference="The Athena horizon check with their silhouette rotated by 1° in azimuth",
     tolerance=proof.text(
         "must break both conditions: under 99% of azimuths within and RMS above 0.03°",
         "precisa quebrar as duas condições: menos de 99% dos azimutes dentro e RMS acima de 0,03°",
@@ -281,36 +281,36 @@ def test_the_server_runner_writes_what_the_checks_read(tmp_path: Path) -> None:
 # --- The Proof entries -------------------------------------------------------------------------
 
 
-@proof.check("larissa-athena-horizon")
+@proof.check("independent-athena-horizon")
 def test_our_horizon_against_larissa() -> None:
-    output = engine_or_skip("larissa-athena-horizon")
+    output = engine_or_skip("independent-athena-horizon")
     s = athena.compare_horizon(our_horizon(output), larissa())
     proof.record(
-        "larissa-athena-horizon",
+        "independent-athena-horizon",
         "passed" if s["passed"] else "failed",
         proof.text(
-            f"{s['share_within']:.1%} of {s['azimuths']} azimuths within; ours − hers: mean "
+            f"{s['share_within']:.1%} of {s['azimuths']} azimuths within; ours − theirs: mean "
             f"{s['mean_deg']:+.4f}°, RMS {s['rms_deg']:.4f}°, P95 {s['p95_deg']:.3f}°, largest "
-            f"{s['largest_deg']:+.3f}° at {s['largest_at_deg']:g}° (her Occluder "
+            f"{s['largest_deg']:+.3f}° at {s['largest_at_deg']:g}° (their Occluder "
             f"{s['largest_distance_km']:.2f} km away)",
             f"{pt(100 * s['share_within'], '.1f')}% de {s['azimuths']} azimutes dentro; nosso − "
-            f"dela: média {pt(s['mean_deg'], '+.4f')}°, RMS {pt(s['rms_deg'], '.4f')}°, P95 "
+            f"deles: média {pt(s['mean_deg'], '+.4f')}°, RMS {pt(s['rms_deg'], '.4f')}°, P95 "
             f"{pt(s['p95_deg'], '.3f')}°, maior {pt(s['largest_deg'])}° em "
-            f"{pt(s['largest_at_deg'], 'g')}° (Occluder dela a "
+            f"{pt(s['largest_at_deg'], 'g')}° (Occluder deles a "
             f"{pt(s['largest_distance_km'], '.2f')} km)",
         ),
     )
     assert s["passed"], s
 
 
-@proof.check("negative-control-larissa-horizon-rotated")
+@proof.check("negative-control-independent-horizon-rotated")
 def test_her_silhouette_turned_by_one_degree_breaks_the_check() -> None:
-    output = engine_or_skip("negative-control-larissa-horizon-rotated")
+    output = engine_or_skip("negative-control-independent-horizon-rotated")
     s = athena.compare_horizon(our_horizon(output), larissa(), athena.CONTROL_ROTATION_DEG)
     en = f"{s['share_within']:.1%} within, RMS {s['rms_deg']:.3f}°"
     pt_text = f"{pt(100 * s['share_within'], '.1f')}% dentro, RMS {pt(s['rms_deg'], '.3f')}°"
     proof.record(
-        "negative-control-larissa-horizon-rotated",
+        "negative-control-independent-horizon-rotated",
         "passed" if s["broke_both"] else "failed",
         proof.text(f"broke both conditions ({en})", f"quebrou as duas condições ({pt_text})")
         if s["broke_both"]

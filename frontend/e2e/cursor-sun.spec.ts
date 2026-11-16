@@ -51,7 +51,7 @@ const slider = (page: Page) => page.getByRole('slider', { name: 'Cursor' })
 const reading = (page: Page) => page.locator('.strip__now .cursor-sun')
 const percentOf = async (page: Page) => Number(await reading(page).getAttribute('data-sun-percent'))
 
-test('dragging the Cursor through the first hour of the Athena Window shows the Sun coming into view', async ({ page }) => {
+test('dragging the Cursor through the first hour of the Athena Window shows the Sun coming into view', { tag: '@smoke' }, async ({ page }) => {
   await serve(page)
   await page.goto(`${link}&lang=en`)
   await expect(slider(page)).toBeVisible()

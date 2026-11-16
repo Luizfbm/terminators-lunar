@@ -19,7 +19,7 @@ test.beforeEach(async ({ page }) => {
 })
 
 test.describe('Resolution ladder', () => {
-  test('asks nothing until opened, then says what the coarse map changes', async ({ page }) => {
+  test('asks nothing until opened, then says what the coarse map changes', { tag: '@smoke' }, async ({ page }) => {
     let asked = 0
     page.on('request', (request) => {
       if (request.url().includes('/visibility/ladder')) asked += 1

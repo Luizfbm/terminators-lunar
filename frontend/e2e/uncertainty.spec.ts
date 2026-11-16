@@ -83,7 +83,7 @@ async function serveBand(page: Page, sunsetSpreadMs = 40 * MINUTE_MS) {
 test.describe('in English', () => {
   test.use({ locale: 'en-GB' })
 
-  test('says it is working out the band, then gives the window next to the Sunset and that the Earthset may not happen', async ({ page }) => {
+  test('says it is working out the band, then gives the window next to the Sunset and that the Earthset may not happen', { tag: '@smoke' }, async ({ page }) => {
     const band = await serveBand(page)
     await page.goto('/')
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()

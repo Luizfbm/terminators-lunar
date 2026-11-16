@@ -55,11 +55,11 @@ The test, in his `rodar_todos.py`, is `scipy.stats.wilcoxon(grade_with_margin, m
 - **The gain shrinks as the starting map improves.** Starting from 20 m (the map that actually exists south of 80°S), the grade with a margin is already about as good as Multiresolution from 60 m; his own correction in `MONTE_CARLO_LOLA_TESE.md` says not to claim that 60 m with Multiresolution equals a map three times finer.
 - **Nominal margin trades hazard for false alarm.** A method that vetoes more will miss less; the equal-false-alarm comparison is the fair one.
 
-The negative control, `negative-control-eduardo-equal-false-alarm`, repeats the 60 m comparison with the grade allowed a 30 % false alarm. There Multiresolution P90 is better in 8 of 26 tiles and the median reduction is negative (-79 %): the check can come out the other way.
+The negative control, `negative-control-group-equal-false-alarm`, repeats the 60 m comparison with the grade allowed a 30 % false alarm. There Multiresolution P90 is better in 8 of 26 tiles and the median reduction is negative (-79 %): the check can come out the other way.
 
 ## What is pending
 
-The rerun from the PGDA 78 layers and the laser coverage need gigabytes and run on the server; until then the entries `eduardo-mc-rerun-pgda78` and `eduardo-ldec-coverage` are `pending`.
+The rerun from the PGDA 78 layers and the laser coverage need gigabytes and run on the server; until then the entries `group-mc-rerun-pgda78` and `group-ldec-coverage` are `pending`.
 
 - `validation/hazard/mc_lola.py` is a port of his `mc_lola.py` without figures and HTML. With scipy it gives, on a synthetic tile at 60 m and 20 m, exactly the same means, intervals, statistics, calibrated margins and curve points as his script run from his commit (the check is in `test_hazard_mc.py`). The rerun on the real layers must give his 52 runs within 0.5 points (and 0.02° of median error).
 - `validation/hazard/coverage.py` is a port of the coverage part of his `analise_cobertura_lola.py`. His `cobertura_multiescala.csv` gives 7.29, 25.90, 67.97, 95.93 and 99.40 % of the cells with a shot at 5, 10, 20, 40 and 60 m inside 87.5°S. These are cells with a shot, not cells with a good measurement: one shot inside a 60 m cell counts it as measured.

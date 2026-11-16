@@ -28,7 +28,7 @@ const serve = (page: Page, body: unknown) =>
   page.route('**/validations', (route) => route.fulfill({ json: body }))
 
 test.describe('the Proof page', () => {
-  test('opens from the answer, says the score first, puts failures first, and goes back', async ({ page }) => {
+  test('opens from the answer, says the score first, puts failures first, and goes back', { tag: '@smoke' }, async ({ page }) => {
     await serve(page, LIST)
     await page.goto('/')
     await page.getByRole('link', { name: 'How we know these numbers' }).click()
@@ -135,7 +135,7 @@ test.describe('the Proof page', () => {
     await expect(page.getByTestId('proof-not-checked')).toBeVisible()
   })
 
-  test('fits a phone: the table stacks and the page does not scroll sideways', async ({ page }) => {
+  test('fits a phone: the table stacks and the page does not scroll sideways', { tag: '@smoke' }, async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 })
     await serve(page, LIST)
     await page.goto('/?page=proof')

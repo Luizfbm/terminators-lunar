@@ -3,7 +3,7 @@
   "branch": "eduardo/cockpit-multirresolucao",
   "commit": "2195fcb2d0ee447b1e72c877f4497b82371b917e",
   "what": "Eduardo's battery of simulated traverses over 16 real LOLA test lanes, 100 per lane, team B of each file: one outcome character per traverse, lane by lane. Made by validation/sfs/extract_battery.py from the raw files listed in `files`",
-  "generator": "validation/sfs/eduardo/exp_dif.js, rodar_dif_multi.js"
+  "generator": "validation/sfs/group/exp_dif.js, rodar_dif_multi.js"
  },
  "lanes": 16,
  "traverses_per_lane": 100,

@@ -11,13 +11,20 @@ concurrency:
   cancel-in-progress: true
 
 # The heavy half of CI: scripts/ci-mac.sh (ruff, mypy, pytest, the validation suite, eslint, tsc,
-# vitest, the generated-types check and the full Playwright e2e). The light half is ci.yml.
+# vitest, the generated-types check and the Playwright e2e). The light half is ci.yml.
+# On a pull request the e2e is the @smoke set only (the whole suite while no test carries the tag).
+# On a push to main it is everything, except when the commit has the very tree of the merged pull
+# request's head and that head has `mac-gates` green: then the groups and the smoke set are not run
+# again, only the rest of the e2e (decided by Luiz on 15/11/2026, the details are at the top of the
+# script). That lookup (the pull requests of a commit, the head's statuses) is why the job also
+# needs `pull-requests: read`; without it the lookup fails and everything runs.
 # This job runs on a self-hosted runner that is Luiz's Mac (Apple M4, 10 cores), labelled
 # lunar-mac. The script posts the commit status `mac-gates` itself, so the job needs
 # `statuses: write`. The job is red when the script fails, and so is `mac-gates`. The job is not
 # named mac-gates on purpose: the required check on main is the commit status of that name.
 permissions:
   contents: read
+  pull-requests: read
   statuses: write
 
 jobs:
@@ -37,3 +44,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           # On a pull request only the groups its changes can break run; a push to main runs all.
           LUNAR_CI_BASE: ${{ github.event.pull_request.base.sha }}
+      # Runs after a failure and after a cancellation too. A cancelled run leaves pytest, its xdist
+      # workers and Playwright's web servers running with PPID 1, and they load the Mac for the next
+      # run (#159). This kills every process of the runner's user whose working directory is inside
+      # this job's workspace, and nothing else: the Mac is shared with Luiz's own work, so never by
+      # name. It excludes its own shell and the runner above it. See scripts/ci-sweep.sh.
+      - name: Kill what this job left running
+        if: always()
+        timeout-minutes: 2
+        run: |
+          if [ -x scripts/ci-sweep.sh ]; then
+            scripts/ci-sweep.sh "$GITHUB_WORKSPACE"
+          else
+            echo "scripts/ci-sweep.sh is not in this checkout: nothing to sweep"
+          fi

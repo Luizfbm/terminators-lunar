@@ -11,7 +11,7 @@ const numbers = (page: Page) => page.getByRole('table', { name: 'The numbers for
 const facts = (page: Page) => page.getByRole('table', { name: /Where the Sun and the Earth are at the Cursor/ })
 const fact = (page: Page, name: string) => facts(page).getByRole('row', { name }).getByRole('cell')
 
-test('the default screen has the sentences only; the button opens the numbers in place and the link remembers it', async ({ page }) => {
+test('the default screen has the sentences only; the button opens the numbers in place and the link remembers it', { tag: '@smoke' }, async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   await expect(toggle(page)).toHaveAttribute('aria-expanded', 'false')
